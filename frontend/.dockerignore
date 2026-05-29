@@ -1,0 +1,34 @@
+# Frontend .dockerignore
+# Prevents sending unnecessary files into the Docker build context
+
+# Dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+
+# Testing
+coverage
+*.log
+
+# Git
+.git
+.gitignore
+
+# Misc
+README.md
+.env*
+!.env.example
+*.md
+
+# Editor / OS
+.idea
+.vscode
+*.swp
+.DS_Store
+
+# Lockfiles we don't need (we copy package-lock in Dockerfile)
+bun.lock
+yarn.lock
+pnpm-lock.yaml
