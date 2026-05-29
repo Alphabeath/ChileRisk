@@ -8,7 +8,6 @@ import {
   MAP_STYLE,
   CHILE_BOUNDS,
   COMUNAS_MIN_ZOOM,
-  REGION_FILL_COLOR,
   REGION_FILL_HOVER,
   REGION_LINE_COLOR,
   REGION_LINE_HOVER,
@@ -27,6 +26,8 @@ import {
   ComunaPopupContent,
   RegionPopupContent,
 } from "./map-popup"
+import { getNationalRisk, getComunaRisk } from "@/lib/api"
+import type { NationalRisk } from "@/lib/types"
 
 type Position = [number, number]
 type LinearRing = Position[]
@@ -106,7 +107,7 @@ export function ChileMap() {
       hoveredComunaRef.current = null
     })
 
-    map.on("click", fillLayer, (e) => {
+    map.on("click", fillLayer, async (e) => {
       const props = e.features?.[0]?.properties as ComunaProperties | undefined
       if (!props) return
       if (popupRef.current) popupRef.current.remove()
@@ -114,9 +115,25 @@ export function ChileMap() {
         popupDestroyRef.current()
         popupDestroyRef.current = null
       }
+
+      let comunaWithRisk: ComunaProperties = props
+      try {
+        const risk = await getComunaRisk(props.cod_comuna)
+        comunaWithRisk = {
+          ...props,
+          composite_score: risk.composite_score,
+          severity: risk.severity,
+          dominant_hazard: risk.dominant_hazard,
+          sismo_score: risk.sismo_score,
+          ola_calor_score: risk.ola_calor_score,
+          ola_frio_score: risk.ola_frio_score,
+          viento_score: risk.viento_score,
+        }
+      } catch {}
+
       const { element, destroy } = createPopupContent(
         <ComunaPopupContent
-          properties={props}
+          properties={comunaWithRisk}
           onViewDetail={() => {
             if (popupRef.current) popupRef.current.remove()
             destroy()
@@ -126,7 +143,7 @@ export function ChileMap() {
         />
       )
       popupDestroyRef.current = destroy
-      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
+      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false, className: "cr-popup" })
         .setLngLat(e.lngLat)
         .setDOMContent(element)
         .addTo(map)
@@ -160,7 +177,7 @@ export function ChileMap() {
         />
       )
       popupDestroyRef.current = destroy
-      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
+      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false, className: "cr-popup" })
         .setLngLat(e.lngLat)
         .setDOMContent(element)
         .addTo(mapRef.current)
@@ -209,6 +226,25 @@ export function ChileMap() {
       const regionsRes = await fetch(REGIONS_DATA_URL)
       const regionsGeojson = await regionsRes.json()
 
+      try {
+        const riskData = await getNationalRisk()
+        const riskMap = new Map(riskData.map((r: NationalRisk) => [r.codregion, r]))
+        if (regionsGeojson.features) {
+          for (const f of regionsGeojson.features) {
+            const r = riskMap.get(f.properties.codregion)
+            if (r) {
+              f.properties.composite_score = r.composite_score
+              f.properties.severity = r.severity
+              f.properties.dominant_hazard = r.dominant_hazard
+              f.properties.sismo_score = r.sismo_score
+              f.properties.ola_calor_score = r.ola_calor_score
+              f.properties.ola_frio_score = r.ola_frio_score
+              f.properties.viento_score = r.viento_score
+            }
+          }
+        }
+      } catch {}
+
       map.addSource("regions", { type: "geojson", data: regionsGeojson, generateId: true })
 
       map.addLayer({
@@ -216,7 +252,20 @@ export function ChileMap() {
         type: "fill",
         source: "regions",
         paint: {
-          "fill-color": ["case", ["boolean", ["feature-state", "hover"], false], REGION_FILL_HOVER, REGION_FILL_COLOR],
+          "fill-color": [
+            "case",
+            ["boolean", ["feature-state", "hover"], false],
+            REGION_FILL_HOVER,
+            [
+              "step",
+              ["coalesce", ["get", "composite_score"], 45],
+              "#085e08",
+              45,
+              "#cc9e23",
+              60,
+              "#c23d3c",
+            ],
+          ],
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.45, 0.2],
         },
         filter: ["!=", ["get", "codregion"], 0],

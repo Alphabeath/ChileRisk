@@ -24,6 +24,13 @@ export interface RegionProperties {
   codregion: number
   Region: string
   area_km: number
+  composite_score?: number
+  severity?: string
+  dominant_hazard?: string
+  sismo_score?: number
+  ola_calor_score?: number
+  ola_frio_score?: number
+  viento_score?: number
 }
 
 export interface ComunaProperties {
@@ -32,6 +39,13 @@ export interface ComunaProperties {
   Provincia: string
   Region: string
   codregion: number
+  composite_score?: number
+  severity?: string
+  dominant_hazard?: string
+  sismo_score?: number
+  ola_calor_score?: number
+  ola_frio_score?: number
+  viento_score?: number
 }
 
 export function hideForeignLabels(map: maplibregl.Map) {
