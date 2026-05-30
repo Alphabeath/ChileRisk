@@ -23,8 +23,7 @@ import {
   ComunaPopupContent,
   RegionPopupContent,
 } from "./map-popup"
-import { getNationalRisk, getComunaRisk, getRegionRisk } from "@/lib/api"
-import type { NationalRisk, RegionRisk } from "@/lib/types"
+import { useMapData } from "@/hooks/use-map-data"
 
 type Position = [number, number]
 type LinearRing = Position[]
@@ -76,12 +75,11 @@ export function ChileMap() {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const hoveredRegionRef = useRef<number | null>(null)
   const hoveredComunaRef = useRef<number | null>(null)
-  const preloadedComunaDataRef = useRef<Record<string, unknown> | null>(null)
-  const preloadedRawComunaGeojsonRef = useRef<Record<string, unknown> | null>(null)
   const popupRef = useRef<maplibregl.Popup | null>(null)
   const popupDestroyRef = useRef<(() => void) | null>(null)
   const sizeObserverRef = useRef<ResizeObserver | null>(null)
   const router = useRouter()
+  const { loadRegions, loadComunas, prefetchAllRegionRisks, fetchComunaRisk } = useMapData()
 
   const attachComunaListeners = useCallback((map: maplibregl.Map) => {
     const fillLayer = "comuna-fill"
@@ -117,7 +115,7 @@ export function ChileMap() {
 
       let comunaWithRisk: ComunaProperties = props
       try {
-        const risk = await getComunaRisk(props.cod_comuna)
+        const risk = await fetchComunaRisk(props.cod_comuna)
         comunaWithRisk = {
           ...props,
           composite_score: risk.composite_score,
@@ -155,7 +153,7 @@ export function ChileMap() {
         popupRef.current = null
       })
     })
-  }, [router])
+  }, [router, fetchComunaRisk])
 
   const handleRegionClick = useCallback(
     (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
@@ -225,31 +223,10 @@ export function ChileMap() {
       if (mapRef.current) mapRef.current.resize()
       hideForeignLabels(map)
 
-      const regionsRes = await fetch(REGIONS_DATA_URL)
-      const regionsGeojson = await regionsRes.json()
+      const regionsGeojson = await loadRegions(REGIONS_DATA_URL)
+      if (!regionsGeojson) return
 
-      try {
-        const riskData = await getNationalRisk()
-        const riskMap = new Map(riskData.map((r: NationalRisk) => [r.codregion, r]))
-        if (regionsGeojson.features) {
-          for (const f of regionsGeojson.features) {
-            const r = riskMap.get(f.properties.codregion)
-            if (r) {
-              f.properties.composite_score = r.composite_score
-              f.properties.severity = r.severity
-              f.properties.dominant_hazard = r.dominant_hazard
-              f.properties.sismo_score = r.sismo_score
-              f.properties.ola_calor_score = r.ola_calor_score
-              f.properties.ola_frio_score = r.ola_frio_score
-              f.properties.viento_score = r.viento_score
-              if (r.avg_temperature_c != null) f.properties.avg_temperature_c = r.avg_temperature_c
-              if (r.avg_wind_speed_kmh != null) f.properties.avg_wind_speed_kmh = r.avg_wind_speed_kmh
-            }
-          }
-        }
-      } catch {}
-
-      map.addSource("regions", { type: "geojson", data: regionsGeojson, generateId: true })
+      map.addSource("regions", { type: "geojson", data: regionsGeojson as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
 
       map.addLayer({
         id: "region-fill",
@@ -284,7 +261,7 @@ export function ChileMap() {
         filter: ["!=", ["get", "codregion"], 0],
       })
 
-      const labelFeatures = (regionsGeojson.features as RegionFeature[])
+      const labelFeatures = (regionsGeojson.features as unknown as RegionFeature[])
         .filter((f) => f.properties?.codregion && f.properties.codregion !== 0)
         .map((f) => ({
           type: "Feature" as const,
@@ -334,74 +311,9 @@ export function ChileMap() {
       })
 
       const prefetchRegionCodes = Array.from(new Set(
-        (regionsGeojson.features || []).map((f: { properties?: { codregion?: number } }) => f.properties?.codregion).filter(Boolean)
+        regionsGeojson.features.map((f) => (f.properties?.codregion as number | undefined)).filter(Boolean)
       )) as number[]
-      prefetchRegionCodes.forEach((cod) => {
-        getRegionRisk(cod).catch(() => null)
-      })
-
-      const comunaGeojsonPromise = fetch(COMUNAS_DATA_URL)
-        .then((r) => r.json())
-        .then((d) => {
-          preloadedRawComunaGeojsonRef.current = d
-          return d
-        })
-        .catch(() => null)
-
-      // Background full preparation: as soon as risks + geojson are ready, enrich and store
-      Promise.all([
-        comunaGeojsonPromise,
-        ...prefetchRegionCodes.map((cod) => getRegionRisk(cod).catch(() => null)),
-      ]).then(([rawData]) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const d = (rawData || {}) as { features?: any[] }
-        if (!d.features) return
-        try {
-          const regionCodes = Array.from(new Set(
-            (d.features || []).map((f: { properties?: { codregion?: number } }) => f.properties?.codregion).filter(Boolean)
-          )) as number[]
-          const promises = regionCodes.map((cod) => getRegionRisk(cod).catch(() => null))
-          return Promise.all(promises).then((results) => {
-            type ComunaRiskItem = RegionRisk["comunas"][number]
-            const riskByComuna = new Map<number, ComunaRiskItem>()
-            results.forEach((region) => {
-              if (region?.comunas) {
-                region.comunas.forEach((c: ComunaRiskItem) => riskByComuna.set(c.cod_comuna, c))
-              }
-            })
-            ;(d.features || []).forEach((f: { properties?: Record<string, unknown> }) => {
-              const props = f.properties as Record<string, number | string> | undefined
-              const cod = props?.cod_comuna as number | undefined
-              const r = cod != null ? riskByComuna.get(cod) : undefined
-              if (r && props) {
-                props.composite_score = r.composite_score
-                props.severity = r.severity
-                props.dominant_hazard = r.dominant_hazard
-                props.sismo_score = r.sismo_score
-                props.ola_calor_score = r.ola_calor_score
-                props.ola_frio_score = r.ola_frio_score
-                props.viento_score = r.viento_score
-                if (r.temperature_c != null) props.temperature_c = r.temperature_c
-                if (r.wind_speed_kmh != null) props.wind_speed_kmh = r.wind_speed_kmh
-              }
-            })
-            preloadedComunaDataRef.current = d
-
-            // Aggressive preload: add source + layers now (minzoom keeps them hidden until user reaches zoom 7)
-            if (!map.getSource("comunas")) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              map.addSource("comunas", { type: "geojson", data: d as any, generateId: true })
-              map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": ["step", ["coalesce", ["get", "composite_score"], 35], "#085e08", 35, "#cc9e23", 55, "#e07020", 75, "#c23d3c"], "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
-              map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
-              map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
-              if (map.getLayer("region-line")) {
-                map.moveLayer("region-line")
-              }
-              attachComunaListeners(map)
-            }
-          })
-        } catch {}
-      }).catch(() => null)
+      prefetchAllRegionRisks(prefetchRegionCodes)
 
       map.on("mousemove", "region-fill", (e) => {
         if (map.getZoom() >= COMUNAS_MIN_ZOOM) {
@@ -431,101 +343,31 @@ export function ChileMap() {
 
       map.on("click", "region-fill", handleRegionClick)
 
-      const loadComunas = async () => {
+      const addComunaLayers = (data: Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never) => {
         if (map.getSource("comunas")) return
 
-        let data: Record<string, unknown> | null = null
-
-        if (preloadedComunaDataRef.current) {
-          data = preloadedComunaDataRef.current
-          preloadedComunaDataRef.current = null
-        } else if (preloadedRawComunaGeojsonRef.current) {
-          data = preloadedRawComunaGeojsonRef.current
-          preloadedRawComunaGeojsonRef.current = null
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const d = data as { features?: any[] }
-          // enrich on the fly (risks are cached)
-          try {
-            const regionCodes = Array.from(new Set(
-              (d.features || []).map((f: { properties?: { codregion?: number } }) => f.properties?.codregion).filter(Boolean)
-            )) as number[]
-            const results = await Promise.all(regionCodes.map((cod) => getRegionRisk(cod).catch(() => null)))
-            type ComunaRiskItem = RegionRisk["comunas"][number]
-            const riskByComuna = new Map<number, ComunaRiskItem>()
-            results.forEach((region) => {
-              if (region?.comunas) region.comunas.forEach((c: ComunaRiskItem) => riskByComuna.set(c.cod_comuna, c))
-            })
-            ;(d.features || []).forEach((f: { properties?: Record<string, unknown> }) => {
-              const props = f.properties as Record<string, number | string> | undefined
-              const cod = props?.cod_comuna as number | undefined
-              const r = cod != null ? riskByComuna.get(cod) : undefined
-              if (r && props) {
-                props.composite_score = r.composite_score
-                props.severity = r.severity
-                props.dominant_hazard = r.dominant_hazard
-                props.sismo_score = r.sismo_score
-                props.ola_calor_score = r.ola_calor_score
-                props.ola_frio_score = r.ola_frio_score
-                props.viento_score = r.viento_score
-                if (r.temperature_c != null) props.temperature_c = r.temperature_c
-                if (r.wind_speed_kmh != null) props.wind_speed_kmh = r.wind_speed_kmh
-              }
-            })
-          } catch {}
-        } else {
-          const res = await fetch(COMUNAS_DATA_URL)
-          data = await res.json()
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const d = data as { features?: any[] }
-          // full slow path enrichment (should be rare)
-          try {
-            const regionCodes = Array.from(new Set(
-              (d.features || []).map((f: { properties?: { codregion?: number } }) => f.properties?.codregion).filter(Boolean)
-            )) as number[]
-            const results = await Promise.all(regionCodes.map((cod) => getRegionRisk(cod).catch(() => null)))
-            type ComunaRiskItem = RegionRisk["comunas"][number]
-            const riskByComuna = new Map<number, ComunaRiskItem>()
-            results.forEach((region) => {
-              if (region?.comunas) region.comunas.forEach((c: ComunaRiskItem) => riskByComuna.set(c.cod_comuna, c))
-            })
-            ;(d.features || []).forEach((f: { properties?: Record<string, unknown> }) => {
-              const props = f.properties as Record<string, number | string> | undefined
-              const cod = props?.cod_comuna as number | undefined
-              const r = cod != null ? riskByComuna.get(cod) : undefined
-              if (r && props) {
-                props.composite_score = r.composite_score
-                props.severity = r.severity
-                props.dominant_hazard = r.dominant_hazard
-                props.sismo_score = r.sismo_score
-                props.ola_calor_score = r.ola_calor_score
-                props.ola_frio_score = r.ola_frio_score
-                props.viento_score = r.viento_score
-                if (r.temperature_c != null) props.temperature_c = r.temperature_c
-                if (r.wind_speed_kmh != null) props.wind_speed_kmh = r.wind_speed_kmh
-              }
-            })
-          } catch {}
-        }
-
-        if (!data) return
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        map.addSource("comunas", { type: "geojson", data: data as any, generateId: true })
-
+        map.addSource("comunas", { type: "geojson", data, generateId: true })
         map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": ["step", ["coalesce", ["get", "composite_score"], 35], "#085e08", 35, "#cc9e23", 55, "#e07020", 75, "#c23d3c"], "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
         map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
         map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
         if (map.getLayer("region-line")) {
           map.moveLayer("region-line")
         }
-
         attachComunaListeners(map)
+      }
+
+      const loadComunasForMap = async () => {
+        if (map.getSource("comunas")) return
+        const comunasData = await loadComunas(COMUNAS_DATA_URL)
+        if (comunasData) {
+          addComunaLayers(comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never)
+        }
       }
 
       map.on("moveend", () => {
         const z = map.getZoom()
         if (z >= COMUNAS_MIN_ZOOM) {
-          loadComunas()
+          loadComunasForMap()
           if (hoveredRegionRef.current !== null) {
             map.setFeatureState({ source: "regions", id: hoveredRegionRef.current }, { hover: false })
             hoveredRegionRef.current = null
@@ -534,7 +376,7 @@ export function ChileMap() {
       })
 
       if (map.getZoom() >= COMUNAS_MIN_ZOOM) {
-        loadComunas()
+        loadComunasForMap()
         if (hoveredRegionRef.current !== null) {
           map.setFeatureState({ source: "regions", id: hoveredRegionRef.current }, { hover: false })
           hoveredRegionRef.current = null
@@ -560,7 +402,7 @@ export function ChileMap() {
         mapRef.current = null
       }
     }
-  }, [handleRegionClick, attachComunaListeners])
+  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas, prefetchAllRegionRisks])
 
   return (
     <div

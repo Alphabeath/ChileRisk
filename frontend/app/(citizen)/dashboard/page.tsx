@@ -1,60 +1,32 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getNationalRisk, getRecentEvents, getApiBase } from "@/lib/api"
-import type { NationalRisk, SeismicEvent } from "@/lib/types"
+import { useNationalRisk, useRecentEvents } from "@/hooks"
+import { severityColor, formatMagnitude, formatDepth } from "@/lib/format"
+import { getApiBase } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 
 export default function DashboardPage() {
-  const [risks, setRisks] = useState<NationalRisk[]>([])
-  const [events, setEvents] = useState<SeismicEvent[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const {
+    data: risks = [],
+    isLoading: risksLoading,
+    error: risksError,
+    refetch: refetchRisks,
+  } = useNationalRisk()
 
-  useEffect(() => {
-    ;(async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const [r, e] = await Promise.all([
-          getNationalRisk(),
-          getRecentEvents(24),
-        ])
-        setRisks(r)
-        setEvents(e.slice(0, 8))
-        setLastUpdated(new Date())
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar datos del backend")
-      } finally {
-        setLoading(false)
-      }
-    })()
-  }, [])
+  const {
+    data: allEvents = [],
+    isLoading: eventsLoading,
+    error: eventsError,
+    refetch: refetchEvents,
+  } = useRecentEvents(24)
 
-  async function handleRefresh() {
-    setLoading(true)
-    setError(null)
-    try {
-      const [r, e] = await Promise.all([
-        getNationalRisk(),
-        getRecentEvents(24),
-      ])
-      setRisks(r)
-      setEvents(e.slice(0, 8))
-      setLastUpdated(new Date())
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al cargar datos del backend")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const events = allEvents.slice(0, 8)
+  const loading = risksLoading || eventsLoading
+  const error = risksError || eventsError
 
-  const severityColor = (s: string) => {
-    if (s === "critico") return "bg-red-500 text-white"
-    if (s === "alto") return "bg-orange-500 text-white"
-    if (s === "moderado") return "bg-yellow-500 text-black"
-    return "bg-emerald-500 text-white"
+  function handleRefresh() {
+    refetchRisks()
+    refetchEvents()
   }
 
   return (
@@ -73,7 +45,7 @@ export default function DashboardPage() {
 
       {error && (
         <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 text-red-400">
-          {error} — ¿Backend corriendo en 8000?
+          {error.message} — ¿Backend corriendo en 8000?
         </div>
       )}
 
@@ -81,14 +53,9 @@ export default function DashboardPage() {
         <div className="rounded-xl border bg-card p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-medium">Riesgo Nacional (por región)</h2>
-            {lastUpdated && (
-              <span className="text-xs text-muted-foreground">
-                {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
           </div>
 
-          {loading && risks.length === 0 ? (
+          {risksLoading && risks.length === 0 ? (
             <div className="text-muted-foreground">Cargando datos mock del backend...</div>
           ) : (
             <div className="space-y-2 text-sm">
@@ -117,7 +84,7 @@ export default function DashboardPage() {
 
         <div className="rounded-xl border bg-card p-6">
           <h2 className="text-xl font-medium mb-4">Eventos sísmicos recientes (24h)</h2>
-          {loading && events.length === 0 ? (
+          {eventsLoading && events.length === 0 ? (
             <div className="text-muted-foreground">Cargando...</div>
           ) : events.length === 0 ? (
             <div className="text-muted-foreground">Sin eventos recientes</div>
@@ -125,7 +92,7 @@ export default function DashboardPage() {
             <div className="space-y-1.5 text-sm font-mono">
               {events.map((e) => (
                 <div key={e.id} className="flex justify-between border-b border-border/60 py-1 last:border-0">
-                  <span>M{e.magnitude.toFixed(1)} · {e.depth_km.toFixed(0)}km</span>
+                  <span>{formatMagnitude(e.magnitude)} · {formatDepth(e.depth_km)}</span>
                   <span className="text-muted-foreground">{new Date(e.occurred_at).toLocaleTimeString()}</span>
                 </div>
               ))}

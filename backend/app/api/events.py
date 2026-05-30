@@ -37,7 +37,9 @@ async def list_recent_events(request: Request, hours: int = 48, db: AsyncSession
             "magnitude": e.magnitude,
             "depth_km": e.depth_km,
             "occurred_at": e.occurred_at,
+            "occurred_at_local": e.occurred_at_local,
             "source": e.source,
+            "raw_data": e.raw_data,
         }
         for e in events
     ]
@@ -87,7 +89,9 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
                 "magnitude": event.magnitude,
                 "depth_km": event.depth_km,
                 "occurred_at": event.occurred_at,
+                "occurred_at_local": event.occurred_at_local,
                 "source": event.source,
+                "raw_data": event.raw_data,
             },
             "affected_comunas": impacts[:50],
             "total_affected": len(impacts),
@@ -132,7 +136,9 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
             "magnitude": event.magnitude,
             "depth_km": event.depth_km,
             "occurred_at": event.occurred_at,
+            "occurred_at_local": event.occurred_at_local,
             "source": event.source,
+            "raw_data": event.raw_data,
         },
         "affected_comunas": impacts[:50],
         "total_affected": len(impacts),

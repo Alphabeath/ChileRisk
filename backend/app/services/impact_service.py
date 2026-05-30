@@ -50,7 +50,7 @@ async def compute_and_store_event_impact(
             continue
 
         intensity = estimate_intensity(event.magnitude, dist, event.depth_km)
-        if intensity < 3.0:
+        if intensity < 2.0:
             continue
 
         score = intensity_to_risk_score(intensity)

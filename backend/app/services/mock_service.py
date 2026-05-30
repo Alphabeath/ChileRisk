@@ -20,6 +20,13 @@ from app.services.seismic_service import compute_sismo_score_for_comuna
 
 HAZARDS = ["sismo", "ola_calor", "ola_frio", "viento"]
 
+HAZARD_WEIGHTS = {
+    "sismo": 1.5,
+    "ola_calor": 1.0,
+    "viento": 0.8,
+    "ola_frio": 0.6,
+}
+
 
 def _zone_biases(codregion: int) -> dict[str, float]:
     """
@@ -61,12 +68,19 @@ def generate_baseline_scores(codregion: int, seed: int | None = None) -> dict[st
 
 
 def compute_composite_and_dominant(scores: dict[str, float]) -> tuple[float, str]:
-    """Weighted average composite — highest score gets 3x weight."""
+    """Weighted average composite with dominant hazard bonus."""
+    weighted_sum = 0.0
+    total_weight = 0.0
     dominant = max(scores, key=scores.get)
-    max_val = scores[dominant]
-    others_sum = sum(v for k, v in scores.items() if k != dominant)
-    n = len(scores)
-    composite = (max_val * 3 + others_sum) / (n + 2)
+
+    for hazard, score in scores.items():
+        weight = HAZARD_WEIGHTS.get(hazard, 1.0)
+        if hazard == dominant:
+            weight *= 1.5
+        weighted_sum += score * weight
+        total_weight += weight
+
+    composite = weighted_sum / total_weight if total_weight > 0 else 0.0
     return round(composite, 1), dominant
 
 

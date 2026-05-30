@@ -43,7 +43,7 @@ function SeverityBadge({ severity }: { severity: string }) {
   const colors: Record<string, string> = {
     critico: "bg-red-500/20 text-red-400 border-red-500/40",
     alto: "bg-orange-500/20 text-orange-400 border-orange-500/40",
-    moderado: "bg-yellow-500/20 text-yellow-400 border-yellow-500/40",
+    moderado: "bg-amber-500/20 text-amber-400 border-amber-500/40",
     bajo: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
   }
   return (

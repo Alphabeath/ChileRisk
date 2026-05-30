@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +11,9 @@ class SeismicEventResponse(BaseModel):
     magnitude: float
     depth_km: float
     occurred_at: datetime
+    occurred_at_local: datetime | None = None
     source: str
+    raw_data: dict[str, Any] | None = None
 
 
 class ComunaImpact(BaseModel):

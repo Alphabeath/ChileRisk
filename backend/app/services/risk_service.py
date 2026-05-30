@@ -87,7 +87,7 @@ async def recompute_all_scores(session: AsyncSession) -> int:
         sismo_from_impact = impact_map.get(rs.cod_comuna, 0.0)
 
         if sismo_from_impact > 0:
-            new_sismo = max(rs.sismo_score * 0.7, sismo_from_impact)
+            new_sismo = max(rs.sismo_score * 0.7, sismo_from_impact * 1.2)
         else:
             new_sismo = max(3.0, min(97.0, rs.sismo_score + random.uniform(-drift, drift)))
 

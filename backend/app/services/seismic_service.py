@@ -27,7 +27,7 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
 
 def estimate_intensity(magnitude: float, distance_km: float, depth_km: float) -> float:
     """
-    Very rough attenuation model (MVP only).
+    Attenuation model calibrated for Chilean subduction zone.
 
     Returns approximate intensity on a 0-10 scale (similar to MMI).
     Higher magnitude, closer distance, shallower depth → higher intensity.
@@ -35,11 +35,11 @@ def estimate_intensity(magnitude: float, distance_km: float, depth_km: float) ->
     if distance_km < 1.0:
         distance_km = 1.0
 
-    base = magnitude * 1.2
+    base = magnitude * 1.6
 
-    dist_term = 1.8 * math.log10(distance_km + 5)
+    dist_term = 1.5 * math.log10(distance_km + 5)
 
-    depth_term = depth_km / 120.0
+    depth_term = depth_km / 150.0
 
     intensity = base - dist_term - depth_term
     return max(0.0, min(10.0, intensity))
