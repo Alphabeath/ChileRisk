@@ -1,124 +1,88 @@
-# BACKEND.md — ChileRisk API Reference
+# Backend — ChileRisk
 
-**Base URL (local)**: `http://localhost:8000`
+**Stack**: Python 3.12 + FastAPI + SQLAlchemy 2.0 async + PostgreSQL 16
 
-All endpoints return JSON. All risk values are 0–100 floats.
+**Base URL**: `http://localhost:8000`
 
 ---
 
-## Core Concepts
+## Quick Start
 
-- **Comuna** (346): Smallest administrative unit with its own risk vector.
-- **Region** (16): Aggregation of the comunas that belong to it (uniform average for MVP).
-- **Hazard**: `sismo`, `ola_calor`, `ola_frio`, `viento`
-- **Severity**: `bajo` | `moderado` | `alto` | `critico` (derived from composite score)
+```bash
+# Mock mode (default)
+docker compose up --build
+
+# Real seismic data (CSN)
+USE_REAL_CSN=true docker compose up --build
+
+# Both real sources
+USE_REAL_CSN=true USE_REAL_METEO=true docker compose up --build
+
+# Clean database
+docker compose down -v && docker compose up --build
+```
 
 ---
 
 ## Endpoints
 
-### Health
-`GET /health`
-→ `{ "status": "ok", "version": "0.1.0", "uptime_seconds": 123.4 }`
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/health` | Health check |
+| GET | `/api/v1/risk/national` | Aggregated risk for 16 regions (map) |
+| GET | `/api/v1/regiones/{codregion}/risk` | Region detail + comuna list |
+| GET | `/api/v1/comunas/{cod_comuna}/risk` | Single comuna hazard vector |
+| GET | `/api/v1/events?hours=48` | Recent seismic events |
+| GET | `/api/v1/events/{id}/impact` | Impact on comunas from one event |
+| GET | `/api/v1/stats/national` | National averages + severity distribution |
+| GET | `/api/v1/stats/regiones/{codregion}` | Region statistics |
+| GET | `/api/v1/stats/trends?days=7` | Trend data (placeholder) |
+| GET | `/api/v1/stats/compare?regiones=13,14,15` | Compare up to 8 regions |
+| GET | `/api/v1/alerts/active` | Active alerts (stub → `[]`) |
 
-### National Overview (Map)
-`GET /api/v1/risk/national`
-→ `NationalRiskEntry[]`
+All risk values are 0–100 floats. Rate limits: 100 req/min (read), 60 (events), 30 (impact).
 
-Each entry:
-```json
-{
-  "codregion": 13,
-  "name": "Región de Los Ríos",
-  "composite_score": 47.3,
-  "dominant_hazard": "ola_frio",
-  "severity": "moderado",
-  "comuna_count": 12
-}
+---
+
+## Configuration
+
+Edit the root `.env` file:
+
+```env
+USE_REAL_CSN=false          # true = real earthquakes from sismologia.cl
+USE_REAL_METEO=false        # true = real weather from Open-Meteo
+RISK_REFRESH_MINUTES=15     # Risk recompute frequency
+ENABLE_SCHEDULER=true
 ```
 
-### Region Detail
-`GET /api/v1/regiones/{codregion}/risk`
-
-Returns the aggregated scores for the region plus the list of all its comunas with individual scores.
-
-### Comuna Detail
-`GET /api/v1/comunas/{cod_comuna}/risk`
-
-Returns full hazard vector + metadata for one comuna.
-
-### Seismic Events
-`GET /api/v1/events?hours=48`
-
-Recent events (mock data in MVP).
-
-`GET /api/v1/events/{id}/impact`
-
-Returns the event + up to 50 most affected comunas with estimated intensity and risk contribution from that single event (computed via Haversine + attenuation).
-
-### Alerts (MVP stub)
-`GET /api/v1/alerts/active`
-→ `[]`
+Full reference: `backend/.env.example`
 
 ---
 
-## Data Models (selected)
+## Architecture
 
-### RiskScore (internal)
-- `sismo_score`, `ola_calor_score`, `ola_frio_score`, `viento_score`
-- `composite_score`, `dominant_hazard`, `severity`, `computed_at`
-
-### SeismicEvent
-- `latitude`, `longitude`, `magnitude`, `depth_km`, `occurred_at`, `source`
-
----
-
-## Seismic Impact Model (MVP)
-
-- Haversine distance from epicenter to comuna centroid
-- Attenuation: `intensity = mag - 2.2*log10(dist+10) - depth/80`
-- Intensity (0-10) linearly mapped to risk score (0-100)
-- Only events from the last 24 h affect live scores
-- Future: when CSN data is integrated, official intensities will override the calculated ones
-
----
-
-## Mock Data Behavior
-
-- On first startup: 12 recent seismic events + one RiskScore per comuna are generated.
-- Every 15 minutes (configurable): small random walk (±2.8 pts) is applied to all hazard scores and composites are recalculated.
-- North regions bias toward `ola_calor` + high `sismo`
-- South regions bias toward `ola_frio` + `viento`
-
----
-
-## Running Locally
-
-### With Docker (recommended)
-```bash
-docker compose up --build
+```
+Frontend (Next.js) → Backend (FastAPI) → PostgreSQL
+                        ↓
+           CSN / sismologia.cl (sismos)
+           Open-Meteo (temperatura/viento)
 ```
 
-### Backend only (dev)
-```bash
-cd backend
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-uvicorn app.main:app --reload
+- **Scheduler**: risk refresh (15 min), CSN sync (5 min), Open-Meteo update (45 min)
+- **Seismic model**: Haversine distance + attenuation → intensity → risk score
+- **Climate model**: Region centroids (16 API calls) → scores applied to all comunas in region
+- **Composite**: simple average of 4 hazard scores
+
+---
+
+## Detailed Reference
+
+For complete documentation (models, services, code rules, commands), see:
+
+```
+backend/AGENTS.md
 ```
 
-Use `DATABASE_URL=sqlite+aiosqlite:///./dev.db` for zero-dependency local testing.
-
 ---
 
-## Future Work (documented in BACKEND-PLAN.md)
-
-- Real data sources (CSN, MeteoChile, CONAF)
-- Population-weighted regional aggregation
-- Alert generation engine
-- Authentication & rate limiting
-- PostGIS for geospatial queries
-
----
-
-*Last updated: 2026-05-28 (MVP complete)*
+*Last updated: 2026-05-29*

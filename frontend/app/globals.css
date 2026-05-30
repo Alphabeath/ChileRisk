@@ -143,8 +143,7 @@
 .cr-popup .maplibregl-popup-content {
   background: var(--popover) !important;
   color: var(--popover-foreground) !important;
-  border: 1px solid var(--border) !important;
-  border-left: 3px solid var(--primary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 0 !important;
   padding: 0 !important;
   min-width: 210px;
@@ -156,7 +155,7 @@
 .cr-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
 .cr-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-bottom-color: var(--primary) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.5) !important;
   border-top: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -166,7 +165,7 @@
 .cr-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
 .cr-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-top-color: var(--primary) !important;
+  border-top-color: rgba(255, 255, 255, 0.5) !important;
   border-bottom: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -174,7 +173,7 @@
 
 .cr-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-right-color: var(--primary) !important;
+  border-right-color: rgba(255, 255, 255, 0.5) !important;
   border-left: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -182,7 +181,7 @@
 
 .cr-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-left-color: var(--primary) !important;
+  border-left-color: rgba(255, 255, 255, 0.5) !important;
   border-right: none !important;
   height: 0 !important;
   width: 0 !important;

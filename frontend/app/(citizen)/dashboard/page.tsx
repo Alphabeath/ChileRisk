@@ -96,6 +96,12 @@ export default function DashboardPage() {
                 <div key={r.codregion} className="flex items-center justify-between rounded border px-3 py-2">
                   <div className="font-medium">{r.name}</div>
                   <div className="flex items-center gap-3 font-mono text-xs">
+                    {r.avg_temperature_c != null && (
+                      <span title="Temperatura promedio" className="text-blue-400">{r.avg_temperature_c.toFixed(1)}°C</span>
+                    )}
+                    {r.avg_wind_speed_kmh != null && (
+                      <span title="Viento promedio" className="text-cyan-400">{r.avg_wind_speed_kmh.toFixed(0)} km/h</span>
+                    )}
                     <span title="Compuesto">{r.composite_score.toFixed(1)}</span>
                     <span className={`rounded px-2 py-0.5 text-[10px] font-semibold ${severityColor(r.severity)}`}>
                       {r.severity}

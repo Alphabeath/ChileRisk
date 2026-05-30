@@ -61,9 +61,12 @@ def generate_baseline_scores(codregion: int, seed: int | None = None) -> dict[st
 
 
 def compute_composite_and_dominant(scores: dict[str, float]) -> tuple[float, str]:
-    """Simple average composite + argmax dominant hazard."""
-    composite = sum(scores.values()) / len(scores)
+    """Weighted average composite — highest score gets 3x weight."""
     dominant = max(scores, key=scores.get)
+    max_val = scores[dominant]
+    others_sum = sum(v for k, v in scores.items() if k != dominant)
+    n = len(scores)
+    composite = (max_val * 3 + others_sum) / (n + 2)
     return round(composite, 1), dominant
 
 

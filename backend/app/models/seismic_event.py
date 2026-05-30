@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import String, Float, DateTime, func, JSON
+from sqlalchemy import String, Float, DateTime, func, JSON, Index
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -18,3 +18,8 @@ class SeismicEvent(Base):
     source: Mapped[str] = mapped_column(String(20), default="mock")
     raw_data: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        Index("idx_event_time", "occurred_at"),
+        Index("idx_event_source", "source"),
+    )

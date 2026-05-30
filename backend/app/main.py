@@ -2,16 +2,21 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, comunas, events, regiones, risk
+from app.api import alerts, comunas, events, regiones, risk, stats
 from app.config import settings
+from app.core.limiter import limiter
 from app.data.seed_comunas import seed_comunas
 from app.data.seed_regions import seed_regions
 from app.database import async_session, engine, Base
 from app.scheduler import setup_scheduler, shutdown_scheduler
 from app.services.mock_service import generate_initial_seismic_events, seed_initial_risk_scores
+from app.services.csn_service import sync_recent_csn_events
 
 _start_time = time.time()
 logger = logging.getLogger("chilerisk")
@@ -30,11 +35,40 @@ async def lifespan(app: FastAPI):
         if n_regions or n_comunas:
             logger.info("Seeded %d regions and %d comunas", n_regions, n_comunas)
 
-        # Seed initial seismic events + risk scores (idempotent)
-        n_events = await generate_initial_seismic_events(session)
-        n_scores = await seed_initial_risk_scores(session)
-        if n_scores:
-            logger.info("Generated %d initial seismic events and %d risk scores", len(n_events), n_scores)
+        n_events = 0
+        n_scores = 0
+
+        if not settings.use_real_csn:
+            n_events = await generate_initial_seismic_events(session)
+
+            from app.models.seismic_event import SeismicEvent
+            from app.services.impact_service import compute_and_store_event_impact
+
+            mock_events = (
+                await session.execute(
+                    select(SeismicEvent).where(SeismicEvent.source == "mock")
+                )
+            ).scalars().all()
+            for ev in mock_events:
+                await compute_and_store_event_impact(session, ev)
+
+        if not (settings.use_real_csn and settings.use_real_meteo):
+            n_scores = await seed_initial_risk_scores(session)
+
+        if n_events or n_scores:
+            logger.info("Generated %d initial seismic events and %d risk scores", n_events, n_scores)
+
+        if settings.use_real_csn:
+            real_events = await sync_recent_csn_events(session, hours=24)
+            if real_events:
+                logger.info("Synced %d real seismic events from CSN (sismologia.cl) at startup", real_events)
+
+        if settings.use_real_meteo:
+            from app.services.openmeteo_service import update_climate_scores_from_real_data
+
+            n_climate = await update_climate_scores_from_real_data(session)
+            if n_climate:
+                logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
 
     # Start background mock refresh
     setup_scheduler()
@@ -51,6 +85,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.backend_cors_origins,
@@ -59,12 +96,22 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    from fastapi.responses import JSONResponse
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded. Try again later."},
+    )
+
 # Routers
 app.include_router(risk.router, prefix="/api/v1/risk", tags=["risk"])
 app.include_router(regiones.router, prefix="/api/v1/regiones", tags=["regiones"])
 app.include_router(comunas.router, prefix="/api/v1/comunas", tags=["comunas"])
 app.include_router(events.router, prefix="/api/v1/events", tags=["events"])
 app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
+app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
 
 
 @app.get("/health", tags=["system"])

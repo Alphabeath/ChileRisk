@@ -35,14 +35,11 @@ def estimate_intensity(magnitude: float, distance_km: float, depth_km: float) ->
     if distance_km < 1.0:
         distance_km = 1.0
 
-    # Base intensity from magnitude
-    base = magnitude - 1.5
+    base = magnitude * 1.2
 
-    # Distance attenuation (logarithmic)
-    dist_term = 2.2 * math.log10(distance_km + 10)
+    dist_term = 1.8 * math.log10(distance_km + 5)
 
-    # Depth penalty
-    depth_term = depth_km / 80.0
+    depth_term = depth_km / 120.0
 
     intensity = base - dist_term - depth_term
     return max(0.0, min(10.0, intensity))

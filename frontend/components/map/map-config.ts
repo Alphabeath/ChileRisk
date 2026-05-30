@@ -10,15 +10,11 @@ export const CHILE_BOUNDS: [number, number, number, number] = [-76, -56, -66, -1
 
 export const COMUNAS_MIN_ZOOM = 7
 
-export const REGION_FILL_COLOR = "#3b82f6"
-export const REGION_FILL_HOVER = "#60a5fa"
-export const REGION_LINE_COLOR = "#1e40af"
-export const REGION_LINE_HOVER = "#93c5fd"
+export const REGION_LINE_COLOR = "#e2e8f0"
+export const REGION_LINE_HOVER = "#ffffff"
 
-export const COMUNA_FILL_COLOR = "#8b5cf6"
-export const COMUNA_FILL_HOVER = "#a78bfa"
-export const COMUNA_LINE_COLOR = "#6d28d9"
-export const COMUNA_LINE_HOVER = "#c4b5fd"
+export const COMUNA_LINE_COLOR = "#94a3b8"
+export const COMUNA_LINE_HOVER = "#cbd5e1"
 
 export interface RegionProperties {
   codregion: number
@@ -31,6 +27,8 @@ export interface RegionProperties {
   ola_calor_score?: number
   ola_frio_score?: number
   viento_score?: number
+  avg_temperature_c?: number | null
+  avg_wind_speed_kmh?: number | null
 }
 
 export interface ComunaProperties {
@@ -46,6 +44,15 @@ export interface ComunaProperties {
   ola_calor_score?: number
   ola_frio_score?: number
   viento_score?: number
+  temperature_c?: number | null
+  wind_speed_kmh?: number | null
+  seismic_impact?: {
+    event_id: number
+    distance_km: number
+    estimated_intensity: number
+    risk_score: number
+    magnitude: number
+  } | null
 }
 
 export function hideForeignLabels(map: maplibregl.Map) {

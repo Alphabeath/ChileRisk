@@ -22,6 +22,8 @@ class ComunaRiskResponse(BaseModel):
     dominant_hazard: str
     severity: str
     computed_at: datetime
+    temperature_c: float | None = None
+    wind_speed_kmh: float | None = None
 
 
 class RegionRiskResponse(BaseModel):
@@ -35,6 +37,8 @@ class RegionRiskResponse(BaseModel):
     dominant_hazard: str
     severity: str
     comuna_count: int
+    avg_temperature_c: float | None = None
+    avg_wind_speed_kmh: float | None = None
 
 
 class NationalRiskEntry(BaseModel):

@@ -1,15 +1,14 @@
-"""
-Risk scoring service.
+"""Risk scoring service (v2 — uses precomputed seismic impacts)."""
 
-For MVP this mostly orchestrates mock data.
-Later this will call real data sources and ML models.
-"""
+import random
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.comuna import Comuna
 from app.models.risk_score import RiskScore
+from app.services.impact_service import get_max_risk_per_comuna_from_impacts
 from app.services.mock_service import (
     compute_composite_and_dominant,
     severity_from_score,
@@ -31,14 +30,12 @@ async def get_latest_risk_for_comuna(
 async def get_latest_risks_for_region(
     session: AsyncSession, codregion: int
 ) -> list[RiskScore]:
-    """Return latest risk score for every comuna in the region."""
     comunas_stmt = select(Comuna.cod_comuna).where(Comuna.codregion == codregion)
     cods = [row[0] for row in (await session.execute(comunas_stmt)).all()]
 
     if not cods:
         return []
 
-    # For each comuna get its most recent score (simple approach for MVP)
     scores: list[RiskScore] = []
     for cod in cods:
         s = await get_latest_risk_for_comuna(session, cod)
@@ -48,43 +45,51 @@ async def get_latest_risks_for_region(
 
 
 def aggregate_region_scores(scores: list[RiskScore]) -> dict[str, float]:
-    """Uniform average across comunas for each hazard (MVP)."""
     if not scores:
         return {h: 0.0 for h in ["sismo", "ola_calor", "ola_frio", "viento"]}
 
-    totals = {"sismo": 0.0, "ola_calor": 0.0, "ola_frio": 0.0, "viento": 0.0}
-    for s in scores:
-        totals["sismo"] += s.sismo_score
-        totals["ola_calor"] += s.ola_calor_score
-        totals["ola_frio"] += s.ola_frio_score
-        totals["viento"] += s.viento_score
+    hazards = ["sismo", "ola_calor", "ola_frio", "viento"]
+    score_map = {
+        "sismo": "sismo_score",
+        "ola_calor": "ola_calor_score",
+        "ola_frio": "ola_frio_score",
+        "viento": "viento_score",
+    }
 
-    n = len(scores)
-    agg = {k: round(v / n, 1) for k, v in totals.items()}
-    return agg
+    total_weight = 0.0
+    weighted = {h: 0.0 for h in hazards}
+
+    for s in scores:
+        w = max(s.composite_score, 1.0)
+        total_weight += w
+        for h in hazards:
+            weighted[h] += getattr(s, score_map[h]) * w
+
+    if total_weight == 0:
+        return {h: 0.0 for h in hazards}
+
+    return {h: round(v / total_weight, 1) for h, v in weighted.items()}
 
 
 async def recompute_all_scores(session: AsyncSession) -> int:
-    """
-    Lightweight evolution pass (used by scheduler).
-
-    For every existing RiskScore, apply small random walk and recompute composite.
-    In a real system this would pull fresh weather/seismic data.
-    """
-    from app.services.mock_service import generate_baseline_scores, HAZARDS
-    import random
-
     result = await session.execute(select(RiskScore))
     all_scores = result.scalars().all()
 
+    impact_map = await get_max_risk_per_comuna_from_impacts(session, hours=24)
+
     updated = 0
     for rs in all_scores:
-        # Small drift per hazard
         drift = 2.8
-        new_sismo = max(3.0, min(97.0, rs.sismo_score + random.uniform(-drift, drift)))
         new_calor = max(3.0, min(97.0, rs.ola_calor_score + random.uniform(-drift, drift)))
         new_frio = max(3.0, min(97.0, rs.ola_frio_score + random.uniform(-drift, drift)))
         new_viento = max(3.0, min(97.0, rs.viento_score + random.uniform(-drift, drift)))
+
+        sismo_from_impact = impact_map.get(rs.cod_comuna, 0.0)
+
+        if sismo_from_impact > 0:
+            new_sismo = max(rs.sismo_score * 0.7, sismo_from_impact)
+        else:
+            new_sismo = max(3.0, min(97.0, rs.sismo_score + random.uniform(-drift, drift)))
 
         scores_dict = {
             "sismo": round(new_sismo, 1),

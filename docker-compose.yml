@@ -20,10 +20,11 @@ services:
     build: ./backend
     ports:
       - "${BACKEND_HOST_PORT:-8000}:8000"
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://chilerisk:chilerisk@db:5432/chilerisk
       BACKEND_CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001"]'
-      ENABLE_SCHEDULER: "true"
     depends_on:
       db:
         condition: service_healthy
@@ -45,8 +46,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      # PostgreSQL host port (loaded from .env or defaults to 5434)
-      # Edit .env to change: POSTGRES_HOST_PORT=5435
+      # PostgreSQL host port (configured in the root .env file)
       - "127.0.0.1:${POSTGRES_HOST_PORT:-5434}:5432"
     restart: unless-stopped
     healthcheck:
@@ -55,6 +55,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+
+  # ============================================
+  # Adminer - Interfaz visual para la base de datos (desarrollo)
+  # ============================================
+  # Se levanta automáticamente con `docker compose up`
+  # Acceso: http://localhost:8080
+  #
+  # Conexión:
+  #   System: PostgreSQL
+  #   Server: db
+  #   Usuario: chilerisk
+  #   Password: chilerisk
+  #   Base de datos: chilerisk
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
 
 volumes:
   pgdata:
