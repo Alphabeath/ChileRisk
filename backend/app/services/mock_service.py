@@ -76,7 +76,12 @@ def compute_composite_and_dominant(scores: dict[str, float]) -> tuple[float, str
     for hazard, score in scores.items():
         weight = HAZARD_WEIGHTS.get(hazard, 1.0)
         if hazard == dominant:
-            weight *= 1.5
+            if score >= 70:
+                weight *= 2.5
+            elif score >= 50:
+                weight *= 2.0
+            else:
+                weight *= 1.5
         weighted_sum += score * weight
         total_weight += weight
 

@@ -11,6 +11,7 @@ from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
 from app.models.region import Region
 from app.models.risk_score import RiskScore
+from app.services.mock_service import compute_composite_and_dominant
 from app.services.risk_service import aggregate_region_scores, get_latest_risks_for_region
 
 _national_cache = TTLCache(maxsize=1, ttl=settings.cache_ttl_seconds)
@@ -69,8 +70,7 @@ async def get_region_aggregated_risk(
         return None
 
     agg = aggregate_region_scores(scores)
-    composite = sum(agg.values()) / len(agg)
-    dominant = max(agg, key=agg.get)
+    composite, dominant = compute_composite_and_dominant(agg)
 
     climate = await get_region_climate_avg(session, codregion)
 

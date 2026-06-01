@@ -59,7 +59,7 @@ export function useMapData() {
         )
       ) as number[]
 
-      const results = await Promise.all(
+      const results: (RegionRisk | null)[] = await Promise.all(
         regionCodes.map((cod) =>
           queryClient.fetchQuery({
             queryKey: queryKeys.regionRisk(cod),
@@ -72,7 +72,7 @@ export function useMapData() {
       const riskByComuna = new Map<number, ComunaRiskItem>()
       results.forEach((region) => {
         if (region?.comunas) {
-          region.comunas.forEach((c) => riskByComuna.set(c.cod_comuna, c))
+          region.comunas.forEach((c: ComunaRiskItem) => riskByComuna.set(c.cod_comuna, c))
         }
       })
 

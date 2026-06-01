@@ -4,6 +4,8 @@ Fetches weather for all comunas in batches, stores readings in climate_readings,
 and updates risk_scores accordingly.
 """
 
+import asyncio
+import logging
 import math
 from datetime import datetime, timezone
 
@@ -16,6 +18,8 @@ from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
 from app.models.risk_score import RiskScore
 from app.services.mock_service import compute_composite_and_dominant, severity_from_score
+
+logger = logging.getLogger(__name__)
 
 
 def temperature_to_heat_score(temp_c: float) -> float:
@@ -56,7 +60,6 @@ async def _fetch_weather_batch(
     lats: list[float],
     lons: list[float],
 ) -> list[dict] | None:
-    """Fetch current weather for a batch of coordinates in one API call."""
     params = {
         "latitude": ",".join(str(l) for l in lats),
         "longitude": ",".join(str(l) for l in lons),
@@ -65,16 +68,25 @@ async def _fetch_weather_batch(
     }
     url = f"{settings.openmeteo_api_base}/forecast"
 
-    try:
-        resp = await client.get(url, params=params, timeout=30.0)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception:
-        return None
-
-    if isinstance(data, list):
-        return data
-    return [data]
+    for attempt in range(5):
+        try:
+            resp = await client.get(url, params=params, timeout=30.0)
+            if resp.status_code == 429:
+                retry_after = resp.headers.get("Retry-After")
+                delay = int(retry_after) if retry_after and retry_after.isdigit() else (2 ** attempt + 1)
+                await asyncio.sleep(min(delay, 90))
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            if isinstance(data, list):
+                return data
+            return [data]
+        except (httpx.HTTPError, httpx.TimeoutException, asyncio.TimeoutError):
+            if attempt == 4:
+                logger.warning("Open-Meteo batch failed after retries for %d coordinates", len(lats))
+                return None
+            await asyncio.sleep(2 ** attempt + 0.5)
+    return None
 
 
 def _parse_weather_item(item: dict) -> dict | None:
@@ -130,6 +142,9 @@ async def update_climate_scores_from_real_data(session: AsyncSession) -> int:
                     "codregion": batch[j].codregion,
                     **parsed,
                 })
+
+            if i + batch_size < len(comunas):
+                await asyncio.sleep(0.7)
 
     if not readings:
         return 0

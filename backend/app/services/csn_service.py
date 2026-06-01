@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -9,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.seismic_event import SeismicEvent
+
+logger = logging.getLogger(__name__)
 
 CSN_BASE = settings.csn_base_url
 CATALOG_PATH = "/sismicidad/catalogo"
@@ -101,12 +105,25 @@ async def _fetch_catalog_day(
     client: httpx.AsyncClient, date: datetime
 ) -> list[dict[str, Any]]:
     url = _build_catalog_url(date)
-    try:
-        resp = await client.get(url, timeout=20.0, follow_redirects=True)
-        if resp.status_code == 404:
-            return []
-        resp.raise_for_status()
-    except Exception:
+
+    for attempt in range(5):
+        try:
+            resp = await client.get(url, timeout=25.0, follow_redirects=True)
+            if resp.status_code == 404:
+                return []
+            if resp.status_code == 429:
+                retry_after = resp.headers.get("Retry-After")
+                delay = int(retry_after) if retry_after and retry_after.isdigit() else (2 ** attempt + 2)
+                await asyncio.sleep(min(delay, 120))
+                continue
+            resp.raise_for_status()
+            break
+        except (httpx.HTTPError, httpx.TimeoutException):
+            if attempt == 4:
+                logger.warning("CSN catalog fetch failed after retries: %s", url)
+                return []
+            await asyncio.sleep(2 ** attempt + 1)
+    else:
         return []
 
     soup = BeautifulSoup(resp.text, "html.parser")
@@ -135,6 +152,9 @@ async def fetch_recent_earthquakes(hours: int = 48) -> list[dict]:
             for ev in day_events:
                 if ev["occurred_at"] >= cutoff:
                     all_events.append(ev)
+
+            if delta < 2:
+                await asyncio.sleep(1.2)
 
     seen: set[tuple] = set()
     unique = []

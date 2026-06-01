@@ -17,6 +17,7 @@ from app.database import async_session, engine, Base
 from app.scheduler import setup_scheduler, shutdown_scheduler
 from app.services.mock_service import generate_initial_seismic_events, seed_initial_risk_scores
 from app.services.csn_service import sync_recent_csn_events
+from app.services.risk_service import recompute_all_scores
 
 _start_time = time.time()
 logger = logging.getLogger("chilerisk")
@@ -70,7 +71,14 @@ async def lifespan(app: FastAPI):
             if n_climate:
                 logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
 
-    # Start background mock refresh
+        n_recomputed = await recompute_all_scores(session)
+        if n_recomputed:
+            logger.info("Initial risk recompute applied seismic impacts to %d comunas", n_recomputed)
+
+        from app.services.region_service import _national_cache, _region_cache
+        _national_cache.clear()
+        _region_cache.clear()
+
     setup_scheduler()
 
     yield

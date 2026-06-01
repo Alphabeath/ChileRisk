@@ -22,6 +22,7 @@ Single source of truth for any coding agent working on the ChileRisk backend.
 - **beautifulsoup4** for CSN HTML parsing
 - **cachetools** for in-memory TTL cache
 - **slowapi** for rate limiting
+- **python-json-logger** for structured logs
 - **Docker** is the only supported deployment method
 
 ---
@@ -77,10 +78,12 @@ backend/
 │       ├── __init__.py            # re-exports setup_scheduler, shutdown_scheduler
 │       └── jobs.py                # APScheduler job definitions + setup
 ├── pyproject.toml                 # Dependencies + build config
-├── Dockerfile                     # Multi-stage (python:3.12-slim)
-├── .env.example                   # Template for environment variables
-└── alembic/                       # (empty — future migrations)
+├── Dockerfile                     # python:3.12-slim (single stage; uses entrypoint.sh)
+├── entrypoint.sh                  # Stub: reserved for future migrations
+└── .env.example                   # Template for environment variables
 ```
+
+> No `alembic/` yet. Schema is created via `Base.metadata.create_all` in the lifespan. Don't introduce migrations without an explicit migration story.
 
 ---
 
@@ -96,8 +99,8 @@ All config via `pydantic-settings`. Loaded from environment + `.env` file.
 | `BACKEND_CORS_ORIGINS` | `["http://localhost:3000","http://localhost:3001"]` | JSON array of allowed origins |
 | `ENABLE_SCHEDULER`     | `true`                                     | Enable/disable all background jobs |
 | `RISK_REFRESH_MINUTES` | `15`                                       | Frequency of the main risk recompute job |
-| `USE_REAL_CSN`         | `false`                                    | `true` = fetch live earthquakes from CSN |
-| `USE_REAL_METEO`       | `false`                                    | `true` = fetch live weather from Open-Meteo |
+| `USE_REAL_CSN`         | `true`                                     | `true` = fetch live earthquakes from CSN |
+| `USE_REAL_METEO`       | `true`                                     | `true` = fetch live weather from Open-Meteo |
 | `CSN_BASE_URL`         | `https://www.sismologia.cl`               | CSN website base URL |
 | `CSN_RECENT_PATH`      | `/`                                        | Path to the recent earthquakes page |
 | `OPENMETEO_API_BASE`   | `https://api.open-meteo.com/v1`           | Open-Meteo API base URL |
@@ -265,6 +268,8 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 | `csn_sync`     | `_sync_real_seismic_events`  | 5 min                 | `USE_REAL_CSN=true` |
 | `meteo_update` | `_update_real_climate_scores` | 60 min               | `USE_REAL_METEO=true` |
 
+> **Note**: the meteo log message in `jobs.py:77` says "every 45 min" but the actual `IntervalTrigger(minutes=60)` is the source of truth. The log line is stale — fix the message if you touch that block.
+
 ### Startup Behavior (lifespan in main.py)
 
 1. Create tables (`Base.metadata.create_all`)
@@ -406,6 +411,68 @@ asyncio.run(t())
 
 ---
 
+## Decision rules
+
+### "Where do I put a new X?"
+
+| You want to add...                       | Put it in...                                | Notes |
+|------------------------------------------|---------------------------------------------|-------|
+| A new HTTP endpoint                      | `app/api/<resource>.py` + register in `app/main.py` | One file per resource, mount under `/api/v1/<resource>` |
+| The Pydantic response model for it       | `app/schemas/<resource>.py`                 | If cross-cutting (e.g., shared by events + stats), put in the most specific file |
+| A new ORM model                          | `app/models/<entity>.py` + import from `app/models/__init__.py` | Always with indexes on hot columns |
+| A new service / business logic            | `app/services/<thing>_service.py`           | Async functions; take `AsyncSession` as first arg |
+| A new background job                     | extend `app/scheduler/jobs.py`              | `IntervalTrigger`, `replace_existing=True`, gate on a settings flag |
+| A new external data source               | `app/services/<source>_service.py`          | Mirror the shape of `csn_service.py` / `openmeteo_service.py` |
+| A new env var                            | `app/config.py:Settings` + root `.env.example` + table in this file | Use lowercase field; pydantic-settings maps to UPPER_SNAKE_CASE |
+| A rate-limited endpoint                  | decorate with `@limiter.limit("X/minute")` from `app.core.limiter` | Never import `limiter` from `app.main` (circular) |
+| A new GeoJSON seed file                  | `app/data/<file>.geojson` + load in `app/data/seed_*.py` | Idempotent upsert keyed on PK |
+
+### "I'm adding a new endpoint. What's the skeleton?"
+
+```python
+# app/api/foo.py
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.api.deps import get_db
+from app.schemas.foo import FooOut
+
+router = APIRouter()
+
+@router.get("/foo", response_model=list[FooOut])
+async def list_foo(session: AsyncSession = Depends(get_db)):
+    ...
+```
+
+Then in `app/main.py`:
+```python
+from app.api import foo
+app.include_router(foo.router, prefix="/api/v1/foo", tags=["foo"])
+```
+
+If the endpoint should be rate-limited, import `limiter` from `app.core.limiter` and add the decorator. Do **not** import from `app.main`.
+
+### "I'm adding a new model. What's the minimum?"
+
+- Inherit from `Base` (`app.database.Base`).
+- Add it to `app/models/__init__.py` so `Base.metadata` sees it before `create_all` runs.
+- Index any column used in `WHERE` clauses of hot paths (risk recompute, GeoJSON enrichment, scheduler jobs).
+
+---
+
+## Pitfalls (learned the hard way — don't repeat them)
+
+- **Circular import between `app.main` and routers**: routers that need `limiter` must import from `app.core.limiter`, never from `app.main`. The `app/core/` package exists to break this cycle. Adding a new shared singleton? Put it in `app/core/`, not in `main.py`.
+- **Haversine in the hot loop**: `recompute_all_scores` reads from `seismic_impacts` (precomputed) — it does *not* call `haversine_km` per comuna. Don't regress this. When you need per-event impact, call `impact_service.compute_and_store_event_impact` once at event arrival, not inside the recompute loop.
+- **Max affected radius is magnitude-driven**: `max(20, 50 * (magnitude - 2.0))` km. Comunas outside that radius are skipped to keep the impact table small. If you see "this comuna was affected" assertions failing, check the radius first.
+- **CSN dedup window is ±3 min + magnitude match**: `sync_recent_csn_events` skips near-duplicates to avoid double-inserting when sismologia.cl reorders events on the page. Don't tighten the window without understanding why it exists.
+- **Meteo batch size is 40**: 346 comunas / 40 ≈ 9 HTTP requests per refresh. Changing this number has cost implications (rate limits, latency) — discuss before changing.
+- **`Base.metadata.create_all` is the only schema mechanism**: it adds missing tables/columns but does not drop or alter existing ones. For a real migration story we'd need Alembic. Right now, schema changes require `docker compose down -v` to wipe the volume.
+- **Settings are loaded from `.env` once at import**: `app.config.settings` is a module-level singleton. Tests that need to flip `USE_REAL_CSN` must monkeypatch the settings object — `pydantic-settings` does not re-read env at runtime.
+- **`region_service` caches** (`_national_cache`, `_region_cache`) are module-level. The lifespan clears them on startup. If you add caching elsewhere, clear it in the same place.
+- **`async_session` is the session factory**; the `get_db` FastAPI dependency yields from it. Don't open a second session inside a service that already received one.
+
+---
+
 ## ML Readiness (Future — not implemented yet)
 
 The following is the documented plan for future ML integration. None of this is implemented yet.
@@ -451,4 +518,4 @@ Scheduler → every N minutes:
 
 ---
 
-**Last updated**: 2026-05-29 (v0.3 — per-comuna climate storage + precomputed seismic impacts + ML readiness plan)
+**Last updated**: 2026-06-01 (v0.3.1 — added python-json-logger to stack, removed non-existent alembic/ reference, added decision rules + pitfalls, flagged stale "45 min" log line in meteo job)
