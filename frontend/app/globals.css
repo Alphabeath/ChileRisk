@@ -141,21 +141,22 @@
 }
 
 .cr-popup .maplibregl-popup-content {
-  background: var(--popover) !important;
+  background: oklch(0.1 0 0 / 0.85) !important;
   color: var(--popover-foreground) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid oklch(1 0 0 / 0.09) !important;
   border-radius: 0 !important;
   padding: 0 !important;
-  min-width: 210px;
-  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.2), 0 4px 10px -4px rgb(0 0 0 / 0.1) !important;
+  min-width: 240px;
+  backdrop-filter: blur(16px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.1) !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.35), 0 10px 10px -6px rgb(0 0 0 / 0.25), inset 0 1px 0 oklch(1 0 0 / 0.06) !important;
 }
 
-/* Popup tip (arrow) - must fully override MapLibre's border trick to keep triangle shape */
 .cr-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip,
 .cr-popup.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
 .cr-popup.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-bottom-color: rgba(255, 255, 255, 0.5) !important;
+  border-bottom-color: oklch(0.1 0 0 / 0.92) !important;
   border-top: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -165,7 +166,7 @@
 .cr-popup.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
 .cr-popup.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-top-color: rgba(255, 255, 255, 0.5) !important;
+  border-top-color: oklch(0.1 0 0 / 0.92) !important;
   border-bottom: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -173,7 +174,7 @@
 
 .cr-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-right-color: rgba(255, 255, 255, 0.5) !important;
+  border-right-color: oklch(0.1 0 0 / 0.92) !important;
   border-left: none !important;
   height: 0 !important;
   width: 0 !important;
@@ -181,23 +182,24 @@
 
 .cr-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip {
   border: 10px solid transparent !important;
-  border-left-color: rgba(255, 255, 255, 0.5) !important;
+  border-left-color: oklch(0.1 0 0 / 0.92) !important;
   border-right: none !important;
   height: 0 !important;
   width: 0 !important;
 }
 
 .cr-popup .maplibregl-popup-close-button {
-  color: var(--muted-foreground);
-  border-radius: 0;
-  font-size: 18px;
+  color: oklch(1 0 0 / 0.55);
+  border-radius: 4px;
+  font-size: 16px;
   line-height: 1;
-  padding: 2px 6px;
+  padding: 1px 5px;
   top: 6px;
   right: 6px;
+  transition: background-color .1s ease, color .1s ease;
 }
 
 .cr-popup .maplibregl-popup-close-button:hover {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
+  background-color: oklch(1 0 0 / 0.1);
+  color: oklch(1 0 0 / 0.9);
 }

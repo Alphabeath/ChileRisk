@@ -1,15 +1,16 @@
 # Multi-stage Dockerfile for ChileRisk Frontend (Next.js 16)
+# Uses bun as the package manager (standardized for this monorepo).
 # Required by project rules (AGENTS.md)
 
-FROM node:22-alpine AS base
+FROM oven/bun:1-alpine AS base
 
 # 1. Dependencies stage
 FROM base AS deps
 WORKDIR /app
 
-# Install dependencies based on the preferred lockfile
-COPY package.json package-lock.json* ./
-RUN npm ci
+# Install dependencies using bun (bun.lock is the source of truth)
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # 2. Builder stage
 FROM base AS builder
@@ -19,9 +20,10 @@ COPY . .
 
 # Build the Next.js application
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN bun run build
 
 # 3. Runner stage (minimal production image)
+# We stay on the bun base image (fast + compatible with Next standalone output).
 FROM base AS runner
 WORKDIR /app
 
@@ -46,4 +48,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Health check endpoint will be added at /api/health
-CMD ["node", "server.js"]
+CMD ["bun", "server.js"]

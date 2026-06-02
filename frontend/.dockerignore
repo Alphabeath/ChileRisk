@@ -28,7 +28,7 @@ README.md
 *.swp
 .DS_Store
 
-# Lockfiles we don't need (we copy package-lock in Dockerfile)
-bun.lock
+# Lockfiles we don't need (we copy bun.lock in Dockerfile; bun is the standardized package manager)
+package-lock.json
 yarn.lock
 pnpm-lock.yaml

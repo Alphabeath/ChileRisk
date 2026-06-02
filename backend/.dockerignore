@@ -1,0 +1,71 @@
+# Docker build context exclusions for backend (FastAPI/Python)
+# Prevents unnecessary / sensitive / cache files from being sent to the daemon.
+# Complements the root .gitignore and the new backend/.gitignore.
+
+# Python bytecode and caches (primary reason for this file + original user issue)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Packaging and build artifacts
+*.egg-info/
+build/
+dist/
+.eggs/
+*.egg
+*.manifest
+*.spec
+
+# Version control and git-related (never needed in image)
+.git/
+.gitignore
+.gitattributes
+
+# Environment (Docker compose injects its own; local .env must not leak)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE / Editor / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Documentation and non-runtime files
+*.md
+docs/
+LICENSE*
+
+# Testing / dev tooling caches (not needed at runtime)
+tests/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Local dev DBs (sqlite fallback)
+dev.db
+*.sqlite
+*.sqlite3
+
+# Any wheels or sdist from local builds
+*.whl
+
+# Misc (keep image lean)
+*.bak
+*.swp

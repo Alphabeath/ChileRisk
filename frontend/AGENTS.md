@@ -231,12 +231,14 @@ If a page is purely a wrapper around a single component, prefer a server compone
 
 ## Quick reference
 
+From repo root you can also use `make dev-frontend`, `make` (see root `Makefile`).
+
 ```bash
 # Local dev
-cd frontend && npm run dev
+cd frontend && bun run dev
 
 # Lint
-cd frontend && npm run lint
+cd frontend && bun run lint
 
 # Type-check
 cd frontend && npx tsc --noEmit
@@ -245,9 +247,9 @@ cd frontend && npx tsc --noEmit
 npx shadcn@latest add card
 
 # Build for Docker
-cd frontend && npm run build
+cd frontend && bun run build
 ```
 
 ---
 
-**Last updated**: 2026-06-01
+**Last updated**: 2026-06 (switched to bun as package manager)

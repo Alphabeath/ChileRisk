@@ -20,27 +20,18 @@ Thumbs.db
 .vscode/
 *.log
 
-# Python (backend only)
-backend/*pyc
-backend/*.py[cod]
-backend/*$py.class
-backend/*.so
-backend/.Python
-backend/build/
-backend/develop-eggs/
-backend/dist/
-backend/downloads/
-backend/eggs/
-backend/.eggs/
-backend/lib/
-backend/lib64/
-backend/parts/
-backend/sdist/
-backend/var/
-backend/wheels/
-backend/*.egg-info/
-backend/.installed.cfg
-backend/*.egg
+# Python (cross-cutting + backend/)
+# The detailed/complete Python ignores now live in backend/.gitignore.
+# These patterns at root provide defense-in-depth (caches can appear from tools
+# running at repo root or other Python experiments). Recursive ** not required;
+# gitignore matches these names anywhere in the tree by default for these globs.
+__pycache__/
+*.py[cod]
+*$py.class
+
+# (Historical note: the previous "backend/*..." lines were single-level only and
+#  completely omitted __pycache__/. They have been replaced by the combination
+#  of this section + backend/.gitignore.)
 
 # Node / Frontend
 node_modules/
@@ -54,6 +45,13 @@ logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Other package manager lockfiles (monorepo standardization)
+# Frontend is standardized on bun (see frontend/.gitignore + Dockerfile).
+# These prevent accidental commits if someone runs npm/pnpm/yarn at root.
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
 
 # Misc
 *.bak

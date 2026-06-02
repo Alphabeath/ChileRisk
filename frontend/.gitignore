@@ -30,6 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Package manager lockfiles (monorepo standardization)
+# We use bun (bun.lock) as the single source of truth.
+# See frontend/Dockerfile (bun install) and frontend/.dockerignore.
+# npm / pnpm / yarn locks are intentionally not committed.
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
 # env files (can opt-in for committing if needed)
 .env*
 

@@ -2,6 +2,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Monorepo hygiene: prevent Python from writing .pyc/__pycache__ inside the image
+# (complements backend/.dockerignore + backend/.gitignore).
+# PYTHONUNBUFFERED ensures logs are emitted immediately (good for Docker).
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     wget \
@@ -11,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 RUN pip install --no-cache-dir .
 
+# Context is already filtered by backend/.dockerignore (prevents __pycache__, *.pyc, .env*, etc.)
 COPY . .
 
 RUN useradd --create-home --shell /bin/bash appuser \

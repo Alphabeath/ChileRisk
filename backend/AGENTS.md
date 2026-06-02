@@ -348,6 +348,8 @@ The relationship between seismic events and comunas is **precomputed and stored*
 
 ## Quick Reference Commands
 
+From repo root: `make up`, `make clean` (caches), `make logs-backend`, `make help` (see root Makefile + docs/ARCHITECTURE.md "Monorepo Structure"). Frontend uses bun (see its Dockerfile and AGENTS).
+
 ```bash
 # Start with real CSN data
 USE_REAL_CSN=true USE_REAL_METEO=false docker compose up --build

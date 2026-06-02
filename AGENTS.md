@@ -35,12 +35,22 @@ Rule of thumb: if the task is "build a feature in the citizen app" → go to `fr
 
 ### Run / build the whole stack
 
+The root `Makefile` is the monorepo convenience layer (see "Monorepo Structure" in `docs/ARCHITECTURE.md`).
+
 ```bash
-docker compose up --build           # all three services
-docker compose down -v              # wipe DB volume too
-docker compose logs -f backend      # follow backend logs
-docker compose logs -f frontend
+make up                # docker compose up --build (recommended)
+make down-v            # full clean (removes DB volume)
+make logs-backend
+make clean             # host-side __pycache__ / *.pyc removal
+make help              # list all targets
+
+# Raw compose still works
+docker compose up --build
+docker compose down -v
+docker compose logs -f backend
 ```
+
+The per-area `.gitignore` + `.dockerignore` files (plus cleaned root `.gitignore`) are now the authoritative way Python/JS caches and alt package-manager locks are excluded. Frontend uses **bun** (bun.lock is committed; package-lock.json is ignored). See `backend/.gitignore`, `backend/.dockerignore`, and the updated frontend/Dockerfile. The long-standing `__pycache__` visibility problem is solved.
 
 Ports (from `docker-compose.yml` + root `.env`):
 - Frontend → `http://localhost:3000` (health: `/api/health`)
