@@ -138,7 +138,8 @@ Floating top-left panel on the map view that lists the active SERNAPRED alerts s
 
 **Features**:
 - Glassmorphic dark surface (`bg-black/60` + `backdrop-blur-xl`) matching `.cr-popup` aesthetic; **no rounded corners** (sharp edges, same as `CitizenNavbar` and map popups)
-- **Draggable**: grab the header (left side) to move the panel anywhere on the screen. Position is clamped to the viewport, persisted in component state, and re-clamped on window resize. A small ↺ button appears in the header when the panel has been moved from its default position; click it to snap back to `top-4 left-16` (clear of the floating `CitizenNavbar`).
+- **Draggable**: grab the header (left side) to move the panel anywhere on the screen. Powered by `@dnd-kit/core`: position is clamped to the viewport via the `restrictToWindowEdges` modifier, held in component state, and re-clamped automatically on window resize. A small ↺ button appears in the header when the panel has been moved from its default position; click it to snap back to `top-4 left-16` (clear of the floating `CitizenNavbar`).
+- **Keyboard support**: Tab to focus the handle, `Enter`/`Space` to start a keyboard drag, arrow keys to move 25 px, `Esc` to cancel. Free, via `KeyboardSensor` in `app/(citizen)/map/page.tsx`.
 - Header layout: drag-handle area (bell icon + title + reset button when moved) on the left, toggle button (count badge + chevron) on the right. This split avoids nested buttons and gives clear visual affordance: drag the left, click the right.
 - Each card:
   - Left vertical color bar matching the level (sky / amber / orange / `#DA291C`)
@@ -172,13 +173,15 @@ Floating top-left panel on the map view that lists the active SERNAPRED alerts s
 - `focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30` on every interactive element
 
 **Drag implementation notes**:
-- Uses `setPointerCapture` so the drag continues even when the pointer leaves the header
-- 4 px movement threshold (`DRAG_THRESHOLD`) differentiates click vs drag; clicks on the reset button (`closest("button")` check in `pointerdown`) never start a drag
-- `cursor-grab` (idle) / `cursor-grabbing` (dragging) give clear visual feedback
-- `select-none` + `touchAction: "none"` on the drag handle prevent text selection and browser scroll during drag
-- `e.preventDefault()` + `e.stopPropagation()` on `pointerdown` prevent the map from panning while dragging
-- During drag, `panel.style.left/top` is updated via ref (no React re-render). On `pointerup`, the final position is committed to state so it persists across renders.
-- `useEffect` listens to `resize` and re-clamps the position to keep the panel fully on-screen if the viewport shrinks.
+- Built on `@dnd-kit/core` + `@dnd-kit/modifiers` (`@dnd-kit/core@6.3.1`, `@dnd-kit/modifiers@9.0.0`).
+- All drag wiring is encapsulated in the `useDraggablePanel({ id, defaultPosition })` hook at `frontend/hooks/use-draggable-panel.ts`. The component just spreads `{ ref, handleProps, style, isDragging, isMoved, resetPosition }` onto its JSX. New floating overlays (legend, filters, etc.) can call the same hook and get drag + viewport clamping for free.
+- The `<DndContext>` lives in `app/(citizen)/map/page.tsx`, **outside** `<ChileMap />` so the map's pan/zoom listeners never share event surface with the drag context. `ChileMap` is therefore free to listen to pointer events on the whole canvas without conflict.
+- The hook uses `useDndMonitor` to listen for the `onDragEnd` of the panel it owns (filtered by `event.active.id === id`). This is what commits the cumulative delta to React state — no per-move re-renders, no manual DOM mutation.
+- Viewport clamping is delegated to the `restrictToWindowEdges` modifier. This also handles the resize case automatically (the modifier re-reads the window dimensions on each drag frame) — no `resize` listener needed in the hook.
+- Click vs drag is differentiated by `PointerSensor`'s `activationConstraint: { distance: 4 }` in the page's `DndContext`. Clicks that move < 4 px never become drags. The reset button's `onPointerDown` calls `e.stopPropagation()` to opt out of the activator entirely (cleaner than the old `closest("button")` check).
+- `cursor-grab` (idle) / `cursor-grabbing` (dragging) come from `isDragging` returned by `useDraggable`.
+- `select-none` + `touchAction: "none"` on the drag handle remain — they prevent text selection and browser scroll during pointer drag (dnd-kit doesn't set these for you).
+- The hook assumes it is rendered **inside** a `<DndContext>`. If a future consumer renders `<SenapredAlertsPanel />` (or any other component using the hook) outside the map page's context, it will throw. Mounting the context is a one-line wrapper around the consumer.
 
 **Positioning notes**:
 - `fixed left-4 top-20 z-20` (initial) — sits below the floating `CitizenNavbar` (`fixed top-4 left-1/2 z-50`)

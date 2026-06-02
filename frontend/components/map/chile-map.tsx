@@ -17,6 +17,7 @@ import {
   type RegionProperties,
   type ComunaProperties,
 } from "./map-config"
+import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
 import {
   createPopupContent,
   ComunaPopupContent,
@@ -24,7 +25,12 @@ import {
   SeismicEventPopupContent,
 } from "./map-popup"
 import { useMapData } from "@/hooks/use-map-data"
-import { useRecentEvents } from "@/hooks"
+import { useActiveAlerts, useRecentEvents } from "@/hooks"
+import { filterAlertsForRegion, sortSenapredAlerts } from "@/lib/senapred-display"
+import {
+  buildPopupSeismicItems,
+  filterRecentEventsInGeometry,
+} from "@/lib/seismic-events"
 import { formatMagnitude, formatDepth } from "@/lib/format"
 import { getSeismicAccentColor } from "@/lib/seismic"
 import type { SeismicEvent } from "@/lib/types"
@@ -117,6 +123,16 @@ export function ChileMap() {
   const { loadRegions, loadComunas, isComunasLoading, fetchComunaRisk } = useMapData()
 
   const { data: recentEvents = [] } = useRecentEvents(24)
+  const { data: allAlerts = [], isLoading: alertsLoading } = useActiveAlerts()
+
+  const allAlertsRef = useRef(allAlerts)
+  const recentEventsRef = useRef(recentEvents)
+  const alertsLoadingRef = useRef(alertsLoading)
+  useEffect(() => {
+    allAlertsRef.current = allAlerts
+    recentEventsRef.current = recentEvents
+    alertsLoadingRef.current = alertsLoading
+  }, [allAlerts, recentEvents, alertsLoading])
 
   const attachComunaListeners = useCallback((map: maplibregl.Map) => {
     const fillLayer = "comuna-fill"
@@ -168,14 +184,27 @@ export function ChileMap() {
         }
       } catch {}
 
+      const geometry = e.features?.[0]?.geometry
+      const regionAlerts = sortSenapredAlerts(
+        filterAlertsForRegion(allAlertsRef.current, comunaWithRisk.codregion)
+      )
+      const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry)
+      const seismicItems = buildPopupSeismicItems(eventsInZone, comunaWithRisk.seismic_impact)
+
       const dismissPopup = () => popupRef.current?.remove()
       const { element, destroy } = createPopupContent(
-        <ComunaPopupContent properties={comunaWithRisk} onClose={dismissPopup} />
+        <ComunaPopupContent
+          properties={comunaWithRisk}
+          alerts={regionAlerts}
+          seismicItems={seismicItems}
+          alertsLoading={alertsLoadingRef.current}
+          onClose={dismissPopup}
+        />
       )
       popupDestroyRef.current = destroy
       popupRef.current = addPopupToOverlay(
         map,
-        new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "cr-popup" })
+        new maplibregl.Popup(MAP_POPUP_OPTIONS)
           .setLngLat(e.lngLat)
           .setDOMContent(element)
       )
@@ -198,10 +227,19 @@ export function ChileMap() {
         popupDestroyRef.current()
         popupDestroyRef.current = null
       }
+      const regionAlerts = sortSenapredAlerts(
+        filterAlertsForRegion(allAlertsRef.current, props.codregion)
+      )
+      const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry)
+      const seismicItems = buildPopupSeismicItems(eventsInZone)
+
       const dismissPopup = () => popupRef.current?.remove()
       const { element, destroy } = createPopupContent(
         <RegionPopupContent
           properties={props}
+          alerts={regionAlerts}
+          seismicItems={seismicItems}
+          alertsLoading={alertsLoadingRef.current}
           onClose={dismissPopup}
           onViewDetail={() => {
             dismissPopup()
@@ -224,9 +262,10 @@ export function ChileMap() {
         />
       )
       popupDestroyRef.current = destroy
+      const map = mapRef.current
       popupRef.current = addPopupToOverlay(
-        mapRef.current,
-        new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "cr-popup" })
+        map,
+        new maplibregl.Popup(MAP_POPUP_OPTIONS)
           .setLngLat(e.lngLat)
           .setDOMContent(element)
       )
@@ -287,21 +326,14 @@ export function ChileMap() {
           eventPopupsRef.current.forEach((p) => p.remove())
           eventPopupsRef.current = []
 
-          const popup = new maplibregl.Popup({
-            closeButton: false,
-            closeOnClick: false,
-            className: "cr-popup",
-            offset: 14,
-          })
+          const popup = new maplibregl.Popup(MAP_POPUP_OPTIONS)
           const dismissPopup = () => popup.remove()
           const { element, destroy } = createPopupContent(
             <SeismicEventPopupContent event={ev} onClose={dismissPopup} />
           )
+          const lngLat: [number, number] = [ev.longitude, ev.latitude]
 
-          addPopupToOverlay(
-            map,
-            popup.setLngLat([ev.longitude, ev.latitude]).setDOMContent(element)
-          )
+          addPopupToOverlay(map, popup.setLngLat(lngLat).setDOMContent(element))
 
           popup.on("close", () => {
             destroy()
@@ -309,7 +341,7 @@ export function ChileMap() {
           eventPopupsRef.current.push(popup)
 
           map.flyTo({
-            center: [ev.longitude, ev.latitude],
+            center: lngLat,
             zoom: Math.max(6.5, map.getZoom()),
             duration: 420,
           })
@@ -354,7 +386,7 @@ export function ChileMap() {
       container,
       style: MAP_STYLE,
       bounds: CHILE_BOUNDS,
-      fitBoundsOptions: { padding: 20 },
+      fitBoundsOptions: { padding: MAP_FIT_BOUNDS_PADDING, maxZoom: 5 },
       maxBounds: [-120, -60, -30, -10],
       minZoom: 3,
       maxZoom: 12,

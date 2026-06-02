@@ -1,11 +1,13 @@
+"use client"
+
 import { ChileMap } from "@/components/map/chile-map"
-import { SenapredAlertsPanel } from "@/components/map/senapred-alerts-panel"
+import { MapOverlays } from "@/components/map/map-overlays"
 
 export default function MapPage() {
   return (
     <div className="relative h-dvh w-full overflow-hidden">
       <ChileMap />
-      <SenapredAlertsPanel />
+      <MapOverlays />
     </div>
   )
 }

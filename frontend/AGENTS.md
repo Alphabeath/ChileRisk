@@ -148,7 +148,7 @@ frontend/
 | A typed API call                         | `lib/api.ts`                                | One function per endpoint; types from `lib/types.ts` |
 | A type that mirrors a backend schema     | `lib/types.ts`                              | Keep in lockstep with `backend/app/schemas/` |
 | A new React Query key                    | `lib/queries.ts`                            | Never inline query keys in components |
-| A floating map overlay (alerts panel, legend, etc.) | `components/map/<name>.tsx` + render in `app/(citizen)/map/page.tsx` | `absolute` positioning; mind z-index vs `CitizenNavbar` (z-50) and MapLibre popups |
+| A floating map overlay (alerts panel, legend, etc.) | `components/map/<name>.tsx` + render in `app/(citizen)/map/page.tsx` | `absolute` positioning; mind z-index vs `CitizenNavbar` (z-50) and MapLibre popups. **Draggable overlays must use `useDraggablePanel` from `hooks/`** — see "Drag, mouse, focus" below. |
 | A new zustand slice                      | extend `stores/ui-store.ts`                 | Single store for now; split only if it grows past ~200 lines |
 | A pure formatter / helper                | `lib/format.ts`                             | No React, no fetching |
 | GeoJSON or static data                   | `data/` (source) → `public/data/` (served)  | The map fetches `/data/*.geojson` |
@@ -217,6 +217,7 @@ If a page is purely a wrapper around a single component, prefer a server compone
 - **`comunas` layer is lazy**: it's only added when `map.getZoom() >= COMUNAS_MIN_ZOOM (7)`. Adding a listener on `comuna-fill` before that won't fire.
 - **`output: "standalone"`** is what the Dockerfile depends on for the slim runner stage. Removing it breaks Docker builds.
 - **Map floating overlays** (e.g. `SenapredAlertsPanel`) must use `position: fixed` so they can be dragged over the entire viewport. Position at `top-20 left-4` to clear the floating `CitizenNavbar`. Use `z-20` (above MapLibre popups) but below the navbar (`z-50`). Sharp corners (`rounded-none`); match the `bg-black/60` + `backdrop-blur-xl` glass used by the map popups. If the overlay is draggable, the drag-handle must be a non-button element so the toggle button can sit beside it without nesting.
+- **Drag for floating overlays goes through `useDraggablePanel` (`hooks/use-draggable-panel.ts`)**. Never re-implement drag with raw pointer events. The hook expects to be rendered inside a `<DndContext>` that has `PointerSensor` (with `activationConstraint: { distance: 4 }`), `KeyboardSensor`, and the `restrictToWindowEdges` modifier. The `DndContext` in `app/(citizen)/map/page.tsx` is set up that way — new overlay consumers just need to be rendered as children of it. Buttons inside the drag handle (e.g. a reset-position button) must `e.stopPropagation()` on `onPointerDown` so the click does not also start a drag.
 - **The dashboard is debug UI**: don't polish it as a production citizen surface — the real one is the map and the home page.
 
 ---
@@ -254,4 +255,4 @@ cd frontend && bun run build
 
 ---
 
-**Last updated**: 2026-06-02 (added `SenapredAlertsPanel` floating overlay on `/map`; v2 made it draggable with viewport clamping, sharp corners matching the navbar, and transparent `bg-black/60`. Applied the same visual language — sharp corners, `oklch(0 0 0 / 0.6)` glass, glowing-dot severity badges, mono uppercase tracking-wider labels — to the map popup in `components/map/map-popup.tsx`. `SEVERITY_META` is now the single source of truth for severity colors.)
+**Last updated**: 2026-06-02 (refactored `SenapredAlertsPanel` drag from raw pointer events to `@dnd-kit/core` + `@dnd-kit/modifiers`. Added `useDraggablePanel` hook (`hooks/use-draggable-panel.ts`) that encapsulates `useDraggable` + `useDndMonitor` + position state; the component dropped from 396 → 307 lines. `<DndContext>` lives in `app/(citizen)/map/page.tsx` outside `<ChileMap />` so future overlays can share the same context. Drag is now keyboard-accessible via `KeyboardSensor` (Tab to focus handle, Enter/Space to start, arrows to move, Esc to cancel). Viewport clamping is delegated to the `restrictToWindowEdges` modifier — no more manual `resize` listener. `map/page.tsx` is now a client component.)

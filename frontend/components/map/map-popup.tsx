@@ -4,7 +4,6 @@ import { createRoot, type Root } from "react-dom/client"
 import type { ReactNode } from "react"
 import {
   Activity,
-  AlertTriangle,
   ChevronRight,
   Clock,
   ExternalLink,
@@ -22,8 +21,12 @@ import {
   getSeismicLocation,
   getSeismicMagnitudeType,
 } from "@/lib/seismic"
-import type { SeismicEvent } from "@/lib/types"
+import type { SeismicEvent, SenapredAlert } from "@/lib/types"
+import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
+import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/senapred-display"
+import { ActiveAlertsSection } from "./senapred-alert-ui"
+import { PopupSeismicSection } from "./popup-seismic-section"
 
 /** Glass panel — aligned with SenapredAlertsPanel and CitizenNavbar */
 export const MAP_POPUP_GLASS_CLASS =
@@ -204,13 +207,13 @@ function PopupShell({
   return (
     <div
       className={cn(
-        "min-w-[240px] max-w-[310px] divide-y divide-white/[0.07]",
+        "flex min-w-[240px] max-w-[310px] flex-col",
         MAP_POPUP_GLASS_CLASS,
         className
       )}
     >
-      {accentColor && <div className="h-[3px] w-full" style={{ backgroundColor: accentColor }} />}
-      <div className="px-3.5 pt-2.5 pb-1.5">
+      {accentColor && <div className="h-[3px] w-full shrink-0" style={{ backgroundColor: accentColor }} />}
+      <div className="shrink-0 border-b border-white/[0.07] px-3.5 pt-2.5 pb-1.5">
         <div className="flex items-start justify-between gap-x-2">
           <div className="min-w-0 flex-1">
             <h3 className="text-[13px] font-semibold leading-tight tracking-[-0.1px] text-white">{title}</h3>
@@ -238,10 +241,12 @@ function PopupShell({
         </div>
       </div>
 
-      {children}
+      <div className="min-h-0 max-h-[min(50dvh,400px)] overflow-y-auto divide-y divide-white/[0.07]">
+        {children}
+      </div>
 
       {(onViewDetail || detailHref || onClose) && (
-        <div className="flex flex-col gap-1.5 px-3 py-2">
+        <div className="flex shrink-0 flex-col gap-1.5 border-t border-white/[0.07] px-3 py-2">
           {onViewDetail && (
             <button type="button" onClick={onViewDetail} className={actionClass}>
               <span>{actionLabel || "Ver detalle"}</span>
@@ -404,7 +409,26 @@ function HeaderExtras({ properties }: { properties: RegionProperties | ComunaPro
   return <SeverityBadge severity={properties.severity} />
 }
 
-export function RegionPopupContent({ properties, onViewDetail, onClose }: RegionPopupContentProps) {
+function PopupMoreIndicator({ count, noun }: { count: number; noun: string }) {
+  if (count <= 0) return null
+  return (
+    <p className="px-3.5 py-1.5 font-mono text-[9px] text-white/45">
+      +{count} {noun} — ver panel SERNAPRED
+    </p>
+  )
+}
+
+export function RegionPopupContent({
+  properties,
+  alerts = [],
+  seismicItems = [],
+  alertsLoading = false,
+  onViewDetail,
+  onClose,
+}: RegionPopupContentProps) {
+  const visibleAlerts = alerts.slice(0, POPUP_MAX_ALERTS)
+  const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
+
   return (
     <PopupShell
       title={properties.Region}
@@ -415,6 +439,10 @@ export function RegionPopupContent({ properties, onViewDetail, onClose }: Region
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
+      <ActiveAlertsSection alerts={visibleAlerts} isLoading={alertsLoading} compact showRegion={false} />
+      <PopupMoreIndicator count={alerts.length - visibleAlerts.length} noun="alertas" />
+      <PopupSeismicSection items={visibleSeismic} />
+      <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
       {properties.composite_score != null && (
         <div>
           <WeatherRow
@@ -428,7 +456,17 @@ export function RegionPopupContent({ properties, onViewDetail, onClose }: Region
   )
 }
 
-export function ComunaPopupContent({ properties, onViewDetail, onClose }: ComunaPopupContentProps) {
+export function ComunaPopupContent({
+  properties,
+  alerts = [],
+  seismicItems = [],
+  alertsLoading = false,
+  onViewDetail,
+  onClose,
+}: ComunaPopupContentProps) {
+  const visibleAlerts = alerts.slice(0, POPUP_MAX_ALERTS)
+  const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
+
   return (
     <PopupShell
       title={properties.Comuna}
@@ -439,24 +477,10 @@ export function ComunaPopupContent({ properties, onViewDetail, onClose }: Comuna
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
-      {properties.seismic_impact && typeof properties.seismic_impact.magnitude === "number" && (
-        <div className="mx-2.5 my-1.5 flex gap-2 border-l-[3px] border-orange-400/70 bg-orange-500/10 pl-2.5 pr-2 py-1.5">
-          <AlertTriangle className="size-3.5 shrink-0 text-orange-300" />
-          <div className="text-[10px] leading-snug text-orange-200/90">
-            <div className="font-semibold">Sismo M{properties.seismic_impact.magnitude.toFixed(1)}</div>
-            <div className="text-orange-300/70">
-              {(properties.seismic_impact.distance_km ?? 0).toFixed(0)} km · I{" "}
-              {(properties.seismic_impact.estimated_intensity ?? 0).toFixed(1)}
-            </div>
-            {properties.seismic_impact.occurred_at && (
-              <div className="text-[9px] text-orange-300/60 mt-0.5">
-                {new Date(properties.seismic_impact.occurred_at).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
+      <ActiveAlertsSection alerts={visibleAlerts} isLoading={alertsLoading} compact showRegion={false} />
+      <PopupMoreIndicator count={alerts.length - visibleAlerts.length} noun="alertas" />
+      <PopupSeismicSection items={visibleSeismic} />
+      <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
       {properties.composite_score != null && (
         <div>
           <WeatherRow temp={properties.temperature_c} wind={properties.wind_speed_kmh} />
@@ -469,12 +493,18 @@ export function ComunaPopupContent({ properties, onViewDetail, onClose }: Comuna
 
 interface RegionPopupContentProps {
   properties: RegionProperties
+  alerts?: SenapredAlert[]
+  seismicItems?: PopupSeismicItem[]
+  alertsLoading?: boolean
   onViewDetail?: () => void
   onClose?: () => void
 }
 
 interface ComunaPopupContentProps {
   properties: ComunaProperties
+  alerts?: SenapredAlert[]
+  seismicItems?: PopupSeismicItem[]
+  alertsLoading?: boolean
   onViewDetail?: () => void
   onClose?: () => void
 }
