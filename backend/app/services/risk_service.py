@@ -3,7 +3,7 @@
 import random
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.comuna import Comuna
@@ -69,6 +69,31 @@ def aggregate_region_scores(scores: list[RiskScore]) -> dict[str, float]:
         return {h: 0.0 for h in hazards}
 
     return {h: round(v / total_weight, 1) for h, v in weighted.items()}
+
+
+async def get_comuna_map_scores(session: AsyncSession) -> list[dict]:
+    """Minimal data for map choropleth coloring: only what is needed to paint comunas."""
+    subq = (
+        select(
+            RiskScore.cod_comuna,
+            func.max(RiskScore.computed_at).label("max_computed_at"),
+        )
+        .group_by(RiskScore.cod_comuna)
+        .subquery()
+    )
+    stmt = (
+        select(RiskScore.cod_comuna, RiskScore.composite_score)
+        .join(
+            subq,
+            (RiskScore.cod_comuna == subq.c.cod_comuna)
+            & (RiskScore.computed_at == subq.c.max_computed_at),
+        )
+    )
+    rows = (await session.execute(stmt)).all()
+    return [
+        {"cod_comuna": row[0], "composite_score": float(row[1])}
+        for row in rows
+    ]
 
 
 async def recompute_all_scores(session: AsyncSession) -> int:

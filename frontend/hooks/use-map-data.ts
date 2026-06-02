@@ -1,10 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { getNationalRisk, getRegionRisk, getComunaRisk } from "@/lib/api"
+import { getNationalRisk, getComunaMapScores, getComunaRisk } from "@/lib/api"
 import { queryKeys } from "@/lib/queries"
-import type { NationalRisk, RegionRisk } from "@/lib/types"
-
-type ComunaRiskItem = RegionRisk["comunas"][number]
+import type { NationalRisk, ComunaMapScore } from "@/lib/types"
 
 interface EnrichedGeojson {
   type: string
@@ -20,6 +18,7 @@ export function useMapData() {
   const [regionsGeojson, setRegionsGeojson] = useState<EnrichedGeojson | null>(null)
   const [comunasGeojson, setComunasGeojson] = useState<EnrichedGeojson | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isComunasLoading, setIsComunasLoading] = useState(false)
   const loadedRef = useRef(false)
 
   const enrichWithRisk = useCallback(
@@ -47,54 +46,6 @@ export function useMapData() {
     []
   )
 
-  const enrichComunasWithRegionRisk = useCallback(
-    async (geojson: EnrichedGeojson) => {
-      if (!geojson.features) return
-
-      const regionCodes = Array.from(
-        new Set(
-          geojson.features
-            .map((f) => f.properties?.codregion as number | undefined)
-            .filter(Boolean)
-        )
-      ) as number[]
-
-      const results: (RegionRisk | null)[] = await Promise.all(
-        regionCodes.map((cod) =>
-          queryClient.fetchQuery({
-            queryKey: queryKeys.regionRisk(cod),
-            queryFn: () => getRegionRisk(cod),
-            staleTime: 5 * 60 * 1000,
-          }).catch(() => null)
-        )
-      )
-
-      const riskByComuna = new Map<number, ComunaRiskItem>()
-      results.forEach((region) => {
-        if (region?.comunas) {
-          region.comunas.forEach((c: ComunaRiskItem) => riskByComuna.set(c.cod_comuna, c))
-        }
-      })
-
-      for (const f of geojson.features) {
-        const cod = f.properties?.cod_comuna as number | undefined
-        const r = cod != null ? riskByComuna.get(cod) : undefined
-        if (r) {
-          f.properties.composite_score = r.composite_score
-          f.properties.severity = r.severity
-          f.properties.dominant_hazard = r.dominant_hazard
-          f.properties.sismo_score = r.sismo_score
-          f.properties.ola_calor_score = r.ola_calor_score
-          f.properties.ola_frio_score = r.ola_frio_score
-          f.properties.viento_score = r.viento_score
-          if (r.temperature_c != null) f.properties.temperature_c = r.temperature_c
-          if (r.wind_speed_kmh != null) f.properties.wind_speed_kmh = r.wind_speed_kmh
-        }
-      }
-    },
-    [queryClient]
-  )
-
   const loadRegions = useCallback(
     async (regionsUrl: string) => {
       const riskData = await queryClient.fetchQuery({
@@ -116,27 +67,35 @@ export function useMapData() {
 
   const loadComunas = useCallback(
     async (comunasUrl: string) => {
-      const res = await fetch(comunasUrl)
-      const geojson = (await res.json()) as EnrichedGeojson
-
-      await enrichComunasWithRegionRisk(geojson)
-      setComunasGeojson(geojson)
-      return geojson
-    },
-    [enrichComunasWithRegionRisk]
-  )
-
-  const prefetchAllRegionRisks = useCallback(
-    async (regionCodes: number[]) => {
-      await Promise.all(
-        regionCodes.map((cod) =>
-          queryClient.prefetchQuery({
-            queryKey: queryKeys.regionRisk(cod),
-            queryFn: () => getRegionRisk(cod),
+      setIsComunasLoading(true)
+      try {
+        const [res, scores] = await Promise.all([
+          fetch(comunasUrl),
+          queryClient.fetchQuery({
+            queryKey: queryKeys.comunaMapScores,
+            queryFn: getComunaMapScores,
             staleTime: 5 * 60 * 1000,
-          })
-        )
-      )
+          }),
+        ])
+
+        const geojson = (await res.json()) as EnrichedGeojson
+        if (!geojson.features) return null
+
+        const scoreMap = new Map(scores.map((s: ComunaMapScore) => [s.cod_comuna, s.composite_score]))
+
+        for (const f of geojson.features) {
+          const cod = f.properties?.cod_comuna as number | undefined
+          const cs = cod != null ? scoreMap.get(cod) : undefined
+          if (cs != null) {
+            f.properties.composite_score = cs
+          }
+        }
+
+        setComunasGeojson(geojson)
+        return geojson
+      } finally {
+        setIsComunasLoading(false)
+      }
     },
     [queryClient]
   )
@@ -162,9 +121,9 @@ export function useMapData() {
     regionsGeojson,
     comunasGeojson,
     isLoading,
+    isComunasLoading,
     loadRegions,
     loadComunas,
-    prefetchAllRegionRisks,
     fetchComunaRisk,
   }
 }

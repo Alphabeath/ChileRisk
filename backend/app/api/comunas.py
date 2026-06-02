@@ -43,6 +43,7 @@ async def get_comuna_risk(cod_comuna: int, db: AsyncSession = Depends(get_db)):
             SeismicImpact.estimated_intensity,
             SeismicImpact.risk_score,
             SeismicEvent.magnitude,
+            SeismicEvent.occurred_at,
         )
         .join(SeismicEvent, SeismicEvent.id == SeismicImpact.event_id)
         .where(
@@ -56,12 +57,14 @@ async def get_comuna_risk(cod_comuna: int, db: AsyncSession = Depends(get_db)):
 
     seismic_impact = None
     if impact_row:
+        mapping = impact_row._mapping
         seismic_impact = {
-            "event_id": impact_row.event_id,
-            "distance_km": impact_row.distance_km,
-            "estimated_intensity": impact_row.estimated_intensity,
-            "risk_score": impact_row.risk_score,
-            "magnitude": impact_row.magnitude,
+            "event_id": mapping["event_id"],
+            "distance_km": mapping["distance_km"],
+            "estimated_intensity": mapping["estimated_intensity"],
+            "risk_score": mapping["risk_score"],
+            "magnitude": mapping["magnitude"],
+            "occurred_at": mapping["occurred_at"],
         }
 
     return {

@@ -52,6 +52,7 @@ export interface ComunaProperties {
     estimated_intensity: number
     risk_score: number
     magnitude: number
+    occurred_at?: string | null
   } | null
 }
 

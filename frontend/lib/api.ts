@@ -2,6 +2,7 @@ import type {
   NationalRisk,
   RegionRisk,
   ComunaRisk,
+  ComunaMapScore,
   SeismicEvent,
   EventImpactResponse,
   ActiveAlert,
@@ -33,6 +34,10 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
 
 export async function getNationalRisk(): Promise<NationalRisk[]> {
   return fetchJson<NationalRisk[]>("/api/v1/risk/national")
+}
+
+export async function getComunaMapScores(): Promise<ComunaMapScore[]> {
+  return fetchJson<ComunaMapScore[]>("/api/v1/risk/comunas")
 }
 
 export async function getRegionRisk(codregion: number): Promise<RegionRisk> {

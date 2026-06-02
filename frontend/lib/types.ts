@@ -12,6 +12,11 @@ export interface NationalRisk {
   avg_wind_speed_kmh?: number | null
 }
 
+export interface ComunaMapScore {
+  cod_comuna: number
+  composite_score: number
+}
+
 export interface RegionRisk {
   codregion: number
   name: string
@@ -81,6 +86,7 @@ export interface ComunaRisk {
     estimated_intensity: number
     risk_score: number
     magnitude: number
+    occurred_at?: string | null
   } | null
 }
 

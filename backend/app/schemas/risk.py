@@ -48,3 +48,8 @@ class NationalRiskEntry(BaseModel):
     dominant_hazard: str
     severity: str
     comuna_count: int
+
+
+class ComunaMapScore(BaseModel):
+    cod_comuna: int
+    composite_score: float

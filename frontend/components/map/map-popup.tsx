@@ -118,11 +118,13 @@ function PopupShell({
   subtitle,
   children,
   onViewDetail,
+  actionLabel,
 }: {
   title: string
   subtitle?: ReactNode
   children: ReactNode
-  onViewDetail: () => void
+  onViewDetail?: () => void
+  actionLabel?: string
 }) {
   return (
     <div className="min-w-[240px] divide-y divide-white/10">
@@ -133,17 +135,19 @@ function PopupShell({
 
       {children}
 
-      <div className="px-3 py-2.5">
-        <Button
-          variant="default"
-          size="xs"
-          onClick={onViewDetail}
-          className="w-full justify-between"
-        >
-          <span>Ver detalle</span>
-          <ChevronRight className="size-3" />
-        </Button>
-      </div>
+      {onViewDetail && (
+        <div className="px-3 py-2.5">
+          <Button
+            variant="default"
+            size="xs"
+            onClick={onViewDetail}
+            className="w-full justify-between"
+          >
+            <span>{actionLabel || "Ver detalle"}</span>
+            <ChevronRight className="size-3" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -198,6 +202,7 @@ export function RegionPopupContent({ properties, onViewDetail }: RegionPopupCont
       title={properties.Region}
       subtitle={<HeaderExtras properties={properties} />}
       onViewDetail={onViewDetail}
+      actionLabel="Ver comunas"
     >
       {properties.composite_score != null && (
         <div>
@@ -224,15 +229,20 @@ export function ComunaPopupContent({ properties, onViewDetail }: ComunaPopupCont
       }
       onViewDetail={onViewDetail}
     >
-      {properties.seismic_impact && (
+      {properties.seismic_impact && typeof properties.seismic_impact.magnitude === "number" && (
         <div className="mx-3 my-2 flex gap-2 rounded-md border border-orange-400/25 bg-orange-500/10 px-2.5 py-2">
           <AlertTriangle className="size-3.5 shrink-0 text-orange-300" />
           <div className="text-[10px] leading-snug text-orange-200/90">
             <div className="font-semibold">Sismo M{properties.seismic_impact.magnitude.toFixed(1)}</div>
             <div className="text-orange-300/70">
-              {properties.seismic_impact.distance_km.toFixed(0)} km · I{" "}
-              {properties.seismic_impact.estimated_intensity.toFixed(1)}
+              {(properties.seismic_impact.distance_km ?? 0).toFixed(0)} km · I{" "}
+              {(properties.seismic_impact.estimated_intensity ?? 0).toFixed(1)}
             </div>
+            {properties.seismic_impact.occurred_at && (
+              <div className="text-[9px] text-orange-300/60 mt-0.5">
+                {new Date(properties.seismic_impact.occurred_at).toLocaleString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -249,12 +259,12 @@ export function ComunaPopupContent({ properties, onViewDetail }: ComunaPopupCont
 
 interface RegionPopupContentProps {
   properties: RegionProperties
-  onViewDetail: () => void
+  onViewDetail?: () => void
 }
 
 interface ComunaPopupContentProps {
   properties: ComunaProperties
-  onViewDetail: () => void
+  onViewDetail?: () => void
 }
 
 export function createPopupContent(node: ReactNode): { element: HTMLDivElement; destroy: () => void } {

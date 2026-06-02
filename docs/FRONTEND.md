@@ -17,8 +17,8 @@ Interactive map of Chile's 16 regions and 346 comunas using MapLibre GL with dar
 - Comunas loaded from single file when zoom ≥ 7
 - Comunas automatically hide when zoom < 7
 - Hover: highlights region/comuna with lighter fill and thicker border
-- Click region: popup with name, code, area (km²) → navigates to `/map/[codregion]`
-- Click comuna: popup with name, province, region → navigates to `/map/[codregion]/[cod_comuna]`
+- Click region: popup with name, risk scores + "Ver comunas" button; clicking zooms map to the region (ensuring zoom ≥7) to reveal its comunas
+- Click comuna: popup with name, province, region, risk scores + seismic impact if any (no action button)
 - Only one popup visible at a time (last click wins)
 - Foreign labels (countries, islands, cities, towns, villages, POIs) hidden from base map
 
@@ -83,14 +83,14 @@ Dedicated React components for map popups. Content is rendered with React and mo
 
 | Export | Description |
 |---|---|
-| `RegionPopupContent({ properties, onViewDetail })` | Renders region info (name, code, area) + "Ver detalle" action button (blue) |
-| `ComunaPopupContent({ properties, onViewDetail })` | Renders comuna info (name, provincia, region) + "Ver detalle" action button (violet) |
+| `RegionPopupContent({ properties, onViewDetail? })` | Renders region info + hazards + "Ver comunas" action button that triggers map zoom |
+| `ComunaPopupContent({ properties, onViewDetail? })` | Renders comuna info + hazards + optional seismic; no action button |
 | `createPopupContent(reactNode)` | Returns `{ element, destroy }` for safe mounting/unmounting of React content inside a `maplibregl.Popup` |
 
 **Usage in map** (internal):
 ```tsx
 const { element, destroy } = createPopupContent(
-  <RegionPopupContent properties={props} onViewDetail={() => { popup.remove(); router.push(...) }} />
+  <RegionPopupContent properties={props} onViewDetail={() => { popup.remove(); /* zoom logic */ }} />
 )
 popup.setDOMContent(element).addTo(map)
 popup.on("close", destroy)
@@ -100,4 +100,4 @@ popup.on("close", destroy)
 
 ---
 
-*Last updated*: 2026-05-27
+*Last updated*: 2026-06-01

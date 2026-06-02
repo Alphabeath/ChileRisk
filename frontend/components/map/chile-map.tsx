@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useRef, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import {
@@ -70,6 +69,21 @@ function getRegionLabelPoint(geometry: RegionGeometry): [number, number] {
   return best
 }
 
+function getFeatureBounds(geometry: unknown): maplibregl.LngLatBounds | null {
+  const bounds = new maplibregl.LngLatBounds()
+  const visit = (coords: unknown): void => {
+    if (!coords) return
+    if (Array.isArray(coords) && typeof coords[0] === "number") {
+      bounds.extend(coords as [number, number])
+    } else if (Array.isArray(coords)) {
+      coords.forEach(visit)
+    }
+  }
+  const g = geometry as { coordinates?: unknown } | undefined
+  visit(g?.coordinates)
+  return bounds.isEmpty() ? null : bounds
+}
+
 export function ChileMap() {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
@@ -78,8 +92,7 @@ export function ChileMap() {
   const popupRef = useRef<maplibregl.Popup | null>(null)
   const popupDestroyRef = useRef<(() => void) | null>(null)
   const sizeObserverRef = useRef<ResizeObserver | null>(null)
-  const router = useRouter()
-  const { loadRegions, loadComunas, prefetchAllRegionRisks, fetchComunaRisk } = useMapData()
+  const { loadRegions, loadComunas, isComunasLoading, fetchComunaRisk } = useMapData()
 
   const attachComunaListeners = useCallback((map: maplibregl.Map) => {
     const fillLayer = "comuna-fill"
@@ -132,15 +145,7 @@ export function ChileMap() {
       } catch {}
 
       const { element, destroy } = createPopupContent(
-        <ComunaPopupContent
-          properties={comunaWithRisk}
-          onViewDetail={() => {
-            if (popupRef.current) popupRef.current.remove()
-            destroy()
-            popupDestroyRef.current = null
-            router.push(`/map/${props.codregion}/${props.cod_comuna}`)
-          }}
-        />
+        <ComunaPopupContent properties={comunaWithRisk} />
       )
       popupDestroyRef.current = destroy
       popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false, className: "cr-popup" })
@@ -153,11 +158,12 @@ export function ChileMap() {
         popupRef.current = null
       })
     })
-  }, [router, fetchComunaRisk])
+  }, [fetchComunaRisk])
 
   const handleRegionClick = useCallback(
     (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
       const props = e.features?.[0]?.properties as RegionProperties | undefined
+      const geometry = e.features?.[0]?.geometry
       if (!props || !mapRef.current) return
 
       if (popupRef.current) popupRef.current.remove()
@@ -172,7 +178,21 @@ export function ChileMap() {
             if (popupRef.current) popupRef.current.remove()
             destroy()
             popupDestroyRef.current = null
-            router.push(`/map/${props.codregion}`)
+            const map = mapRef.current
+            if (map && geometry) {
+              const bounds = getFeatureBounds(geometry)
+              if (bounds) {
+                map.fitBounds(bounds, { padding: 30, duration: 700 })
+                setTimeout(() => {
+                  const m = mapRef.current
+                  if (!m) return
+                  const z = m.getZoom()
+                  if (z < COMUNAS_MIN_ZOOM + 0.2) {
+                    m.easeTo({ zoom: COMUNAS_MIN_ZOOM + 0.6, duration: 500, padding: 30 })
+                  }
+                }, 800)
+              }
+            }
           }}
         />
       )
@@ -187,7 +207,7 @@ export function ChileMap() {
         popupRef.current = null
       })
     },
-    [router]
+    []
   )
 
   useEffect(() => {
@@ -310,11 +330,6 @@ export function ChileMap() {
         }
       })
 
-      const prefetchRegionCodes = Array.from(new Set(
-        regionsGeojson.features.map((f) => (f.properties?.codregion as number | undefined)).filter(Boolean)
-      )) as number[]
-      prefetchAllRegionRisks(prefetchRegionCodes)
-
       map.on("mousemove", "region-fill", (e) => {
         if (map.getZoom() >= COMUNAS_MIN_ZOOM) {
           if (hoveredRegionRef.current !== null) {
@@ -343,10 +358,10 @@ export function ChileMap() {
 
       map.on("click", "region-fill", handleRegionClick)
 
-      const addComunaLayers = (data: Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never) => {
-        if (map.getSource("comunas")) return
+      loadComunas(COMUNAS_DATA_URL).then((comunasData) => {
+        if (!comunasData || map.getSource("comunas")) return
 
-        map.addSource("comunas", { type: "geojson", data, generateId: true })
+        map.addSource("comunas", { type: "geojson", data: comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
         map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": ["step", ["coalesce", ["get", "composite_score"], 35], "#085e08", 35, "#cc9e23", 55, "#e07020", 75, "#c23d3c"], "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
         map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
         map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
@@ -354,34 +369,14 @@ export function ChileMap() {
           map.moveLayer("region-line")
         }
         attachComunaListeners(map)
-      }
-
-      const loadComunasForMap = async () => {
-        if (map.getSource("comunas")) return
-        const comunasData = await loadComunas(COMUNAS_DATA_URL)
-        if (comunasData) {
-          addComunaLayers(comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never)
-        }
-      }
-
-      map.on("moveend", () => {
-        const z = map.getZoom()
-        if (z >= COMUNAS_MIN_ZOOM) {
-          loadComunasForMap()
-          if (hoveredRegionRef.current !== null) {
-            map.setFeatureState({ source: "regions", id: hoveredRegionRef.current }, { hover: false })
-            hoveredRegionRef.current = null
-          }
-        }
       })
 
-      if (map.getZoom() >= COMUNAS_MIN_ZOOM) {
-        loadComunasForMap()
-        if (hoveredRegionRef.current !== null) {
+      map.on("moveend", () => {
+        if (map.getZoom() >= COMUNAS_MIN_ZOOM && hoveredRegionRef.current !== null) {
           map.setFeatureState({ source: "regions", id: hoveredRegionRef.current }, { hover: false })
           hoveredRegionRef.current = null
         }
-      }
+      })
     })
 
     return () => {
@@ -402,14 +397,25 @@ export function ChileMap() {
         mapRef.current = null
       }
     }
-  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas, prefetchAllRegionRisks])
+  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas])
 
   return (
-    <div
-      ref={containerRef}
-      className="h-dvh w-full"
-      role="application"
-      aria-label="Mapa interactivo de regiones y comunas de Chile"
-    />
+    <div className="relative h-dvh w-full">
+      <div
+        ref={containerRef}
+        className="h-full w-full"
+        role="application"
+        aria-label="Mapa interactivo de regiones y comunas de Chile"
+      />
+      {isComunasLoading && (
+        <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-lg bg-slate-900/90 px-4 py-2 text-sm text-slate-200 shadow-lg backdrop-blur-sm transition-opacity duration-300">
+          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Cargando comunas...
+        </div>
+      )}
+    </div>
   )
 }
