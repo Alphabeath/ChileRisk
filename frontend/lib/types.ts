@@ -47,6 +47,8 @@ export interface SeismicEvent {
   occurred_at: string
   occurred_at_local?: string | null
   source: string
+  /** Informe CSN en sismologia.cl (cuando source=csn) */
+  detail_url?: string | null
   raw_data?: Record<string, unknown> | null
 }
 
@@ -58,12 +60,25 @@ export interface EventImpact {
   risk_score: number
 }
 
-export interface ActiveAlert {
-  id: number
+export interface SenapredAlert {
+  id: string
+  level: "preventiva" | "amarilla" | "naranja" | "roja"
+  category: string | null
   title: string
-  message: string
-  severity: string
-  created_at: string
+  content: string | null
+  url_access: string | null
+  senapred_url: string | null
+  issued_at: string
+  synced_at: string
+  region_code: number | null
+  region_name: string | null
+  is_monitor: boolean
+  parent_id: string | null
+}
+
+export interface SenapredAlertParams {
+  region?: number
+  level?: SenapredAlert["level"]
 }
 
 export interface ComunaRisk {

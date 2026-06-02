@@ -21,8 +21,13 @@ import {
   createPopupContent,
   ComunaPopupContent,
   RegionPopupContent,
+  SeismicEventPopupContent,
 } from "./map-popup"
 import { useMapData } from "@/hooks/use-map-data"
+import { useRecentEvents } from "@/hooks"
+import { formatMagnitude, formatDepth } from "@/lib/format"
+import { getSeismicAccentColor } from "@/lib/seismic"
+import type { SeismicEvent } from "@/lib/types"
 
 type Position = [number, number]
 type LinearRing = Position[]
@@ -69,6 +74,17 @@ function getRegionLabelPoint(geometry: RegionGeometry): [number, number] {
   return best
 }
 
+/** MapLibre popups live inside `.maplibregl-map` (overflow:hidden), which blocks backdrop-filter. */
+function addPopupToOverlay(map: maplibregl.Map, popup: maplibregl.Popup): maplibregl.Popup {
+  popup.addTo(map)
+  const el = popup.getElement()
+  const overlay = map.getContainer().parentElement
+  if (el && overlay && el.parentElement !== overlay) {
+    overlay.appendChild(el)
+  }
+  return popup
+}
+
 function getFeatureBounds(geometry: unknown): maplibregl.LngLatBounds | null {
   const bounds = new maplibregl.LngLatBounds()
   const visit = (coords: unknown): void => {
@@ -92,7 +108,15 @@ export function ChileMap() {
   const popupRef = useRef<maplibregl.Popup | null>(null)
   const popupDestroyRef = useRef<(() => void) | null>(null)
   const sizeObserverRef = useRef<ResizeObserver | null>(null)
+
+  // Earthquake (high-intensity sismo) pulsing markers
+  const eventMarkersRef = useRef<maplibregl.Marker[]>([])
+  const eventPopupsRef = useRef<maplibregl.Popup[]>([])
+  const latestEventsRef = useRef<SeismicEvent[]>([])
+
   const { loadRegions, loadComunas, isComunasLoading, fetchComunaRisk } = useMapData()
+
+  const { data: recentEvents = [] } = useRecentEvents(24)
 
   const attachComunaListeners = useCallback((map: maplibregl.Map) => {
     const fillLayer = "comuna-fill"
@@ -144,14 +168,17 @@ export function ChileMap() {
         }
       } catch {}
 
+      const dismissPopup = () => popupRef.current?.remove()
       const { element, destroy } = createPopupContent(
-        <ComunaPopupContent properties={comunaWithRisk} />
+        <ComunaPopupContent properties={comunaWithRisk} onClose={dismissPopup} />
       )
       popupDestroyRef.current = destroy
-      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false, className: "cr-popup" })
-        .setLngLat(e.lngLat)
-        .setDOMContent(element)
-        .addTo(map)
+      popupRef.current = addPopupToOverlay(
+        map,
+        new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "cr-popup" })
+          .setLngLat(e.lngLat)
+          .setDOMContent(element)
+      )
       popupRef.current.on("close", () => {
         destroy()
         popupDestroyRef.current = null
@@ -171,13 +198,13 @@ export function ChileMap() {
         popupDestroyRef.current()
         popupDestroyRef.current = null
       }
+      const dismissPopup = () => popupRef.current?.remove()
       const { element, destroy } = createPopupContent(
         <RegionPopupContent
           properties={props}
+          onClose={dismissPopup}
           onViewDetail={() => {
-            if (popupRef.current) popupRef.current.remove()
-            destroy()
-            popupDestroyRef.current = null
+            dismissPopup()
             const map = mapRef.current
             if (map && geometry) {
               const bounds = getFeatureBounds(geometry)
@@ -197,10 +224,12 @@ export function ChileMap() {
         />
       )
       popupDestroyRef.current = destroy
-      popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false, className: "cr-popup" })
-        .setLngLat(e.lngLat)
-        .setDOMContent(element)
-        .addTo(mapRef.current)
+      popupRef.current = addPopupToOverlay(
+        mapRef.current,
+        new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: "cr-popup" })
+          .setLngLat(e.lngLat)
+          .setDOMContent(element)
+      )
       popupRef.current.on("close", () => {
         destroy()
         popupDestroyRef.current = null
@@ -209,6 +238,111 @@ export function ChileMap() {
     },
     []
   )
+
+  // Clear any existing earthquake markers and their popups
+  const clearEventMarkers = useCallback(() => {
+    eventMarkersRef.current.forEach((m) => m.remove())
+    eventMarkersRef.current = []
+    eventPopupsRef.current.forEach((p) => p.remove())
+    eventPopupsRef.current = []
+  }, [])
+
+  // Create classic "punto con ondas que parpadea" markers for high-intensity recent sismos (M>=4.5)
+  const renderEarthquakeMarkers = useCallback(
+    (map: maplibregl.Map, events: SeismicEvent[]) => {
+      clearEventMarkers()
+
+      const strongEvents = events.filter(
+        (e) => typeof e.magnitude === "number" && e.magnitude >= 4.5 && e.longitude != null && e.latitude != null
+      )
+
+      strongEvents.forEach((ev) => {
+        const mag = ev.magnitude
+        const color = getSeismicAccentColor(mag)
+        // Larger marker for higher magnitude
+        const size = Math.min(48, 20 + (mag - 4) * 6)
+
+        const el = document.createElement("div")
+        el.className = "earthquake-marker"
+        el.style.width = `${size}px`
+        el.style.height = `${size}px`
+        el.style.setProperty("--eq-color", color)
+
+        // 5 staggered ripples for the "ondas"
+        for (let i = 0; i < 5; i++) {
+          const ripple = document.createElement("div")
+          ripple.className = "earthquake-ripple"
+          ripple.style.animationDelay = `-${i * 0.875}s`
+          el.appendChild(ripple)
+        }
+
+        const core = document.createElement("div")
+        core.className = "earthquake-core"
+        el.appendChild(core)
+
+        core.title = `${formatMagnitude(mag)} · ${formatDepth(ev.depth_km)}`
+
+        core.onclick = (e) => {
+          e.stopPropagation()
+          eventPopupsRef.current.forEach((p) => p.remove())
+          eventPopupsRef.current = []
+
+          const popup = new maplibregl.Popup({
+            closeButton: false,
+            closeOnClick: false,
+            className: "cr-popup",
+            offset: 14,
+          })
+          const dismissPopup = () => popup.remove()
+          const { element, destroy } = createPopupContent(
+            <SeismicEventPopupContent event={ev} onClose={dismissPopup} />
+          )
+
+          addPopupToOverlay(
+            map,
+            popup.setLngLat([ev.longitude, ev.latitude]).setDOMContent(element)
+          )
+
+          popup.on("close", () => {
+            destroy()
+          })
+          eventPopupsRef.current.push(popup)
+
+          map.flyTo({
+            center: [ev.longitude, ev.latitude],
+            zoom: Math.max(6.5, map.getZoom()),
+            duration: 420,
+          })
+        }
+
+        const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+          .setLngLat([ev.longitude, ev.latitude])
+          .addTo(map)
+
+        eventMarkersRef.current.push(marker)
+      })
+    },
+    [clearEventMarkers]
+  )
+
+  // Ref to current render fn so the map-init effect doesn't depend on it (avoids remounting map on data refresh)
+  const renderRef = useRef(renderEarthquakeMarkers)
+  useEffect(() => {
+    renderRef.current = renderEarthquakeMarkers
+  }, [renderEarthquakeMarkers])
+
+  // Keep latest events for races between map load and query
+  useEffect(() => {
+    latestEventsRef.current = recentEvents
+  }, [recentEvents])
+
+  // Re-render markers when recent strong events update (and map exists)
+  useEffect(() => {
+    const map = mapRef.current
+    if (map && recentEvents.length > 0) {
+      renderEarthquakeMarkers(map, recentEvents)
+    }
+  }, [recentEvents, renderEarthquakeMarkers])
 
   useEffect(() => {
     const container = containerRef.current
@@ -369,6 +503,12 @@ export function ChileMap() {
           map.moveLayer("region-line")
         }
         attachComunaListeners(map)
+
+        // Render high-intensity earthquake markers once comunas (and base layers) are ready
+        const evs = latestEventsRef.current
+        if (evs.length > 0) {
+          renderRef.current(map, evs)
+        }
       })
 
       map.on("moveend", () => {
@@ -392,12 +532,13 @@ export function ChileMap() {
         popupRef.current.remove()
         popupRef.current = null
       }
+      clearEventMarkers()
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
       }
     }
-  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas])
+  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas, clearEventMarkers])
 
   return (
     <div className="relative h-dvh w-full">

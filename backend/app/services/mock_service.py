@@ -190,3 +190,25 @@ async def seed_initial_risk_scores(session: AsyncSession) -> int:
     session.add_all(scores_to_add)
     await session.commit()
     return len(scores_to_add)
+
+
+async def generate_artificial_seismic_event(session: AsyncSession, magnitude: float = 6.1, latitude: float = -33.45, longitude: float = -70.65, depth_km: float = 25.0) -> SeismicEvent:
+    from app.models.seismic_event import SeismicEvent
+    from app.services.impact_service import compute_and_store_event_impact
+    now = datetime.now(timezone.utc)
+    occurred_at = now - timedelta(minutes=1)
+    ev = SeismicEvent(
+        latitude=round(latitude, 4),
+        longitude=round(longitude, 4),
+        magnitude=round(magnitude, 1),
+        depth_km=round(depth_km, 1),
+        occurred_at=occurred_at,
+        occurred_at_local=None,
+        source="artificial",
+        raw_data={"note": "artificial event for demo"},
+    )
+    session.add(ev)
+    await session.commit()
+    await session.refresh(ev)
+    await compute_and_store_event_impact(session, ev)
+    return ev

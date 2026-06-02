@@ -5,7 +5,7 @@ from app.schemas.risk import (
     HazardScores,
 )
 from app.schemas.event import SeismicEventResponse, SeismicImpactResponse, ComunaImpact
-from app.schemas.alert import AlertResponse
+from app.schemas.alert import AlertLevel, SenapredAlertOut
 
 __all__ = [
     "ComunaRiskResponse",
@@ -15,6 +15,7 @@ __all__ = [
     "SeismicEventResponse",
     "SeismicImpactResponse",
     "ComunaImpact",
-    "AlertResponse",
+    "AlertLevel",
+    "SenapredAlertOut",
 ]
 

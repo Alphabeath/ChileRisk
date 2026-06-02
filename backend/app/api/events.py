@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_db
 from app.core.limiter import limiter
 from app.models.seismic_event import SeismicEvent
+from app.services.seismic_event_utils import event_to_response
 from app.services.seismic_service import (
     compute_sismo_score_for_comuna,
     estimate_intensity,
@@ -29,20 +30,7 @@ async def list_recent_events(request: Request, hours: int = 48, db: AsyncSession
         .order_by(SeismicEvent.occurred_at.desc())
     )
     events = result.scalars().all()
-    return [
-        {
-            "id": e.id,
-            "latitude": e.latitude,
-            "longitude": e.longitude,
-            "magnitude": e.magnitude,
-            "depth_km": e.depth_km,
-            "occurred_at": e.occurred_at,
-            "occurred_at_local": e.occurred_at_local,
-            "source": e.source,
-            "raw_data": e.raw_data,
-        }
-        for e in events
-    ]
+    return [event_to_response(e).model_dump() for e in events]
 
 
 @router.get("/{event_id}/impact")
@@ -82,17 +70,7 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
             })
 
         return {
-            "event": {
-                "id": event.id,
-                "latitude": event.latitude,
-                "longitude": event.longitude,
-                "magnitude": event.magnitude,
-                "depth_km": event.depth_km,
-                "occurred_at": event.occurred_at,
-                "occurred_at_local": event.occurred_at_local,
-                "source": event.source,
-                "raw_data": event.raw_data,
-            },
+            "event": event_to_response(event).model_dump(),
             "affected_comunas": impacts[:50],
             "total_affected": len(impacts),
         }
@@ -129,17 +107,20 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
     impacts.sort(key=lambda x: x["risk_score"], reverse=True)
 
     return {
-        "event": {
-            "id": event.id,
-            "latitude": event.latitude,
-            "longitude": event.longitude,
-            "magnitude": event.magnitude,
-            "depth_km": event.depth_km,
-            "occurred_at": event.occurred_at,
-            "occurred_at_local": event.occurred_at_local,
-            "source": event.source,
-            "raw_data": event.raw_data,
-        },
+        "event": event_to_response(event).model_dump(),
         "affected_comunas": impacts[:50],
         "total_affected": len(impacts),
     }
+
+
+@router.get("/artificial")
+@limiter.limit("10/minute")
+async def create_artificial_event(request: Request, mag: float = 6.1, lat: float = -33.45, lon: float = -70.65, depth: float = 25.0, db: AsyncSession = Depends(get_db)):
+    from app.services.mock_service import generate_artificial_seismic_event
+    from app.services.risk_service import recompute_all_scores
+    ev = await generate_artificial_seismic_event(db, mag, lat, lon, depth)
+    await recompute_all_scores(db)
+    from app.services.region_service import _national_cache, _region_cache
+    _national_cache.clear()
+    _region_cache.clear()
+    return event_to_response(ev).model_dump()

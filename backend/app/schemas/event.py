@@ -13,6 +13,7 @@ class SeismicEventResponse(BaseModel):
     occurred_at: datetime
     occurred_at_local: datetime | None = None
     source: str
+    detail_url: str | None = None
     raw_data: dict[str, Any] | None = None
 
 

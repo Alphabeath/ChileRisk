@@ -2,9 +2,32 @@
 
 import { createRoot, type Root } from "react-dom/client"
 import type { ReactNode } from "react"
-import { Activity, Thermometer, Snowflake, Wind, ChevronRight, AlertTriangle } from "lucide-react"
+import {
+  Activity,
+  AlertTriangle,
+  ChevronRight,
+  Clock,
+  ExternalLink,
+  MapPin,
+  Snowflake,
+  Thermometer,
+  Wind,
+  X,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+import { formatDepth } from "@/lib/format"
+import {
+  getSeismicAccentColor,
+  getSeismicDetailUrl,
+  getSeismicLocation,
+  getSeismicMagnitudeType,
+} from "@/lib/seismic"
+import type { SeismicEvent } from "@/lib/types"
 import type { RegionProperties, ComunaProperties } from "./map-config"
-import { Button } from "@/components/ui/button"
+
+/** Glass panel — aligned with SenapredAlertsPanel and CitizenNavbar */
+export const MAP_POPUP_GLASS_CLASS =
+  "border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50"
 
 const HAZARD_META: Record<string, { label: string; Icon: typeof Activity }> = {
   sismo: { label: "Sismo", Icon: Activity },
@@ -13,49 +36,84 @@ const HAZARD_META: Record<string, { label: string; Icon: typeof Activity }> = {
   viento: { label: "Viento", Icon: Wind },
 }
 
-function getRiskAccent(severity?: string, score?: number): string {
+const SEVERITY_META = {
+  critico: {
+    label: "Crítico",
+    hex: "#DA291C",
+    badge: "bg-[#DA291C]/15 text-[#ff9a9a] border-[#DA291C]/45",
+  },
+  alto: {
+    label: "Alto",
+    hex: "#e07020",
+    badge: "bg-orange-500/10 text-orange-300 border-orange-400/40",
+  },
+  moderado: {
+    label: "Moderado",
+    hex: "#cc9e23",
+    badge: "bg-amber-500/10 text-amber-300 border-amber-400/40",
+  },
+  bajo: {
+    label: "Bajo",
+    hex: "#15803d",
+    badge: "bg-emerald-500/10 text-emerald-300 border-emerald-400/40",
+  },
+} as const
+
+type Severity = keyof typeof SEVERITY_META
+
+function resolveSeverity(severity?: string, score?: number): Severity {
   const s = score ?? 0
-  if (severity === "critico" || s >= 75) return "#DA291C"
-  if (severity === "alto" || s >= 55) return "#e07020"
-  if (severity === "moderado" || s >= 35) return "#cc9e23"
-  return "#15803d"
+  if (severity === "critico" || s >= 75) return "critico"
+  if (severity === "alto" || s >= 55) return "alto"
+  if (severity === "moderado" || s >= 35) return "moderado"
+  return "bajo"
 }
 
-function hazardColor(score: number): string {
-  if (score >= 75) return "bg-[#DA291C]"
-  if (score >= 55) return "bg-[#e07020]"
-  if (score >= 35) return "bg-[#cc9e23]"
-  return "bg-[#15803d]"
+function severityFromScore(score: number): Severity {
+  if (score >= 75) return "critico"
+  if (score >= 55) return "alto"
+  if (score >= 35) return "moderado"
+  return "bajo"
+}
+
+function getRiskAccent(severity?: string, score?: number): string {
+  return SEVERITY_META[resolveSeverity(severity, score)].hex
 }
 
 function SeverityBadge({ severity }: { severity: string }) {
-  const colors: Record<string, string> = {
-    critico: "bg-[#DA291C]/20 text-[#ff9a9a] border-[#DA291C]/35",
-    alto: "bg-orange-500/20 text-orange-300 border-orange-400/40",
-    moderado: "bg-amber-500/20 text-amber-300 border-amber-400/40",
-    bajo: "bg-emerald-500/20 text-emerald-300 border-emerald-400/40",
-  }
+  const meta = SEVERITY_META[severity as Severity] ?? SEVERITY_META.bajo
   return (
     <span
-      className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${colors[severity] || colors.bajo}`}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-[1px]",
+        meta.badge
+      )}
     >
-      {severity}
+      <span
+        className="size-1.5 rounded-full"
+        style={{ backgroundColor: meta.hex, boxShadow: `0 0 6px ${meta.hex}99` }}
+        aria-hidden
+      />
+      {meta.label}
     </span>
   )
 }
 
 function HazardRow({ label, score, Icon }: { label: string; score: number; Icon: typeof Activity }) {
+  const meta = SEVERITY_META[severityFromScore(score)]
   return (
-    <div className="flex items-center gap-1.5">
-      <Icon className="size-3 shrink-0 text-muted-foreground/60" />
-      <span className="w-9 text-[10px] text-muted-foreground/90">{label}</span>
-      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/8">
+    <div className="flex items-center gap-2">
+      <Icon className="size-3 shrink-0 text-white/55" />
+      <span className="w-12 font-mono text-[9px] uppercase tracking-[1.1px] text-white/55">
+        {label}
+      </span>
+      <div className="h-1 flex-1 bg-white/[0.08]">
         <div
-          className={`h-full rounded-full ${hazardColor(score)}`}
-          style={{ width: `${Math.min(100, Math.max(0, score))}%` }}
+          className="h-full transition-all"
+          style={{ width: `${Math.min(100, Math.max(0, score))}%`, backgroundColor: meta.hex }}
         />
       </div>
-      <span className="w-5 text-right font-mono text-[10px] tabular-nums text-foreground/90">
+      <span className="w-6 text-right font-mono text-[10px] font-semibold tabular-nums text-white/90">
         {score.toFixed(0)}
       </span>
     </div>
@@ -74,11 +132,11 @@ function WeatherCell({
   accent: string
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded bg-white/5 px-2 py-1">
+    <div className="flex items-center gap-1.5 border-l-[2px] border-white/15 bg-white/[0.04] px-2 py-1">
       <Icon className={`size-3.5 shrink-0 ${accent}`} />
       <div className="flex flex-col leading-tight">
         <span className={`font-mono text-[11px] font-semibold tabular-nums ${accent}`}>{value}</span>
-        <span className="text-[9px] uppercase tracking-wide text-muted-foreground/60">{label}</span>
+        <span className="font-mono text-[9px] uppercase tracking-[1.1px] text-white/50">{label}</span>
       </div>
     </div>
   )
@@ -111,35 +169,70 @@ function WeatherRow({ temp, wind }: { temp?: number | null; wind?: number | null
 function PopupShell({
   title,
   subtitle,
+  parent,
   children,
   onViewDetail,
   actionLabel,
+  detailHref,
+  detailLabel,
+  onClose,
   compositeScore,
+  scoreLabel = "Riesgo",
+  scoreNote,
   accentColor,
+  className,
 }: {
   title: string
   subtitle?: ReactNode
+  parent?: ReactNode
   children: ReactNode
   onViewDetail?: () => void
   actionLabel?: string
+  detailHref?: string
+  detailLabel?: string
+  onClose?: () => void
   compositeScore?: number
+  scoreLabel?: string
+  scoreNote?: string
   accentColor?: string
+  className?: string
 }) {
+  const actionClass =
+    "flex w-full items-center justify-between border border-white/10 bg-white/[0.04] px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[1.2px] text-white/85 transition-colors hover:border-white/20 hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+  const closeActionClass =
+    "flex w-full items-center justify-between border border-white/10 bg-white/[0.04] px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[1.2px] text-white/85 transition-colors hover:border-[#DA291C]/45 hover:bg-[#DA291C]/20 hover:text-[#ff9a9a] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[#DA291C]/50"
   return (
-    <div className="min-w-[240px] divide-y divide-white/10">
-      {accentColor && <div className="h-0.5 w-full" style={{ backgroundColor: accentColor }} />}
-      <div className="px-3.5 pt-2 pb-1.5">
-        <div className="flex items-start justify-between gap-x-3">
-          <div className="min-w-0">
-            <h3 className="text-[13px] font-semibold leading-tight tracking-[-0.1px] text-foreground">{title}</h3>
+    <div
+      className={cn(
+        "min-w-[240px] max-w-[310px] divide-y divide-white/[0.07]",
+        MAP_POPUP_GLASS_CLASS,
+        className
+      )}
+    >
+      {accentColor && <div className="h-[3px] w-full" style={{ backgroundColor: accentColor }} />}
+      <div className="px-3.5 pt-2.5 pb-1.5">
+        <div className="flex items-start justify-between gap-x-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[13px] font-semibold leading-tight tracking-[-0.1px] text-white">{title}</h3>
+            {parent && (
+              <div className="mt-0.5 flex items-center gap-1 text-[10px] leading-tight text-white/55">
+                <MapPin className="size-2.5 shrink-0" />
+                <span className="truncate">{parent}</span>
+              </div>
+            )}
             {subtitle && <div className="mt-1 flex items-center gap-1.5 text-[10px]">{subtitle}</div>}
           </div>
           {compositeScore != null && (
             <div className="shrink-0 text-right leading-none">
-              <div className="text-[9px] font-medium uppercase tracking-[1.5px] text-muted-foreground/60">RIESGO</div>
-              <div className="font-mono text-[22px] font-semibold tabular-nums text-foreground/95 mt-px">
+              <div className="font-mono text-[9px] font-semibold uppercase tracking-[1.4px] text-white/55">
+                {scoreLabel}
+              </div>
+              <div className="mt-px font-mono text-[22px] font-semibold tabular-nums text-white/95">
                 {compositeScore.toFixed(1)}
               </div>
+              {scoreNote && (
+                <div className="mt-0.5 font-mono text-[10px] font-medium text-white/55">{scoreNote}</div>
+              )}
             </div>
           )}
         </div>
@@ -147,20 +240,138 @@ function PopupShell({
 
       {children}
 
-      {onViewDetail && (
-        <div className="px-3 py-2">
-          <Button
-            variant="default"
-            size="xs"
-            onClick={onViewDetail}
-            className="w-full justify-between"
-          >
-            <span>{actionLabel || "Ver detalle"}</span>
-            <ChevronRight className="size-3" />
-          </Button>
+      {(onViewDetail || detailHref || onClose) && (
+        <div className="flex flex-col gap-1.5 px-3 py-2">
+          {onViewDetail && (
+            <button type="button" onClick={onViewDetail} className={actionClass}>
+              <span>{actionLabel || "Ver detalle"}</span>
+              <ChevronRight className="size-3" />
+            </button>
+          )}
+          {detailHref && (
+            <a href={detailHref} target="_blank" rel="noopener noreferrer" className={actionClass}>
+              <span>{detailLabel || "Ver informe CSN"}</span>
+              <ExternalLink className="size-3 shrink-0" aria-hidden />
+            </a>
+          )}
+          {onClose && (
+            <button type="button" onClick={onClose} className={closeActionClass}>
+              <span>Cerrar</span>
+              <X className="size-3 shrink-0" strokeWidth={2.25} aria-hidden />
+            </button>
+          )}
         </div>
       )}
     </div>
+  )
+}
+
+function SeismicStat({
+  label,
+  value,
+  secondaryValue,
+  Icon,
+}: {
+  label: string
+  value: string
+  secondaryValue?: string
+  Icon: typeof Activity
+}) {
+  return (
+    <div className="flex gap-2.5 border-l-[2px] border-white/15 bg-white/[0.04] px-2.5 py-2">
+      <Icon className="mt-0.5 size-3.5 shrink-0 text-white/55" />
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[9px] uppercase tracking-[1.1px] text-white/50">{label}</div>
+        <div className="mt-0.5 font-mono text-[11px] font-semibold leading-snug tabular-nums text-white/90">
+          {value}
+        </div>
+        {secondaryValue && (
+          <div className="mt-0.5 font-mono text-[10px] leading-snug tabular-nums text-white/55">
+            {secondaryValue}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function formatSeismicWhen(event: SeismicEvent): {
+  label: string
+  value: string
+  secondaryValue?: string
+} {
+  const fmt = (iso: string) =>
+    new Date(iso).toLocaleString("es-CL", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+
+  if (event.occurred_at_local) {
+    const local = fmt(event.occurred_at_local)
+    const utc = fmt(event.occurred_at)
+    return {
+      label: "Fecha y hora",
+      value: local,
+      secondaryValue: local !== utc ? `UTC ${utc}` : undefined,
+    }
+  }
+
+  return { label: "Fecha y hora (UTC)", value: fmt(event.occurred_at) }
+}
+
+export function SeismicEventPopupContent({
+  event,
+  onClose,
+}: {
+  event: SeismicEvent
+  onClose?: () => void
+}) {
+  const mag = event.magnitude
+  const accent = getSeismicAccentColor(mag)
+  const location = getSeismicLocation(event)
+  const magType = getSeismicMagnitudeType(event)
+  const detailUrl = getSeismicDetailUrl(event)
+  const when = formatSeismicWhen(event)
+
+  return (
+    <PopupShell
+      title={location ?? "Sismo registrado"}
+      subtitle={
+        <span className="inline-flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/70">
+          <Activity className="size-2.5" />
+          {event.source === "csn" ? "CSN · sismologia.cl" : event.source}
+        </span>
+      }
+      parent={
+        <span className="font-mono tabular-nums">
+          {event.latitude.toFixed(3)}°, {event.longitude.toFixed(3)}°
+        </span>
+      }
+      compositeScore={mag}
+      scoreLabel="Magnitud"
+      scoreNote={magType ?? undefined}
+      accentColor={accent}
+      detailHref={detailUrl ?? undefined}
+      detailLabel="Ver informe CSN"
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-1.5 px-3 py-2.5">
+        <SeismicStat Icon={Activity} label="Profundidad" value={formatDepth(event.depth_km)} />
+        <SeismicStat
+          Icon={Clock}
+          label={when.label}
+          value={when.value}
+          secondaryValue={when.secondaryValue}
+        />
+      </div>
+      {!detailUrl && event.source === "csn" && (
+        <p className="px-3.5 pb-2 text-[10px] leading-snug text-white/45">
+          El enlace al informe se actualizará en la próxima sincronización con CSN.
+        </p>
+      )}
+    </PopupShell>
   )
 }
 
@@ -189,27 +400,18 @@ function HazardScores({ properties }: { properties: RegionProperties | ComunaPro
 }
 
 function HeaderExtras({ properties }: { properties: RegionProperties | ComunaProperties }) {
-  const meta = properties.dominant_hazard ? HAZARD_META[properties.dominant_hazard] : null
-  return (
-    <>
-      {properties.severity && <SeverityBadge severity={properties.severity} />}
-      {meta && (
-        <span className="flex items-center gap-1 text-[10px] text-muted-foreground/80">
-          <meta.Icon className="size-3" />
-          {meta.label}
-        </span>
-      )}
-    </>
-  )
+  if (!properties.severity) return null
+  return <SeverityBadge severity={properties.severity} />
 }
 
-export function RegionPopupContent({ properties, onViewDetail }: RegionPopupContentProps) {
+export function RegionPopupContent({ properties, onViewDetail, onClose }: RegionPopupContentProps) {
   return (
     <PopupShell
       title={properties.Region}
       subtitle={<HeaderExtras properties={properties} />}
       onViewDetail={onViewDetail}
       actionLabel="Ver comunas"
+      onClose={onClose}
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
@@ -226,17 +428,14 @@ export function RegionPopupContent({ properties, onViewDetail }: RegionPopupCont
   )
 }
 
-export function ComunaPopupContent({ properties, onViewDetail }: ComunaPopupContentProps) {
+export function ComunaPopupContent({ properties, onViewDetail, onClose }: ComunaPopupContentProps) {
   return (
     <PopupShell
       title={properties.Comuna}
-      subtitle={
-        <>
-          <HeaderExtras properties={properties} />
-          <span className="text-[10px] text-muted-foreground/60">· {properties.Region}</span>
-        </>
-      }
+      parent={properties.Region}
+      subtitle={<HeaderExtras properties={properties} />}
       onViewDetail={onViewDetail}
+      onClose={onClose}
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
@@ -271,11 +470,13 @@ export function ComunaPopupContent({ properties, onViewDetail }: ComunaPopupCont
 interface RegionPopupContentProps {
   properties: RegionProperties
   onViewDetail?: () => void
+  onClose?: () => void
 }
 
 interface ComunaPopupContentProps {
   properties: ComunaProperties
   onViewDetail?: () => void
+  onClose?: () => void
 }
 
 export function createPopupContent(node: ReactNode): { element: HTMLDivElement; destroy: () => void } {

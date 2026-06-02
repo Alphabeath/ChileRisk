@@ -38,9 +38,41 @@ docker compose down -v && docker compose up --build
 | GET | `/api/v1/stats/regiones/{codregion}` | Region statistics |
 | GET | `/api/v1/stats/trends?days=7` | Trend data (placeholder) |
 | GET | `/api/v1/stats/compare?regiones=13,14,15` | Compare up to 8 regions |
-| GET | `/api/v1/alerts/active` | Active alerts (stub → `[]`) |
+| GET | `/api/v1/alerts/active?region=&level=` | Active SERNAPRED alerts |
 
-All risk values are 0–100 floats. Rate limits: 100 req/min (read), 60 (events), 30 (impact).
+### `GET /api/v1/alerts/active`
+
+Alertas oficiales de SERNAPRED sincronizadas desde `senapred.cl/sismos-alertas`.
+Soportan dos filtros opcionales:
+
+| Param   | Type                                | Descripción |
+|---------|-------------------------------------|-------------|
+| region  | int (1–16)                          | `codregion` para filtrar por región |
+| level   | `preventiva` \| `amarilla` \| `naranja` \| `roja` | Filtrar por nivel |
+
+Rate limit: 60 req/min. Respuesta: lista de objetos `SenapredAlertOut`.
+
+```json
+[
+  {
+    "id": "be345812-43e3-469a-8dc9-7e3c67ffc5c7",
+    "level": "preventiva",
+    "category": "Otros",
+    "title": "Se declara Alerta Temprana Preventiva para la Región de Los Lagos por evento meteorológico",
+    "content": "<p>...</p>",
+    "url_access": "se-declara-alerta-temprana-preventiva-...",
+    "senapred_url": "https://senapred.cl/alerta/se-declara-alerta-temprana-preventiva-...",
+    "issued_at": "2026-06-02T11:45:00+00:00",
+    "synced_at": "2026-06-02T19:46:16+00:00",
+    "region_code": 10,
+    "region_name": "Región de los Lagos",
+    "is_monitor": false,
+    "parent_id": null
+  }
+]
+```
+
+All risk values are 0–100 floats. Rate limits: 100 req/min (read), 60 (events), 30 (impact), 60 (alerts).
 
 ---
 
@@ -49,9 +81,10 @@ All risk values are 0–100 floats. Rate limits: 100 req/min (read), 60 (events)
 Edit the root `.env` file:
 
 ```env
-USE_REAL_CSN=false          # true = real earthquakes from sismologia.cl
-USE_REAL_METEO=false        # true = real weather from Open-Meteo
-RISK_REFRESH_MINUTES=15     # Risk recompute frequency
+USE_REAL_SENAPRED=true        # true = real alerts from SERNAPRED
+SENAPRED_REFRESH_MINUTES=10   # SERNAPRED sync frequency
+SENAPRED_ALERT_BASE_URL=https://senapred.cl/alerta/  # base para construir el link al artículo
+RISK_REFRESH_MINUTES=15       # Risk recompute frequency
 ENABLE_SCHEDULER=true
 ```
 
@@ -64,13 +97,15 @@ Full reference: `backend/.env.example`
 ```
 Frontend (Next.js) → Backend (FastAPI) → PostgreSQL
                         ↓
-           CSN / sismologia.cl (sismos)
-           Open-Meteo (temperatura/viento)
+           CSN / sismologia.cl   (sismos — HTML scrape)
+           Open-Meteo            (temperatura/viento — batch REST)
+           SERNAPRED             (alertas — AWS AppSync GraphQL + Cognito Identity)
 ```
 
-- **Scheduler**: risk refresh (15 min), CSN sync (5 min), Open-Meteo update (45 min)
+- **Scheduler**: risk refresh (15 min), CSN sync (5 min), Open-Meteo update (60 min), SERNAPRED sync (10 min)
 - **Seismic model**: Haversine distance + attenuation → intensity → risk score
-- **Climate model**: Region centroids (16 API calls) → scores applied to all comunas in region
+- **Climate model**: Per-comuna (346 batched requests) → scores applied individually
+- **SERNAPRED sync**: anonymous Cognito Identity Pool → STS temp creds → SigV4-signed GraphQL query `alertasByDate` → upsert local `senapred_alerts` table
 - **Composite**: simple average of 4 hazard scores
 
 ---
@@ -85,4 +120,4 @@ backend/AGENTS.md
 
 ---
 
-*Last updated: 2026-05-29*
+*Last updated: 2026-06-02 — SERNAPRED alerts integration*

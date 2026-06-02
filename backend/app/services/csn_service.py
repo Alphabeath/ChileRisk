@@ -48,6 +48,15 @@ def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
         tzinfo=timezone.utc
     )
 
+    detail_url: str | None = None
+    link = local_cell.find("a", href=True)
+    if link:
+        href = (link.get("href") or "").strip()
+        if href.startswith("http"):
+            detail_url = href
+        elif href.startswith("/"):
+            detail_url = f"{CSN_BASE}{href}"
+
     local_text = local_cell.get_text(" ", strip=True)
     local_match = DATETIME_RE.search(local_text)
     occurred_local = None
@@ -83,6 +92,7 @@ def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
         "magnitude": magnitude,
         "magnitude_type": mag_type,
         "source_url": f"{CSN_BASE}{CATALOG_PATH}",
+        "detail_url": detail_url,
     }
 
     return {
@@ -178,6 +188,7 @@ async def sync_recent_csn_events(session: AsyncSession, hours: int = 48) -> int:
         return 0
 
     new_events = []
+    backfilled = 0
     for ev in events:
         if ev["magnitude"] < 3.0:
             continue
@@ -193,13 +204,17 @@ async def sync_recent_csn_events(session: AsyncSession, hours: int = 48) -> int:
         )
         existing = (await session.execute(stmt)).scalar_one_or_none()
         if existing:
+            new_detail = (ev.get("raw_data") or {}).get("detail_url")
+            if new_detail and not (existing.raw_data or {}).get("detail_url"):
+                existing.raw_data = {**(existing.raw_data or {}), "detail_url": new_detail}
+                backfilled += 1
             continue
 
         new_ev = SeismicEvent(**ev)
         session.add(new_ev)
         new_events.append(new_ev)
 
-    if new_events:
+    if new_events or backfilled:
         await session.commit()
 
         from app.services.impact_service import compute_and_store_event_impact

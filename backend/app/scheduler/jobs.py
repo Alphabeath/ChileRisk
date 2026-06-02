@@ -8,6 +8,7 @@ from app.database import async_session
 from app.services.risk_service import recompute_all_scores
 from app.services.csn_service import sync_recent_csn_events
 from app.services.openmeteo_service import update_climate_scores_from_real_data
+from app.services.senapred_service import sync_senapred_alerts
 
 logger = logging.getLogger("chilerisk.scheduler")
 
@@ -36,6 +37,18 @@ async def _update_real_climate_scores():
         updated = await update_climate_scores_from_real_data(session)
         if updated:
             logger.info("Updated climate scores from Open-Meteo for %d comunas", updated)
+
+
+async def _sync_senapred_alerts():
+    if not settings.use_real_senapred:
+        return
+    try:
+        async with async_session() as session:
+            inserted = await sync_senapred_alerts(session)
+        if inserted:
+            logger.info("Synced %d SERNAPRED alerts", inserted)
+    except Exception as e:
+        logger.exception("SERNAPRED sync failed: %s", e)
 
 
 def setup_scheduler():
@@ -69,12 +82,26 @@ def setup_scheduler():
             replace_existing=True,
         )
 
+    if settings.use_real_senapred:
+        scheduler.add_job(
+            _sync_senapred_alerts,
+            trigger=IntervalTrigger(minutes=settings.senapred_refresh_minutes),
+            id="senapred_sync",
+            name="Sync SERNAPRED alerts",
+            replace_existing=True,
+        )
+
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
     if settings.use_real_csn:
         logger.info("CSN (sismologia.cl) real seismic sync enabled (every 5 min)")
     if settings.use_real_meteo:
         logger.info("Open-Meteo real climate updates enabled (every 45 min)")
+    if settings.use_real_senapred:
+        logger.info(
+            "SERNAPRED alerts sync enabled (every %d min)",
+            settings.senapred_refresh_minutes,
+        )
 
 
 def shutdown_scheduler():

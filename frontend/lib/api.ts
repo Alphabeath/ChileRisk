@@ -5,7 +5,8 @@ import type {
   ComunaMapScore,
   SeismicEvent,
   EventImpactResponse,
-  ActiveAlert,
+  SenapredAlert,
+  SenapredAlertParams,
 } from "@/lib/types"
 
 const API_BASE =
@@ -56,6 +57,12 @@ export async function getEventImpact(eventId: number): Promise<EventImpactRespon
   return fetchJson<EventImpactResponse>(`/api/v1/events/${eventId}/impact`)
 }
 
-export async function getActiveAlerts(): Promise<ActiveAlert[]> {
-  return fetchJson<ActiveAlert[]>("/api/v1/alerts/active")
+export async function getActiveAlerts(
+  params: SenapredAlertParams = {}
+): Promise<SenapredAlert[]> {
+  const search = new URLSearchParams()
+  if (params.region !== undefined) search.set("region", String(params.region))
+  if (params.level) search.set("level", params.level)
+  const qs = search.toString()
+  return fetchJson<SenapredAlert[]>(`/api/v1/alerts/active${qs ? `?${qs}` : ""}`)
 }

@@ -44,7 +44,7 @@ backend/
 │   │   ├── regiones.py            # GET /api/v1/regiones/{codregion}/risk
 │   │   ├── comunas.py             # GET /api/v1/comunas/{cod_comuna}/risk
 │   │   ├── events.py              # GET /api/v1/events, /{id}/impact
-│   │   ├── alerts.py              # GET /api/v1/alerts/active (stub)
+│   │   ├── alerts.py              # GET /api/v1/alerts/active (SERNAPRED)
 │   │   └── stats.py               # GET /api/v1/stats/national, regiones, trends, compare
 │   ├── models/
 │   │   ├── __init__.py
@@ -53,12 +53,13 @@ backend/
 │   │   ├── risk_score.py          # RiskScore (4 hazards + composite + severity + indexes)
 │   │   ├── seismic_event.py       # SeismicEvent (lat, lon, mag, depth, time, source)
 │   │   ├── climate_reading.py     # ClimateReading (per-comuna temp/wind + scores)
-│   │   └── seismic_impact.py      # SeismicImpact (precomputed event-comuna impacts)
+│   │   ├── seismic_impact.py      # SeismicImpact (precomputed event-comuna impacts)
+│   │   └── senapred_alert.py      # SenapredAlert (synced from senapred.cl)
 │   ├── schemas/
 │   │   ├── __init__.py
 │   │   ├── risk.py                # Pydantic response models for risk endpoints
 │   │   ├── event.py               # Pydantic response models for event endpoints
-│   │   └── alert.py               # Pydantic response models for alert endpoints
+│   │   └── alert.py               # SenapredAlertOut Pydantic model (SERNAPRED)
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── risk_service.py        # recompute_all_scores: main risk engine (reads precomputed impacts)
@@ -68,12 +69,15 @@ backend/
 │   │   ├── mock_service.py        # Mock generators (seismic events + risk scores)
 │   │   ├── csn_service.py         # CSN / sismologia.cl scraper + auto impact computation
 │   │   ├── openmeteo_service.py   # Open-Meteo batch API + per-comuna climate storage
+│   │   ├── senapred_service.py    # SERNAPRED GraphQL sync (parser + upsert)
+│   │   ├── aws_sigv4.py           # Cognito Identity client + SigV4 signer for AppSync
 │   │   ├── stats_service.py       # National/region/trend/compare aggregations
 │   │   └── usgs_service.py        # DEPRECATED — do not use
 │   ├── data/
 │   │   ├── __init__.py
 │   │   ├── seed_regions.py        # Load 16 regions from regional.geojson
-│   │   └── seed_comunas.py        # Load 346 comunas from comunas.geojson
+│   │   ├── seed_comunas.py        # Load 346 comunas from comunas.geojson
+│   │   └── region_name_to_code.py # SERNAPRED region-name → codregion resolver
 │   └── scheduler/
 │       ├── __init__.py            # re-exports setup_scheduler, shutdown_scheduler
 │       └── jobs.py                # APScheduler job definitions + setup
@@ -101,9 +105,16 @@ All config via `pydantic-settings`. Loaded from environment + `.env` file.
 | `RISK_REFRESH_MINUTES` | `15`                                       | Frequency of the main risk recompute job |
 | `USE_REAL_CSN`         | `true`                                     | `true` = fetch live earthquakes from CSN |
 | `USE_REAL_METEO`       | `true`                                     | `true` = fetch live weather from Open-Meteo |
+| `USE_REAL_SENAPRED`    | `true`                                     | `true` = fetch live alerts from SERNAPRED |
 | `CSN_BASE_URL`         | `https://www.sismologia.cl`               | CSN website base URL |
 | `CSN_RECENT_PATH`      | `/`                                        | Path to the recent earthquakes page |
 | `OPENMETEO_API_BASE`   | `https://api.open-meteo.com/v1`           | Open-Meteo API base URL |
+| `SENAPRED_REFRESH_MINUTES` | `10`                                  | SERNAPRED sync frequency |
+| `SENAPRED_AWS_REGION`  | `us-east-1`                                | AWS region for Cognito + AppSync |
+| `SENAPRED_COGNITO_IDENTITY_POOL_ID` | `us-east-1:17c696bc-53e1-49a2-991f-f1b65f752fda` | Public Identity Pool (NOT a secret) for anonymous access to SERNAPRED GraphQL |
+| `SENAPRED_APPSYNC_ENDPOINT` | `https://rz2uv7ifxbgflh2bqmp6kmh4le.appsync-api.us-east-1.amazonaws.com/graphql` | SERNAPRED AppSync GraphQL endpoint |
+| `SENAPRED_ALERT_BASE_URL` | `https://senapred.cl/alerta/`            | Base URL prepended to each `urlAccess` slug to produce the full link to the SERNAPRED article (returned as `senapred_url` in the API) |
+| `SENAPRED_LOOKBACK_DAYS` | `7`                                      | Days of history to keep in the local table |
 | `CACHE_TTL_SECONDS`    | `300`                                      | General cache TTL (5 min) |
 | `CACHE_METEO_TTL_SECONDS` | `21600`                                | Meteo cache TTL (6 hours) |
 
@@ -170,6 +181,22 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 - `computed_at`: datetime
 - **Indexes**: `(event_id)`, `(cod_comuna)`, `(event_id, cod_comuna)` unique
 
+### SenapredAlert (`app/models/senapred_alert.py`)
+- `id`: int (PK surrogate)
+- `senapred_id`: str (SERNAPRED UUID, **unique index**)
+- `kind`: str ("alerta")
+- `level`: str ("preventiva" | "amarilla" | "naranja" | "roja")
+- `title`, `content`, `url_access`, `category`: str
+- `is_active`, `is_monitor`: bool
+- `parent_id`: str | None
+- `senapred_issued_at`: datetime (indexed DESC)
+- `synced_at`: datetime
+- `region_code`: int | None (indexed)
+- `region_name`: str | None
+- `meta_data`: JSON (SERNAPRED metaData blob)
+- `raw`: JSON (full GraphQL item)
+- **Indexes**: `senapred_id` unique, `(senapred_issued_at)`, `(is_active, level, senapred_issued_at)`, `(region_code, is_active, senapred_issued_at)`, `(parent_id)`
+
 ---
 
 ## API Endpoints
@@ -196,12 +223,12 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 - `GET /api/v1/stats/trends?days=7` → trend data (placeholder)
 - `GET /api/v1/stats/compare?regiones=13,14,15` → side-by-side comparison (max 8)
 
-### Alerts (stub)
-- `GET /api/v1/alerts/active` → `[]`
+### Alerts
+- `GET /api/v1/alerts/active?region={1-16}&level={preventiva|amarilla|naranja|roja}` → SERNAPRED alerts currently active
 
 ### Rate Limits
 - Most read endpoints: 100 req/min/IP
-- Events list: 60/min, Impact: 30/min, Stats: 50/min
+- Events list: 60/min, Impact: 30/min, Stats: 50/min, Alerts: 60/min
 
 ---
 
@@ -258,6 +285,20 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 - `get_trends(session, days)` → placeholder
 - `compare_regions(session, codregion_list)` → side-by-side
 
+### senapred_service.py — SERNAPRED Real Data
+- `fetch_senapred_alerts(lookback_days, max_pages)` → paginated GraphQL fetch with SigV4-signed requests
+- `sync_senapred_alerts(session)` → upsert by `senapred_id` (PG `ON CONFLICT`, SQLite fallback); prunes stale rows outside the lookback window
+- `_parse_alert(raw)` → maps `codigoAlertaEvento` (`v`→preventiva, `a`→amarilla, `n`→naranja, `r`→roja), detects `is_active` and `is_monitor` from `titulo`, resolves `region_code` via `region_name_to_code.resolve()`
+- GraphQL query: `alertasByDate(type: "Alerta", fechaHora: {ge: <cutoff>}, filter: {isDeleted: {eq: false}}, sortDirection: DESC, limit: 100, nextToken)`
+
+### aws_sigv4.py — Cognito Identity + SigV4
+- `CognitoIdentityClient(identity_pool_id, region, refresh_buffer_seconds=600)`:
+  - Cachea credenciales STS de Cognito (default 50 min de margen, viven 1 h)
+  - `get_credentials() -> StsCredentials` (async, thread-safe)
+- `sign_appsync_request(method, url, body, credentials, region, service="appsync")`:
+  - Devuelve headers `Authorization`, `X-Amz-Date`, `X-Amz-Security-Token`, `Content-Type` listos para `httpx`
+- `is_credential_error(payload)` → detecta errores 401/expirados en respuestas GraphQL para forzar refresh
+
 ---
 
 ## Scheduler Jobs (app/scheduler/jobs.py)
@@ -267,8 +308,9 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 | `risk_refresh` | `_refresh_risk_scores`       | `RISK_REFRESH_MINUTES` (default 15) | Always |
 | `csn_sync`     | `_sync_real_seismic_events`  | 5 min                 | `USE_REAL_CSN=true` |
 | `meteo_update` | `_update_real_climate_scores` | 60 min               | `USE_REAL_METEO=true` |
+| `senapred_sync`| `_sync_senapred_alerts`      | `SENAPRED_REFRESH_MINUTES` (default 10) | `USE_REAL_SENAPRED=true` |
 
-> **Note**: the meteo log message in `jobs.py:77` says "every 45 min" but the actual `IntervalTrigger(minutes=60)` is the source of truth. The log line is stale — fix the message if you touch that block.
+> **Note**: the meteo log message in `jobs.py:80` says "every 45 min" but the actual `IntervalTrigger(minutes=60)` is the source of truth. The log line is stale — fix the message if you touch that block.
 
 ### Startup Behavior (lifespan in main.py)
 
@@ -277,7 +319,8 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 3. If `USE_REAL_CSN=false` → generate mock seismic events + compute impacts
 4. If NOT both real flags → seed initial risk scores
 5. If `USE_REAL_CSN=true` → sync CSN events (last 24h) + auto-compute impacts
-6. Start scheduler
+6. If `USE_REAL_SENAPRED=true` → initial SERNAPRED sync (errors are logged but don't block startup)
+7. Start scheduler
 
 ---
 
@@ -285,12 +328,13 @@ When using Docker, the root `.env` file is loaded via `env_file:` directive. Edi
 
 ### Behavior Matrix
 
-| `USE_REAL_CSN` | `USE_REAL_METEO` | Startup behavior | Seismic source | Climate source |
-|----------------|------------------|------------------|----------------|----------------|
-| false          | false            | Full mock seed   | Mock generators | Mock generators |
-| true           | false            | CSN sync only    | CSN/sismologia.cl | Mock generators |
-| false          | true             | Mock events + meteo seed | Mock generators | Open-Meteo |
-| true           | true             | CSN sync only (no mock seed, no risk_scores seed) | CSN/sismologia.cl | Open-Meteo |
+| `USE_REAL_CSN` | `USE_REAL_METEO` | `USE_REAL_SENAPRED` | Startup behavior | Seismic source | Climate source | Alerts source |
+|----------------|------------------|----------------------|------------------|----------------|----------------|----------------|
+| false          | false            | *                    | Full mock seed   | Mock generators | Mock generators | Mock (none) |
+| true           | false            | *                    | CSN sync only    | CSN/sismologia.cl | Mock generators | SERNAPRED (if true) |
+| false          | true             | *                    | Mock events + meteo seed | Mock generators | Open-Meteo | SERNAPRED (if true) |
+| true           | true             | true                 | Real sync only   | CSN/sismologia.cl | Open-Meteo | SERNAPRED |
+| true           | true             | false                | Real sync only   | CSN/sismologia.cl | Open-Meteo | (empty table) |
 
 **Important**: When both flags are `true`, **no mock data is generated**. RiskScore rows are created on-demand by the meteo service or by the recompute job.
 
@@ -313,6 +357,16 @@ The relationship between seismic events and comunas is **precomputed and stored*
 - Results are stored in `seismic_impacts` (event_id, cod_comuna, distance_km, intensity, risk_score)
 - During `recompute_all_scores`, the service reads precomputed impacts instead of recalculating
 - This eliminates ~34,600 Haversine calculations per recompute cycle
+
+### How SERNAPRED Alerts Work (no user credentials)
+
+- The SERNAPRED web app at `senapred.cl/sismos-alertas` reads from an AWS AppSync GraphQL endpoint that uses **Amazon Cognito Identity Pools** for unauthenticated public access
+- Our service mirrors that flow: `CognitoIdentityClient.get_credentials()` returns temporary STS credentials (`AccessKeyId`/`SecretAccessKey`/`SessionToken`) valid for ~1h
+- Every GraphQL POST is signed with SigV4 (`sign_appsv4_request()`) using those temp creds
+- Credentials are cached for 50 min to avoid hammering the Identity service (1 h validity)
+- The GraphQL query is `alertasByDate(type: "Alerta", fechaHora: {ge: <cutoff>}, filter: {isDeleted: {eq: false}}, sortDirection: DESC, limit: 100, nextToken)` — paginated by `nextToken`
+- The Identity Pool ID is **public** (not a secret) — it's the same value the SENAPRED SPA bundles in their `static/js/main.*.js`. Anyone can call `GetId` against it. If the SENAPRED team rotates the ID or disables unauthenticated access, the sync will fail and the last successful sync's data remains in our DB
+- Region names from `metaData.regiones` (e.g. `"Región de los Lagos"`) are mapped to our `codregion` (1-16) via `app/data/region_name_to_code.py:resolve()`
 
 ---
 
@@ -424,7 +478,7 @@ asyncio.run(t())
 | A new ORM model                          | `app/models/<entity>.py` + import from `app/models/__init__.py` | Always with indexes on hot columns |
 | A new service / business logic            | `app/services/<thing>_service.py`           | Async functions; take `AsyncSession` as first arg |
 | A new background job                     | extend `app/scheduler/jobs.py`              | `IntervalTrigger`, `replace_existing=True`, gate on a settings flag |
-| A new external data source               | `app/services/<source>_service.py`          | Mirror the shape of `csn_service.py` / `openmeteo_service.py` |
+| A new external data source               | `app/services/<source>_service.py`          | Mirror the shape of `csn_service.py` / `openmeteo_service.py` / `senapred_service.py` |
 | A new env var                            | `app/config.py:Settings` + root `.env.example` + table in this file | Use lowercase field; pydantic-settings maps to UPPER_SNAKE_CASE |
 | A rate-limited endpoint                  | decorate with `@limiter.limit("X/minute")` from `app.core.limiter` | Never import `limiter` from `app.main` (circular) |
 | A new GeoJSON seed file                  | `app/data/<file>.geojson` + load in `app/data/seed_*.py` | Idempotent upsert keyed on PK |
@@ -468,6 +522,8 @@ If the endpoint should be rate-limited, import `limiter` from `app.core.limiter`
 - **Max affected radius is magnitude-driven**: `max(20, 50 * (magnitude - 2.0))` km. Comunas outside that radius are skipped to keep the impact table small. If you see "this comuna was affected" assertions failing, check the radius first.
 - **CSN dedup window is ±3 min + magnitude match**: `sync_recent_csn_events` skips near-duplicates to avoid double-inserting when sismologia.cl reorders events on the page. Don't tighten the window without understanding why it exists.
 - **Meteo batch size is 40**: 346 comunas / 40 ≈ 9 HTTP requests per refresh. Changing this number has cost implications (rate limits, latency) — discuss before changing.
+- **SERNAPRED pagination limit is 100**: configurable in `senapred_service.fetch_senapred_alerts()`. Max 20 pages per sync to avoid runaway. Lookback is `SENAPRED_LOOKBACK_DAYS` (default 7).
+- **Cognito credentials cache TTL is 50 min**: STS creds live 1h; the 10-min buffer avoids signing requests with creds about to expire. Tunable via `CognitoIdentityClient(refresh_buffer_seconds=...)`.
 - **`Base.metadata.create_all` is the only schema mechanism**: it adds missing tables/columns but does not drop or alter existing ones. For a real migration story we'd need Alembic. Right now, schema changes require `docker compose down -v` to wipe the volume.
 - **Settings are loaded from `.env` once at import**: `app.config.settings` is a module-level singleton. Tests that need to flip `USE_REAL_CSN` must monkeypatch the settings object — `pydantic-settings` does not re-read env at runtime.
 - **`region_service` caches** (`_national_cache`, `_region_cache`) are module-level. The lifespan clears them on startup. If you add caching elsewhere, clear it in the same place.
@@ -520,4 +576,4 @@ Scheduler → every N minutes:
 
 ---
 
-**Last updated**: 2026-06-01 (v0.3.1 — added python-json-logger to stack, removed non-existent alembic/ reference, added decision rules + pitfalls, flagged stale "45 min" log line in meteo job)
+**Last updated**: 2026-06-02 (v0.4.1 — SERNAPRED `senapred_url` link to source article: new `senapred_alert_base_url` env var, `SenapredAlertOut.senapred_url` field computed in `alerts.py`)

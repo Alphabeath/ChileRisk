@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -28,6 +28,15 @@ async def lifespan(app: FastAPI):
     # Create tables on startup (idempotent for MVP)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        def _widen_senapred_content(sync_conn):
+            if not inspect(sync_conn).has_table("senapred_alerts"):
+                return
+            sync_conn.execute(
+                text("ALTER TABLE senapred_alerts ALTER COLUMN content TYPE TEXT")
+            )
+
+        await conn.run_sync(_widen_senapred_content)
 
     # Seed reference geography (regions + comunas)
     async with async_session() as session:
@@ -70,6 +79,17 @@ async def lifespan(app: FastAPI):
             n_climate = await update_climate_scores_from_real_data(session)
             if n_climate:
                 logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
+
+        if settings.use_real_senapred:
+            from app.services.senapred_service import sync_senapred_alerts
+
+            try:
+                n_alerts = await sync_senapred_alerts(session)
+                if n_alerts:
+                    logger.info("Synced %d SERNAPRED alerts at startup", n_alerts)
+            except Exception as e:
+                await session.rollback()
+                logger.exception("Initial SERNAPRED sync failed: %s", e)
 
         n_recomputed = await recompute_all_scores(session)
         if n_recomputed:

@@ -14,6 +14,14 @@ class Settings(BaseSettings):
     csn_recent_path: str = "/"
     openmeteo_api_base: str = "https://api.open-meteo.com/v1"
 
+    use_real_senapred: bool = True
+    senapred_refresh_minutes: int = 10
+    senapred_aws_region: str = "us-east-1"
+    senapred_cognito_identity_pool_id: str = "us-east-1:17c696bc-53e1-49a2-991f-f1b65f752fda"
+    senapred_appsync_endpoint: str = "https://rz2uv7ifxbgflh2bqmp6kmh4le.appsync-api.us-east-1.amazonaws.com/graphql"
+    senapred_alert_base_url: str = "https://senapred.cl/alerta/"
+    senapred_lookback_days: int = 7
+
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600
 

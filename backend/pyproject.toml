@@ -13,6 +13,7 @@ dependencies = [
     "aiosqlite>=0.21",
     "apscheduler>=3.10,<4",
     "httpx>=0.28",
+    "boto3>=1.35",
     "beautifulsoup4>=4.12",
     "python-json-logger>=3.0",
     "cachetools>=5.5",
