@@ -60,26 +60,40 @@ export interface EventImpact {
   risk_score: number
 }
 
-export interface SenapredAlert {
+export type AlertSource = "senapred" | "chilerisk"
+export type AlertLevel = "preventiva" | "amarilla" | "naranja" | "roja"
+
+export interface ActiveAlert {
   id: string
-  level: "preventiva" | "amarilla" | "naranja" | "roja"
+  source: AlertSource
+  level: AlertLevel
   category: string | null
   title: string
   content: string | null
   url_access: string | null
-  senapred_url: string | null
+  external_url: string | null
   issued_at: string
   synced_at: string
   region_code: number | null
   region_name: string | null
   is_monitor: boolean
   parent_id: string | null
+  composite_score?: number | null
+  dominant_hazard?: string | null
+  severity?: string | null
+  risk_detail?: string | null
 }
 
-export interface SenapredAlertParams {
+/** @deprecated Use ActiveAlert */
+export type SenapredAlert = ActiveAlert
+
+export interface ActiveAlertParams {
   region?: number
-  level?: SenapredAlert["level"]
+  level?: AlertLevel
 }
+
+/** @deprecated Use ActiveAlertParams */
+export type SenapredAlertParams = ActiveAlertParams
 
 export interface ComunaRisk {
   cod_comuna: number

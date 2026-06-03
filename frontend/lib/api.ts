@@ -1,3 +1,4 @@
+import { normalizeActiveAlerts } from "@/lib/alerts-display"
 import type {
   NationalRisk,
   RegionRisk,
@@ -5,8 +6,8 @@ import type {
   ComunaMapScore,
   SeismicEvent,
   EventImpactResponse,
-  SenapredAlert,
-  SenapredAlertParams,
+  ActiveAlert,
+  ActiveAlertParams,
 } from "@/lib/types"
 
 const API_BASE =
@@ -58,11 +59,12 @@ export async function getEventImpact(eventId: number): Promise<EventImpactRespon
 }
 
 export async function getActiveAlerts(
-  params: SenapredAlertParams = {}
-): Promise<SenapredAlert[]> {
+  params: ActiveAlertParams = {}
+): Promise<ActiveAlert[]> {
   const search = new URLSearchParams()
   if (params.region !== undefined) search.set("region", String(params.region))
   if (params.level) search.set("level", params.level)
   const qs = search.toString()
-  return fetchJson<SenapredAlert[]>(`/api/v1/alerts/active${qs ? `?${qs}` : ""}`)
+  const raw = await fetchJson<unknown[]>(`/api/v1/alerts/active${qs ? `?${qs}` : ""}`)
+  return normalizeActiveAlerts(raw)
 }

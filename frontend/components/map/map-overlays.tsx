@@ -2,10 +2,12 @@
 
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { restrictToWindowEdges } from "@dnd-kit/modifiers"
-import { SenapredAlertsPanel } from "./senapred-alerts-panel"
+import { ActiveAlertsPanel } from "./active-alerts-panel"
 
-/** Stable id so aria-describedby matches between SSR and client (dnd-kit global counter otherwise diverges). */
-export const SENAPRED_DND_CONTEXT_ID = "chilerisk-senapred-alerts"
+export const ALERTS_DND_CONTEXT_ID = "chilerisk-active-alerts"
+
+/** @deprecated Use ALERTS_DND_CONTEXT_ID */
+export const SENAPRED_DND_CONTEXT_ID = ALERTS_DND_CONTEXT_ID
 
 export function MapOverlays() {
   const sensors = useSensors(
@@ -15,11 +17,11 @@ export function MapOverlays() {
 
   return (
     <DndContext
-      id={SENAPRED_DND_CONTEXT_ID}
+      id={ALERTS_DND_CONTEXT_ID}
       sensors={sensors}
       modifiers={[restrictToWindowEdges]}
     >
-      <SenapredAlertsPanel />
+      <ActiveAlertsPanel />
     </DndContext>
   )
 }

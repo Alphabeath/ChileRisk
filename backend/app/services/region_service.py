@@ -73,10 +73,12 @@ async def get_region_aggregated_risk(
     composite, dominant = compute_composite_and_dominant(agg)
 
     climate = await get_region_climate_avg(session, codregion)
+    risk_computed_at = max(s.computed_at for s in scores)
 
     result = {
         "codregion": codregion,
         "name": region.name,
+        "risk_computed_at": risk_computed_at,
         "sismo_score": agg["sismo"],
         "ola_calor_score": agg["ola_calor"],
         "ola_frio_score": agg["ola_frio"],

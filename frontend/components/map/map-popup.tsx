@@ -21,11 +21,11 @@ import {
   getSeismicLocation,
   getSeismicMagnitudeType,
 } from "@/lib/seismic"
-import type { SeismicEvent, SenapredAlert } from "@/lib/types"
+import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
-import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/senapred-display"
-import { ActiveAlertsSection } from "./senapred-alert-ui"
+import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/alerts-display"
+import { ActiveAlertsSection } from "./alert-ui"
 import { PopupSeismicSection } from "./popup-seismic-section"
 
 /** Glass panel — aligned with SenapredAlertsPanel and CitizenNavbar */
@@ -413,7 +413,7 @@ function PopupMoreIndicator({ count, noun }: { count: number; noun: string }) {
   if (count <= 0) return null
   return (
     <p className="px-3.5 py-1.5 font-mono text-[9px] text-white/45">
-      +{count} {noun} — ver panel SERNAPRED
+      +{count} {noun} — ver panel de alertas
     </p>
   )
 }
@@ -493,7 +493,7 @@ export function ComunaPopupContent({
 
 interface RegionPopupContentProps {
   properties: RegionProperties
-  alerts?: SenapredAlert[]
+  alerts?: ActiveAlert[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
   onViewDetail?: () => void
@@ -502,7 +502,7 @@ interface RegionPopupContentProps {
 
 interface ComunaPopupContentProps {
   properties: ComunaProperties
-  alerts?: SenapredAlert[]
+  alerts?: ActiveAlert[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
   onViewDetail?: () => void

@@ -26,7 +26,7 @@ import {
 } from "./map-popup"
 import { useMapData } from "@/hooks/use-map-data"
 import { useActiveAlerts, useRecentEvents } from "@/hooks"
-import { filterAlertsForRegion, sortSenapredAlerts } from "@/lib/senapred-display"
+import { filterAlertsForRegion, sortActiveAlerts } from "@/lib/alerts-display"
 import {
   buildPopupSeismicItems,
   filterRecentEventsInGeometry,
@@ -119,6 +119,7 @@ export function ChileMap() {
   const eventMarkersRef = useRef<maplibregl.Marker[]>([])
   const eventPopupsRef = useRef<maplibregl.Popup[]>([])
   const latestEventsRef = useRef<SeismicEvent[]>([])
+  const mapReadyRef = useRef(false)
 
   const { loadRegions, loadComunas, isComunasLoading, fetchComunaRisk } = useMapData()
 
@@ -185,7 +186,7 @@ export function ChileMap() {
       } catch {}
 
       const geometry = e.features?.[0]?.geometry
-      const regionAlerts = sortSenapredAlerts(
+      const regionAlerts = sortActiveAlerts(
         filterAlertsForRegion(allAlertsRef.current, comunaWithRisk.codregion)
       )
       const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry)
@@ -227,7 +228,7 @@ export function ChileMap() {
         popupDestroyRef.current()
         popupDestroyRef.current = null
       }
-      const regionAlerts = sortSenapredAlerts(
+      const regionAlerts = sortActiveAlerts(
         filterAlertsForRegion(allAlertsRef.current, props.codregion)
       )
       const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry)
@@ -368,12 +369,10 @@ export function ChileMap() {
     latestEventsRef.current = recentEvents
   }, [recentEvents])
 
-  // Re-render markers when recent strong events update (and map exists)
   useEffect(() => {
     const map = mapRef.current
-    if (map && recentEvents.length > 0) {
-      renderEarthquakeMarkers(map, recentEvents)
-    }
+    if (!map || !mapReadyRef.current) return
+    renderEarthquakeMarkers(map, recentEvents)
   }, [recentEvents, renderEarthquakeMarkers])
 
   useEffect(() => {
@@ -408,6 +407,7 @@ export function ChileMap() {
     map.on("load", async () => {
       if (mapRef.current) mapRef.current.resize()
       hideForeignLabels(map)
+      mapReadyRef.current = true
 
       const regionsGeojson = await loadRegions(REGIONS_DATA_URL)
       if (!regionsGeojson) return
@@ -535,12 +535,7 @@ export function ChileMap() {
           map.moveLayer("region-line")
         }
         attachComunaListeners(map)
-
-        // Render high-intensity earthquake markers once comunas (and base layers) are ready
-        const evs = latestEventsRef.current
-        if (evs.length > 0) {
-          renderRef.current(map, evs)
-        }
+        renderRef.current(map, latestEventsRef.current)
       })
 
       map.on("moveend", () => {
@@ -565,6 +560,7 @@ export function ChileMap() {
         popupRef.current = null
       }
       clearEventMarkers()
+      mapReadyRef.current = false
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
