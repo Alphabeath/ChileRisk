@@ -1,4 +1,5 @@
 import { normalizeActiveAlerts } from "@/lib/alerts-display"
+import { clampQueryDate, todayIsoDate } from "@/lib/query-date"
 import type {
   NationalRisk,
   RegionRisk,
@@ -34,24 +35,31 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export async function getNationalRisk(): Promise<NationalRisk[]> {
-  return fetchJson<NationalRisk[]>("/api/v1/risk/national")
+export async function getNationalRisk(date?: string): Promise<NationalRisk[]> {
+  const d = clampQueryDate(date ?? todayIsoDate())
+  return fetchJson<NationalRisk[]>(`/api/v1/risk/national?date=${d}`)
 }
 
-export async function getComunaMapScores(): Promise<ComunaMapScore[]> {
-  return fetchJson<ComunaMapScore[]>("/api/v1/risk/comunas")
+export async function getComunaMapScores(date?: string): Promise<ComunaMapScore[]> {
+  const d = clampQueryDate(date ?? todayIsoDate())
+  return fetchJson<ComunaMapScore[]>(`/api/v1/risk/comunas?date=${d}`)
 }
 
 export async function getRegionRisk(codregion: number): Promise<RegionRisk> {
   return fetchJson<RegionRisk>(`/api/v1/regiones/${codregion}/risk`)
 }
 
-export async function getComunaRisk(codcomuna: number): Promise<ComunaRisk> {
-  return fetchJson<ComunaRisk>(`/api/v1/comunas/${codcomuna}/risk`)
+export async function getComunaRisk(
+  codcomuna: number,
+  date?: string
+): Promise<ComunaRisk> {
+  const d = clampQueryDate(date ?? todayIsoDate())
+  return fetchJson<ComunaRisk>(`/api/v1/comunas/${codcomuna}/risk?date=${d}`)
 }
 
-export async function getRecentEvents(hours = 48): Promise<SeismicEvent[]> {
-  return fetchJson<SeismicEvent[]>(`/api/v1/events?hours=${hours}`)
+export async function getRecentEvents(date?: string): Promise<SeismicEvent[]> {
+  const d = clampQueryDate(date ?? todayIsoDate())
+  return fetchJson<SeismicEvent[]>(`/api/v1/events?date=${d}`)
 }
 
 export async function getEventImpact(eventId: number): Promise<EventImpactResponse> {
@@ -64,6 +72,9 @@ export async function getActiveAlerts(
   const search = new URLSearchParams()
   if (params.region !== undefined) search.set("region", String(params.region))
   if (params.level) search.set("level", params.level)
+  if (params.date !== undefined) {
+    search.set("date", clampQueryDate(params.date))
+  }
   const qs = search.toString()
   const raw = await fetchJson<unknown[]>(`/api/v1/alerts/active${qs ? `?${qs}` : ""}`)
   return normalizeActiveAlerts(raw)

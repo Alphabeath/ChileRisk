@@ -18,19 +18,22 @@ import { formatDepth } from "@/lib/format"
 import {
   getSeismicAccentColor,
   getSeismicDetailUrl,
+  getSeismicIntensityReportUrl,
   getSeismicLocation,
   getSeismicMagnitudeType,
+  isSeismicPerceived,
 } from "@/lib/seismic"
 import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
 import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/alerts-display"
+import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { todayIsoDate } from "@/lib/query-date"
 import { ActiveAlertsSection } from "./alert-ui"
 import { PopupSeismicSection } from "./popup-seismic-section"
 
-/** Glass panel — aligned with SenapredAlertsPanel and CitizenNavbar */
-export const MAP_POPUP_GLASS_CLASS =
-  "border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50"
+/** @deprecated Use GLASS_PANEL_CLASS from @/lib/glass-panel */
+export const MAP_POPUP_GLASS_CLASS = GLASS_PANEL_CLASS
 
 const HAZARD_META: Record<string, { label: string; Icon: typeof Activity }> = {
   sismo: { label: "Sismo", Icon: Activity },
@@ -338,15 +341,26 @@ export function SeismicEventPopupContent({
   const location = getSeismicLocation(event)
   const magType = getSeismicMagnitudeType(event)
   const detailUrl = getSeismicDetailUrl(event)
+  const intensityUrl = getSeismicIntensityReportUrl(event)
+  const perceived = isSeismicPerceived(event)
   const when = formatSeismicWhen(event)
+  const relatedEvents = event.related_senapred_events ?? []
+  const relatedAlerts = event.related_senapred_alerts ?? []
 
   return (
     <PopupShell
       title={location ?? "Sismo registrado"}
       subtitle={
-        <span className="inline-flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/70">
-          <Activity className="size-2.5" />
-          {event.source === "csn" ? "CSN · sismologia.cl" : event.source}
+        <span className="inline-flex flex-wrap items-center gap-1">
+          <span className="inline-flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-white/70">
+            <Activity className="size-2.5" />
+            {event.source === "csn" ? "CSN · sismologia.cl" : event.source}
+          </span>
+          {perceived && (
+            <span className="rounded-sm border border-orange-400/40 bg-orange-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-orange-200/90">
+              Percibido
+            </span>
+          )}
         </span>
       }
       parent={
@@ -370,7 +384,55 @@ export function SeismicEventPopupContent({
           value={when.value}
           secondaryValue={when.secondaryValue}
         />
+        {event.reported_intensity_max != null && (
+          <SeismicStat
+            Icon={Activity}
+            label="Intensidad reportada"
+            value={`Mercalli ${event.reported_intensity_max.toFixed(1)}`}
+          />
+        )}
       </div>
+      {(intensityUrl || relatedEvents.length > 0 || relatedAlerts.length > 0) && (
+        <div className="space-y-1 border-t border-white/[0.07] px-3 py-2">
+          {intensityUrl && (
+            <a
+              href={intensityUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between border border-white/10 bg-white/[0.04] px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[1px] text-white/85 hover:border-white/20 hover:bg-white/[0.08]"
+            >
+              <span>Reporte de intensidades (SERNAPRED)</span>
+              <ExternalLink className="size-3 shrink-0" aria-hidden />
+            </a>
+          )}
+          {relatedEvents.map((rel) =>
+            rel.external_url ? (
+              <a
+                key={rel.id}
+                href={rel.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate px-1 py-0.5 font-mono text-[10px] text-sky-300/90 hover:text-sky-200"
+              >
+                {rel.title}
+              </a>
+            ) : null
+          )}
+          {relatedAlerts.map((rel) =>
+            rel.external_url ? (
+              <a
+                key={rel.id}
+                href={rel.external_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate px-1 py-0.5 font-mono text-[10px] text-amber-300/80 hover:text-amber-200"
+              >
+                Alerta: {rel.title}
+              </a>
+            ) : null
+          )}
+        </div>
+      )}
       {!detailUrl && event.source === "csn" && (
         <p className="px-3.5 pb-2 text-[10px] leading-snug text-white/45">
           El enlace al informe se actualizará en la próxima sincronización con CSN.
@@ -423,10 +485,10 @@ export function RegionPopupContent({
   alerts = [],
   seismicItems = [],
   alertsLoading = false,
+  queryDate = todayIsoDate(),
   onViewDetail,
   onClose,
 }: RegionPopupContentProps) {
-  const visibleAlerts = alerts.slice(0, POPUP_MAX_ALERTS)
   const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
 
   return (
@@ -439,9 +501,14 @@ export function RegionPopupContent({
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
-      <ActiveAlertsSection alerts={visibleAlerts} isLoading={alertsLoading} compact showRegion={false} />
-      <PopupMoreIndicator count={alerts.length - visibleAlerts.length} noun="alertas" />
-      <PopupSeismicSection items={visibleSeismic} />
+      <ActiveAlertsSection
+        alerts={alerts}
+        isLoading={alertsLoading}
+        compact
+        showRegion={false}
+        collapsedLimit={POPUP_MAX_ALERTS}
+      />
+      <PopupSeismicSection items={visibleSeismic} queryDate={queryDate} />
       <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
       {properties.composite_score != null && (
         <div>
@@ -461,10 +528,10 @@ export function ComunaPopupContent({
   alerts = [],
   seismicItems = [],
   alertsLoading = false,
+  queryDate = todayIsoDate(),
   onViewDetail,
   onClose,
 }: ComunaPopupContentProps) {
-  const visibleAlerts = alerts.slice(0, POPUP_MAX_ALERTS)
   const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
 
   return (
@@ -477,9 +544,14 @@ export function ComunaPopupContent({
       compositeScore={properties.composite_score}
       accentColor={getRiskAccent(properties.severity, properties.composite_score)}
     >
-      <ActiveAlertsSection alerts={visibleAlerts} isLoading={alertsLoading} compact showRegion={false} />
-      <PopupMoreIndicator count={alerts.length - visibleAlerts.length} noun="alertas" />
-      <PopupSeismicSection items={visibleSeismic} />
+      <ActiveAlertsSection
+        alerts={alerts}
+        isLoading={alertsLoading}
+        compact
+        showRegion={false}
+        collapsedLimit={POPUP_MAX_ALERTS}
+      />
+      <PopupSeismicSection items={visibleSeismic} queryDate={queryDate} />
       <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
       {properties.composite_score != null && (
         <div>
@@ -496,6 +568,7 @@ interface RegionPopupContentProps {
   alerts?: ActiveAlert[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
+  queryDate?: string
   onViewDetail?: () => void
   onClose?: () => void
 }
@@ -505,6 +578,7 @@ interface ComunaPopupContentProps {
   alerts?: ActiveAlert[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
+  queryDate?: string
   onViewDetail?: () => void
   onClose?: () => void
 }

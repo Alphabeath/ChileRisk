@@ -53,6 +53,7 @@ export interface ComunaProperties {
     risk_score: number
     magnitude: number
     occurred_at?: string | null
+    detail_url?: string | null
   } | null
 }
 

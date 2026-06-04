@@ -25,7 +25,7 @@ async def _sync_real_seismic_events():
     if not settings.use_real_csn:
         return
     async with async_session() as session:
-        inserted = await sync_recent_csn_events(session, hours=48)
+        inserted = await sync_recent_csn_events(session, hours=168)
         if inserted:
             logger.info("Synced %d new real seismic events from CSN (sismologia.cl)", inserted)
 
@@ -44,9 +44,13 @@ async def _sync_senapred_alerts():
         return
     try:
         async with async_session() as session:
-            inserted = await sync_senapred_alerts(session)
-        if inserted:
-            logger.info("Synced %d SERNAPRED alerts", inserted)
+            n_alertas, n_eventos = await sync_senapred_alerts(session)
+        if n_alertas or n_eventos:
+            logger.info(
+                "Synced %d SERNAPRED alertas + %d eventos (Sismos y otros)",
+                n_alertas,
+                n_eventos,
+            )
     except Exception as e:
         logger.exception("SERNAPRED sync failed: %s", e)
 

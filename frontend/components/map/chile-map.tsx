@@ -25,15 +25,22 @@ import {
   SeismicEventPopupContent,
 } from "./map-popup"
 import { useMapData } from "@/hooks/use-map-data"
-import { useActiveAlerts, useRecentEvents } from "@/hooks"
-import { filterAlertsForRegion, sortActiveAlerts } from "@/lib/alerts-display"
+import { useActiveAlerts, useQueryDate, useRecentEvents } from "@/hooks"
+import {
+  filterAlertsForComuna,
+  filterAlertsForRegion,
+  sortActiveAlerts,
+} from "@/lib/alerts-display"
 import {
   buildPopupSeismicItems,
   filterRecentEventsInGeometry,
 } from "@/lib/seismic-events"
 import { formatMagnitude, formatDepth } from "@/lib/format"
-import { getSeismicAccentColor } from "@/lib/seismic"
+import { mapRiskFillColorExpression } from "@/lib/risk-scale"
+import { getSeismicAccentColor, isSeismicPerceived } from "@/lib/seismic"
 import type { SeismicEvent } from "@/lib/types"
+
+const EMPTY_SEISMIC_EVENTS: SeismicEvent[] = []
 
 type Position = [number, number]
 type LinearRing = Position[]
@@ -121,10 +128,50 @@ export function ChileMap() {
   const latestEventsRef = useRef<SeismicEvent[]>([])
   const mapReadyRef = useRef(false)
 
-  const { loadRegions, loadComunas, isComunasLoading, fetchComunaRisk } = useMapData()
+  const {
+    loadRegions,
+    loadComunas,
+    refreshMapRisk,
+    isComunasLoading,
+    isRiskRefreshing,
+    fetchComunaRisk,
+  } = useMapData()
+  const { selectedDate } = useQueryDate()
 
-  const { data: recentEvents = [] } = useRecentEvents(24)
+  const { data: recentEventsData, isFetching: eventsFetching } = useRecentEvents()
+  const recentEvents = recentEventsData ?? EMPTY_SEISMIC_EVENTS
   const { data: allAlerts = [], isLoading: alertsLoading } = useActiveAlerts()
+
+  const selectedDateRef = useRef(selectedDate)
+  useEffect(() => {
+    selectedDateRef.current = selectedDate
+  }, [selectedDate])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!mapReadyRef.current || !map) return
+
+    let cancelled = false
+    void refreshMapRisk(selectedDate).then((result) => {
+      if (cancelled || !result) return
+      const regionsSource = map.getSource("regions") as maplibregl.GeoJSONSource | undefined
+      if (regionsSource && result.regions) {
+        regionsSource.setData(
+          result.regions as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
+        )
+      }
+      const comunasSource = map.getSource("comunas") as maplibregl.GeoJSONSource | undefined
+      if (comunasSource && result.comunas) {
+        comunasSource.setData(
+          result.comunas as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
+        )
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedDate, refreshMapRisk])
 
   const allAlertsRef = useRef(allAlerts)
   const recentEventsRef = useRef(recentEvents)
@@ -169,7 +216,10 @@ export function ChileMap() {
 
       let comunaWithRisk: ComunaProperties = props
       try {
-        const risk = await fetchComunaRisk(props.cod_comuna)
+        const risk = await fetchComunaRisk(
+          props.cod_comuna,
+          selectedDateRef.current
+        )
         comunaWithRisk = {
           ...props,
           composite_score: risk.composite_score,
@@ -186,8 +236,12 @@ export function ChileMap() {
       } catch {}
 
       const geometry = e.features?.[0]?.geometry
-      const regionAlerts = sortActiveAlerts(
-        filterAlertsForRegion(allAlertsRef.current, comunaWithRisk.codregion)
+      const comunaAlerts = sortActiveAlerts(
+        filterAlertsForComuna(
+          allAlertsRef.current,
+          comunaWithRisk.codregion,
+          comunaWithRisk.cod_comuna
+        )
       )
       const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry)
       const seismicItems = buildPopupSeismicItems(eventsInZone, comunaWithRisk.seismic_impact)
@@ -196,9 +250,10 @@ export function ChileMap() {
       const { element, destroy } = createPopupContent(
         <ComunaPopupContent
           properties={comunaWithRisk}
-          alerts={regionAlerts}
+          alerts={comunaAlerts}
           seismicItems={seismicItems}
           alertsLoading={alertsLoadingRef.current}
+          queryDate={selectedDateRef.current}
           onClose={dismissPopup}
         />
       )
@@ -241,6 +296,7 @@ export function ChileMap() {
           alerts={regionAlerts}
           seismicItems={seismicItems}
           alertsLoading={alertsLoadingRef.current}
+          queryDate={selectedDateRef.current}
           onClose={dismissPopup}
           onViewDetail={() => {
             dismissPopup()
@@ -292,15 +348,20 @@ export function ChileMap() {
     (map: maplibregl.Map, events: SeismicEvent[]) => {
       clearEventMarkers()
 
-      const strongEvents = events.filter(
-        (e) => typeof e.magnitude === "number" && e.magnitude >= 4.5 && e.longitude != null && e.latitude != null
-      )
+      const markerEvents = events.filter((e) => {
+        if (e.longitude == null || e.latitude == null || typeof e.magnitude !== "number") {
+          return false
+        }
+        return e.magnitude >= 4.5 || (isSeismicPerceived(e) && e.magnitude >= 3)
+      })
 
-      strongEvents.forEach((ev) => {
+      markerEvents.forEach((ev) => {
         const mag = ev.magnitude
+        const perceived = isSeismicPerceived(ev)
         const color = getSeismicAccentColor(mag)
-        // Larger marker for higher magnitude
-        const size = Math.min(48, 20 + (mag - 4) * 6)
+        const size = perceived && mag < 4.5
+          ? 22
+          : Math.min(48, 20 + (mag - 4) * 6)
 
         const el = document.createElement("div")
         el.className = "earthquake-marker"
@@ -373,7 +434,7 @@ export function ChileMap() {
     const map = mapRef.current
     if (!map || !mapReadyRef.current) return
     renderEarthquakeMarkers(map, recentEvents)
-  }, [recentEvents, renderEarthquakeMarkers])
+  }, [recentEventsData, selectedDate, eventsFetching, renderEarthquakeMarkers])
 
   useEffect(() => {
     const container = containerRef.current
@@ -409,7 +470,7 @@ export function ChileMap() {
       hideForeignLabels(map)
       mapReadyRef.current = true
 
-      const regionsGeojson = await loadRegions(REGIONS_DATA_URL)
+      const regionsGeojson = await loadRegions(REGIONS_DATA_URL, selectedDateRef.current)
       if (!regionsGeojson) return
 
       map.addSource("regions", { type: "geojson", data: regionsGeojson as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
@@ -420,17 +481,7 @@ export function ChileMap() {
         source: "regions",
         maxzoom: COMUNAS_MIN_ZOOM,
         paint: {
-          "fill-color": [
-            "step",
-            ["coalesce", ["get", "composite_score"], 35],
-            "#085e08",
-            35,
-            "#cc9e23",
-            55,
-            "#e07020",
-            75,
-            "#c23d3c",
-          ],
+          "fill-color": mapRiskFillColorExpression(),
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65],
         },
         filter: ["!=", ["get", "codregion"], 0],
@@ -524,11 +575,11 @@ export function ChileMap() {
 
       map.on("click", "region-fill", handleRegionClick)
 
-      loadComunas(COMUNAS_DATA_URL).then((comunasData) => {
+      loadComunas(COMUNAS_DATA_URL, selectedDateRef.current).then((comunasData) => {
         if (!comunasData || map.getSource("comunas")) return
 
         map.addSource("comunas", { type: "geojson", data: comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
-        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": ["step", ["coalesce", ["get", "composite_score"], 35], "#085e08", 35, "#cc9e23", 55, "#e07020", 75, "#c23d3c"], "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
+        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": mapRiskFillColorExpression(), "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
         map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
         map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
         if (map.getLayer("region-line")) {
@@ -576,13 +627,13 @@ export function ChileMap() {
         role="application"
         aria-label="Mapa interactivo de regiones y comunas de Chile"
       />
-      {isComunasLoading && (
+      {(isComunasLoading || isRiskRefreshing) && (
         <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 rounded-lg bg-slate-900/90 px-4 py-2 text-sm text-slate-200 shadow-lg backdrop-blur-sm transition-opacity duration-300">
           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
-          Cargando comunas...
+          {isComunasLoading ? "Cargando comunas..." : "Actualizando riesgo..."}
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ import {
   getPopupSeismicTitle,
   type PopupSeismicItem,
 } from "@/lib/seismic-events"
+import { formatSeismicEmptyForDate, todayIsoDate } from "@/lib/query-date"
 
 function formatWhen(iso: string): string {
   return new Date(iso).toLocaleString("es-CL", {
@@ -33,7 +34,16 @@ function SeismicRow({ item }: { item: PopupSeismicItem }) {
         aria-hidden
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[11px] font-medium leading-snug text-white/90">{title}</div>
+        <div
+          className={cn(
+            "truncate text-[11px] leading-snug text-white/90",
+            item.event.is_perceived || item.event.raw_data?.is_perceived
+              ? "font-semibold"
+              : "font-medium"
+          )}
+        >
+          {title}
+        </div>
         <div className="mt-0.5 font-mono text-[10px] tabular-nums text-white/55">{meta}</div>
         {item.event.occurred_at && (
           <div className="mt-0.5 flex items-center gap-1 font-mono text-[9px] text-white/40">
@@ -75,9 +85,11 @@ function SeismicRow({ item }: { item: PopupSeismicItem }) {
 export function PopupSeismicSection({
   items,
   isLoading = false,
+  queryDate = todayIsoDate(),
 }: {
   items: PopupSeismicItem[]
   isLoading?: boolean
+  queryDate?: string
 }) {
   const hasItems = items.length > 0
 
@@ -111,7 +123,7 @@ export function PopupSeismicSection({
         </div>
       ) : !hasItems ? (
         <p className="px-3.5 pb-2.5 text-[10px] leading-snug text-white/45">
-          Sin sismos significativos (M≥4.5) en las últimas 24 h en esta zona.
+          {formatSeismicEmptyForDate(queryDate)}
         </p>
       ) : (
         <div className="divide-y divide-white/[0.06]">

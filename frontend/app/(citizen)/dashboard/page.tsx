@@ -18,7 +18,7 @@ export default function DashboardPage() {
     isLoading: eventsLoading,
     error: eventsError,
     refetch: refetchEvents,
-  } = useRecentEvents(24)
+  } = useRecentEvents()
 
   const events = allEvents.slice(0, 8)
   const loading = risksLoading || eventsLoading
@@ -98,7 +98,7 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-          <p className="mt-3 text-[10px] text-muted-foreground">Fuente: GET /api/v1/events?hours=24 (datos mock del backend)</p>
+          <p className="mt-3 text-[10px] text-muted-foreground">Fuente: GET /api/v1/events?date=YYYY-MM-DD</p>
         </div>
       </div>
 

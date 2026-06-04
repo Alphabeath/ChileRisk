@@ -38,6 +38,17 @@ export interface RegionRisk {
   }>
 }
 
+export type AlertLevel = "preventiva" | "amarilla" | "naranja" | "roja" | "informativa"
+
+export interface SenapredAlertBrief {
+  id: string
+  record_kind: "alerta" | "evento"
+  title: string
+  level: AlertLevel
+  external_url?: string | null
+  hazard_type?: string | null
+}
+
 export interface SeismicEvent {
   id: number
   latitude: number
@@ -49,6 +60,11 @@ export interface SeismicEvent {
   source: string
   /** Informe CSN en sismologia.cl (cuando source=csn) */
   detail_url?: string | null
+  is_perceived?: boolean
+  intensity_report_url?: string | null
+  reported_intensity_max?: number | null
+  related_senapred_events?: SenapredAlertBrief[]
+  related_senapred_alerts?: SenapredAlertBrief[]
   raw_data?: Record<string, unknown> | null
 }
 
@@ -61,7 +77,15 @@ export interface EventImpact {
 }
 
 export type AlertSource = "senapred" | "chilerisk"
-export type AlertLevel = "preventiva" | "amarilla" | "naranja" | "roja"
+export type AffectedScope = "region" | "comuna" | "unknown"
+export type RecordKind = "alerta" | "evento"
+export type HazardType =
+  | "sismo"
+  | "volcan"
+  | "incendio"
+  | "incendio_estructural"
+  | "remocion"
+  | "otros"
 
 export interface ActiveAlert {
   id: string
@@ -76,12 +100,18 @@ export interface ActiveAlert {
   synced_at: string
   region_code: number | null
   region_name: string | null
+  affected_scope?: AffectedScope
+  comuna_codes?: number[]
   is_monitor: boolean
   parent_id: string | null
+  /** Id SERNAPRED de la primera versión del hilo (actualizaciones encadenan parent_id). */
+  thread_root_id?: string | null
   composite_score?: number | null
   dominant_hazard?: string | null
   severity?: string | null
   risk_detail?: string | null
+  record_kind?: RecordKind
+  hazard_type?: HazardType | string | null
 }
 
 /** @deprecated Use ActiveAlert */
@@ -90,6 +120,8 @@ export type SenapredAlert = ActiveAlert
 export interface ActiveAlertParams {
   region?: number
   level?: AlertLevel
+  /** Día calendario Chile (YYYY-MM-DD) */
+  date?: string
 }
 
 /** @deprecated Use ActiveAlertParams */
@@ -116,6 +148,7 @@ export interface ComunaRisk {
     risk_score: number
     magnitude: number
     occurred_at?: string | null
+    detail_url?: string | null
   } | null
 }
 

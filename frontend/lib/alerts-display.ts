@@ -1,7 +1,15 @@
-import type { ActiveAlert, AlertLevel, AlertSource } from "@/lib/types"
+import type { ActiveAlert, AffectedScope, AlertLevel, AlertSource } from "@/lib/types"
 
 const ALERT_SOURCES: AlertSource[] = ["senapred", "chilerisk"]
-const ALERT_LEVELS: AlertLevel[] = ["preventiva", "amarilla", "naranja", "roja"]
+const AFFECTED_SCOPES: AffectedScope[] = ["region", "comuna", "unknown"]
+
+const ALERT_LEVELS: AlertLevel[] = [
+  "preventiva",
+  "amarilla",
+  "naranja",
+  "roja",
+  "informativa",
+]
 
 /** Maps legacy API payloads (sin `source`, con `senapred_url`) al contrato unificado. */
 export function normalizeActiveAlert(raw: unknown): ActiveAlert {
@@ -36,12 +44,26 @@ export function normalizeActiveAlert(raw: unknown): ActiveAlert {
     synced_at: typeof r.synced_at === "string" ? r.synced_at : new Date().toISOString(),
     region_code: typeof r.region_code === "number" ? r.region_code : null,
     region_name: typeof r.region_name === "string" ? r.region_name : null,
+    affected_scope: AFFECTED_SCOPES.includes(r.affected_scope as AffectedScope)
+      ? (r.affected_scope as AffectedScope)
+      : "unknown",
+    comuna_codes: Array.isArray(r.comuna_codes)
+      ? r.comuna_codes.filter((c): c is number => typeof c === "number")
+      : [],
     is_monitor: Boolean(r.is_monitor),
     parent_id: typeof r.parent_id === "string" ? r.parent_id : null,
+    thread_root_id:
+      typeof r.thread_root_id === "string" ? r.thread_root_id : null,
     composite_score: typeof r.composite_score === "number" ? r.composite_score : null,
     dominant_hazard: typeof r.dominant_hazard === "string" ? r.dominant_hazard : null,
     severity: typeof r.severity === "string" ? r.severity : null,
     risk_detail: typeof r.risk_detail === "string" ? r.risk_detail : null,
+    record_kind:
+      r.record_kind === "evento" || r.record_kind === "alerta"
+        ? r.record_kind
+        : "alerta",
+    hazard_type:
+      typeof r.hazard_type === "string" ? r.hazard_type : null,
   }
 }
 
@@ -73,6 +95,11 @@ export const ALERT_LEVEL_META: Record<
     label: "Roja",
     hex: "#DA291C",
     badge: "bg-[#DA291C]/15 text-[#ff9a9a] border-[#DA291C]/45",
+  },
+  informativa: {
+    label: "Informativo",
+    hex: "#64748b",
+    badge: "bg-slate-500/10 text-slate-300 border-slate-400/35",
   },
 }
 
@@ -135,6 +162,14 @@ const LEVEL_TO_SEVERITY: Record<AlertLevel, ChileRiskSeverity> = {
   naranja: "alto",
   amarilla: "moderado",
   preventiva: "moderado",
+  informativa: "moderado",
+}
+
+export function senapredSourceLabel(alert: ActiveAlert): string {
+  if (alert.source !== "senapred") return ALERT_SOURCE_META.chilerisk.label
+  return alert.record_kind === "evento"
+    ? "SERNAPRED · Evento"
+    : "SERNAPRED · Alerta"
 }
 
 export function formatHazardLabel(
@@ -231,6 +266,33 @@ export function filterAlertsForRegion(
   return alerts.filter(
     (a) => a.region_code == null || a.region_code === codregion
   )
+}
+
+export function alertAppliesToComuna(
+  alert: ActiveAlert,
+  codregion: number,
+  codComuna: number
+): boolean {
+  if (alert.region_code != null && alert.region_code !== codregion) return false
+  if (alert.source === "chilerisk") {
+    return alert.region_code == null || alert.region_code === codregion
+  }
+  const scope = alert.affected_scope ?? "unknown"
+  if (scope === "region") {
+    return alert.region_code == null || alert.region_code === codregion
+  }
+  if (scope === "comuna") {
+    return (alert.comuna_codes ?? []).includes(codComuna)
+  }
+  return false
+}
+
+export function filterAlertsForComuna(
+  alerts: ActiveAlert[],
+  codregion: number,
+  codComuna: number
+): ActiveAlert[] {
+  return alerts.filter((a) => alertAppliesToComuna(a, codregion, codComuna))
 }
 
 /** @deprecated Use sortActiveAlerts */

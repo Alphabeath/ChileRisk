@@ -1,6 +1,15 @@
 "use client"
 
-import { AlertTriangle, CheckCircle2, Clock, ExternalLink, Eye, MapPin } from "lucide-react"
+import { useEffect, useState } from "react"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  Clock,
+  ExternalLink,
+  Eye,
+  MapPin,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   ALERT_LEVEL_META,
@@ -8,6 +17,7 @@ import {
   CHILERISK_SEVERITY_META,
   getActiveAlertMainText,
   resolveChileRiskSeverity,
+  senapredSourceLabel,
   shortenRegionName,
   timeAgo,
 } from "@/lib/alerts-display"
@@ -48,11 +58,13 @@ export function ChileRiskSeverityBadge({ alert }: { alert: ActiveAlert }) {
 }
 
 /** Fuente (SERNAPRED / ChileRisk). */
-export function AlertSourceBadge({ source }: { source: ActiveAlert["source"] }) {
-  const meta = ALERT_SOURCE_META[source] ?? ALERT_SOURCE_META.senapred
+export function AlertSourceBadge({ alert }: { alert: ActiveAlert }) {
+  const meta = ALERT_SOURCE_META[alert.source] ?? ALERT_SOURCE_META.senapred
+  const label =
+    alert.source === "senapred" ? senapredSourceLabel(alert) : meta.label
   return (
     <span className={cn(ALERT_BADGE_CLASS, "font-mono tracking-[1px]", meta.badge)}>
-      {meta.label}
+      {label}
     </span>
   )
 }
@@ -158,7 +170,7 @@ export function ActiveAlertCard({
         ) : (
           <AlertLevelBadge level={alert.level} />
         )}
-        <AlertSourceBadge source={alert.source} />
+        <AlertSourceBadge alert={alert} />
         {alert.is_monitor && alert.source === "senapred" && (
           <span className="inline-flex items-center gap-1 text-[8px] uppercase tracking-wider text-cyan-300/80">
             <Eye className="size-2.5" />
@@ -185,14 +197,27 @@ export function ActiveAlertsSection({
   isLoading = false,
   compact = false,
   showRegion = false,
+  collapsedLimit,
 }: {
   alerts: ActiveAlert[]
   isLoading?: boolean
   compact?: boolean
   /** @deprecated El pie unificado siempre muestra ubicación cuando la trae la alerta. */
   showRegion?: boolean
+  /** Si se define, muestra solo N alertas hasta expandir. */
+  collapsedLimit?: number
 }) {
   const hasAlerts = alerts.length > 0
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    setExpanded(false)
+  }, [alerts.length, collapsedLimit])
+
+  const canCollapse =
+    collapsedLimit != null && alerts.length > collapsedLimit && !expanded
+  const displayedAlerts = canCollapse ? alerts.slice(0, collapsedLimit) : alerts
+  const hiddenCount = canCollapse ? alerts.length - collapsedLimit! : 0
 
   return (
     <section className="border-t border-white/[0.07]" aria-labelledby="popup-active-alerts-heading">
@@ -202,7 +227,7 @@ export function ActiveAlertsSection({
           className="flex items-center gap-1.5 font-mono text-[9px] font-semibold uppercase tracking-[1.3px] text-white/55"
         >
           <AlertTriangle className="size-3 shrink-0 text-[#DA291C]/80" />
-          Alertas activas
+          Alertas
         </h4>
         {!isLoading && (
           <span
@@ -228,15 +253,38 @@ export function ActiveAlertsSection({
           Sin alertas activas en esta zona
         </div>
       ) : (
-        <div className="divide-y divide-white/[0.06]">
-          {alerts.map((alert) => (
-            <ActiveAlertCard
-              key={`${alert.source}-${alert.id}`}
-              alert={alert}
-              compact={compact}
-            />
-          ))}
-        </div>
+        <>
+          <div className="divide-y divide-white/[0.06]">
+            {displayedAlerts.map((alert) => (
+              <ActiveAlertCard
+                key={`${alert.source}-${alert.id}`}
+                alert={alert}
+                compact={compact}
+                showRegion={showRegion}
+              />
+            ))}
+          </div>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="flex w-full items-center justify-center gap-1 border-t border-white/[0.06] px-3 py-2 font-mono text-[9px] font-semibold uppercase tracking-wider text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+            >
+              Ver todas ({alerts.length})
+              <ChevronDown className="size-3" aria-hidden />
+            </button>
+          )}
+          {expanded && collapsedLimit != null && alerts.length > collapsedLimit && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="flex w-full items-center justify-center gap-1 border-t border-white/[0.06] px-3 py-2 font-mono text-[9px] font-semibold uppercase tracking-wider text-white/45 transition-colors hover:bg-white/[0.04] hover:text-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+            >
+              Mostrar menos
+              <ChevronDown className="size-3 rotate-180" aria-hidden />
+            </button>
+          )}
+        </>
       )}
     </section>
   )

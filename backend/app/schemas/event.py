@@ -3,6 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.schemas.alert import SenapredAlertBrief
+
 
 class SeismicEventResponse(BaseModel):
     id: int
@@ -14,6 +16,11 @@ class SeismicEventResponse(BaseModel):
     occurred_at_local: datetime | None = None
     source: str
     detail_url: str | None = None
+    is_perceived: bool = False
+    intensity_report_url: str | None = None
+    reported_intensity_max: float | None = None
+    related_senapred_events: list[SenapredAlertBrief] = Field(default_factory=list)
+    related_senapred_alerts: list[SenapredAlertBrief] = Field(default_factory=list)
     raw_data: dict[str, Any] | None = None
 
 

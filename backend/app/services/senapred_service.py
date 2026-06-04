@@ -5,13 +5,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.data.region_name_to_code import resolve as resolve_region_code
+from app.services.mercalli_utils import extract_max_mercalli_from_html
+from app.services.senapred_geography import infer_geography
 from app.models.senapred_alert import SenapredAlert
 from app.services.aws_sigv4 import (
     CognitoIdentityClient,
@@ -27,12 +29,11 @@ _LEVEL_FROM_CODE: dict[str, str] = {
     "a": "amarilla",
     "n": "naranja",
     "r": "roja",
+    "az": "informativa",
 }
 
 _CANCEL_RE = re.compile(r"cancel", re.IGNORECASE)
 _MONITOR_RE = re.compile(r"monitoreo", re.IGNORECASE)
-_DECLARE_RE = re.compile(r"se\s+declara|se\s+actualiza", re.IGNORECASE)
-
 
 _cognito_client: CognitoIdentityClient | None = None
 
@@ -47,20 +48,38 @@ def _get_cognito_client() -> CognitoIdentityClient:
     return _cognito_client
 
 
-def _map_level(codigo: str | None) -> str:
+def _map_level(codigo: str | None, *, kind: str = "alerta") -> str:
     if not codigo:
-        return "preventiva"
-    return _LEVEL_FROM_CODE.get(codigo.lower().strip(), "preventiva")
+        return "informativa" if kind == "evento" else "preventiva"
+    code = codigo.lower().strip()
+    if code in _LEVEL_FROM_CODE:
+        return _LEVEL_FROM_CODE[code]
+    return "informativa" if kind == "evento" else "preventiva"
 
 
-def _is_active(title: str, raw: dict) -> bool:
+def normalize_hazard_type(category: str | None) -> str | None:
+    if not category:
+        return None
+    c = category.lower()
+    if "sismo" in c or "sísm" in c:
+        return "sismo"
+    if "volcan" in c or "volcán" in c:
+        return "volcan"
+    if "incendio" in c:
+        return "incendio_estructural" if "estructural" in c else "incendio"
+    if "remoci" in c or "desliz" in c:
+        return "remocion"
+    return "otros"
+
+
+def _is_active(title: str, raw: dict, *, kind: str = "alerta") -> bool:
     if not raw.get("isActive", True):
-        return False
-    if not raw.get("isPrincipal", True):
         return False
     if raw.get("isDeleted", False):
         return False
     if _CANCEL_RE.search(title or ""):
+        return False
+    if kind == "alerta" and not raw.get("isPrincipal", True):
         return False
     return True
 
@@ -69,51 +88,116 @@ def _is_monitor(title: str) -> bool:
     return bool(_MONITOR_RE.search(title or ""))
 
 
-def _parse_alert(raw: dict) -> dict[str, Any] | None:
-    senapred_id = raw.get("id")
-    title = raw.get("titulo")
-    if not senapred_id or not title:
-        return None
-
-    meta_str = raw.get("metaData") or "{}"
-    try:
-        meta = json.loads(meta_str) if isinstance(meta_str, str) else (meta_str or {})
-    except (json.JSONDecodeError, TypeError):
-        meta = {}
-
-    region_name = (meta.get("regiones") or "").strip() or None
-    region_code = resolve_region_code(region_name) if region_name else None
-
+def _parse_issued_at(raw: dict) -> datetime:
     issued_raw = raw.get("fechaHora")
     if isinstance(issued_raw, str):
         try:
             issued_at = datetime.fromisoformat(issued_raw.replace("Z", "+00:00"))
             if issued_at.tzinfo is None:
                 issued_at = issued_at.replace(tzinfo=timezone.utc)
+            return issued_at
         except ValueError:
-            issued_at = datetime.now(timezone.utc)
+            pass
     elif isinstance(issued_raw, datetime):
-        issued_at = issued_raw if issued_raw.tzinfo else issued_raw.replace(tzinfo=timezone.utc)
-    else:
-        issued_at = datetime.now(timezone.utc)
+        return issued_raw if issued_raw.tzinfo else issued_raw.replace(tzinfo=timezone.utc)
+    return datetime.now(timezone.utc)
+
+
+def _parse_meta(raw: dict) -> dict:
+    meta_str = raw.get("metaData") or "{}"
+    try:
+        return json.loads(meta_str) if isinstance(meta_str, str) else (meta_str or {})
+    except (json.JSONDecodeError, TypeError):
+        return {}
+
+
+def _parse_record(raw: dict, *, kind: str) -> dict[str, Any] | None:
+    senapred_id = raw.get("id")
+    title = raw.get("titulo")
+    if not senapred_id or not title:
+        return None
+
+    meta = _parse_meta(raw)
+    region_name_raw = (meta.get("regiones") or "").strip() or None
+    region_name = region_name_raw[:128] if region_name_raw else None
+    region_code = resolve_region_code(region_name_raw) if region_name_raw else None
+    title_stripped = title.strip()
+    content_raw = raw.get("contenido")
+    content_str = content_raw if isinstance(content_raw, str) else None
+    affected_scope, comuna_codes = infer_geography(
+        title_stripped, content_str, region_code
+    )
+    category = (meta.get("nombreVariable") or "").strip()[:128] or None
+    url_access = raw.get("urlAccess")
+    if isinstance(url_access, str):
+        url_access = url_access[:512] or None
+
+    if content_str and category and category.lower() == "sismo":
+        mercalli = extract_max_mercalli_from_html(content_str)
+        if mercalli:
+            meta["max_mercalli"], meta["mercalli_by_city"] = mercalli
 
     return {
         "senapred_id": senapred_id,
-        "kind": "alerta",
-        "level": _map_level(meta.get("codigoAlertaEvento")),
-        "title": title.strip()[:500],
-        "content": raw.get("contenido"),
-        "url_access": raw.get("urlAccess"),
-        "category": (meta.get("nombreVariable") or "").strip()[:128] or None,
-        "is_active": _is_active(title, raw),
+        "kind": kind,
+        "level": _map_level(meta.get("codigoAlertaEvento"), kind=kind),
+        "title": title_stripped[:500],
+        "content": content_raw,
+        "url_access": url_access,
+        "category": category,
+        "is_active": _is_active(title, raw, kind=kind),
         "is_monitor": _is_monitor(title),
         "parent_id": (raw.get("parentId") or None) if raw.get("parentId") not in (None, "parent") else None,
-        "senapred_issued_at": issued_at,
+        "senapred_issued_at": _parse_issued_at(raw),
         "region_code": region_code,
         "region_name": region_name,
+        "affected_scope": affected_scope,
+        "comuna_codes": comuna_codes,
         "meta_data": meta,
         "raw": raw,
     }
+
+
+def _parse_alert(raw: dict) -> dict[str, Any] | None:
+    return _parse_record(raw, kind="alerta")
+
+
+def _parse_evento(raw: dict) -> dict[str, Any] | None:
+    return _parse_record(raw, kind="evento")
+
+
+def senapred_thread_root(
+    row: SenapredAlert, by_id: dict[str, SenapredAlert]
+) -> str:
+    """Oldest senapred_id in an update chain (parentId links versiones sucesivas)."""
+    root_id = row.senapred_id
+    parent_id = row.parent_id
+    seen: set[str] = {root_id}
+    while parent_id and parent_id not in seen:
+        seen.add(parent_id)
+        if parent_id in by_id:
+            root_id = parent_id
+            parent_id = by_id[parent_id].parent_id
+        else:
+            root_id = parent_id
+            break
+    return root_id
+
+
+def pick_latest_senapred_per_thread(
+    rows: list[SenapredAlert],
+) -> list[SenapredAlert]:
+    """Una fila por hilo de actualización: conserva la versión con issued_at más reciente."""
+    if len(rows) <= 1:
+        return list(rows)
+    by_id = {r.senapred_id: r for r in rows}
+    best: dict[tuple[str, str], SenapredAlert] = {}
+    for row in rows:
+        key = (row.kind, senapred_thread_root(row, by_id))
+        prev = best.get(key)
+        if prev is None or row.senapred_issued_at > prev.senapred_issued_at:
+            best[key] = row
+    return list(best.values())
 
 
 _LIST_QUERY = """
@@ -150,13 +234,50 @@ query ListAlertas($fechaHora: ModelStringKeyConditionInput, $filter: ModelAlerta
 }
 """
 
+_LIST_EVENTOS_QUERY = """
+query ListEventos($fechaHora: ModelStringKeyConditionInput, $filter: ModelEventoFilterInput, $limit: Int, $nextToken: String, $sortDirection: ModelSortDirection) {
+  eventosByDate(
+    type: "Evento"
+    fechaHora: $fechaHora
+    sortDirection: $sortDirection
+    filter: $filter
+    limit: $limit
+    nextToken: $nextToken
+  ) {
+    items {
+      id
+      titulo
+      contenido
+      fechaHora
+      autor
+      isActive
+      isDeleted
+      isPrincipal
+      type
+      urlAccess
+      parentId
+      metaData
+      createdAt
+      updatedAt
+    }
+    nextToken
+  }
+}
+"""
 
-async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> list[dict]:
+
+async def _fetch_paginated(
+    *,
+    query: str,
+    data_key: str,
+    lookback_days: int,
+    max_pages: int,
+) -> list[dict]:
     cognito = _get_cognito_client()
     creds = await cognito.get_credentials()
-
-    cutoff_date = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
-
+    cutoff_date = (datetime.now(timezone.utc) - timedelta(days=lookback_days)).strftime(
+        "%Y-%m-%dT%H:%M:%S.000Z"
+    )
     variables: dict[str, Any] = {
         "fechaHora": {"ge": cutoff_date},
         "filter": {"isDeleted": {"eq": False}},
@@ -164,13 +285,12 @@ async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> 
         "limit": 100,
         "nextToken": None,
     }
-
     all_items: list[dict] = []
     endpoint = settings.senapred_appsync_endpoint
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         for page in range(max_pages):
-            payload = json.dumps({"query": _LIST_QUERY, "variables": variables}).encode()
+            payload = json.dumps({"query": query, "variables": variables}).encode()
             headers = sign_appsync_request(
                 method="POST",
                 url=endpoint,
@@ -181,63 +301,74 @@ async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> 
             try:
                 resp = await client.post(endpoint, headers=headers, content=payload)
             except httpx.HTTPError as e:
-                logger.error("SERNAPRED fetch HTTP error page %d: %s", page, e)
+                logger.error("SERNAPRED fetch HTTP error page %d (%s): %s", page, data_key, e)
                 break
 
             if resp.status_code != 200:
-                logger.error("SERNAPRED fetch status %d page %d: %s", resp.status_code, page, resp.text[:300])
+                logger.error(
+                    "SERNAPRED fetch status %d page %d (%s): %s",
+                    resp.status_code,
+                    page,
+                    data_key,
+                    resp.text[:300],
+                )
                 break
 
             try:
                 body = resp.json()
             except json.JSONDecodeError:
-                logger.error("SERNAPRED fetch invalid JSON page %d: %s", page, resp.text[:200])
+                logger.error("SERNAPRED invalid JSON page %d (%s)", page, data_key)
                 break
 
             if is_credential_error(body):
-                logger.warning("SERNAPRED returned credential error — forcing refresh")
+                logger.warning("SERNAPRED credential error (%s) — refresh", data_key)
                 cognito._creds = None
                 creds = await cognito.get_credentials()
                 continue
 
             errors = body.get("errors")
             if errors:
-                logger.error("SERNAPRED GraphQL errors page %d: %s", page, errors[:1])
+                logger.error("SERNAPRED GraphQL errors (%s): %s", data_key, errors[:1])
                 break
 
-            page_data = (body.get("data") or {}).get("alertasByDate") or {}
+            page_data = (body.get("data") or {}).get(data_key) or {}
             items = page_data.get("items") or []
             all_items.extend(items)
-            logger.info("SERNAPRED page %d returned %d items", page, len(items))
+            logger.info("SERNAPRED %s page %d: %d items", data_key, page, len(items))
 
             next_token = page_data.get("nextToken")
             if not next_token or not items:
                 break
             variables["nextToken"] = next_token
 
-    logger.info("SERNAPRED fetch total: %d raw items", len(all_items))
+    logger.info("SERNAPRED %s total: %d raw items", data_key, len(all_items))
     return all_items
 
 
-async def sync_senapred_alerts(session: AsyncSession) -> int:
-    raws = await fetch_senapred_alerts(lookback_days=settings.senapred_lookback_days)
-    if not raws:
-        return 0
+async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> list[dict]:
+    return await _fetch_paginated(
+        query=_LIST_QUERY,
+        data_key="alertasByDate",
+        lookback_days=lookback_days,
+        max_pages=max_pages,
+    )
 
-    parsed: list[dict] = []
-    for r in raws:
-        p = _parse_alert(r)
-        if p:
-            parsed.append(p)
 
+async def fetch_senapred_eventos(lookback_days: int = 7, max_pages: int = 20) -> list[dict]:
+    return await _fetch_paginated(
+        query=_LIST_EVENTOS_QUERY,
+        data_key="eventosByDate",
+        lookback_days=lookback_days,
+        max_pages=max_pages,
+    )
+
+
+async def _upsert_parsed(session: AsyncSession, parsed: list[dict]) -> None:
     if not parsed:
-        return 0
-
+        return
     dialect = session.bind.dialect.name if session.bind else "sqlite"
     insert_stmt = (
-        pg_insert(SenapredAlert)
-        if dialect == "postgresql"
-        else sqlite_insert(SenapredAlert)
+        pg_insert(SenapredAlert) if dialect == "postgresql" else sqlite_insert(SenapredAlert)
     )
     insert_stmt = insert_stmt.values(parsed)
     update_cols = {
@@ -252,21 +383,61 @@ async def sync_senapred_alerts(session: AsyncSession) -> int:
     )
     await session.execute(upsert)
 
-    existing_ids = {p["senapred_id"] for p in parsed}
+
+async def _prune_stale(
+    session: AsyncSession,
+    *,
+    kind: str,
+    existing_ids: set[str],
+    lookback_days: int,
+) -> int:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=lookback_days + 1)
     result = await session.execute(
         select(SenapredAlert.senapred_id).where(
-            SenapredAlert.senapred_issued_at
-            >= datetime.now(timezone.utc) - timedelta(days=settings.senapred_lookback_days + 1)
+            SenapredAlert.kind == kind,
+            SenapredAlert.senapred_issued_at >= cutoff,
         )
     )
     stale_ids = [r for r, in result.all() if r not in existing_ids]
     if stale_ids:
-        from sqlalchemy import delete
         await session.execute(
             delete(SenapredAlert).where(SenapredAlert.senapred_id.in_(stale_ids))
         )
-        logger.info("Pruned %d stale SERNAPRED alerts", len(stale_ids))
+        logger.info("Pruned %d stale SERNAPRED %s records", len(stale_ids), kind)
+    return len(stale_ids)
+
+
+async def sync_senapred_alerts(session: AsyncSession) -> tuple[int, int]:
+    """Sync alertas (ATP) and eventos (Sismos y otros). Returns (n_alertas, n_eventos)."""
+    lookback = settings.senapred_lookback_days
+
+    alert_raws = await fetch_senapred_alerts(lookback_days=lookback)
+    evento_raws = await fetch_senapred_eventos(lookback_days=lookback)
+
+    alert_parsed = [p for r in alert_raws if (p := _parse_alert(r))]
+    evento_parsed = [p for r in evento_raws if (p := _parse_evento(r))]
+
+    await _upsert_parsed(session, alert_parsed + evento_parsed)
+
+    if alert_parsed:
+        await _prune_stale(
+            session,
+            kind="alerta",
+            existing_ids={p["senapred_id"] for p in alert_parsed},
+            lookback_days=lookback,
+        )
+    if evento_parsed:
+        await _prune_stale(
+            session,
+            kind="evento",
+            existing_ids={p["senapred_id"] for p in evento_parsed},
+            lookback_days=lookback,
+        )
 
     await session.commit()
-    logger.info("Upserted %d SERNAPRED alerts", len(parsed))
-    return len(parsed)
+    logger.info(
+        "Upserted %d SERNAPRED alertas + %d eventos",
+        len(alert_parsed),
+        len(evento_parsed),
+    )
+    return len(alert_parsed), len(evento_parsed)

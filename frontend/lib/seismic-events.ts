@@ -61,6 +61,7 @@ export function buildPopupSeismicItems(
           depth_km: 0,
           occurred_at: seismicImpact.occurred_at ?? new Date(0).toISOString(),
           source: "impact",
+          detail_url: seismicImpact.detail_url,
         },
         distanceKm: seismicImpact.distance_km,
         estimatedIntensity: seismicImpact.estimated_intensity,

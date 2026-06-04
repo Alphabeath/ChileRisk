@@ -11,6 +11,7 @@ import {
 } from "lucide-react"
 import { useActiveAlerts, useDraggablePanel } from "@/hooks"
 import { sortActiveAlerts } from "@/lib/alerts-display"
+import { MAP_PANEL_DEFAULT_TOP_PX } from "@/lib/citizen-layout"
 import { cn } from "@/lib/utils"
 import { ActiveAlertCard } from "./alert-ui"
 
@@ -56,7 +57,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-const DEFAULT_POS = { x: 16, y: 80 }
+const DEFAULT_POS = { x: 16, y: MAP_PANEL_DEFAULT_TOP_PX }
 
 export function ActiveAlertsPanel() {
   const [open, setOpen] = useState(false)
@@ -66,7 +67,12 @@ export function ActiveAlertsPanel() {
   const { data: alerts = [], isLoading, error, refetch } = useActiveAlerts()
 
   const sorted = useMemo(() => sortActiveAlerts(alerts), [alerts])
-  const senapredCount = sorted.filter((a) => a.source === "senapred").length
+  const senapredAlerts = sorted.filter(
+    (a) => a.source === "senapred" && (a.record_kind ?? "alerta") === "alerta"
+  ).length
+  const senapredEventos = sorted.filter(
+    (a) => a.source === "senapred" && a.record_kind === "evento"
+  ).length
   const chileriskCount = sorted.filter((a) => a.source === "chilerisk").length
 
   const hasAlerts = sorted.length > 0
@@ -75,7 +81,7 @@ export function ActiveAlertsPanel() {
   return (
     <aside
       ref={ref}
-      className="fixed left-4 top-20 z-20 flex w-[320px] max-w-[calc(100vw-2rem)] max-h-[min(380px,42dvh)] flex-col border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl"
+      className="z-20 flex w-[320px] max-w-[calc(100vw-2rem)] max-h-[min(380px,42dvh)] flex-col border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl"
       style={style}
       aria-label="Alertas activas SERNAPRED y ChileRisk"
     >
@@ -101,11 +107,14 @@ export function ActiveAlertsPanel() {
           </div>
           <div className="min-w-0 flex-1">
             <span className="block text-[10.5px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              Alertas activas
+              Alertas
             </span>
             {hasAlerts && (
               <span className="mt-0.5 block font-mono text-[9px] text-white/45">
-                {senapredCount} SERNAPRED · {chileriskCount} ChileRisk
+                {senapredAlerts} alertas
+                {senapredEventos > 0 ? ` · ${senapredEventos} eventos` : ""}
+                {" · "}
+                {chileriskCount} ChileRisk
               </span>
             )}
           </div>

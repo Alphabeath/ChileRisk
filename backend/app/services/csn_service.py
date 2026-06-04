@@ -20,6 +20,10 @@ CATALOG_PATH = "/sismicidad/catalogo"
 MAGNITUDE_RE = re.compile(r"(\d+\.?\d*)\s*(ML|Mw|MLv|Mlw|mb)", re.IGNORECASE)
 LATLON_RE = re.compile(r"(-?\d+\.?\d*)")
 DATETIME_RE = re.compile(r"(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})")
+SENAPRED_EVENTO_RE = re.compile(
+    r'href=["\'](https?://(?:www\.)?senapred\.cl/evento/[^"\']+)["\']',
+    re.IGNORECASE,
+)
 
 
 def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
@@ -82,6 +86,11 @@ def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
     depth_match = re.search(r"(\d+\.?\d*)", depth_text)
     depth_km = float(depth_match.group(1)) if depth_match else 30.0
 
+    row_classes = row.get("class") or []
+    if isinstance(row_classes, str):
+        row_classes = row_classes.split()
+    is_perceived = "percibido" in row_classes
+
     raw = {
         "local_time": local_match.group(1) if local_match else None,
         "utc_time": utc_match.group(1),
@@ -93,6 +102,7 @@ def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
         "magnitude_type": mag_type,
         "source_url": f"{CSN_BASE}{CATALOG_PATH}",
         "detail_url": detail_url,
+        "is_perceived": is_perceived,
     }
 
     return {
@@ -105,6 +115,24 @@ def _parse_catalog_row(row: Tag) -> dict[str, Any] | None:
         "source": "csn",
         "raw_data": raw,
     }
+
+
+async def _fetch_csn_detail_enrichment(
+    client: httpx.AsyncClient, detail_url: str
+) -> dict[str, Any]:
+    out: dict[str, Any] = {}
+    try:
+        resp = await client.get(detail_url, timeout=25.0, follow_redirects=True)
+        resp.raise_for_status()
+    except (httpx.HTTPError, httpx.TimeoutException):
+        logger.warning("CSN detail fetch failed: %s", detail_url)
+        return out
+
+    match = SENAPRED_EVENTO_RE.search(resp.text)
+    if match:
+        out["intensity_report_url"] = match.group(1)
+
+    return out
 
 
 def _build_catalog_url(date: datetime) -> str:
@@ -150,25 +178,15 @@ async def _fetch_catalog_day(
     return events
 
 
-async def fetch_recent_earthquakes(hours: int = 48) -> list[dict]:
-    now = datetime.now(timezone.utc)
-    cutoff = now - timedelta(hours=hours)
-    all_events: list[dict] = []
+def _catalog_days_for_hours(hours: int) -> int:
+    """CSN publishes daily pages; fetch enough days to cover the lookback window."""
+    return min(8, max(3, (hours + 23) // 24))
 
-    async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
-        for delta in range(0, 3):
-            day = now - timedelta(days=delta)
-            day_events = await _fetch_catalog_day(client, day)
-            for ev in day_events:
-                if ev["occurred_at"] >= cutoff:
-                    all_events.append(ev)
 
-            if delta < 2:
-                await asyncio.sleep(1.2)
-
+def _dedupe_catalog_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[tuple] = set()
-    unique = []
-    for e in sorted(all_events, key=lambda x: x["occurred_at"], reverse=True):
+    unique: list[dict[str, Any]] = []
+    for e in sorted(events, key=lambda x: x["occurred_at"], reverse=True):
         key = (
             round(e["occurred_at"].timestamp()),
             round(e["magnitude"], 1),
@@ -178,8 +196,79 @@ async def fetch_recent_earthquakes(hours: int = 48) -> list[dict]:
         if key not in seen:
             seen.add(key)
             unique.append(e)
+    return unique
 
-    return unique[:100]
+
+def _limit_catalog_events(
+    events: list[dict[str, Any]],
+    *,
+    max_total: int = 300,
+    significant_magnitude: float = 4.5,
+) -> list[dict[str, Any]]:
+    """Never drop M≥4.5 (or perceived) events when capping catalog size."""
+    unique = _dedupe_catalog_events(events)
+    significant: list[dict[str, Any]] = []
+    other: list[dict[str, Any]] = []
+    for e in unique:
+        raw = e.get("raw_data") or {}
+        if e["magnitude"] >= significant_magnitude or raw.get("is_perceived"):
+            significant.append(e)
+        else:
+            other.append(e)
+    if len(significant) >= max_total:
+        return significant
+    return significant + other[: max_total - len(significant)]
+
+
+async def fetch_recent_earthquakes(hours: int = 48) -> list[dict]:
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=hours)
+    all_events: list[dict] = []
+    catalog_days = _catalog_days_for_hours(hours)
+
+    async with httpx.AsyncClient(timeout=25.0, follow_redirects=True) as client:
+        perceived_urls: list[str] = []
+        for delta in range(0, catalog_days):
+            day = now - timedelta(days=delta)
+            day_events = await _fetch_catalog_day(client, day)
+            for ev in day_events:
+                if ev["occurred_at"] >= cutoff:
+                    all_events.append(ev)
+                    raw = ev.get("raw_data") or {}
+                    if raw.get("is_perceived") and raw.get("detail_url"):
+                        perceived_urls.append(raw["detail_url"])
+
+            if delta < catalog_days - 1:
+                await asyncio.sleep(1.2)
+
+        sem = asyncio.Semaphore(3)
+
+        async def enrich_one(detail_url: str) -> tuple[str, dict[str, Any]]:
+            async with sem:
+                extra = await _fetch_csn_detail_enrichment(client, detail_url)
+                return detail_url, extra
+
+        if perceived_urls:
+            results = await asyncio.gather(*(enrich_one(u) for u in perceived_urls))
+            by_url = dict(results)
+            for ev in all_events:
+                url = (ev.get("raw_data") or {}).get("detail_url")
+                if url and url in by_url:
+                    ev["raw_data"] = {**(ev.get("raw_data") or {}), **by_url[url]}
+
+    return _limit_catalog_events(all_events)
+
+
+async def _enrich_event_relations(session: AsyncSession, event: SeismicEvent) -> None:
+    from app.services.seismic_alert_match import find_related_senapred
+
+    event_ids, alert_ids = await find_related_senapred(session, event)
+    raw = dict(event.raw_data or {})
+    if event_ids:
+        raw["related_senapred_event_ids"] = event_ids
+    if alert_ids:
+        raw["related_senapred_alert_ids"] = alert_ids
+    event.raw_data = raw
 
 
 async def sync_recent_csn_events(session: AsyncSession, hours: int = 48) -> int:
@@ -187,8 +276,8 @@ async def sync_recent_csn_events(session: AsyncSession, hours: int = 48) -> int:
     if not events:
         return 0
 
-    new_events = []
-    backfilled = 0
+    new_events: list[SeismicEvent] = []
+    updated = 0
     for ev in events:
         if ev["magnitude"] < 3.0:
             continue
@@ -204,23 +293,27 @@ async def sync_recent_csn_events(session: AsyncSession, hours: int = 48) -> int:
         )
         existing = (await session.execute(stmt)).scalar_one_or_none()
         if existing:
-            new_detail = (ev.get("raw_data") or {}).get("detail_url")
-            if new_detail and not (existing.raw_data or {}).get("detail_url"):
-                existing.raw_data = {**(existing.raw_data or {}), "detail_url": new_detail}
-                backfilled += 1
+            merged_raw = {**(existing.raw_data or {}), **(ev.get("raw_data") or {})}
+            if merged_raw != (existing.raw_data or {}):
+                existing.raw_data = merged_raw
+                updated += 1
+                await _enrich_event_relations(session, existing)
             continue
 
         new_ev = SeismicEvent(**ev)
         session.add(new_ev)
         new_events.append(new_ev)
 
-    if new_events or backfilled:
+    if new_events or updated:
         await session.commit()
 
         from app.services.impact_service import compute_and_store_event_impact
 
         for ev in new_events:
             await session.refresh(ev)
+            await _enrich_event_relations(session, ev)
             await compute_and_store_event_impact(session, ev)
+        if updated:
+            await session.commit()
 
     return len(new_events)

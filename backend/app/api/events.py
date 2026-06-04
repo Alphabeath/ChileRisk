@@ -1,15 +1,16 @@
 """Seismic events and impact endpoints."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.limiter import limiter
 from app.models.seismic_event import SeismicEvent
-from app.services.seismic_event_utils import event_to_response
+from app.services.query_date_window import clamp_query_date, day_bounds_utc, today_chile
+from app.services.seismic_event_utils import event_to_response as event_to_response_async
 from app.services.seismic_service import (
     compute_sismo_score_for_comuna,
     estimate_intensity,
@@ -21,16 +22,30 @@ router = APIRouter()
 
 @router.get("")
 @limiter.limit("60/minute")
-async def list_recent_events(request: Request, hours: int = 48, db: AsyncSession = Depends(get_db)):
-    """List recent seismic events (mock + future real sources)."""
-    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+async def list_recent_events(
+    request: Request,
+    date: date | None = Query(
+        default=None,
+        description="Día calendario Chile (YYYY-MM-DD). Por defecto: hoy.",
+    ),
+    db: AsyncSession = Depends(get_db),
+):
+    """List seismic events for one calendar day (Chile timezone)."""
+    query_date = clamp_query_date(date or today_chile())
+    start, end = day_bounds_utc(query_date)
     result = await db.execute(
         select(SeismicEvent)
-        .where(SeismicEvent.occurred_at >= since)
+        .where(
+            SeismicEvent.occurred_at >= start,
+            SeismicEvent.occurred_at < end,
+        )
         .order_by(SeismicEvent.occurred_at.desc())
     )
     events = result.scalars().all()
-    return [event_to_response(e).model_dump() for e in events]
+    out = []
+    for e in events:
+        out.append((await event_to_response_async(e, db)).model_dump())
+    return out
 
 
 @router.get("/{event_id}/impact")
@@ -70,7 +85,7 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
             })
 
         return {
-            "event": event_to_response(event).model_dump(),
+            "event": (await event_to_response_async(event, db)).model_dump(),
             "affected_comunas": impacts[:50],
             "total_affected": len(impacts),
         }
@@ -107,7 +122,7 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
     impacts.sort(key=lambda x: x["risk_score"], reverse=True)
 
     return {
-        "event": event_to_response(event).model_dump(),
+        "event": (await event_to_response_async(event, db)).model_dump(),
         "affected_comunas": impacts[:50],
         "total_affected": len(impacts),
     }
@@ -123,4 +138,4 @@ async def create_artificial_event(request: Request, mag: float = 6.1, lat: float
     from app.services.region_service import _national_cache, _region_cache
     _national_cache.clear()
     _region_cache.clear()
-    return event_to_response(ev).model_dump()
+    return (await event_to_response_async(ev, db)).model_dump()

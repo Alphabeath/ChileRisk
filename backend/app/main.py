@@ -29,14 +29,29 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-        def _widen_senapred_content(sync_conn):
+        def _migrate_senapred_alerts(sync_conn):
             if not inspect(sync_conn).has_table("senapred_alerts"):
                 return
             sync_conn.execute(
                 text("ALTER TABLE senapred_alerts ALTER COLUMN content TYPE TEXT")
             )
+            cols = {c["name"] for c in inspect(sync_conn).get_columns("senapred_alerts")}
+            if "affected_scope" not in cols:
+                sync_conn.execute(
+                    text(
+                        "ALTER TABLE senapred_alerts "
+                        "ADD COLUMN affected_scope VARCHAR(16) NOT NULL DEFAULT 'unknown'"
+                    )
+                )
+            if "comuna_codes" not in cols:
+                sync_conn.execute(
+                    text(
+                        "ALTER TABLE senapred_alerts "
+                        "ADD COLUMN comuna_codes JSON NOT NULL DEFAULT '[]'"
+                    )
+                )
 
-        await conn.run_sync(_widen_senapred_content)
+        await conn.run_sync(_migrate_senapred_alerts)
 
     # Seed reference geography (regions + comunas)
     async with async_session() as session:
@@ -69,7 +84,7 @@ async def lifespan(app: FastAPI):
             logger.info("Generated %d initial seismic events and %d risk scores", n_events, n_scores)
 
         if settings.use_real_csn:
-            real_events = await sync_recent_csn_events(session, hours=24)
+            real_events = await sync_recent_csn_events(session, hours=168)
             if real_events:
                 logger.info("Synced %d real seismic events from CSN (sismologia.cl) at startup", real_events)
 
@@ -84,9 +99,13 @@ async def lifespan(app: FastAPI):
             from app.services.senapred_service import sync_senapred_alerts
 
             try:
-                n_alerts = await sync_senapred_alerts(session)
-                if n_alerts:
-                    logger.info("Synced %d SERNAPRED alerts at startup", n_alerts)
+                n_alertas, n_eventos = await sync_senapred_alerts(session)
+                if n_alertas or n_eventos:
+                    logger.info(
+                        "Synced %d SERNAPRED alertas + %d eventos at startup",
+                        n_alertas,
+                        n_eventos,
+                    )
             except Exception as e:
                 await session.rollback()
                 logger.exception("Initial SERNAPRED sync failed: %s", e)

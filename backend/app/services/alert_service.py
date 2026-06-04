@@ -1,7 +1,6 @@
-"""Active alerts: SERNAPRED (DB) + ChileRisk (risk algorithm, computed on read)."""
+"""Active alerts: SERNAPRED (DB) + ChileRisk (per-hazard evaluation, computed on read)."""
 
-from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,10 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.comuna import Comuna
 from app.models.senapred_alert import SenapredAlert
-from app.models.seismic_event import SeismicEvent
-from app.schemas.alert import ActiveAlertOut, AlertLevel
-from app.services.region_service import get_all_regions_aggregated
-from app.services.seismic_service import estimate_intensity, haversine_km
+from app.schemas.alert import ActiveAlertOut, AlertLevel, HazardType, RecordKind
+from app.services.alert_evaluator import (
+    HazardAlertEvaluation,
+    evaluate_region_hazards,
+)
+from app.services.impact_service import get_max_seismic_metrics_by_region
+from app.services.query_date_window import day_bounds_utc, today_chile
+from app.services.region_service import get_all_regions_for_alerts
+from app.services.senapred_service import (
+    normalize_hazard_type,
+    pick_latest_senapred_per_thread,
+    senapred_thread_root,
+)
 
 HAZARD_LABELS: dict[str, str] = {
     "sismo": "Sismo",
@@ -27,25 +35,82 @@ SEVERITY_TO_LEVEL: dict[str, AlertLevel] = {
     "moderado": "amarilla",
 }
 
-MIN_CHILERISK_SEVERITY = {"moderado", "alto", "critico"}
-SEISMIC_LOOKBACK_HOURS = 24
-
-
 def _severity_to_level(severity: str) -> AlertLevel | None:
     return SEVERITY_TO_LEVEL.get(severity)
 
 
-def _hazard_risk_detail(hazard: str, region: dict, seismic: dict[str, float] | None) -> str:
-    """Texto corto con la magnitud física dominante para la tarjeta de alerta."""
-    codregion = int(region["codregion"])
+def _senapred_external_url(row: SenapredAlert) -> str | None:
+    if not row.url_access:
+        return None
+    base = (
+        settings.senapred_event_base_url
+        if row.kind == "evento"
+        else settings.senapred_alert_base_url
+    )
+    return f"{base}{row.url_access}"
+
+
+def _row_to_out(
+    row: SenapredAlert, *, thread_root_id: str | None = None
+) -> ActiveAlertOut:
+    kind: RecordKind = "evento" if row.kind == "evento" else "alerta"
+    hazard = normalize_hazard_type(row.category)
+    return ActiveAlertOut(
+        id=row.senapred_id,
+        source="senapred",
+        level=row.level if row.level in ("preventiva", "amarilla", "naranja", "roja", "informativa") else "informativa",
+        category=row.category,
+        title=row.title,
+        content=row.content,
+        url_access=row.url_access,
+        external_url=_senapred_external_url(row),
+        issued_at=row.senapred_issued_at,
+        synced_at=row.synced_at,
+        region_code=row.region_code,
+        region_name=row.region_name,
+        affected_scope=(
+            row.affected_scope
+            if row.affected_scope in ("region", "comuna", "unknown")
+            else "unknown"
+        ),
+        comuna_codes=list(row.comuna_codes or []),
+        is_monitor=row.is_monitor,
+        parent_id=row.parent_id,
+        thread_root_id=thread_root_id,
+        record_kind=kind,
+        hazard_type=hazard,
+        composite_score=None,
+        dominant_hazard=hazard,
+        severity=None,
+        risk_detail=None,
+    )
+
+
+def _hazard_score_for_display(region: dict, evaluation: HazardAlertEvaluation) -> float:
+    if evaluation.hazard == "sismo":
+        if evaluation.trigger_metric == "intensity":
+            return evaluation.trigger_value
+        return float(region.get("max_sismo_score") or region.get("sismo_score") or 0)
+    return float(region.get(f"{evaluation.hazard}_score") or evaluation.trigger_value)
+
+
+def _hazard_risk_detail(
+    evaluation: HazardAlertEvaluation,
+    region: dict,
+    seismic: dict[str, float] | None,
+) -> str:
+    hazard = evaluation.hazard
 
     if hazard == "sismo":
-        if seismic:
+        if evaluation.trigger_metric == "intensity" and seismic:
+            source = seismic.get("intensity_source")
+            if source == "reported":
+                return f"un sismo de intensidad {seismic['max_intensity']:.1f}"
             parts = [f"intensidad estimada de {seismic['max_intensity']:.1f}"]
             if seismic.get("max_magnitude"):
                 parts.append(f"magnitud máxima de {seismic['max_magnitude']:.1f}")
             return " y ".join(parts)
-        score = float(region.get("sismo_score") or 0)
+        score = float(region.get("max_sismo_score") or region.get("sismo_score") or 0)
         approx = (score / 100.0) * 10.0
         return f"intensidad referencial de {approx:.1f} (riesgo {score:.0f} de 100)"
 
@@ -74,122 +139,59 @@ def _hazard_risk_detail(hazard: str, region: dict, seismic: dict[str, float] | N
     return f"índice compuesto {score:.1f}/100"
 
 
-async def _seismic_metrics_by_region(
-    session: AsyncSession,
-) -> dict[int, dict[str, float]]:
-    """Máxima intensidad/M por región según eventos recientes y centroides comunales."""
-    since = datetime.now(timezone.utc) - timedelta(hours=SEISMIC_LOOKBACK_HOURS)
-
-    events_rows = (
-        await session.execute(
-            select(SeismicEvent).where(SeismicEvent.occurred_at >= since)
-        )
-    ).scalars().all()
-    if not events_rows:
-        return {}
-
-    events = [
-        {
-            "latitude": e.latitude,
-            "longitude": e.longitude,
-            "magnitude": e.magnitude,
-            "depth_km": e.depth_km or 30.0,
-        }
-        for e in events_rows
-    ]
-
-    comuna_rows = (
-        await session.execute(
-            select(Comuna.codregion, Comuna.latitude, Comuna.longitude).where(
-                Comuna.latitude.isnot(None),
-                Comuna.longitude.isnot(None),
-            )
-        )
-    ).all()
-
-    comunas_by_region: dict[int, list[tuple[float, float]]] = defaultdict(list)
-    for codregion, lat, lon in comuna_rows:
-        comunas_by_region[int(codregion)].append((float(lat), float(lon)))
-
-    metrics: dict[int, dict[str, float]] = {}
-    for codregion, points in comunas_by_region.items():
-        max_intensity = 0.0
-        max_magnitude = 0.0
-        for lat, lon in points:
-            for ev in events:
-                dist = haversine_km(lat, lon, ev["latitude"], ev["longitude"])
-                intensity = estimate_intensity(
-                    ev["magnitude"], dist, ev["depth_km"]
-                )
-                if intensity > max_intensity:
-                    max_intensity = intensity
-                    max_magnitude = ev["magnitude"]
-        if max_intensity > 0:
-            metrics[codregion] = {
-                "max_intensity": round(max_intensity, 1),
-                "max_magnitude": round(max_magnitude, 1),
-            }
-
-    return metrics
-
-
-async def _senapred_rows_to_out(session: AsyncSession) -> list[ActiveAlertOut]:
+async def _senapred_rows_to_out(
+    session: AsyncSession, *, query_date: date
+) -> list[ActiveAlertOut]:
+    start, end = day_bounds_utc(query_date)
     stmt = (
         select(SenapredAlert)
-        .where(SenapredAlert.is_active.is_(True))
+        .where(
+            SenapredAlert.is_active.is_(True),
+            SenapredAlert.senapred_issued_at >= start,
+            SenapredAlert.senapred_issued_at < end,
+        )
         .order_by(SenapredAlert.senapred_issued_at.desc())
     )
     rows = (await session.execute(stmt)).scalars().all()
+    by_id = {r.senapred_id: r for r in rows}
+    latest = pick_latest_senapred_per_thread(rows)
     return [
-        ActiveAlertOut(
-            id=r.senapred_id,
-            source="senapred",
-            level=r.level,
-            category=r.category,
-            title=r.title,
-            content=r.content,
-            url_access=r.url_access,
-            external_url=(
-                f"{settings.senapred_alert_base_url}{r.url_access}"
-                if r.url_access
-                else None
-            ),
-            issued_at=r.senapred_issued_at,
-            synced_at=r.synced_at,
-            region_code=r.region_code,
-            region_name=r.region_name,
-            is_monitor=r.is_monitor,
-            parent_id=r.parent_id,
-            composite_score=None,
-            dominant_hazard=None,
-            severity=None,
-            risk_detail=None,
-        )
-        for r in rows
+        _row_to_out(r, thread_root_id=senapred_thread_root(r, by_id))
+        for r in latest
     ]
 
 
-async def _chilerisk_alerts_from_risk(session: AsyncSession) -> list[ActiveAlertOut]:
-    regions = await get_all_regions_aggregated(session)
-    seismic_by_region = await _seismic_metrics_by_region(session)
+async def _chilerisk_alerts_from_risk(
+    session: AsyncSession, *, query_date: date
+) -> list[ActiveAlertOut]:
+    start, end = day_bounds_utc(query_date)
+    regions = await get_all_regions_for_alerts(session)
+    seismic_by_region = await get_max_seismic_metrics_by_region(
+        session, start=start, end=end
+    )
     fallback_now = datetime.now(timezone.utc)
     alerts: list[ActiveAlertOut] = []
 
     for r in regions:
-        severity = r.get("severity") or "bajo"
-        if severity not in MIN_CHILERISK_SEVERITY:
-            continue
-        level = _severity_to_level(severity)
-        if not level:
+        codregion = int(r["codregion"])
+        seismic = seismic_by_region.get(codregion)
+        max_intensity = seismic["max_intensity"] if seismic else None
+        max_magnitude = seismic.get("max_magnitude") if seismic else None
+
+        evaluations = evaluate_region_hazards(
+            sismo_score=float(r.get("sismo_score") or 0),
+            max_sismo_score=float(r.get("max_sismo_score") or 0),
+            ola_calor_score=float(r.get("ola_calor_score") or 0),
+            ola_frio_score=float(r.get("ola_frio_score") or 0),
+            viento_score=float(r.get("viento_score") or 0),
+            max_intensity=max_intensity,
+            max_magnitude=max_magnitude,
+        )
+
+        if not evaluations:
             continue
 
-        codregion = int(r["codregion"])
-        hazard = r.get("dominant_hazard") or "sismo"
-        hazard_label = HAZARD_LABELS.get(hazard, hazard.replace("_", " ").title())
-        score = float(r.get("composite_score") or 0)
         name = r.get("name") or f"Región {codregion}"
-        seismic = seismic_by_region.get(codregion)
-        risk_detail = _hazard_risk_detail(hazard, r, seismic)
         issued_raw = r.get("risk_computed_at")
         if isinstance(issued_raw, datetime):
             issued_at = (
@@ -200,50 +202,123 @@ async def _chilerisk_alerts_from_risk(session: AsyncSession) -> list[ActiveAlert
         else:
             issued_at = fallback_now
 
-        hazard_phrase = hazard_label.lower()
-        main_text = f"Alerta por {hazard_phrase}: {risk_detail}"
+        for evaluation in evaluations:
+            level = _severity_to_level(evaluation.severity)
+            if not level:
+                continue
 
-        alerts.append(
-            ActiveAlertOut(
-                id=f"cr-region-{codregion}",
-                source="chilerisk",
-                level=level,
-                category=hazard,
-                title=main_text,
-                content=None,
-                url_access=None,
-                external_url=None,
-                issued_at=issued_at,
-                synced_at=issued_at,
-                region_code=codregion,
-                region_name=name,
-                is_monitor=False,
-                parent_id=None,
-                composite_score=score,
-                dominant_hazard=hazard,
-                severity=severity,
-                risk_detail=risk_detail,
+            hazard = evaluation.hazard
+            hazard_label = HAZARD_LABELS.get(hazard, hazard.replace("_", " ").title())
+            risk_detail = _hazard_risk_detail(evaluation, r, seismic)
+            display_score = _hazard_score_for_display(r, evaluation)
+
+            if risk_detail.startswith("un "):
+                title = f"Alerta por {risk_detail}"
+            else:
+                title = f"Alerta por {hazard_label.lower()}: {risk_detail}"
+
+            alerts.append(
+                ActiveAlertOut(
+                    id=f"cr-region-{codregion}-{hazard}",
+                    source="chilerisk",
+                    level=level,
+                    category=hazard,
+                    title=title,
+                    content=None,
+                    url_access=None,
+                    external_url=None,
+                    issued_at=issued_at,
+                    synced_at=issued_at,
+                    region_code=codregion,
+                    region_name=name,
+                    affected_scope="region",
+                    comuna_codes=[],
+                    is_monitor=False,
+                    parent_id=None,
+                    record_kind="alerta",
+                    hazard_type=hazard,
+                    composite_score=round(display_score, 1),
+                    dominant_hazard=hazard,
+                    severity=evaluation.severity,
+                    risk_detail=risk_detail,
+                )
             )
-        )
 
     return alerts
 
 
 def _sort_alerts(alerts: list[ActiveAlertOut]) -> list[ActiveAlertOut]:
-    return sorted(alerts, key=lambda a: a.issued_at, reverse=True)
+    level_rank = {
+        "roja": 0,
+        "naranja": 1,
+        "amarilla": 2,
+        "preventiva": 3,
+        "informativa": 4,
+    }
+    kind_rank = {"alerta": 0, "evento": 1}
+
+    def sort_key(a: ActiveAlertOut) -> tuple:
+        return (
+            level_rank.get(a.level, 9),
+            kind_rank.get(a.record_kind, 9),
+            -a.issued_at.timestamp(),
+        )
+
+    return sorted(alerts, key=sort_key)
+
+
+def _alert_applies_to_comuna(
+    alert: ActiveAlertOut, codregion: int, cod_comuna: int
+) -> bool:
+    if alert.region_code is not None and alert.region_code != codregion:
+        return False
+    if alert.source == "chilerisk":
+        return alert.region_code is None or alert.region_code == codregion
+    scope = alert.affected_scope or "unknown"
+    if scope == "region":
+        return alert.region_code is None or alert.region_code == codregion
+    if scope == "comuna":
+        return cod_comuna in (alert.comuna_codes or [])
+    return False
+
+
+def _matches_hazard_filter(hazard_type: str | None, hazard: HazardType) -> bool:
+    if not hazard_type:
+        return hazard == "otros"
+    if hazard == "incendio":
+        return hazard_type in ("incendio", "incendio_estructural")
+    return hazard_type == hazard
 
 
 async def list_active_alerts(
     session: AsyncSession,
     *,
+    query_date: date | None = None,
     region: int | None = None,
+    comuna: int | None = None,
     level: AlertLevel | None = None,
+    record_kind: RecordKind | None = None,
+    hazard: HazardType | None = None,
 ) -> list[ActiveAlertOut]:
-    senapred = await _senapred_rows_to_out(session)
-    chilerisk = await _chilerisk_alerts_from_risk(session)
+    qd = query_date or today_chile()
+    senapred = await _senapred_rows_to_out(session, query_date=qd)
+    if qd == today_chile():
+        chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
+    else:
+        chilerisk = []
     merged = senapred + chilerisk
 
-    if region is not None:
+    if comuna is not None:
+        row = await session.get(Comuna, comuna)
+        if row is None:
+            merged = []
+        else:
+            merged = [
+                a
+                for a in merged
+                if _alert_applies_to_comuna(a, row.codregion, comuna)
+            ]
+    elif region is not None:
         merged = [
             a
             for a in merged
@@ -251,5 +326,9 @@ async def list_active_alerts(
         ]
     if level is not None:
         merged = [a for a in merged if a.level == level]
+    if record_kind is not None:
+        merged = [a for a in merged if a.record_kind == record_kind]
+    if hazard is not None:
+        merged = [a for a in merged if _matches_hazard_filter(a.hazard_type, hazard)]
 
     return _sort_alerts(merged)[:200]

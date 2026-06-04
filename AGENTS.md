@@ -21,7 +21,7 @@ frontend/ (Next.js 16, MapLibre map)  ──HTTP──▶  backend/ (FastAPI, AP
 
 | Touching this... | Read this first | Edits allowed |
 |------------------|-----------------|---------------|
-| `frontend/**` | `frontend/AGENTS.md` | Yes |
+| `frontend/**` | `frontend/AGENTS.md` (+ `frontend/docs/DESIGN.md` for UI) | Yes |
 | `backend/**` | `backend/AGENTS.md` | Yes |
 | `docs/**` | this file + relevant area file | **Only if user approves** |
 | `docker-compose.yml`, root `.env`, `.gitignore` | this file | **Only if user approves** |

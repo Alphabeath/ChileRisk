@@ -17,6 +17,7 @@ Single source of truth for any coding agent working inside `frontend/`.
 - All work happens **exclusively inside `frontend/`**.
 - Never touch `backend/`, `TrueRisk/`, `misc/`, or root-level files. Cross-area changes require explicit user approval.
 - The root `AGENTS.md` and `docs/FRONTEND.md` are sister docs — when a question is about routing/scope, read the root; when it's about a public component, read `docs/FRONTEND.md`.
+- **UX/UI (layouts, pages, components):** read **`docs/DESIGN.md`** in this folder before writing or restyling UI. It defines glass surfaces, typography, colors, and citizen-page patterns.
 
 ---
 
@@ -30,6 +31,7 @@ A citizen-facing risk monitor. The home page is a hero with a rotating globe (`(
 | `/dashboard` | `app/(citizen)/dashboard`| National risk summary + recent seismic events (verification view) |
 | `/map`       | `app/(citizen)/map`      | Full-screen interactive MapLibre map of Chile |
 | `/account`   | `app/(citizen)/account`  | Placeholder (account page — not built yet) |
+| `/disasters` | `app/(citizen)/disasters` | Disaster guides catalog + `/disasters/[tipo]` detail |
 | `/api/health`| `app/api/health/route.ts`| Docker healthcheck endpoint |
 
 **Important**: the dashboard is a **debug/verification view** showing the raw backend response. It is *not* the production citizen UI. Real citizens should land on `/` or `/map`. The `(citizen)` group will grow.
@@ -74,6 +76,7 @@ frontend/
 │   │   ├── layout.tsx            # Citizen layout — wraps children in <CitizenNavbar/>
 │   │   ├── dashboard/page.tsx    # Verification view (national risk + recent events)
 │   │   ├── map/page.tsx          # Just renders <ChileMap/> full-screen
+│   │   ├── disasters/            # Catalog + [tipo] detail (see docs/DESIGN.md)
 │   │   └── account/page.tsx      # Placeholder
 │   ├── api/health/route.ts       # GET /api/health → { status: "ok" }
 │   ├── page.tsx                  # Landing with <RotatingEarth/> + hero
@@ -87,6 +90,7 @@ frontend/
 │   │   └── tooltip.tsx
 │   ├── layout/
 │   │   └── citizen-navbar.tsx    # Floating top nav for (citizen) routes
+│   ├── disasters/                # Disasters catalog UI (glass — docs/DESIGN.md)
 │   ├── map/
 │   │   ├── chile-map.tsx         # MapLibre map (region + comuna polygons, popups, hover)
 │   │   ├── map-config.ts         # Bounds, colors, layer names, GeoJSON URLs, hideForeignLabels()
@@ -110,6 +114,7 @@ frontend/
 │   ├── queries.ts                # React Query keys (use these; do not inline strings)
 │   ├── format.ts                 # severityColor, formatMagnitude, formatDepth
 │   ├── mocks.ts                  # EMPTY — see "Mock mode" below
+│   ├── glass-panel.ts            # GLASS_PANEL_CLASS + GLASS_DIVIDER
 │   └── utils.ts                  # cn() — clsx + tailwind-merge
 │
 ├── stores/
@@ -143,7 +148,8 @@ frontend/
 |------------------------------------------|---------------------------------------------|-------|
 | A page route                             | `app/(citizen)/<name>/page.tsx`             | Use the citizen route group unless root-level |
 | A new shadcn primitive                   | `components/ui/<name>.tsx`                  | Use `npx shadcn@latest add <name>` (MCP server is configured) |
-| A feature component                      | `components/<area>/<name>.tsx`              | Existing areas: `ui`, `layout`, `map`, `globe` — ask before creating a new top-level area |
+| A feature component                      | `components/<area>/<name>.tsx`              | Existing areas: `ui`, `layout`, `map`, `globe`, `disasters` — ask before creating a new top-level area |
+| Styling a new citizen page or overlay    | Read `docs/DESIGN.md` first                 | Glass vs shadcn surfaces, tokens, spacing — don't improvise rounded cards on dark UI |
 | A data-fetching hook                     | `hooks/use-<resource>.ts` + export in `hooks/index.ts` | Wrap a `useQuery` from React Query; use keys from `lib/queries.ts` |
 | A typed API call                         | `lib/api.ts`                                | One function per endpoint; types from `lib/types.ts` |
 | A type that mirrors a backend schema     | `lib/types.ts`                              | Keep in lockstep with `backend/app/schemas/` |
@@ -193,7 +199,7 @@ If a page is purely a wrapper around a single component, prefer a server compone
 - **Keep components under 150 lines** when feasible. The map component violates this on purpose; do not split it into a god hook.
 - **Server components by default**. Add `"use client"` only when you need hooks, state, browser APIs, or event handlers.
 - **Tailwind v4 syntax** — utility classes only, no `tailwind.config.js` (config is in CSS).
-- **Accessibility**: WCAG 2.2 AA. Map already has `role="application"` with `aria-label`. New interactive elements need focus states (`focus-visible:ring-2 focus-visible:ring-ring`).
+- **Accessibility**: WCAG 2.2 AA. Map already has `role="application"` with `aria-label`. New interactive elements need focus states (`focus-visible:ring-2 focus-visible:ring-ring` on shadcn surfaces; `focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30` on glass — see `docs/DESIGN.md`).
 - **Import paths**: use the `@/` alias, not relative `../../..` chains.
 
 ---
@@ -255,4 +261,4 @@ cd frontend && bun run build
 
 ---
 
-**Last updated**: 2026-06-02 (refactored `SenapredAlertsPanel` drag from raw pointer events to `@dnd-kit/core` + `@dnd-kit/modifiers`. Added `useDraggablePanel` hook (`hooks/use-draggable-panel.ts`) that encapsulates `useDraggable` + `useDndMonitor` + position state; the component dropped from 396 → 307 lines. `<DndContext>` lives in `app/(citizen)/map/page.tsx` outside `<ChileMap />` so future overlays can share the same context. Drag is now keyboard-accessible via `KeyboardSensor` (Tab to focus handle, Enter/Space to start, arrows to move, Esc to cancel). Viewport clamping is delegated to the `restrictToWindowEdges` modifier — no more manual `resize` listener. `map/page.tsx` is now a client component.)
+**Last updated**: 2026-06-03 — added `docs/DESIGN.md` (UX/UI system: glass panels, Chile tokens, disasters layout). Routes: `/disasters`. Previous: 2026-06-02 draggable map panels via `useDraggablePanel` + `@dnd-kit`.

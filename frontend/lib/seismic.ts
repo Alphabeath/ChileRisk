@@ -6,6 +6,17 @@ export function getSeismicDetailUrl(event: SeismicEvent): string | null {
   return typeof fromRaw === "string" && fromRaw.trim() ? fromRaw : null
 }
 
+export function getSeismicIntensityReportUrl(event: SeismicEvent): string | null {
+  if (event.intensity_report_url) return event.intensity_report_url
+  const fromRaw = event.raw_data?.intensity_report_url
+  return typeof fromRaw === "string" && fromRaw.trim() ? fromRaw : null
+}
+
+export function isSeismicPerceived(event: SeismicEvent): boolean {
+  if (event.is_perceived) return true
+  return Boolean(event.raw_data?.is_perceived)
+}
+
 export function getSeismicAccentColor(magnitude: number): string {
   if (magnitude >= 5.5) return "#DA291C"
   if (magnitude >= 5) return "#e07020"

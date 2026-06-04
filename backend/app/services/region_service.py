@@ -107,3 +107,43 @@ async def get_all_regions_aggregated(session: AsyncSession) -> list[dict]:
 
     _national_cache["national"] = results
     return results
+
+
+async def get_all_regions_for_alerts(session: AsyncSession) -> list[dict]:
+    """Region inputs for ChileRisk alerts — no TTL cache, includes max sismo per region."""
+    regions = (await session.execute(select(Region).order_by(Region.codregion))).scalars().all()
+    results: list[dict] = []
+    for region in regions:
+        data = await _build_region_alert_context(session, region.codregion, region.name)
+        if data:
+            results.append(data)
+    return results
+
+
+async def _build_region_alert_context(
+    session: AsyncSession, codregion: int, name: str
+) -> dict | None:
+    scores = await get_latest_risks_for_region(session, codregion)
+    if not scores:
+        return None
+
+    agg = aggregate_region_scores(scores)
+    climate = await get_region_climate_avg(session, codregion)
+    risk_computed_at = max(s.computed_at for s in scores)
+
+    return {
+        "codregion": codregion,
+        "name": name,
+        "risk_computed_at": risk_computed_at,
+        "sismo_score": agg["sismo"],
+        "ola_calor_score": agg["ola_calor"],
+        "ola_frio_score": agg["ola_frio"],
+        "viento_score": agg["viento"],
+        "max_sismo_score": round(max(s.sismo_score for s in scores), 1),
+        "composite_score": round(
+            compute_composite_and_dominant(agg)[0],
+            1,
+        ),
+        "avg_temperature_c": climate["avg_temperature_c"] if climate else None,
+        "avg_wind_speed_kmh": climate["avg_wind_speed_kmh"] if climate else None,
+    }
