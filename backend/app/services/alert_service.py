@@ -102,18 +102,16 @@ def _hazard_risk_detail(
     hazard = evaluation.hazard
 
     if hazard == "sismo":
-        if evaluation.trigger_metric == "magnitude":
-            return f"intensidad reportado {evaluation.trigger_value:.1f}"
         if seismic and seismic.get("max_magnitude"):
-            return f"intensidad reportado {seismic['max_magnitude']:.1f}"
-        if evaluation.trigger_metric == "intensity" and seismic:
-            parts = [f"intensidad estimada de {seismic['max_intensity']:.1f}"]
-            if seismic.get("max_magnitude"):
-                parts.append(f"magnitud máxima de {seismic['max_magnitude']:.1f}")
-            return " y ".join(parts)
+            mag_type = seismic.get("magnitude_type", "Ml")
+            return f"cercano de magnitud {seismic['max_magnitude']:.1f} {mag_type}"
+        if evaluation.trigger_metric == "magnitude":
+            return f"cercano de magnitud {evaluation.trigger_value:.1f} Ml"
         score = float(region.get("max_sismo_score") or region.get("sismo_score") or 0)
-        approx = (score / 100.0) * 10.0
-        return f"intensidad referencial de {approx:.1f} (riesgo {score:.0f} de 100)"
+        if score > 0:
+            approx = (score / 100.0) * 10.0
+            return f"intensidad referencial de {approx:.1f} (riesgo {score:.0f} de 100)"
+        return "en monitoreo"
 
     if hazard == "ola_calor":
         temp = region.get("avg_temperature_c")
@@ -307,10 +305,7 @@ async def list_active_alerts(
     senapred = await _senapred_rows_to_out(
         session, query_date=qd, include_inactive=not is_today
     )
-    if is_today:
-        chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
-    else:
-        chilerisk = []
+    chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
     merged = senapred + chilerisk
 
     if comuna is not None:

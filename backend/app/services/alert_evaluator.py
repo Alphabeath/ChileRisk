@@ -60,7 +60,7 @@ def evaluate_seismic(
     max_sismo_score: float,
     max_magnitude: float | None = None,
 ) -> HazardAlertEvaluation | None:
-    """Magnitude from CSN wins; fallback to estimated intensity, then score."""
+    """Only generate alert if CSN data exists."""
     if max_magnitude is not None and max_magnitude > 0:
         sev = severity_from_value(max_magnitude, SEISMIC_MAGNITUDE_THRESHOLDS)
         if sev:
@@ -81,14 +81,6 @@ def evaluate_seismic(
                 trigger_metric="intensity",
             )
 
-    sev = severity_from_value(max_sismo_score, SEISMIC_SCORE_THRESHOLDS)
-    if sev:
-        return HazardAlertEvaluation(
-            hazard="sismo",
-            severity=sev,
-            trigger_value=max_sismo_score,
-            trigger_metric="sismo_score",
-        )
     return None
 
 

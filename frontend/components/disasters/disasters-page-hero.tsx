@@ -38,12 +38,7 @@ export function DisastersPageHero({ disasterCount }: DisastersPageHeroProps) {
 
       <div className="relative flex flex-col gap-6 p-5 sm:p-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
         <div className="min-w-0 flex-1">
-          <div className="mb-4 inline-flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-1.5 backdrop-blur-sm">
-            <ShieldAlert className="size-4 text-white" aria-hidden />
-            <span className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white">
-              ChileRisk · Prevención
-            </span>
-          </div>
+          
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Desastres y emergencias
           </h1>

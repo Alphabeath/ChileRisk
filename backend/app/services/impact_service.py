@@ -111,7 +111,7 @@ async def get_max_seismic_metrics_by_region(
     *,
     start: datetime,
     end: datetime,
-) -> dict[int, dict[str, float]]:
+) -> dict[int, dict[str, float | str]]:
     """Per-region max intensity/magnitude from precomputed impacts in [start, end)."""
 
     stmt = (
@@ -130,19 +130,23 @@ async def get_max_seismic_metrics_by_region(
     )
     rows = (await session.execute(stmt)).all()
 
-    metrics: dict[int, dict[str, float]] = {}
+    metrics: dict[int, dict[str, float | str]] = {}
     for codregion, intensity, magnitude, raw_data in rows:
         region = int(codregion)
-        detail_url = (raw_data or {}).get("detail_url") if raw_data else None
+        raw = raw_data or {}
+        detail_url = raw.get("detail_url")
+        magnitude_type = raw.get("magnitude_type", "Ml")
         current = metrics.get(region)
         if current is None or intensity > current["max_intensity"]:
             metrics[region] = {
                 "max_intensity": round(float(intensity), 1),
                 "max_magnitude": round(float(magnitude), 1),
+                "magnitude_type": magnitude_type,
                 "detail_url": detail_url,
             }
         elif intensity == current["max_intensity"] and magnitude > current["max_magnitude"]:
             current["max_magnitude"] = round(float(magnitude), 1)
+            current["magnitude_type"] = magnitude_type
             if detail_url:
                 current["detail_url"] = detail_url
 

@@ -98,8 +98,8 @@ export const ALERT_LEVEL_META: Record<
   },
   informativa: {
     label: "Informativo",
-    hex: "#64748b",
-    badge: "bg-slate-500/10 text-slate-300 border-slate-400/35",
+    hex: "#a78bfa",
+    badge: "bg-violet-500/10 text-violet-300 border-violet-400/40",
   },
 }
 
@@ -198,9 +198,8 @@ export function getChileRiskRiskDetail(alert: ActiveAlert): string | null {
 
   const hazard = alert.dominant_hazard ?? alert.category
   const score = alert.composite_score
-  if (hazard === "sismo" && score != null) {
-    const approx = ((score / 100) * 10).toFixed(1)
-    return `intensidad referencial de ${approx} (riesgo ${score.toFixed(0)} de 100)`
+  if (hazard === "sismo") {
+    return null
   }
   if (hazard === "ola_calor" && score != null) {
     return `índice calor ${score.toFixed(0)}/100`
@@ -293,6 +292,29 @@ export function filterAlertsForComuna(
   codComuna: number
 ): ActiveAlert[] {
   return alerts.filter((a) => alertAppliesToComuna(a, codregion, codComuna))
+}
+
+const ALERT_LEVEL_PRIORITY: Record<AlertLevel, number> = {
+  roja: 0,
+  naranja: 1,
+  amarilla: 2,
+  preventiva: 3,
+  informativa: 4,
+}
+
+/** Returns the highest-priority alert level per region code. */
+export function computeRegionAlertLevels(
+  alerts: ActiveAlert[]
+): Map<number, AlertLevel> {
+  const result = new Map<number, AlertLevel>()
+  for (const a of alerts) {
+    if (a.region_code == null) continue
+    const prev = result.get(a.region_code)
+    if (!prev || ALERT_LEVEL_PRIORITY[a.level] < ALERT_LEVEL_PRIORITY[prev]) {
+      result.set(a.region_code, a.level)
+    }
+  }
+  return result
 }
 
 /** @deprecated Use sortActiveAlerts */

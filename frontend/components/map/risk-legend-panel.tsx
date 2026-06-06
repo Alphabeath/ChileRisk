@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, Layers, ShieldAlert } from "lucide-react"
+import { BookOpenText, ChevronDown, Layers, ShieldAlert } from "lucide-react"
 import { useDraggablePanel } from "@/hooks"
 import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_HEADER_LABEL_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
 import { MAP_RISK_BUCKETS } from "@/lib/risk-scale"
@@ -38,10 +38,28 @@ const ALERT_GLOSSARY: { level: AlertLevel; description: string }[] = [
   },
 ]
 
+function MapIndicators() {
+  return (
+    <div className="mt-1 border-t border-white/[0.06] pt-1.5">
+      <p className="text-[10px] font-semibold leading-tight text-white/70">
+        Indicadores en el mapa
+      </p>
+      <ul className="mt-1 flex flex-col gap-1" role="list">
+        <li className="flex items-start gap-1.5">
+          <span className="mt-[3px] inline-block size-2 shrink-0 rounded-full bg-white/30 shadow-[0_0_4px_rgba(255,255,255,0.4)]" aria-hidden />
+          <span className="text-[9px] leading-snug text-white/50">
+            <strong className="text-white/70">Borde pulsante:</strong> indica alertas activas en la región, no un riesgo compuesto alto. Color y velocidad varían según el nivel de alerta.
+          </span>
+        </li>
+      </ul>
+    </div>
+  )
+}
+
 function RiskLegendContent() {
   return (
     <>
-      <p className="mb-1.5 text-[9px] leading-tight text-white/50">
+      <p className="mb-1.5 text-[10px] leading-tight text-white/50">
         Puntuación compuesta (0–100) del día: sismo, calor, frío y viento.
       </p>
       <ul className="flex flex-col gap-1" role="list">
@@ -56,16 +74,17 @@ function RiskLegendContent() {
               <span className="text-[10px] font-medium text-white/90">
                 {bucket.label}
               </span>
-              <span className="shrink-0 font-mono text-[8px] tabular-nums text-white/45">
+              <span className="shrink-0 font-mono text-[9px] tabular-nums text-white/45">
                 {bucket.scoreRangeLabel}
               </span>
             </div>
           </li>
         ))}
       </ul>
-      <p className="mt-1.5 border-t border-white/[0.06] pt-1.5 text-[8px] leading-tight text-white/40">
+      <p className="mt-1.5 border-t border-white/[0.06] pt-1.5 text-[9px] leading-tight text-white/40">
         Regiones al alejar; comunas al acercar. Sin dato → moderado (35).
       </p>
+      <MapIndicators />
     </>
   )
 }
@@ -73,16 +92,16 @@ function RiskLegendContent() {
 function AlertGlossaryContent() {
   return (
     <div className="flex flex-col gap-1.5 py-1.5">
-      <p className="text-[9px] leading-tight text-white/50">
+      <p className="text-[10px] leading-tight text-white/50">
         Niveles de alerta según SERNAPRED, de mayor a menor gravedad.
       </p>
       <ul className="flex flex-col gap-1.5" role="list">
         {ALERT_GLOSSARY.map(({ level, description }) => {
           const meta = ALERT_LEVEL_META[level]
           return (
-            <li key={level} className="flex gap-2">
+            <li key={level} className="flex items-start gap-2">
               <span
-                className="mt-0.5 size-2.5 shrink-0 rounded-[2px]"
+                className="mt-[3px] size-2.5 shrink-0 rounded-[2px]"
                 style={{
                   backgroundColor: meta.hex,
                   boxShadow: `0 0 6px ${meta.hex}66`,
@@ -90,10 +109,10 @@ function AlertGlossaryContent() {
                 aria-hidden
               />
               <div className="min-w-0 flex-1">
-                <span className="block text-[10px] font-semibold text-white/90">
+                <span className="block text-[11px] font-semibold leading-none text-white/90">
                   {meta.label}
                 </span>
-                <span className="mt-0.5 block text-[9px] leading-snug text-white/50">
+                <span className="mt-0.5 block text-[10px] leading-snug text-white/50">
                   {description}
                 </span>
               </div>
@@ -101,6 +120,7 @@ function AlertGlossaryContent() {
           )
         })}
       </ul>
+      <MapIndicators />
     </div>
   )
 }
@@ -135,7 +155,7 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
           data-dragging={isDragging || undefined}
           aria-label="Arrastrar leyenda de riesgo"
         >
-          <Layers className="size-3 shrink-0 text-white/55" aria-hidden />
+          <BookOpenText className="size-3 shrink-0 text-white/55" aria-hidden />
           <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Glosario</span>
           {!expanded && (
             <div

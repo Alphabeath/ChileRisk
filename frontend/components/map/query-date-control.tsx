@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 
 export function QueryDateControl({ flow = false }: { flow?: boolean }) {
   const { selectedDate, setSelectedDate } = useQueryDate()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const today = todayIsoDate()
   const minDate = minQueryDateIso(today)
@@ -145,7 +145,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
             type="button"
             disabled={!canAdvance}
             onClick={() => setSelectedDate(addDaysIso(selectedDate, 1))}
-            className="flex size-7 shrink-0 items-center justify-center rounded-sm text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
+            className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
             aria-label="Avanzar un día"
           >
             <ChevronLeft className="size-3.5" aria-hidden />
@@ -154,7 +154,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
             type="button"
             onClick={() => setSelectedDate(today)}
             className={cn(
-              "flex-1 rounded-sm px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
+              "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
               selectedDate === today && "bg-white/10 text-white"
             )}
           >
@@ -164,7 +164,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
             type="button"
             onClick={() => setSelectedDate(addDaysIso(today, -1))}
             className={cn(
-              "flex-1 rounded-sm px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
+              "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
               selectedDate === addDaysIso(today, -1) && "bg-white/10 text-white"
             )}
           >
@@ -174,7 +174,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
             type="button"
             disabled={!canRetreat}
             onClick={() => setSelectedDate(addDaysIso(selectedDate, -1))}
-            className="flex size-7 shrink-0 items-center justify-center rounded-sm text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
+            className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
             aria-label="Retroceder un día"
           >
             <ChevronRight className="size-3.5" aria-hidden />
