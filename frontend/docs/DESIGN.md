@@ -115,6 +115,10 @@ Each disaster has `color: "from-…/20 to-…/20"` (Tailwind gradient stops).
 
 **Rule:** catalog and detail must feel like the **same** disaster — reuse the same `desastre.color`, not generic gray glass only.
 
+**Catalog & cards:** Use `GLASS_PANEL_CLASS` + color band header (icon + category). Cards show title, description (line-clamp), and meta "Antes · Durante · Después" + total step count. Grid `gap-3` (sm:2, lg:3 cols).
+
+**Detail phases:** Fixed 3-phase nav (sticky glass, observer-driven active + progress bar tinted by disaster color). Each `DisasterPhasePanel` uses left border accent + header with color gradient overlay + numbered step grid (priority "durante" first item gets amber treatment per §3.4). Related disasters: compact glass cards reusing color band + step count.
+
 ### 3.4 Phase semantics (fixed)
 
 Used across disasters detail UI:
@@ -316,4 +320,4 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 
 ---
 
-**Last updated:** 2026-06-06 — hybrid glass + shadcn guidance, references to .agents/skills/shadcn/rules, CLI + pre-ship items, space-y fixes alignment.
+**Last updated:** 2026-06-06 — disasters catalog + detail redesign (total steps in hero/cards, refined related mini-cards, step counts, glass meta headers), new patterns documented in §3.3, respects all glass/phase/color rules.

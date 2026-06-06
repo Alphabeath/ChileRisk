@@ -7,10 +7,16 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 export default function DisastersPage() {
+  const disasterCount = desastres.length
+  const totalSteps = desastres.reduce(
+    (sum, d) => sum + d.antes.length + d.durante.length + d.despues.length,
+    0
+  )
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl flex flex-col gap-4 px-4 py-16 sm:px-6 sm:gap-5 lg:px-8">
-        <DisastersPageHero disasterCount={desastres.length} />
+        <DisastersPageHero disasterCount={disasterCount} totalSteps={totalSteps} />
 
         <DisastersCatalog />
 

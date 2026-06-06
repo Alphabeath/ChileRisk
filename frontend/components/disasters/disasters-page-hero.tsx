@@ -1,10 +1,10 @@
-import { categoryLabels } from "@/lib/disasters-visual"
 import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { AlertTriangle, Clock, ShieldAlert, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DisastersPageHeroProps {
   disasterCount: number
+  totalSteps: number
 }
 
 const phaseHighlights = [
@@ -13,9 +13,7 @@ const phaseHighlights = [
   { label: "Después", subtitle: "Recuperación", icon: ShieldCheck },
 ] as const
 
-export function DisastersPageHero({ disasterCount }: DisastersPageHeroProps) {
-  const categoryCount = Object.keys(categoryLabels).length
-
+export function DisastersPageHero({ disasterCount, totalSteps }: DisastersPageHeroProps) {
   return (
     <header className={cn(GLASS_PANEL_CLASS, "relative w-full overflow-hidden")}>
       <div
@@ -50,8 +48,8 @@ export function DisastersPageHero({ disasterCount }: DisastersPageHeroProps) {
 
         <dl className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3 lg:min-w-[20rem]">
           <StatBox label="Emergencias" value={disasterCount} />
+          <StatBox label="Pasos totales" value={totalSteps} />
           <StatBox label="Fases" value={3} />
-          <StatBox label="Categorías" value={categoryCount} />
         </dl>
       </div>
 

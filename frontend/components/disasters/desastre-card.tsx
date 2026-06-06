@@ -12,6 +12,8 @@ interface DesastreCardProps {
 export function DesastreCard({ desastre }: DesastreCardProps) {
   const Icon = desastre.icon
   const category = getDesastreCategory(desastre.slug)
+  const stepCount =
+    desastre.antes.length + desastre.durante.length + desastre.despues.length
 
   return (
     <Link
@@ -53,9 +55,14 @@ export function DesastreCard({ desastre }: DesastreCardProps) {
           <p className="line-clamp-3 flex-1 text-[12px] leading-snug text-white/55">
             {desastre.description}
           </p>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-white/40">
-            Antes · Durante · Después
-          </p>
+          <div className="mt-auto flex items-center justify-between pt-1">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-white/40">
+              Antes · Durante · Después
+            </p>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-white/60">
+              {stepCount} pasos
+            </span>
+          </div>
         </div>
       </article>
     </Link>
