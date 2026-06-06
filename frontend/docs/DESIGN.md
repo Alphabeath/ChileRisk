@@ -2,7 +2,7 @@
 
 Reference for layouts, pages, and components in `frontend/`. Read this **before** building or restyling citizen UI, map overlays, or content pages.
 
-**Related:** `AGENTS.md` (structure & tooling), `app/globals.css` (tokens), `lib/glass-panel.ts` (glass constant).
+**Related:** [AGENTS.md](../AGENTS.md) (índice), [FRONTEND.md](./FRONTEND.md) (componentes), [DOC-MAINTENANCE.md](../../docs/DOC-MAINTENANCE.md), `app/globals.css`, `lib/glass-panel.ts`, `lib/citizen-layout.ts` (posición paneles mapa).
 
 ---
 
@@ -26,7 +26,7 @@ ChileRisk is a **citizen risk monitor** for Chile: serious, clear, data-forward.
 
 ### 2.1 Glass surface — primary for map & citizen content
 
-Used for: map popups, floating panels, **Disasters** (`/disasters`), alert lists, query-date control.
+Used for: map popups, floating panels (`MapOverlays`), **Disasters** (`/disasters`), alert lists, query-date control, risk legend.
 
 **Always import** from `@/lib/glass-panel`:
 

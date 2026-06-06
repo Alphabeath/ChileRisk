@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   AlertTriangle,
-  CheckCircle2,
   ChevronDown,
   Clock,
   ExternalLink,
@@ -208,11 +207,15 @@ export function ActiveAlertsSection({
   collapsedLimit?: number
 }) {
   const hasAlerts = alerts.length > 0
-  const [expanded, setExpanded] = useState(false)
-
-  useEffect(() => {
-    setExpanded(false)
-  }, [alerts.length, collapsedLimit])
+  const collapseResetKey = `${alerts.length}:${collapsedLimit ?? ""}`
+  const [collapseState, setCollapseState] = useState({
+    resetKey: collapseResetKey,
+    expanded: false,
+  })
+  const expanded =
+    collapseState.resetKey === collapseResetKey ? collapseState.expanded : false
+  const setExpanded = (value: boolean) =>
+    setCollapseState({ resetKey: collapseResetKey, expanded: value })
 
   const canCollapse =
     collapsedLimit != null && alerts.length > collapsedLimit && !expanded

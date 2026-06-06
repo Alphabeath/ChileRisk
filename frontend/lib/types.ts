@@ -4,6 +4,7 @@ export interface NationalRisk {
   composite_score: number
   severity: "bajo" | "moderado" | "alto" | "critico"
   dominant_hazard: string
+  comuna_count?: number
   sismo_score?: number
   ola_calor_score?: number
   ola_frio_score?: number

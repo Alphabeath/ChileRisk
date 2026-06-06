@@ -175,6 +175,49 @@
   }
 }
 
+/* MapLibre — zoom/compass top-right; hide attribution (info) control */
+.cr-map .maplibregl-ctrl-top-left,
+.cr-map .maplibregl-ctrl-bottom-left,
+.cr-map .maplibregl-ctrl-bottom-right,
+.cr-map .maplibregl-ctrl-attrib,
+.cr-map .maplibregl-ctrl-attrib-button {
+  display: none !important;
+}
+
+.cr-map .maplibregl-ctrl-top-right {
+  top: 60px;
+  right: 16px;
+  left: auto;
+}
+
+.cr-map .maplibregl-ctrl-group {
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 25px 50px -12px rgb(0 0 0 / 0.4),
+    0 0 0 1px rgb(255 255 255 / 0.04);
+  border-radius: 0;
+}
+
+.cr-map .maplibregl-ctrl-group button {
+  width: 32px;
+  height: 32px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.cr-map .maplibregl-ctrl-group button:last-child {
+  border-bottom: none;
+}
+
+.cr-map .maplibregl-ctrl-group button:hover {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.cr-map .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+  filter: invert(1) brightness(0.85);
+}
+
 .cr-popup.maplibregl-popup {
   z-index: 20;
   will-change: auto !important;

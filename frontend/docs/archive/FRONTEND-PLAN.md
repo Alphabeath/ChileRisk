@@ -1,7 +1,9 @@
 # ChileRisk Frontend — Implementation Plan (v0.1)
 
+> **ARCHIVO (2026-05-27)** — No usar como spec. Verdad actual: [../FRONTEND.md](../FRONTEND.md), [../DESIGN.md](../DESIGN.md), [../../AGENTS.md](../../AGENTS.md).
+
 **Date**: 2026-05-27
-**Status**: Ready for coding agent
+**Status**: Histórico — superseded
 **Scope**: MVP with 3 hazards (Terremotos, Olas de calor, Olas de frío)
 
 ---

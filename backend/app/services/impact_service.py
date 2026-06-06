@@ -119,6 +119,7 @@ async def get_max_seismic_metrics_by_region(
             Comuna.codregion,
             SeismicImpact.estimated_intensity,
             SeismicEvent.magnitude,
+            SeismicEvent.raw_data,
         )
         .join(Comuna, Comuna.cod_comuna == SeismicImpact.cod_comuna)
         .join(SeismicEvent, SeismicEvent.id == SeismicImpact.event_id)
@@ -130,16 +131,20 @@ async def get_max_seismic_metrics_by_region(
     rows = (await session.execute(stmt)).all()
 
     metrics: dict[int, dict[str, float]] = {}
-    for codregion, intensity, magnitude in rows:
+    for codregion, intensity, magnitude, raw_data in rows:
         region = int(codregion)
+        detail_url = (raw_data or {}).get("detail_url") if raw_data else None
         current = metrics.get(region)
         if current is None or intensity > current["max_intensity"]:
             metrics[region] = {
                 "max_intensity": round(float(intensity), 1),
                 "max_magnitude": round(float(magnitude), 1),
+                "detail_url": detail_url,
             }
         elif intensity == current["max_intensity"] and magnitude > current["max_magnitude"]:
             current["max_magnitude"] = round(float(magnitude), 1)
+            if detail_url:
+                current["detail_url"] = detail_url
 
     perceived = (
         await session.execute(
@@ -190,12 +195,14 @@ async def get_max_seismic_metrics_by_region(
         if codregion is None:
             continue
         region = int(codregion)
+        detail_url = raw.get("detail_url")
         current = metrics.get(region)
         if current is None or current.get("intensity_source") != "reported" or reported_f > current["max_intensity"]:
             metrics[region] = {
                 "max_intensity": round(reported_f, 1),
                 "max_magnitude": round(float(ev.magnitude), 1),
                 "intensity_source": "reported",
+                "detail_url": detail_url,
             }
 
     for m in metrics.values():

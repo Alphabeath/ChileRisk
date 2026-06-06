@@ -7,12 +7,12 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  RotateCcw,
 } from "lucide-react"
 import { useDraggablePanel, useQueryDate } from "@/hooks"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_HEADER_LABEL_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
 import {
   addDaysIso,
   formatQueryDateLabel,
@@ -23,7 +23,7 @@ import {
 } from "@/lib/query-date"
 import { cn } from "@/lib/utils"
 
-export function QueryDateControl() {
+export function QueryDateControl({ flow = false }: { flow?: boolean }) {
   const { selectedDate, setSelectedDate } = useQueryDate()
   const [expanded, setExpanded] = useState(false)
   const [calendarOpen, setCalendarOpen] = useState(false)
@@ -33,12 +33,12 @@ export function QueryDateControl() {
   const maxDay = parseIsoDate(today)
   const selectedDay = parseIsoDate(selectedDate)
 
-  const { ref, handleProps, style, isDragging, isMoved, resetPosition } =
-    useDraggablePanel({
-      id: "query-date-panel",
-      corner: "bottom-left",
-      cornerInset: 16,
-    })
+  const { ref, handleProps, style, isDragging } = useDraggablePanel({
+    id: "query-date-panel",
+    corner: flow ? undefined : "top-left",
+    cornerInset: 16,
+    flow,
+  })
 
   const canAdvance = selectedDate < today
   const canRetreat = selectedDate > minDate
@@ -54,10 +54,7 @@ export function QueryDateControl() {
   return (
     <div
       ref={ref}
-      className={cn(
-        "z-20 border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl",
-        expanded ? "w-[min(280px,calc(100vw-2rem))]" : "w-auto"
-      )}
+      className={MAP_PANEL_SHELL_CLASS}
       style={style}
       role="group"
       aria-label="Fecha de consulta"
@@ -70,36 +67,17 @@ export function QueryDateControl() {
       >
         <div
           {...handleProps}
-          className={cn(
-            "flex min-w-0 flex-1 select-none items-center gap-2 px-3 py-2",
-            isDragging ? "cursor-grabbing" : "cursor-grab"
-          )}
+          className={MAP_PANEL_DRAG_HANDLE_CLASS}
           style={{ touchAction: "none" }}
+          data-dragging={isDragging || undefined}
           aria-label="Arrastrar control de fecha"
         >
           <CalendarIcon className="size-3.5 shrink-0 text-white/55" aria-hidden />
-          <span className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/75">
-            Fecha
-          </span>
+          <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Fecha</span>
           <span className="ml-auto font-mono text-[10px] tabular-nums text-white/50">
             {dateLabel}
           </span>
         </div>
-        {isMoved && (
-          <button
-            type="button"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation()
-              resetPosition()
-            }}
-            aria-label="Restablecer posición"
-            title="Restablecer posición"
-            className="flex shrink-0 items-center border-l border-white/10 px-2.5 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
-          >
-            <RotateCcw className="size-3" />
-          </button>
-        )}
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}

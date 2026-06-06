@@ -1,8 +1,9 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import { getNationalRisk, getComunaMapScores, getComunaRisk } from "@/lib/api"
 import { queryKeys } from "@/lib/queries"
 import { todayIsoDate } from "@/lib/query-date"
+import { LOADING_SOURCE, useLoadingStore } from "@/stores/loading-store"
 import type { NationalRisk, ComunaMapScore } from "@/lib/types"
 
 interface EnrichedGeojson {
@@ -56,10 +57,6 @@ export function useMapData() {
   const [comunasGeojson, setComunasGeojson] = useState<EnrichedGeojson | null>(null)
   const [regionsBaseGeojson, setRegionsBaseGeojson] = useState<EnrichedGeojson | null>(null)
   const [comunasBaseGeojson, setComunasBaseGeojson] = useState<EnrichedGeojson | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isComunasLoading, setIsComunasLoading] = useState(false)
-  const [isRiskRefreshing, setIsRiskRefreshing] = useState(false)
-  const loadedRef = useRef(false)
 
   const fetchRiskForDate = useCallback(
     async (date: string) => {
@@ -86,26 +83,37 @@ export function useMapData() {
     [queryClient]
   )
 
+  const withMapLoading = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
+    const { track, untrack } = useLoadingStore.getState()
+    track(LOADING_SOURCE.MAP_DATA)
+    try {
+      return await fn()
+    } finally {
+      untrack(LOADING_SOURCE.MAP_DATA)
+    }
+  }, [])
+
   const loadRegions = useCallback(
     async (regionsUrl: string, date: string) => {
-      const res = await fetch(regionsUrl)
-      const base = (await res.json()) as EnrichedGeojson
-      const geojson = structuredClone(base) as EnrichedGeojson
+      return withMapLoading(async () => {
+        const res = await fetch(regionsUrl)
+        const base = (await res.json()) as EnrichedGeojson
+        const geojson = structuredClone(base) as EnrichedGeojson
 
-      const { nationalMap } = await fetchRiskForDate(date)
-      applyNationalRiskToRegions(geojson, nationalMap)
+        const { nationalMap } = await fetchRiskForDate(date)
+        applyNationalRiskToRegions(geojson, nationalMap)
 
-      setRegionsBaseGeojson(base)
-      setRegionsGeojson(geojson)
-      return geojson
+        setRegionsBaseGeojson(base)
+        setRegionsGeojson(geojson)
+        return geojson
+      })
     },
-    [fetchRiskForDate]
+    [fetchRiskForDate, withMapLoading]
   )
 
   const loadComunas = useCallback(
     async (comunasUrl: string, date: string) => {
-      setIsComunasLoading(true)
-      try {
+      return withMapLoading(async () => {
         const res = await fetch(comunasUrl)
         const base = (await res.json()) as EnrichedGeojson
         const geojson = structuredClone(base) as EnrichedGeojson
@@ -116,19 +124,16 @@ export function useMapData() {
         setComunasBaseGeojson(base)
         setComunasGeojson(geojson)
         return geojson
-      } finally {
-        setIsComunasLoading(false)
-      }
+      })
     },
-    [fetchRiskForDate]
+    [fetchRiskForDate, withMapLoading]
   )
 
   const refreshMapRisk = useCallback(
     async (date: string) => {
       if (!regionsBaseGeojson && !comunasBaseGeojson) return null
 
-      setIsRiskRefreshing(true)
-      try {
+      return withMapLoading(async () => {
         const { nationalMap, comunaMap } = await fetchRiskForDate(date)
 
         let nextRegions: EnrichedGeojson | null = null
@@ -147,11 +152,9 @@ export function useMapData() {
         }
 
         return { regions: nextRegions, comunas: nextComunas }
-      } finally {
-        setIsRiskRefreshing(false)
-      }
+      })
     },
-    [regionsBaseGeojson, comunasBaseGeojson, fetchRiskForDate]
+    [regionsBaseGeojson, comunasBaseGeojson, fetchRiskForDate, withMapLoading]
   )
 
   const fetchComunaRisk = useCallback(
@@ -165,18 +168,9 @@ export function useMapData() {
     [queryClient]
   )
 
-  useEffect(() => {
-    if (loadedRef.current) return
-    loadedRef.current = true
-    setIsLoading(false)
-  }, [])
-
   return {
     regionsGeojson,
     comunasGeojson,
-    isLoading,
-    isComunasLoading,
-    isRiskRefreshing,
     loadRegions,
     loadComunas,
     refreshMapRisk,

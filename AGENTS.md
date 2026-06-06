@@ -1,118 +1,74 @@
 # AGENTS.md — ChileRisk (root)
 
-Routing document for any coding agent. Cross-cutting rules only; stack-specific rules live in the per-area files.
+Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS-QUICK.md](docs/HARNESS-QUICK.md) (flujo compacto) · detalle: [docs/HARNESS.md](docs/HARNESS.md) · `make verify`
 
 ---
 
-## What is ChileRisk
+## Elige área
 
-Multi-hazard risk monitoring platform for Chile (16 regions, 346 comunas). Two hazards from real sources (CSN earthquakes, Open-Meteo climate), 4 scored hazards (`sismo`, `ola_calor`, `ola_frio`, `viento`). Hybrid mode: live data + mock fallback.
+| Tarea | Abre primero |
+|-------|----------------|
+| UI, mapa, hooks, Next.js | [frontend/AGENTS.md](frontend/AGENTS.md) |
+| API, DB, scheduler, integraciones | [backend/AGENTS.md](backend/AGENTS.md) |
+| Contrato FE↔BE o `?date=` | [docs/HARNESS-QUICK.md](docs/HARNESS-QUICK.md) contract/cross + área |
 
-```
-frontend/ (Next.js 16, MapLibre map)  ──HTTP──▶  backend/ (FastAPI, APScheduler)  ──▶  PostgreSQL 16
-                                                          │
-                                                          ├─▶ sismologia.cl (CSN scraper)
-                                                          └─▶ api.open-meteo.com
-```
-
----
-
-## Where work happens — routing
-
-| Touching this... | Read this first | Edits allowed |
-|------------------|-----------------|---------------|
-| `frontend/**` | `frontend/AGENTS.md` (+ `frontend/docs/DESIGN.md` for UI) | Yes |
-| `backend/**` | `backend/AGENTS.md` | Yes |
-| `docs/**` | this file + relevant area file | **Only if user approves** |
-| `docker-compose.yml`, root `.env`, `.gitignore` | this file | **Only if user approves** |
-| `misc/`, `TrueRisk/`, `.agents/`, `.claude/` | — | **Never** unless user names the file |
-
-Rule of thumb: if the task is "build a feature in the citizen app" → go to `frontend/AGENTS.md`. If it's "expose a new endpoint" → go to `backend/AGENTS.md`. Anything else, ask.
+| Tocas… | Editar |
+|--------|--------|
+| `frontend/**` | Sí (+ `frontend/docs/`) |
+| `backend/**` | Sí (+ `backend/docs/`) |
+| `docs/**` | Sí si cross-cutting |
+| `docker-compose.yml`, root `.env`, `.gitignore` | **Solo con aprobación** |
+| `misc/`, `TrueRisk/`, `.agents/` | **Nunca** salvo que el usuario nombre el archivo |
 
 ---
 
-## Cross-cutting decisions
+## Qué es (1 línea)
 
-### Run / build the whole stack
+Monitoreo multi-amenaza Chile (16 regiones, 346 comunas): CSN + Open-Meteo + SERNAPRED → FastAPI → Next.js/MapLibre. Modo híbrido mock/real.
 
-The root `Makefile` is the monorepo convenience layer (see "Monorepo Structure" in `docs/ARCHITECTURE.md`).
+---
+
+## Contrato FE ↔ BE
+
+- HTTP: `frontend/lib/api.ts` → `backend/app/api/*` (nunca Postgres desde FE).
+- Tipos: `backend/app/schemas/` ↔ `frontend/lib/types.ts` (mismo task si cambia JSON).
+- **OpenAPI (runtime):** `http://localhost:8000/openapi.json` — resumen en [backend/docs/BACKEND.md](backend/docs/BACKEND.md).
+
+---
+
+## Comandos
 
 ```bash
-make up                # docker compose up --build (recommended)
-make down-v            # full clean (removes DB volume)
-make logs-backend
-make clean             # host-side __pycache__ / *.pyc removal
-make help              # list all targets
-
-# Raw compose still works
-docker compose up --build
-docker compose down -v
-docker compose logs -f backend
+make up              # stack Docker
+make verify          # harness: links + contract + lint/tsc + compileall
+make help
 ```
 
-The per-area `.gitignore` + `.dockerignore` files (plus cleaned root `.gitignore`) are now the authoritative way Python/JS caches and alt package-manager locks are excluded. Frontend uses **bun** (bun.lock is committed; package-lock.json is ignored). See `backend/.gitignore`, `backend/.dockerignore`, and the updated frontend/Dockerfile. The long-standing `__pycache__` visibility problem is solved.
-
-Ports (from `docker-compose.yml` + root `.env`):
-- Frontend → `http://localhost:3000` (health: `/api/health`)
-- Backend  → `http://localhost:8000` (health: `/health`)
-- Postgres → `127.0.0.1:5434` (host) / `db:5432` (container network)
-- Adminer  → `http://localhost:8080`
-
-### Hybrid data mode
-
-Controlled by the root `.env`:
-
-```env
-USE_REAL_CSN=true       # earthquakes from sismologia.cl
-USE_REAL_METEO=true     # climate from Open-Meteo
-ENABLE_SCHEDULER=true
-RISK_REFRESH_MINUTES=15
-```
-
-Behavior matrix lives in `backend/AGENTS.md` ("Hybrid Data Mode"). Frontend reads this transparently via `/api/v1/...`.
-
-### Frontend ↔ backend contract
-
-- Frontend never talks to PostgreSQL directly. All data flows through `frontend/lib/api.ts` → `NEXT_PUBLIC_API_BASE` → `backend/app/api/*`.
-- Schemas live in two places that must stay aligned:
-  - Backend: `backend/app/schemas/{risk,event,alert}.py` (Pydantic)
-  - Frontend: `frontend/lib/types.ts` (TypeScript)
-- If you change a response shape, update **both sides in the same task**. CI does not catch contract drift.
+Puertos: FE `3000`, BE `8000`, Postgres host `5434`. Detalle: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## Prohibited at root level
+## Skills (`.agents/skills/`)
 
-- Do not run `git commit`, `git push`, `git tag`, or open PRs.
-- Do not modify `docker-compose.yml`, root `.env`, `.env.example`, `package.json`, `package-lock.json`, `skills-lock.json`, or `.gitignore` without explicit user approval.
-- Do not create new top-level folders (e.g., `infra/`, `scripts/`, `tools/`). Propose first.
-- Never touch `TrueRisk/` (gitignored, third-party material).
-- Never commit `.env` (only `.env.example`).
+| Uso | Skill |
+|-----|--------|
+| Modo breve | `caveman` |
+| Implement + review loop | Grok `/implement` |
+| Review diff | `/review` o `caveman-review` |
+| UI pulida | `frontend-design` |
+| Next perf | `vercel-react-best-practices` |
+| shadcn | `frontend/.agents/skills/shadcn` |
 
----
-
-## When the user asks for "a feature"
-
-Always do this discovery first, in this order:
-
-1. Confirm the area: frontend, backend, or both.
-2. Read the relevant `AGENTS.md` (frontend or backend) end-to-end.
-3. Search for existing patterns (`Grep`/`Glob`) before writing new code — components, hooks, services, and endpoints usually already have a sibling to mimic.
-4. If the feature spans both areas, plan the API contract first (`backend/app/schemas/` + `frontend/lib/types.ts`) and then implement in parallel.
-5. After coding, verify locally (`docker compose up --build`) and confirm both health endpoints respond.
+Skills detalle: [docs/HARNESS.md](docs/HARNESS.md) §8.
 
 ---
 
-## Documentation expectations
+## Prohibido (raíz)
 
-- `docs/ARCHITECTURE.md` — system overview (read once when onboarding).
-- `docs/BACKEND.md` — short API reference + run commands.
-- `docs/FRONTEND.md` — component API reference (must reflect what's actually shipped).
-- `docs/FRONTEND-PLAN.md` — original implementation plan (historical; treat as **aspirational**, not current truth).
-- `docs/README.md` — currently empty.
+No `git commit`/`push`/PRs. No tocar compose/root `.env`/.gitignore sin OK. No carpetas top-level nuevas sin proponer. No `TrueRisk/`. No commitear `.env`.
 
-Keep `docs/FRONTEND.md` and `docs/BACKEND.md` in sync when you change public surfaces. `FRONTEND-PLAN.md` is frozen — do not rewrite.
+Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verify`.
 
 ---
 
-**Last updated**: 2026-06-01
+*Last updated: 2026-06-05*

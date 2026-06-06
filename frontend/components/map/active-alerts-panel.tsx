@@ -1,17 +1,20 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useCallback, useLayoutEffect, useMemo, useState } from "react"
+import {
+  CITIZEN_NAVBAR_CLEARANCE_PX,
+  MAP_PANEL_LEFT_INSET_PX,
+} from "@/lib/citizen-layout"
 import {
   AlertTriangle,
   Bell,
   BellOff,
   CheckCircle2,
   ChevronDown,
-  RotateCcw,
 } from "lucide-react"
 import { useActiveAlerts, useDraggablePanel } from "@/hooks"
 import { sortActiveAlerts } from "@/lib/alerts-display"
-import { MAP_PANEL_DEFAULT_TOP_PX } from "@/lib/citizen-layout"
+import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
 import { cn } from "@/lib/utils"
 import { ActiveAlertCard } from "./alert-ui"
 
@@ -57,12 +60,43 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-const DEFAULT_POS = { x: 16, y: MAP_PANEL_DEFAULT_TOP_PX }
+/** Room for alerts list + header when Fecha/Controles sit below in the left column. */
+const ALERTS_EXPAND_MIN_VIEWPORT_PX = 280
+const LEFT_COLUMN_BOTTOM_RESERVE_PX = 220
 
-export function ActiveAlertsPanel() {
-  const [open, setOpen] = useState(false)
-  const { ref, handleProps, style, isDragging, isMoved, resetPosition } =
-    useDraggablePanel({ id: "active-alerts-panel", defaultPosition: DEFAULT_POS })
+function hasViewportSpaceForAlertsExpanded(): boolean {
+  if (typeof window === "undefined") return false
+  const available =
+    window.innerHeight -
+    CITIZEN_NAVBAR_CLEARANCE_PX -
+    MAP_PANEL_LEFT_INSET_PX -
+    LEFT_COLUMN_BOTTOM_RESERVE_PX
+  return available >= ALERTS_EXPAND_MIN_VIEWPORT_PX
+}
+
+export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
+  const [spaceExpanded, setSpaceExpanded] = useState(false)
+
+  const syncSpaceExpanded = useCallback(() => {
+    if (!flow) return
+    setSpaceExpanded(hasViewportSpaceForAlertsExpanded())
+  }, [flow])
+
+  useLayoutEffect(() => {
+    syncSpaceExpanded()
+    if (!flow) return
+    window.addEventListener("resize", syncSpaceExpanded)
+    return () => window.removeEventListener("resize", syncSpaceExpanded)
+  }, [flow, syncSpaceExpanded])
+
+  const open = openOverride ?? (flow ? spaceExpanded : false)
+  const { ref, handleProps, style, isDragging } = useDraggablePanel({
+    id: "active-alerts-panel",
+    corner: flow ? undefined : "top-left",
+    cornerInset: 16,
+    flow,
+  })
 
   const { data: alerts = [], isLoading, error, refetch } = useActiveAlerts()
 
@@ -81,18 +115,20 @@ export function ActiveAlertsPanel() {
   return (
     <aside
       ref={ref}
-      className="z-20 flex w-[320px] max-w-[calc(100vw-2rem)] max-h-[min(380px,42dvh)] flex-col border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl"
+      className={cn(
+        MAP_PANEL_SHELL_CLASS,
+        "flex flex-col",
+        "max-h-[min(380px,42dvh)]",
+      )}
       style={style}
       aria-label="Alertas activas SERNAPRED y ChileRisk"
     >
       <div className="flex w-full items-stretch border-b border-white/10">
         <div
           {...handleProps}
-          className={cn(
-            "flex flex-1 select-none items-center gap-2.5 px-3 py-2.5",
-            isDragging ? "cursor-grabbing" : "cursor-grab"
-          )}
+          className={cn(MAP_PANEL_DRAG_HANDLE_CLASS, "gap-2.5 py-2.5")}
           style={{ touchAction: "none" }}
+          data-dragging={isDragging || undefined}
           aria-label="Arrastrar panel"
         >
           <div className="relative shrink-0">
@@ -118,25 +154,10 @@ export function ActiveAlertsPanel() {
               </span>
             )}
           </div>
-          {isMoved && (
-            <button
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                resetPosition()
-              }}
-              aria-label="Restablecer posición"
-              title="Restablecer posición"
-              className="flex size-5 shrink-0 items-center justify-center rounded-sm text-white/55 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
-            >
-              <RotateCcw className="size-3" />
-            </button>
-          )}
         </div>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpenOverride((v) => !(v ?? open))}
           aria-expanded={open}
           aria-controls="active-alerts-list"
           aria-label={open ? "Colapsar alertas" : "Expandir alertas"}

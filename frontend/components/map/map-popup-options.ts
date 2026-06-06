@@ -3,8 +3,8 @@ import type maplibregl from "maplibre-gl"
 export const MAP_POPUP_PADDING = {
   top: 88,
   bottom: 48,
-  left: 336,
-  right: 32,
+  left: 296,
+  right: 296,
 } as const
 
 export const MAP_POPUP_OPTIONS: maplibregl.PopupOptions = {
@@ -20,6 +20,6 @@ export const MAP_POPUP_OPTIONS: maplibregl.PopupOptions = {
 export const MAP_FIT_BOUNDS_PADDING = {
   top: 88,
   bottom: 56,
-  left: 360,
-  right: 40,
+  left: 296,
+  right: 296,
 } as const

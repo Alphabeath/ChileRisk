@@ -50,7 +50,7 @@ export function formatQueryDateLabel(iso: string, reference = todayIsoDate()): s
 export function formatSeismicEmptyForDate(iso: string): string {
   const label = formatQueryDateLabel(iso)
   if (label === "Hoy") {
-    return "Sin sismos significativos (M≥4.5) en este día en esta zona."
+    return "Sin sismos registrados en este día en esta zona."
   }
-  return `Sin sismos significativos (M≥4.5) el ${label} en esta zona.`
+  return `Sin sismos registrados el ${label} en esta zona.`
 }

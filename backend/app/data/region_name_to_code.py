@@ -83,5 +83,27 @@ def resolve(text: str | None) -> int | None:
     return None
 
 
+def resolve_all(text: str | None) -> list[int]:
+    """Return all matching region codes from a multi-region string.
+
+    Splits on common separators (comma, semicolon, slash, pipe) and
+    resolves each segment independently.
+    """
+    if not text:
+        return []
+    parts = re.split(r"[,;/|]+", text)
+    codes: list[int] = []
+    seen: set[int] = set()
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        code = resolve(part)
+        if code is not None and code not in seen:
+            codes.append(code)
+            seen.add(code)
+    return codes
+
+
 def official_name(codregion: int) -> str | None:
     return _REGION_NAMES.get(codregion)

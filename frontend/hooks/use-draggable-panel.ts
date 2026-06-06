@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useDraggable, useDndMonitor } from "@dnd-kit/core"
 import { MAP_PANEL_DEFAULT_TOP_PX } from "@/lib/citizen-layout"
+import { useUIStore, type PanelPosition } from "@/stores/ui-store"
 
-export interface PanelPosition {
-  x: number
-  y: number
-}
+export type { PanelPosition }
 
-export type PanelCorner = "top-left" | "bottom-left" | "bottom-right"
+export type PanelCorner =
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
 
 export interface UseDraggablePanelOptions {
   id: string
@@ -18,6 +20,8 @@ export interface UseDraggablePanelOptions {
   /** Anchor to a viewport corner; recomputed on resize / panel size change. */
   corner?: PanelCorner
   cornerInset?: number
+  /** In overlay column: relative layout until user drags (then fixed + saved). */
+  flow?: boolean
 }
 
 export interface UseDraggablePanelReturn {
@@ -42,6 +46,11 @@ function cornerPosition(
   switch (corner) {
     case "top-left":
       return { x: inset, y: inset }
+    case "top-right":
+      return {
+        x: window.innerWidth - w - inset,
+        y: MAP_PANEL_DEFAULT_TOP_PX,
+      }
     case "bottom-left":
       return { x: inset, y: window.innerHeight - h - inset }
     case "bottom-right":
@@ -57,31 +66,36 @@ export function useDraggablePanel({
   defaultPosition = DEFAULT_FIXED,
   corner,
   cornerInset = 16,
+  flow = false,
 }: UseDraggablePanelOptions): UseDraggablePanelReturn {
   const fixedPosition = useMemo(
     () => defaultPosition,
     [defaultPosition.x, defaultPosition.y],
   )
-  const [pos, setPos] = useState<PanelPosition | null>(null)
+  const savedPosition = useUIStore((s) => s.panelPositions[id])
+  const setPanelPosition = useUIStore((s) => s.setPanelPosition)
+  const resetPanelPosition = useUIStore((s) => s.resetPanelPosition)
+  const panelLayoutVersion = useUIStore((s) => s.panelLayoutVersion)
+
   const [defaultPos, setDefaultPos] = useState<PanelPosition>(fixedPosition)
   const nodeRef = useRef<HTMLElement | null>(null)
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id })
 
   const measureDefault = useCallback(() => {
     const node = nodeRef.current
-    if (!node || pos !== null) return
+    if (!node || savedPosition != null) return
     if (corner) {
       setDefaultPos(cornerPosition(node, corner, cornerInset))
     } else {
       setDefaultPos(fixedPosition)
     }
-  }, [corner, cornerInset, fixedPosition, pos])
+  }, [corner, cornerInset, fixedPosition, savedPosition])
 
   const ref = useCallback(
     (node: HTMLElement | null) => {
       nodeRef.current = node
       setNodeRef(node)
-      if (node && pos === null) {
+      if (node && savedPosition == null) {
         if (corner) {
           setDefaultPos(cornerPosition(node, corner, cornerInset))
         } else {
@@ -89,7 +103,7 @@ export function useDraggablePanel({
         }
       }
     },
-    [corner, cornerInset, fixedPosition, pos, setNodeRef],
+    [corner, cornerInset, fixedPosition, savedPosition, setNodeRef],
   )
 
   useLayoutEffect(() => {
@@ -97,7 +111,7 @@ export function useDraggablePanel({
   }, [measureDefault])
 
   useEffect(() => {
-    if (pos !== null || !corner) return
+    if (savedPosition != null || !corner) return
     const node = nodeRef.current
     if (!node) return
 
@@ -110,7 +124,12 @@ export function useDraggablePanel({
       ro.disconnect()
       window.removeEventListener("resize", onResize)
     }
-  }, [corner, measureDefault, pos])
+  }, [corner, measureDefault, savedPosition])
+
+  useEffect(() => {
+    if (savedPosition != null) return
+    requestAnimationFrame(() => measureDefault())
+  }, [panelLayoutVersion, savedPosition, measureDefault])
 
   useDndMonitor({
     onDragEnd: (event) => {
@@ -119,15 +138,16 @@ export function useDraggablePanel({
       const node = nodeRef.current
       if (!node) return
       const rect = node.getBoundingClientRect()
-      setPos({ x: rect.left, y: rect.top })
+      setPanelPosition(id, { x: rect.left, y: rect.top })
     },
   })
 
-  const isMoved = pos !== null
-  const currentPos = pos ?? defaultPos
+  const isMoved = savedPosition != null
+  const currentPos = savedPosition ?? defaultPos
+  const useFlowLayout = flow && savedPosition == null
 
   const resetPosition = useCallback(() => {
-    setPos(null)
+    resetPanelPosition(id)
     requestAnimationFrame(() => {
       const node = nodeRef.current
       if (!node) return
@@ -137,18 +157,25 @@ export function useDraggablePanel({
         setDefaultPos(fixedPosition)
       }
     })
-  }, [corner, cornerInset, fixedPosition])
+  }, [corner, cornerInset, fixedPosition, id, resetPanelPosition])
 
-  const style: React.CSSProperties = {
-    position: "fixed",
-    left: currentPos.x,
-    top: currentPos.y,
-    right: "auto",
-    bottom: "auto",
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
-  }
+  const dragTransform = transform
+    ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+    : undefined
+
+  const style: React.CSSProperties = useFlowLayout
+    ? {
+        position: "relative",
+        transform: dragTransform,
+      }
+    : {
+        position: "fixed",
+        left: currentPos.x,
+        top: currentPos.y,
+        right: "auto",
+        bottom: "auto",
+        transform: dragTransform,
+      }
 
   return {
     ref,

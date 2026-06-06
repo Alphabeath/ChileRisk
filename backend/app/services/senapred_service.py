@@ -11,7 +11,8 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.data.region_name_to_code import resolve as resolve_region_code
+from app.data.region_name_to_code import resolve as resolve_region_code, resolve_all as resolve_all_region_codes
+from app.data.region_name_to_code import official_name as resolve_region_name
 from app.services.mercalli_utils import extract_max_mercalli_from_html
 from app.services.senapred_geography import infer_geography
 from app.models.senapred_alert import SenapredAlert
@@ -111,22 +112,19 @@ def _parse_meta(raw: dict) -> dict:
         return {}
 
 
-def _parse_record(raw: dict, *, kind: str) -> dict[str, Any] | None:
+def _parse_record(raw: dict, *, kind: str) -> list[dict[str, Any]]:
     senapred_id = raw.get("id")
     title = raw.get("titulo")
     if not senapred_id or not title:
-        return None
+        return []
 
     meta = _parse_meta(raw)
     region_name_raw = (meta.get("regiones") or "").strip() or None
-    region_name = region_name_raw[:128] if region_name_raw else None
-    region_code = resolve_region_code(region_name_raw) if region_name_raw else None
+    region_codes = resolve_all_region_codes(region_name_raw) if region_name_raw else []
+    primary_code = region_codes[0] if region_codes else None
     title_stripped = title.strip()
     content_raw = raw.get("contenido")
     content_str = content_raw if isinstance(content_raw, str) else None
-    affected_scope, comuna_codes = infer_geography(
-        title_stripped, content_str, region_code
-    )
     category = (meta.get("nombreVariable") or "").strip()[:128] or None
     url_access = raw.get("urlAccess")
     if isinstance(url_access, str):
@@ -137,39 +135,67 @@ def _parse_record(raw: dict, *, kind: str) -> dict[str, Any] | None:
         if mercalli:
             meta["max_mercalli"], meta["mercalli_by_city"] = mercalli
 
-    return {
-        "senapred_id": senapred_id,
+    is_active = _is_active(title, raw, kind=kind)
+    is_monitor = _is_monitor(title)
+    parent_id = (raw.get("parentId") or None) if raw.get("parentId") not in (None, "parent") else None
+    issued_at = _parse_issued_at(raw)
+
+    base = {
         "kind": kind,
         "level": _map_level(meta.get("codigoAlertaEvento"), kind=kind),
         "title": title_stripped[:500],
         "content": content_raw,
         "url_access": url_access,
         "category": category,
-        "is_active": _is_active(title, raw, kind=kind),
-        "is_monitor": _is_monitor(title),
-        "parent_id": (raw.get("parentId") or None) if raw.get("parentId") not in (None, "parent") else None,
-        "senapred_issued_at": _parse_issued_at(raw),
-        "region_code": region_code,
-        "region_name": region_name,
-        "affected_scope": affected_scope,
-        "comuna_codes": comuna_codes,
+        "is_active": is_active,
+        "is_monitor": is_monitor,
+        "parent_id": parent_id,
+        "senapred_issued_at": issued_at,
         "meta_data": meta,
         "raw": raw,
     }
 
+    if len(region_codes) <= 1:
+        region_name = region_name_raw[:128] if region_name_raw else None
+        affected_scope, comuna_codes = infer_geography(
+            title_stripped, content_str, primary_code
+        )
+        return [{**base, "senapred_id": senapred_id, "region_code": primary_code,
+                 "region_name": region_name, "affected_scope": affected_scope,
+                 "comuna_codes": comuna_codes}]
 
-def _parse_alert(raw: dict) -> dict[str, Any] | None:
+    records = []
+    for code in region_codes:
+        name = resolve_region_name(code) or region_name_raw
+        affected_scope, comuna_codes = infer_geography(
+            title_stripped, content_str, code
+        )
+        records.append({**base, "senapred_id": f"{senapred_id}-{code}",
+                        "region_code": code, "region_name": name[:128] if name else None,
+                        "affected_scope": affected_scope, "comuna_codes": comuna_codes})
+    return records
+
+
+def _parse_alert(raw: dict) -> list[dict[str, Any]]:
     return _parse_record(raw, kind="alerta")
 
 
-def _parse_evento(raw: dict) -> dict[str, Any] | None:
+def _parse_evento(raw: dict) -> list[dict[str, Any]]:
     return _parse_record(raw, kind="evento")
+
+
+_REGION_CODES = list(range(1, 17))
 
 
 def senapred_thread_root(
     row: SenapredAlert, by_id: dict[str, SenapredAlert]
 ) -> str:
-    """Oldest senapred_id in an update chain (parentId links versiones sucesivas)."""
+    """Oldest senapred_id in an update chain (parentId links versiones sucesivas).
+
+    Handles expanded multi-region records whose parent_id points to an
+    original (unsuffixed) ID that was replaced by suffixed variants
+    (e.g. ``uuid-5``, ``uuid-13``).
+    """
     root_id = row.senapred_id
     parent_id = row.parent_id
     seen: set[str] = {root_id}
@@ -179,8 +205,21 @@ def senapred_thread_root(
             root_id = parent_id
             parent_id = by_id[parent_id].parent_id
         else:
-            root_id = parent_id
-            break
+            # Parent not in by_id — may have been replaced by expanded
+            # records with region-code suffixes. Try each variant.
+            expanded_id: str | None = None
+            for code in _REGION_CODES:
+                candidate = f"{parent_id}-{code}"
+                if candidate in by_id:
+                    expanded_id = candidate
+                    break
+            if expanded_id and expanded_id not in seen:
+                seen.add(expanded_id)
+                root_id = expanded_id
+                parent_id = by_id[expanded_id].parent_id
+            else:
+                root_id = parent_id
+                break
     return root_id
 
 
@@ -414,8 +453,12 @@ async def sync_senapred_alerts(session: AsyncSession) -> tuple[int, int]:
     alert_raws = await fetch_senapred_alerts(lookback_days=lookback)
     evento_raws = await fetch_senapred_eventos(lookback_days=lookback)
 
-    alert_parsed = [p for r in alert_raws if (p := _parse_alert(r))]
-    evento_parsed = [p for r in evento_raws if (p := _parse_evento(r))]
+    alert_parsed: list[dict[str, Any]] = [
+        p for r in alert_raws for p in _parse_alert(r)
+    ]
+    evento_parsed: list[dict[str, Any]] = [
+        p for r in evento_raws for p in _parse_evento(r)
+    ]
 
     await _upsert_parsed(session, alert_parsed + evento_parsed)
 

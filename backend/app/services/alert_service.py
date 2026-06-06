@@ -102,10 +102,11 @@ def _hazard_risk_detail(
     hazard = evaluation.hazard
 
     if hazard == "sismo":
+        if evaluation.trigger_metric == "magnitude":
+            return f"intensidad reportado {evaluation.trigger_value:.1f}"
+        if seismic and seismic.get("max_magnitude"):
+            return f"intensidad reportado {seismic['max_magnitude']:.1f}"
         if evaluation.trigger_metric == "intensity" and seismic:
-            source = seismic.get("intensity_source")
-            if source == "reported":
-                return f"un sismo de intensidad {seismic['max_intensity']:.1f}"
             parts = [f"intensidad estimada de {seismic['max_intensity']:.1f}"]
             if seismic.get("max_magnitude"):
                 parts.append(f"magnitud máxima de {seismic['max_magnitude']:.1f}")
@@ -140,16 +141,18 @@ def _hazard_risk_detail(
 
 
 async def _senapred_rows_to_out(
-    session: AsyncSession, *, query_date: date
+    session: AsyncSession, *, query_date: date, include_inactive: bool = False
 ) -> list[ActiveAlertOut]:
     start, end = day_bounds_utc(query_date)
+    conditions = [
+        SenapredAlert.senapred_issued_at >= start,
+        SenapredAlert.senapred_issued_at < end,
+    ]
+    if not include_inactive:
+        conditions.append(SenapredAlert.is_active.is_(True))
     stmt = (
         select(SenapredAlert)
-        .where(
-            SenapredAlert.is_active.is_(True),
-            SenapredAlert.senapred_issued_at >= start,
-            SenapredAlert.senapred_issued_at < end,
-        )
+        .where(*conditions)
         .order_by(SenapredAlert.senapred_issued_at.desc())
     )
     rows = (await session.execute(stmt)).scalars().all()
@@ -212,10 +215,9 @@ async def _chilerisk_alerts_from_risk(
             risk_detail = _hazard_risk_detail(evaluation, r, seismic)
             display_score = _hazard_score_for_display(r, evaluation)
 
-            if risk_detail.startswith("un "):
-                title = f"Alerta por {risk_detail}"
-            else:
-                title = f"Alerta por {hazard_label.lower()}: {risk_detail}"
+            title = f"Alerta por {hazard_label.lower()} de {risk_detail}"
+
+            csn_url = seismic.get("detail_url") if seismic and hazard == "sismo" else None
 
             alerts.append(
                 ActiveAlertOut(
@@ -226,7 +228,7 @@ async def _chilerisk_alerts_from_risk(
                     title=title,
                     content=None,
                     url_access=None,
-                    external_url=None,
+                    external_url=csn_url,
                     issued_at=issued_at,
                     synced_at=issued_at,
                     region_code=codregion,
@@ -301,8 +303,11 @@ async def list_active_alerts(
     hazard: HazardType | None = None,
 ) -> list[ActiveAlertOut]:
     qd = query_date or today_chile()
-    senapred = await _senapred_rows_to_out(session, query_date=qd)
-    if qd == today_chile():
+    is_today = qd == today_chile()
+    senapred = await _senapred_rows_to_out(
+        session, query_date=qd, include_inactive=not is_today
+    )
+    if is_today:
         chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
     else:
         chilerisk = []

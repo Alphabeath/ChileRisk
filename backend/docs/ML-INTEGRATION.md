@@ -346,7 +346,7 @@ PR-2 (Fase A — shadow sísmico)
 
 PR-3 (Fase A — evaluación)
   ├── evaluate_shadow.py + queries documentadas
-  └── docs/BACKEND.md sección ML (opcional)
+  └── backend/docs/BACKEND.md sección ML (opcional)
 
 PR-4 (Fase A — blend piloto)
   ├── ML_MODE=blend solo codregion piloto (env list)
@@ -399,7 +399,7 @@ curl -s 'http://localhost:8000/api/v1/events/{id}/impact' | jq '.affected_comuna
 - `backend/app/services/seismic_service.py` — baseline a reemplazar/mejorar  
 - `backend/app/services/impact_service.py` — hook principal Fase A  
 - `backend/app/services/alert_evaluator.py` — consumidor downstream (umbrales fijos hasta Fase C)  
-- `docs/ARCHITECTURE.md` — flujo híbrido CSN/Open-Meteo  
+- `docs/ARCHITECTURE.md` (raíz) — flujo híbrido CSN/Open-Meteo
 - Root `AGENTS.md` — aprobación para `.env.example` y docs  
 
 ---

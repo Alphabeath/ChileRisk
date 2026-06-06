@@ -3,6 +3,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState, type ReactNode } from "react"
 
+import { AppTopLoader } from "@/components/app-top-loader"
+import { GlobalTopLoaderBridge } from "@/components/global-top-loader-bridge"
+
 interface ProvidersProps {
   children: ReactNode
 }
@@ -23,6 +26,8 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AppTopLoader />
+      <GlobalTopLoaderBridge />
       {children}
     </QueryClientProvider>
   )

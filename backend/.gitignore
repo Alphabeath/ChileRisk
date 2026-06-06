@@ -1,3 +1,6 @@
+# Generated OpenAPI snapshot (make export-openapi)
+docs/openapi.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

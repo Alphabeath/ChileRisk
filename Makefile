@@ -14,10 +14,12 @@
 #
 # Prerequisites: docker, docker compose, make, bun (for native frontend dev), and python3 (for native backend dev).
 
-.PHONY: help up down logs build clean \
+.PHONY: help up down logs build build-frontend build-backend clean \
         dev-frontend dev-backend \
         backend-sh psql adminer \
-        check-ignores
+        check-ignores \
+        verify verify-docs verify-contract verify-frontend verify-backend \
+        export-openapi
 
 .DEFAULT_GOAL := help
 
@@ -50,6 +52,12 @@ logs-backend: ## Follow backend logs only
 
 build: ## Build images without starting
 	docker compose build
+
+build-frontend: ## Rebuild only the frontend image (no deps)
+	docker compose build --no-deps frontend
+
+build-backend: ## Rebuild only the backend image (no deps)
+	docker compose build --no-deps backend
 
 # --- Hygiene / caches (directly addresses original .pyc / __pycache__ issue) ---
 
@@ -95,3 +103,29 @@ check-ignores: ## Quick test that key ignore rules are working
 #   docker compose build --no-cache
 #   docker compose exec backend sh -c 'find /app -name __pycache__ | head -5'
 # Both should show no (or very few runtime) caches inside the image.
+
+# --- Harness verification (agents + CI-friendly) ---
+
+verify: verify-docs verify-contract verify-frontend verify-backend ## Full harness gate
+	@echo "verify: all checks passed"
+
+verify-docs: ## Markdown local links in AGENTS + docs trees
+	@bash docs/scripts/verify-doc-links.sh
+
+verify-contract: ## Heuristic Pydantic field names vs frontend/lib/types.ts
+	@python3 docs/scripts/check-contract.py
+
+verify-frontend: ## eslint + TypeScript (requires bun in frontend/)
+	@cd frontend && bun run lint
+	@cd frontend && bunx tsc --noEmit
+
+verify-backend: ## Python syntax compile (pytest if installed)
+	@cd backend && python3 -m compileall -q app
+	@if command -v pytest >/dev/null 2>&1; then \
+		cd backend && python3 -m pytest tests/ -q --tb=line; \
+	else \
+		echo "verify-backend: pytest not installed — skipped (use Docker: docker compose exec backend python -m pytest tests/ -q)"; \
+	fi
+
+export-openapi: ## Write backend/docs/openapi.json from FastAPI app (needs backend deps)
+	@python3 docs/scripts/export-openapi.py

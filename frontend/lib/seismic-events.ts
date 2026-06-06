@@ -1,10 +1,12 @@
 import { pointInGeometry } from "@/lib/geo"
 import { formatDepth, formatMagnitude } from "@/lib/format"
-import { getSeismicAccentColor, getSeismicDetailUrl, getSeismicLocation } from "@/lib/seismic"
+import { getSeismicAccentColor, getSeismicDetailUrl, getSeismicLocation, isSeismicPerceived } from "@/lib/seismic"
 import type { SeismicEvent } from "@/lib/types"
 import type { ComunaProperties } from "@/components/map/map-config"
 
-export const POPUP_SEISMIC_MIN_MAGNITUDE = 4.5
+export const POPUP_SEISMIC_MIN_MAGNITUDE = 4
+/** Minimum magnitude for perceived events to show in popups (matches marker threshold). */
+export const POPUP_SEISMIC_MIN_PERCEIVED_MAGNITUDE = 3
 
 export interface PopupSeismicItem {
   event: SeismicEvent
@@ -12,19 +14,23 @@ export interface PopupSeismicItem {
   estimatedIntensity?: number
 }
 
+/** Events above this magnitude are always shown (offshore/interplate). */
+export const POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE = 5
+
 export function filterRecentEventsInGeometry(
   events: SeismicEvent[],
   geometry: { type?: string; coordinates?: unknown } | null | undefined,
-  minMagnitude = POPUP_SEISMIC_MIN_MAGNITUDE
+  minMagnitude = POPUP_SEISMIC_MIN_MAGNITUDE,
+  alertDetailUrls?: Set<string>
 ): SeismicEvent[] {
   return events
     .filter(
       (e) =>
-        typeof e.magnitude === "number" &&
-        e.magnitude >= minMagnitude &&
         e.longitude != null &&
         e.latitude != null &&
-        pointInGeometry(e.longitude, e.latitude, geometry)
+        typeof e.magnitude === "number" &&
+        (e.magnitude >= POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE ||
+          pointInGeometry(e.longitude, e.latitude, geometry))
     )
     .sort((a, b) => {
       const magDiff = b.magnitude - a.magnitude

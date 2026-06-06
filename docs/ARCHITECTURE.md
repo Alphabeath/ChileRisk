@@ -1,6 +1,6 @@
 # ChileRisk — Architecture
 
-High-level view of the system. For implementation details see `backend/AGENTS.md` and `frontend/AGENTS.md`.
+Vista de sistema. Detalle: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md), [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md), [QUERY-DATE.md](./QUERY-DATE.md). Agentes: [../AGENTS.md](../AGENTS.md).
 
 ---
 
@@ -9,15 +9,13 @@ High-level view of the system. For implementation details see `backend/AGENTS.md
 ```
 ┌─────────────┐          ┌──────────────────────┐          ┌─────────────────┐
 │  Frontend   │  HTTP    │   Backend (FastAPI)  │  Async   │   PostgreSQL    │
-│  (Next.js)  │─────────▶│   + Scheduler        │─────────▶│   (risk data)   │
+│  Next.js 16 │─────────▶│   + APScheduler      │─────────▶│   16            │
 └─────────────┘          └──────────┬───────────┘          └─────────────────┘
                                     │
-                                    │ External APIs (hybrid mode)
-                                    ▼
-                          ┌─────────────────────┐
-                          │ CSN / sismologia.cl │
-                          │ Open-Meteo          │
-                          └─────────────────────┘
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+              sismologia.cl   Open-Meteo      SERNAPRED AppSync
+              (CSN scrape)    (batch REST)    (Cognito Identity + SigV4)
 ```
 
 ---
@@ -26,81 +24,81 @@ High-level view of the system. For implementation details see `backend/AGENTS.md
 
 | Layer | Tech | Purpose |
 |-------|------|---------|
-| Frontend | Next.js 16, React 19, MapLibre GL | Interactive map + risk visualization |
-| Backend | FastAPI, SQLAlchemy 2.0 async | API + risk computation + data integration |
-| Database | PostgreSQL 16 | Regions, comunas, risk scores, seismic events |
-| Scheduler | APScheduler | Background jobs (risk refresh, real data sync) |
-| External | CSN, Open-Meteo | Real seismic + climate data (when enabled) |
+| Frontend | Next.js 16, React 19, MapLibre, @dnd-kit | Mapa, overlays, consulta por día |
+| Backend | FastAPI, SQLAlchemy 2.0 async | API, riesgo, integraciones, alertas unificadas |
+| Database | PostgreSQL 16 | Geo, scores live, snapshots diarios, eventos, SERNAPRED |
+| Scheduler | APScheduler | Risk refresh, CSN, meteo, SERNAPRED |
 
 ---
 
-## Data Flow
+## Data flow
 
-1. **Geography** (seeded once): 16 regions + 346 comunas with centroids
-2. **Seismic events**: mock generators OR real CSN scraper → `seismic_events` table
-3. **Climate data**: mock generators OR Open-Meteo API → `risk_scores` table
-4. **Risk engine**: recomputes all comuna scores every 15 min using Haversine + attenuation model
-5. **API**: serves aggregated risk data to frontend
+1. **Geografía** — seed idempotente: 16 regiones + 346 comunas (`regional.geojson`, `comunas.geojson`).
+2. **Sismos** — mock o CSN → `seismic_events`; impacto → `seismic_impacts` al insertar.
+3. **Clima** — mock o Open-Meteo (lotes) → `climate_readings` + actualización `risk_scores`.
+4. **Riesgo live** — `risk_service.recompute_all_scores` cada N min (scheduler).
+5. **Riesgo histórico** — `daily_risk_service` materializa `daily_risk_scores` por `score_date` bajo demanda.
+6. **Alertas** — SERNAPRED sync → `senapred_alerts`; evaluador → alertas ChileRisk; API unifica `/alerts/active`.
+7. **Frontend** — `lib/api.ts` + React Query; fecha global en `ui-store` para mapa y listados.
+
+Consulta por día: [QUERY-DATE.md](./QUERY-DATE.md).
 
 ---
 
-## Hybrid Mode
+## Hybrid mode
 
-| `USE_REAL_CSN` | `USE_REAL_METEO` | Seismic source | Climate source |
-|----------------|------------------|----------------|----------------|
-| false | false | Mock | Mock |
-| true | false | CSN/sismologia.cl | Mock |
-| false | true | Mock | Open-Meteo |
-| true | true | CSN/sismologia.cl | Open-Meteo |
+| `USE_REAL_CSN` | `USE_REAL_METEO` | `USE_REAL_SENAPRED` | Sismos | Clima | Alertas |
+|----------------|------------------|---------------------|--------|-------|---------|
+| false | false | false | Mock | Mock | Vacío / mock |
+| true | false | true | CSN | Mock | SERNAPRED |
+| true | true | true | CSN | Open-Meteo | SERNAPRED |
 
-Configure via root `.env` file. Fallback to mocks if external APIs fail.
+Variables en root `.env`. Matriz startup: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 
 ---
 
 ## Deployment
 
-Single `docker-compose.yml` at project root:
-- `frontend` (Next.js standalone) → port 3000
-- `backend` (FastAPI + uvicorn) → port 8000
-- `db` (PostgreSQL 16) → port 5434 (host)
-- `adminer` (DB visual tool) → port 8080
+`docker-compose.yml` en raíz:
+
+| Service | Port |
+|---------|------|
+| frontend | 3000 |
+| backend | 8000 |
+| db | 5434 (host) |
+| adminer | 8080 |
+
+`make up` = build + run. Frontend imagen: Next **standalone** + **bun**.
 
 ---
 
-## Monorepo Structure & Boundaries
+## Monorepo structure
 
-ChileRisk is a **polyglot monorepo** (`frontend/` Next.js + `backend/` FastAPI + shared orchestration) without heavy monorepo tooling (no pnpm workspaces or Turborepo yet). Structure is enforced by a combination of:
+Polyglot monorepo sin Turborepo:
 
-- **Directory ownership + AGENTS.md routing** (root + `frontend/AGENTS.md` + `backend/AGENTS.md`): "all work happens exclusively inside your area". Cross-area or root-file changes require explicit approval.
-- **Isolated Docker build contexts** (`build: ./frontend` and `build: ./backend` in compose). The root tree is *not* sent to the images.
-- **Ignore hygiene** (as of 2026-06):
-  - `backend/.gitignore` — complete Python ignores (`__pycache__/`, `*.py[cod]`, envs, build artifacts, local sqlite, caches...).
-  - `backend/.dockerignore` — prevents the above (and .git, .env*, logs, tests, etc.) from entering the image build context.
-  - `frontend/.gitignore` + `frontend/.dockerignore` — enforce **bun** as the single package manager (package-lock.json / pnpm / yarn locks are ignored).
-  - Root `.gitignore` — cross-cutting (OS, .env, TrueRisk, Docker override, top-level logs, defense-in-depth Python caches + alt package manager locks).
-- **Root `Makefile`** — convenient monorepo entrypoint (`make up`, `make clean`, `make dev-frontend`, `make check-ignores`, `make help`, etc.). Delegates to docker compose or `cd <area> && ...`. Does not replace the per-area commands.
-- **Explicit contract sync**: Backend Pydantic schemas (`backend/app/schemas/`) and frontend TypeScript types (`frontend/lib/types.ts`) must be kept in lockstep manually (documented in root AGENTS.md). No automatic codegen today.
+- **Ownership:** `AGENTS.md` por área; docs de stack en `backend/docs/` y `frontend/docs/`; cross-cutting en `docs/`.
+- **Docker:** contextos `./frontend` y `./backend` separados.
+- **Ignores:** `.gitignore` / `.dockerignore` por área; bun lock en frontend.
+- **Contrato:** Pydantic ↔ TypeScript manual ([DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md)).
+- **Makefile:** atajos (`up`, `clean`, `dev-frontend`, `check-ignores`).
 
-### Why this shape?
-
-- Docker isolation + per-area manifests already gave good boundaries.
-- The original pain point (persistent `__pycache__` / `.pyc` appearing in `git status` and Docker contexts) was caused by non-recursive patterns in the old root-only Python ignore section + missing `backend/.dockerignore`.
-- Adding the per-area ignore files + cleaning the root `.gitignore` + adding `Makefile` + `ENV PYTHONDONTWRITEBYTECODE=1` (and later standardizing the frontend on bun) makes the structure self-documenting and resilient.
-
-### Adding something new
-
-- A new HTTP resource or Python service → `backend/` only (see `backend/AGENTS.md`).
-- A new UI component/hook/page → `frontend/` only (see `frontend/AGENTS.md`).
-- A cross-cutting change (new env var, API shape, root tooling, docs) → plan it and obtain approval.
-- Future extra area (e.g. a worker) → follow the same pattern (own Dockerfile, own .gitignore/.dockerignore, entry in compose, update ARCHITECTURE + AGENTS).
-
-See also:
-- `Makefile` (root targets)
-- `backend/.gitignore`, `backend/.dockerignore`
-- `frontend/.gitignore`, `frontend/.dockerignore`
-- `root AGENTS.md` (prohibitions and routing table)
-- `backend/AGENTS.md` / `frontend/AGENTS.md` (detailed decision rules)
+Nueva área (worker, etc.): mismo patrón + entrada en [README.md](./README.md) y ARCHITECTURE.
 
 ---
 
-*Last updated: 2026-06 (monorepo hygiene + structure section added)*
+## Documentation map
+
+| Ubicación | Role |
+|-----------|------|
+| [docs/README.md](./README.md) | Índice monorepo (cross-cutting) |
+| [backend/docs/README.md](../backend/docs/README.md) | Índice backend |
+| [frontend/docs/README.md](../frontend/docs/README.md) | Índice frontend |
+| [HARNESS.md](./HARNESS.md) | Playbooks + `make verify` |
+| [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Política de actualización |
+| [backend/docs/BACKEND.md](../backend/docs/BACKEND.md) | API, modelos, servicios |
+| [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md) | Componentes y hooks |
+| [backend/docs/ML-INTEGRATION.md](../backend/docs/ML-INTEGRATION.md) | ML futuro |
+
+---
+
+*Last updated: 2026-06-05*
