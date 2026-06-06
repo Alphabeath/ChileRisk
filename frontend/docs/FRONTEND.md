@@ -157,4 +157,4 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-06*

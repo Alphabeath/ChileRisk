@@ -116,7 +116,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
               size="sm"
               className="h-8 w-full justify-start gap-2 border-white/15 bg-white/5 font-mono text-[11px] font-normal tracking-normal text-white/90 hover:bg-white/10 hover:text-white"
             >
-              <CalendarIcon className="size-3.5 text-white/55" />
+              <CalendarIcon data-icon="inline-start" className="text-white/55" />
               {selectedDate.split("-").reverse().join("/")}
             </Button>
           </PopoverTrigger>

@@ -2,7 +2,7 @@
 
 Reference for layouts, pages, and components in `frontend/`. Read this **before** building or restyling citizen UI, map overlays, or content pages.
 
-**Related:** [AGENTS.md](../AGENTS.md) (índice), [FRONTEND.md](./FRONTEND.md) (componentes), [DOC-MAINTENANCE.md](../../docs/DOC-MAINTENANCE.md), `app/globals.css`, `lib/glass-panel.ts`, `lib/citizen-layout.ts` (posición paneles mapa).
+**Related:** [AGENTS.md](../AGENTS.md) (índice), [FRONTEND.md](./FRONTEND.md) (componentes), [DOC-MAINTENANCE.md](../../docs/DOC-MAINTENANCE.md), `frontend/.agents/skills/shadcn/SKILL.md` + `rules/` (cuando toques componentes shadcn), `app/globals.css`, `lib/glass-panel.ts`, `lib/citizen-layout.ts` (posición paneles mapa).
 
 ---
 
@@ -65,13 +65,19 @@ border border-white/10 bg-white/[0.04] text-white/90 placeholder:text-white/40
 h-9 (compact) or h-10
 ```
 
-### 2.2 Shadcn / semantic surface — forms & sparse pages
+### 2.2 Shadcn / semantic surface — forms, controls & sparse pages
 
-Used for: `Button`, `Tooltip`, dashboard verification tables, navbar chrome.
+Used for: `Button` (with `asChild`), `Tooltip`, `Calendar` + `Popover`, `Tabs`, dashboard verification tables, navbar chrome, and complex interactive primitives.
 
 - Tokens: `bg-background`, `bg-card`, `border-border`, `text-foreground`, `text-muted-foreground`, `primary`, `destructive`.
-- `components/ui/button.tsx`: **sharp** (`rounded-none`), uppercase, `tracking-widest`, `text-xs`.
-- Prefer glass for **new citizen-facing content pages**; use shadcn tokens when nesting inside existing card/table patterns (dashboard).
+- **Customized primitives** (see `components/ui/`):
+  - `button.tsx`: **sharp** (`rounded-none`), uppercase, `tracking-widest`, `text-xs`, data-slot/data-variant attrs, cva variants. Our Button deviates from shadcn defaults to match the operations aesthetic — use `variant` + minimal `className` (prefer layout only: `h-*`, `w-*`, `gap-*`, `justify-*`).
+  - `card.tsx`: sharp edges, uppercase `CardTitle`, full composition expected (`CardHeader`/`CardTitle`/`CardContent`/`CardFooter`).
+- **Hybrid rule**: Glass (`GLASS_PANEL_CLASS` + `lib/map-panel-styles.ts`) is primary for citizen-facing map overlays, disasters catalog/detail, alert panels, and popups. Use shadcn components/tokens when you need Radix primitives (date picking, tabs, tooltips, asChild composition) or on semantic/dashboard surfaces.
+- When using any shadcn component (even inside glass wrappers or with heavy glass overrides for look):
+  - Follow the critical rules in `frontend/.agents/skills/shadcn/rules/` (no `space-x/y-*` — use `flex` + `gap-*`; `cn()` for conditional/layout only; semantic tokens & built-in variants before raw colors/overrides; `data-icon="inline-start|inline-end"` + **no** `size-*` on icons inside `Button`/`TabsTrigger`/etc.; full `Card` composition; `TabsTrigger` always inside `TabsList`, etc.).
+  - Prefer `npx shadcn@latest add <component>` (run from `frontend/`) over hand-rolled markup for new controls. Review added files.
+- Prefer glass for **new citizen-facing content pages**; shadcn for forms, verification UIs, or when the primitive (Calendar, Popover, Tabs, Dialog primitives) provides real value.
 
 ---
 
@@ -245,6 +251,14 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 - Active route: `bg-primary text-primary-foreground`
 - Section routes (e.g. `/disasters`): `pathname.startsWith(href)`
 
+### 7.8 shadcn components & CLI (cuando aplique)
+
+- Añade componentes con `cd frontend && npx shadcn@latest add button card ...` (o el que necesites). Nunca edites a mano desde node_modules.
+- Después de añadir: revisa el archivo generado, corrige imports si hace falta, reemplaza iconos por `lucide-react` (nuestro `iconLibrary`), y verifica que respeta las reglas de `rules/styling.md` / `composition.md`.
+- En zonas glass: solo usa shadcn cuando el primitivo justifica (ej. `Calendar`+`Popover` para fecha, `Tabs`). El resto usa las constantes glass + markup controlado + `cn()`.
+- Overrides de `className` en Button/Card/etc. deben limitarse a layout/posición. Colores y tipografía van por variants o tokens (o las glass constants cuando el look lo requiere).
+- Ver también `frontend/.agents/skills/shadcn/SKILL.md` (contexto del proyecto, presets `radix-sera`, aliases, etc.).
+
 ---
 
 ## 8. Map-specific rules
@@ -297,7 +311,9 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 - [ ] Dense lists use 2-column grid where there are 4+ items.
 - [ ] Focus states work keyboard-only.
 - [ ] External SENAPRED links keep official URL; label can say “SENAPRED”.
+- [ ] Si usas componentes de `components/ui/` (shadcn): se respetan las critical rules (`frontend/.agents/skills/shadcn/rules/*`): sin `space-y/x-*`, `data-icon` en íconos dentro de Button/etc., `cn()` solo layout, variants primero, sin overrides de color/tipografía en className.
+- [ ] No se introdujeron nuevos componentes shadcn sin pasar por `npx shadcn@latest add` + revisión.
 
 ---
 
-**Last updated:** 2026-06-03 — glass system, `/disasters` patterns, Chile tokens, phase semantics.
+**Last updated:** 2026-06-06 — hybrid glass + shadcn guidance, references to .agents/skills/shadcn/rules, CLI + pre-ship items, space-y fixes alignment.

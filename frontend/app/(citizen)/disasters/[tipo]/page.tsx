@@ -96,7 +96,7 @@ export default async function DisasterDetailPage({
           <DisasterDetailNav color={desastre.color} phases={phaseNav} />
         </div>
 
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 flex flex-col gap-4">
           {phases.map((phase) => (
             <DisasterPhasePanel
               key={phase.key}

@@ -393,7 +393,7 @@ export function SeismicEventPopupContent({
         )}
       </div>
       {(intensityUrl || relatedEvents.length > 0 || relatedAlerts.length > 0) && (
-        <div className="space-y-1 border-t border-white/[0.07] px-3 py-2">
+        <div className="flex flex-col gap-1 border-t border-white/[0.07] px-3 py-2">
           {intensityUrl && (
             <a
               href={intensityUrl}
@@ -453,7 +453,7 @@ function HazardScores({ properties }: { properties: RegionProperties | ComunaPro
   if (hazards.length === 0) return null
 
   return (
-    <div className="px-3.5 py-2 space-y-1">
+    <div className="px-3.5 py-2 flex flex-col gap-1">
       {hazards.map(({ key, meta }) => (
         <HazardRow
           key={key}

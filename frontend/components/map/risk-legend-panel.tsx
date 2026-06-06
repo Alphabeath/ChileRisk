@@ -208,14 +208,14 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
               value="riesgo"
               className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
             >
-              <Layers className="size-2.5" aria-hidden />
+              <Layers aria-hidden />
               Riesgo
             </TabsTrigger>
             <TabsTrigger
               value="alertas"
               className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
             >
-              <ShieldAlert className="size-2.5" aria-hidden />
+              <ShieldAlert aria-hidden />
               Alertas
             </TabsTrigger>
           </TabsList>

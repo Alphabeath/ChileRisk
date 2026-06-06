@@ -118,7 +118,7 @@ export function PopupSeismicSection({
       </div>
 
       {isLoading ? (
-        <div className="space-y-2 px-3 pb-2.5">
+        <div className="flex flex-col gap-2 px-3 pb-2.5">
           <div className="h-12 animate-pulse rounded-sm bg-white/[0.06]" />
         </div>
       ) : !hasItems ? (

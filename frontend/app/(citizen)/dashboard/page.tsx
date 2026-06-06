@@ -30,7 +30,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-8 max-w-7xl mx-auto flex flex-col gap-8">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard de Verificación</h1>
@@ -58,7 +58,7 @@ export default function DashboardPage() {
           {risksLoading && risks.length === 0 ? (
             <div className="text-muted-foreground">Cargando datos mock del backend...</div>
           ) : (
-            <div className="space-y-2 text-sm">
+            <div className="flex flex-col gap-2 text-sm">
               {risks.map((r) => (
                 <div key={r.codregion} className="flex items-center justify-between rounded border px-3 py-2">
                   <div className="font-medium">{r.name}</div>
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           ) : events.length === 0 ? (
             <div className="text-muted-foreground">Sin eventos recientes</div>
           ) : (
-            <div className="space-y-1.5 text-sm font-mono">
+            <div className="flex flex-col gap-1.5 text-sm font-mono">
               {events.map((e) => (
                 <div key={e.id} className="flex justify-between border-b border-border/60 py-1 last:border-0">
                   <span>{formatMagnitude(e.magnitude)} · {formatDepth(e.depth_km)}</span>
