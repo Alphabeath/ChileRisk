@@ -37,9 +37,8 @@ import {
   buildPopupSeismicItems,
   filterRecentEventsInGeometry,
 } from "@/lib/seismic-events"
-import { formatMagnitude, formatDepth } from "@/lib/format"
 import { mapRiskFillColorExpression } from "@/lib/risk-scale"
-import { getSeismicAccentColor, getSeismicDetailUrl, isSeismicPerceived } from "@/lib/seismic"
+import { getSeismicDetailUrl } from "@/lib/seismic"
 import { useLoadingStore } from "@/stores/loading-store"
 import { useUIStore } from "@/stores/ui-store"
 import type { SeismicEvent } from "@/lib/types"
@@ -127,7 +126,6 @@ export function ChileMap() {
   const sizeObserverRef = useRef<ResizeObserver | null>(null)
 
   // Earthquake (high-intensity sismo) pulsing markers
-  const eventMarkersRef = useRef<maplibregl.Marker[]>([])
   const eventPopupsRef = useRef<maplibregl.Popup[]>([])
   const latestEventsRef = useRef<SeismicEvent[]>([])
   const mapReadyRef = useRef(false)
@@ -430,19 +428,9 @@ export function ChileMap() {
     []
   )
 
-  // Clear any existing earthquake markers and their popups
-  const clearEventMarkers = useCallback(() => {
-    eventMarkersRef.current.forEach((m) => m.remove())
-    eventMarkersRef.current = []
-    eventPopupsRef.current.forEach((p) => p.remove())
-    eventPopupsRef.current = []
-  }, [])
-
-  // Create classic "punto con ondas que parpadea" markers only for sismos with active alerts
+  // Update earthquake source with filtered events (only sismos with active alerts)
   const renderEarthquakeMarkers = useCallback(
     (map: maplibregl.Map, events: SeismicEvent[]) => {
-      clearEventMarkers()
-
       const sismoUrls = sismoAlertUrlsRef.current
       const markerEvents = events.filter((e) => {
         if (e.longitude == null || e.latitude == null || typeof e.magnitude !== "number") {
@@ -452,70 +440,22 @@ export function ChileMap() {
         return detailUrl != null && sismoUrls.has(detailUrl)
       })
 
-      markerEvents.forEach((ev) => {
-        const mag = ev.magnitude
-        const perceived = isSeismicPerceived(ev)
-        const color = getSeismicAccentColor(mag)
-        const size = mag >= 4
-          ? Math.min(48, 20 + (mag - 4) * 6)
-          : perceived
-            ? 22
-            : 16
+      const features: GeoJSON.Feature[] = markerEvents.map((ev) => ({
+        type: "Feature",
+        properties: {
+          magnitude: ev.magnitude,
+          event_id: ev.id,
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [ev.longitude, ev.latitude],
+        },
+      }))
 
-        const el = document.createElement("div")
-        el.className = "earthquake-marker"
-        el.style.width = `${size}px`
-        el.style.height = `${size}px`
-        el.style.setProperty("--eq-color", color)
-
-        // 5 staggered ripples for the "ondas"
-        for (let i = 0; i < 5; i++) {
-          const ripple = document.createElement("div")
-          ripple.className = "earthquake-ripple"
-          ripple.style.animationDelay = `-${i * 0.875}s`
-          el.appendChild(ripple)
-        }
-
-        const core = document.createElement("div")
-        core.className = "earthquake-core"
-        el.appendChild(core)
-
-        core.title = `${formatMagnitude(mag)} · ${formatDepth(ev.depth_km)}`
-
-        core.onclick = (e) => {
-          e.stopPropagation()
-          eventPopupsRef.current.forEach((p) => p.remove())
-          eventPopupsRef.current = []
-
-          const popup = new maplibregl.Popup(MAP_POPUP_OPTIONS)
-          const dismissPopup = () => popup.remove()
-          const { element, destroy } = createPopupContent(
-            <SeismicEventPopupContent event={ev} onClose={dismissPopup} />
-          )
-          const lngLat: [number, number] = [ev.longitude, ev.latitude]
-
-          addPopupToOverlay(map, popup.setLngLat(lngLat).setDOMContent(element))
-
-          popup.on("close", () => {
-            destroy()
-          })
-          eventPopupsRef.current.push(popup)
-
-          map.flyTo({
-            center: lngLat,
-            zoom: Math.max(6.5, map.getZoom()),
-            duration: 420,
-          })
-        }
-
-        const marker = new maplibregl.Marker({ element: el, anchor: "center" })
-          .setLngLat([ev.longitude, ev.latitude])
-          .addTo(map)
-
-        eventMarkersRef.current.push(marker)
-      })
+      const source = map.getSource("earthquakes") as maplibregl.GeoJSONSource | undefined
+      source?.setData({ type: "FeatureCollection", features })
     },
-    [clearEventMarkers]
+    []
   )
 
   // Ref to current render fn so the map-init effect doesn't depend on it (avoids remounting map on data refresh)
@@ -571,6 +511,71 @@ export function ChileMap() {
         hideForeignLabels(map)
         mapReadyRef.current = true
         setMapLoaded(true)
+
+        // Register pulsing dot images for earthquake markers
+        const PULSING_DOT_SIZE = 120
+        const PULSING_COLORS = {
+          red: { r: 218, g: 41, b: 28 },
+          orange: { r: 224, g: 112, b: 32 },
+          yellow: { r: 204, g: 158, b: 35 },
+        }
+
+        function createPulsingDot(color: { r: number; g: number; b: number }): maplibregl.StyleImageInterface {
+          let context: CanvasRenderingContext2D | null = null
+          const data = new Uint8Array(PULSING_DOT_SIZE * PULSING_DOT_SIZE * 4)
+
+          return {
+            width: PULSING_DOT_SIZE,
+            height: PULSING_DOT_SIZE,
+            data,
+
+            onAdd() {
+              const canvas = document.createElement("canvas")
+              canvas.width = PULSING_DOT_SIZE
+              canvas.height = PULSING_DOT_SIZE
+              context = canvas.getContext("2d")
+            },
+
+            render() {
+              const duration = 3500
+              const t = (performance.now() % duration) / duration
+              const ctx = context!
+              const center = PULSING_DOT_SIZE / 2
+              const innerRadius = center * 0.28
+              const outerRadius = center * 0.75 * t + innerRadius
+
+              ctx.clearRect(0, 0, PULSING_DOT_SIZE, PULSING_DOT_SIZE)
+
+              ctx.beginPath()
+              ctx.arc(center, center, outerRadius, 0, Math.PI * 2)
+              ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${0.6 * (1 - t)})`
+              ctx.fill()
+
+              ctx.beginPath()
+              ctx.arc(center, center, outerRadius, 0, Math.PI * 2)
+              ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${0.8 * (1 - t)})`
+              ctx.lineWidth = 2
+              ctx.stroke()
+
+              ctx.beginPath()
+              ctx.arc(center, center, innerRadius, 0, Math.PI * 2)
+              ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 1)`
+              ctx.strokeStyle = "white"
+              ctx.lineWidth = 2 + 3 * (1 - t)
+              ctx.fill()
+              ctx.stroke()
+
+              const imageData = ctx.getImageData(0, 0, PULSING_DOT_SIZE, PULSING_DOT_SIZE)
+              data.set(imageData.data)
+              map.triggerRepaint()
+              return true
+            }
+          }
+        }
+
+        map.addImage("pulsing-dot-red", createPulsingDot(PULSING_COLORS.red), { pixelRatio: 2 })
+        map.addImage("pulsing-dot-orange", createPulsingDot(PULSING_COLORS.orange), { pixelRatio: 2 })
+        map.addImage("pulsing-dot-yellow", createPulsingDot(PULSING_COLORS.yellow), { pixelRatio: 2 })
 
         const regionsGeojson = await loadRegions(
           REGIONS_DATA_URL,
@@ -630,6 +635,28 @@ export function ChileMap() {
           "line-opacity": 0,
         },
         filter: ["!=", ["get", "alert_level"], ""],
+      })
+
+      // Earthquake pulsing dot layer
+      map.addSource("earthquakes", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      })
+
+      map.addLayer({
+        id: "earthquake-layer",
+        type: "symbol",
+        source: "earthquakes",
+        layout: {
+          "icon-image": [
+            "case",
+            [">=", ["get", "magnitude"], 5.5], "pulsing-dot-red",
+            [">=", ["get", "magnitude"], 5], "pulsing-dot-orange",
+            "pulsing-dot-yellow"
+          ],
+          "icon-size": 0.6,
+          "icon-allow-overlap": true,
+        },
       })
 
       const labelFeatures = (regionsGeojson.features as unknown as RegionFeature[])
@@ -733,6 +760,36 @@ export function ChileMap() {
 
         attachComunaListeners(map)
         renderRef.current(map, latestEventsRef.current)
+
+        // Earthquake click handler
+        map.on("click", "earthquake-layer", (e) => {
+          const feature = e.features?.[0]
+          if (!feature) return
+          const props = feature.properties as { magnitude: number; event_id: number }
+          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+          const event = latestEventsRef.current.find((ev) => ev.id === props.event_id)
+          if (!event) return
+
+          eventPopupsRef.current.forEach((p) => p.remove())
+          eventPopupsRef.current = []
+
+          const popup = new maplibregl.Popup(MAP_POPUP_OPTIONS)
+          const dismissPopup = () => popup.remove()
+          const { element, destroy } = createPopupContent(
+            <SeismicEventPopupContent event={event} onClose={dismissPopup} />
+          )
+          addPopupToOverlay(map, popup.setLngLat(coords).setDOMContent(element))
+          popup.on("close", () => destroy())
+          eventPopupsRef.current.push(popup)
+          map.flyTo({ center: coords, zoom: Math.max(6.5, map.getZoom()), duration: 420 })
+        })
+
+        map.on("mouseenter", "earthquake-layer", () => {
+          map.getCanvas().style.cursor = "pointer"
+        })
+        map.on("mouseleave", "earthquake-layer", () => {
+          map.getCanvas().style.cursor = ""
+        })
       }
 
         map.on("moveend", () => {
@@ -762,7 +819,8 @@ export function ChileMap() {
         popupRef.current.remove()
         popupRef.current = null
       }
-      clearEventMarkers()
+      eventPopupsRef.current.forEach((p) => p.remove())
+      eventPopupsRef.current = []
       if (alertAnimFrameRef.current) {
         cancelAnimationFrame(alertAnimFrameRef.current)
         alertAnimFrameRef.current = 0
@@ -773,7 +831,7 @@ export function ChileMap() {
         mapRef.current = null
       }
     }
-  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas, clearEventMarkers])
+  }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas])
 
   return (
     <div className="cr-map relative h-dvh w-full">

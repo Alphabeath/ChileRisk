@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useMemo } from "react"
+import { useState } from "react"
 import { desastres, type Desastre } from "@/data/disasters"
 import { DISASTERS_NAV_LINK_CLASS, GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { ArrowUpRight, LayoutGrid } from "lucide-react"
@@ -11,15 +11,17 @@ interface RelatedDisastersProps {
   currentSlug: string
 }
 
+function shuffleAndSlice(slug: string): Desastre[] {
+  const filtered = desastres.filter((d) => d.slug !== slug)
+  for (let i = filtered.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[filtered[i], filtered[j]] = [filtered[j], filtered[i]]
+  }
+  return filtered.slice(0, 4)
+}
+
 export function RelatedDisasters({ currentSlug }: RelatedDisastersProps) {
-  const others = useMemo(() => {
-    const filtered = desastres.filter((d) => d.slug !== currentSlug)
-    for (let i = filtered.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[filtered[i], filtered[j]] = [filtered[j], filtered[i]]
-    }
-    return filtered.slice(0, 4)
-  }, [currentSlug])
+  const [others] = useState(() => shuffleAndSlice(currentSlug))
 
   return (
     <section className="mt-8">
