@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { ExternalLink, Map } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +12,7 @@ export function DisasterDetailActions({ title }: DisasterDetailActionsProps) {
     <div
       className={cn(
         GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
         "mt-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5",
       )}
     >

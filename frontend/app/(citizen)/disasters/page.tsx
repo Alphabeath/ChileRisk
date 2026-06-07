@@ -1,7 +1,7 @@
 import { DisastersCatalog } from "@/components/disasters/disasters-catalog"
 import { DisastersPageHero } from "@/components/disasters/disasters-page-hero"
 import { desastres } from "@/data/disasters"
-import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -23,6 +23,7 @@ export default function DisastersPage() {
         <aside
           className={cn(
             GLASS_PANEL_CLASS,
+            GLASS_MICA_INTERACTIVE_CLASS,
             "flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between",
           )}
         >

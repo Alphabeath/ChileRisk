@@ -1,6 +1,9 @@
+"use client"
+
 import Link from "next/link"
+import { useMemo } from "react"
 import { desastres, type Desastre } from "@/data/disasters"
-import { DISASTERS_NAV_LINK_CLASS, GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { DISASTERS_NAV_LINK_CLASS, GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { ArrowUpRight, LayoutGrid } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -9,7 +12,14 @@ interface RelatedDisastersProps {
 }
 
 export function RelatedDisasters({ currentSlug }: RelatedDisastersProps) {
-  const others = desastres.filter((d) => d.slug !== currentSlug).slice(0, 4)
+  const others = useMemo(() => {
+    const filtered = desastres.filter((d) => d.slug !== currentSlug)
+    for (let i = filtered.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[filtered[i], filtered[j]] = [filtered[j], filtered[i]]
+    }
+    return filtered.slice(0, 4)
+  }, [currentSlug])
 
   return (
     <section className="mt-8">
@@ -47,7 +57,8 @@ function RelatedDisasterLink({ desastre }: { desastre: Desastre }) {
         href={`/disasters/${desastre.slug}`}
         className={cn(
           GLASS_PANEL_CLASS,
-          "group flex flex-col overflow-hidden transition-colors hover:bg-black/50",
+          GLASS_MICA_INTERACTIVE_CLASS,
+          "group flex flex-col overflow-hidden transition-all duration-200 hover:bg-black/60 hover:-translate-y-[2px]",
         )}
       >
         <div
@@ -58,11 +69,11 @@ function RelatedDisasterLink({ desastre }: { desastre: Desastre }) {
             desastre.color,
           )}
         >
-          <div className="flex size-9 shrink-0 items-center justify-center border border-white/15 bg-black/40 backdrop-blur-sm">
-            <Icon className="size-4 text-white/90" aria-hidden />
+          <div className="flex size-9 shrink-0 items-center justify-center border border-white/15 bg-black/40 backdrop-blur-sm transition-colors group-hover:border-white/25 group-hover:bg-black/50">
+            <Icon className="size-4 text-white/90 transition-transform group-hover:scale-[1.2]" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-medium text-white/90 transition-colors group-hover:text-white">
+            <p className="text-[12px] font-medium text-white/90 transition-colors duration-200 group-hover:text-white">
               {desastre.title}
             </p>
             <p className="font-mono text-[10px] uppercase tracking-wider text-white/50">
@@ -70,7 +81,7 @@ function RelatedDisasterLink({ desastre }: { desastre: Desastre }) {
             </p>
           </div>
           <ArrowUpRight
-            className="size-3.5 shrink-0 text-white/40 transition-transform group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-white/70"
+            className="size-3.5 shrink-0 text-white/40 transition-all duration-200 group-hover:-translate-y-[2px] group-hover:translate-x-[2px] group-hover:text-white group-hover:scale-[1.25]"
             aria-hidden
           />
         </div>

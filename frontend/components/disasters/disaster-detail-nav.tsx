@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { AlertTriangle, Clock, ShieldCheck } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 export interface DisasterPhaseNavItem {
@@ -63,6 +63,7 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
     <nav
       className={cn(
         GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
         "relative sticky top-14 z-10 overflow-hidden",
       )}
       aria-label="Fases de preparación"
@@ -81,28 +82,29 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
           const Icon = phaseIcons[phase.phaseKey]
           const isActive = phase.id === activeId
           return (
-            <li key={phase.id} className="min-w-0">
+            <li key={phase.id} className="group min-w-0">
               <a
                 href={`#${phase.id}`}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "flex h-full min-h-[5.5rem] flex-col items-center justify-center gap-1.5 px-2 py-4 text-center transition-colors sm:min-h-[6.5rem] sm:px-4",
+                  "flex h-full min-h-[5.5rem] flex-col items-center justify-center gap-1.5 px-2 py-4 text-center transition-all duration-200 sm:min-h-[6.5rem] sm:px-4",
                   "hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/35",
                   isActive && "bg-white/[0.1]",
                 )}
               >
                 <div
                   className={cn(
-                    "flex size-9 items-center justify-center border backdrop-blur-sm",
+                    "flex size-9 items-center justify-center border backdrop-blur-sm transition-all duration-200",
                     isActive
                       ? "border-white/30 bg-white/15"
-                      : "border-white/15 bg-black/25",
+                      : "border-white/15 bg-black/25 group-hover:border-white/25",
                   )}
                 >
                   <Icon
                     className={cn(
-                      "size-4",
+                      "size-4 transition-transform duration-200",
                       isActive ? "text-white" : "text-white/70",
+                      "group-hover:scale-[1.2]",
                     )}
                     aria-hidden
                   />

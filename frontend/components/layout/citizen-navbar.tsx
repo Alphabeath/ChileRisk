@@ -3,50 +3,53 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Map, ShieldAlert, UserCircle } from "lucide-react"
+import { CITIZEN_NAVBAR_LINK_CLASS, CITIZEN_NAVBAR_SHELL_CLASS } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/map", label: "Mapa", icon: Map },
-  { href: "/disasters", label: "Desastres", icon: ShieldAlert },
-  { href: "/account", label: "Cuenta", icon: UserCircle },
+  { href: "/dashboard", label: "Inicio", icon: Home, section: false },
+  { href: "/map", label: "Mapa", icon: Map, section: false },
+  { href: "/disasters", label: "Desastres", icon: ShieldAlert, section: true },
+  { href: "/account", label: "Cuenta", icon: UserCircle, section: false },
 ] as const
+
+function isNavActive(pathname: string, href: string, section?: boolean) {
+  if (section) return pathname.startsWith(href)
+  return pathname === href
+}
 
 export function CitizenNavbar() {
   const pathname = usePathname()
 
   return (
     <nav
-      className="fixed top-3 left-1/2 z-50 w-max max-w-[calc(100vw-1.5rem)] -translate-x-1/2"
+      className="fixed top-4 left-1/2 z-50 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2"
       aria-label="Navegación principal"
     >
-      <div
-        className={cn(
-          "flex items-center gap-0.5 overflow-x-auto border border-border/70 bg-background/85 px-1.5 py-1 shadow-md backdrop-blur-xl",
-          "supports-[backdrop-filter]:bg-background/65",
-          "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        )}
-      >
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            href === "/disasters"
-              ? pathname.startsWith(href)
-              : pathname === href
+      <div className={CITIZEN_NAVBAR_SHELL_CLASS}>
+        {navItems.map(({ href, label, icon: Icon, section }) => {
+          const isActive = isNavActive(pathname, href, section)
           return (
             <Link
               key={href}
               href={href}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-2 px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                CITIZEN_NAVBAR_LINK_CLASS,
+                "group",
                 isActive
                   ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground",
+                  : "text-white/55 hover:bg-white/[0.06] hover:text-white/90",
               )}
             >
-              <Icon className="size-4 shrink-0" strokeWidth={isActive ? 2.25 : 2} />
+              <Icon
+                className={cn(
+                  "size-3.5 shrink-0 transition-transform duration-150",
+                  !isActive && "group-hover:scale-[1.15]",
+                )}
+                strokeWidth={isActive ? 2.25 : 2}
+                aria-hidden
+              />
               <span>{label}</span>
             </Link>
           )

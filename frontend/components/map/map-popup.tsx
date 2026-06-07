@@ -27,7 +27,7 @@ import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
 import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/alerts-display"
-import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { todayIsoDate } from "@/lib/query-date"
 import { ActiveAlertsSection } from "./alert-ui"
 import { PopupSeismicSection } from "./popup-seismic-section"
@@ -212,6 +212,7 @@ function PopupShell({
       className={cn(
         "flex min-w-[240px] max-w-[310px] flex-col",
         MAP_POPUP_GLASS_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
         className
       )}
     >

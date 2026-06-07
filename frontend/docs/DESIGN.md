@@ -31,12 +31,13 @@ Used for: map popups, floating panels (`MapOverlays`), **Disasters** (`/disaster
 **Always import** from `@/lib/glass-panel`:
 
 ```ts
-import { GLASS_PANEL_CLASS, GLASS_DIVIDER } from "@/lib/glass-panel"
+import { GLASS_PANEL_CLASS, GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS } from "@/lib/glass-panel"
 ```
 
 | Token | Value | Use |
 |-------|--------|-----|
 | `GLASS_PANEL_CLASS` | `border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50` | Panel/card shell |
+| `GLASS_MICA_INTERACTIVE_CLASS` | `glass-mica interactive-mica` | Cursor-following specular highlight (requires `MicaLightProvider` in citizen layout) |
 | `GLASS_DIVIDER` | `border-white/10` | Borders between sections (`border-b`, `divide-x`) |
 
 **Corners:** sharp — **no** `rounded-xl` / `rounded-2xl` on glass panels. Map overlays and disasters UI use square edges.
@@ -54,9 +55,16 @@ import { GLASS_PANEL_CLASS, GLASS_DIVIDER } from "@/lib/glass-panel"
 **Interactive on glass:**
 
 ```txt
-hover:bg-white/[0.06]
+hover:bg-white/[0.06] / hover:bg-black/50 / hover:bg-white/[0.08]
 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30
+transition-all duration-150/200 (colors + subtle transforms on icons/arrows only)
 ```
+
+**Micro-interactions (glass citizen pages):** 
+- Subtle-to-noticeable lifts (`hover:-translate-y-px` / `-translate-y-[2px]`) and icon scales (`group-hover:scale-[1.2]` / `1.25`) on cards, nav tabs, steps.
+- Step items and filter chips get stronger `hover:bg-` + active press scale.
+- **Mica cursor light**: All interactive glass surfaces (citizen navbar, disasters heroes/cards/nav/panels, map overlays, popups) use `GLASS_MICA_INTERACTIVE_CLASS` on the panel shell. `MicaLightProvider` in `app/(citizen)/layout.tsx` delegates `mousemove` globally and sets CSS vars `--mx` / `--my`. Soft radial white highlight (Windows Mica-inspired). Low opacity, screen blend. CSS in `app/globals.css`; coords helpers in `lib/use-mica-light.ts`. `MAP_PANEL_SHELL_CLASS` and `DISASTERS_NAV_LINK_CLASS` include Mica by default.
+- All via CSS `transition-all duration-150/200`. No stagger, no motion lib on glass (per §10). Landing hero is the only place for `motion`. Respect `prefers-reduced-motion`.
 
 **Inputs on glass:**
 
@@ -67,7 +75,7 @@ h-9 (compact) or h-10
 
 ### 2.2 Shadcn / semantic surface — forms, controls & sparse pages
 
-Used for: `Button` (with `asChild`), `Tooltip`, `Calendar` + `Popover`, `Tabs`, dashboard verification tables, navbar chrome, and complex interactive primitives.
+Used for: `Button` (with `asChild`), `Tooltip`, `Calendar` + `Popover`, `Tabs`, dashboard verification tables, and complex interactive primitives. Navbar chrome uses glass (§7.7); active link state uses `primary` token.
 
 - Tokens: `bg-background`, `bg-card`, `border-border`, `text-foreground`, `text-muted-foreground`, `primary`, `destructive`.
 - **Customized primitives** (see `components/ui/`):
@@ -251,9 +259,19 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 
 ### 7.7 Navbar (`CitizenNavbar`)
 
-- Floating pill: `border bg-background/80 backdrop-blur-xl`
+Import from `@/lib/glass-panel`:
+
+```ts
+import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/glass-panel"
+```
+
+- Position: `fixed top-4 left-1/2 z-50 -translate-x-1/2`
+- Shell: `CITIZEN_NAVBAR_SHELL_CLASS` (`GLASS_PANEL_CLASS` + `GLASS_MICA_INTERACTIVE_CLASS`, sharp edges)
+- Links: `CITIZEN_NAVBAR_LINK_CLASS` + `text-[10px] uppercase tracking-[1.2px]`
 - Active route: `bg-primary text-primary-foreground`
+- Inactive: `text-white/55 hover:bg-white/[0.06] hover:text-white/90`
 - Section routes (e.g. `/disasters`): `pathname.startsWith(href)`
+- Focus: `focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30`
 
 ### 7.8 shadcn components & CLI (cuando aplique)
 
@@ -300,7 +318,7 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 |---------|----------|
 | Disasters feature | `components/disasters/*`, `data/disasters.ts`, `lib/disasters-visual.ts` |
 | Map overlays | `components/map/*` |
-| Shared glass constant | `lib/glass-panel.ts` |
+| Shared glass constant | `lib/glass-panel.ts`, `components/mica-light-provider.tsx` |
 | Alert presentation | `components/map/alert-ui.tsx`, `lib/alerts-display.ts` |
 
 ---
@@ -308,6 +326,7 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 ## 12. Pre-ship checklist (UI)
 
 - [ ] Glass panels use `GLASS_PANEL_CLASS` (not ad-hoc `bg-card rounded-xl`).
+- [ ] Interactive glass shells include `GLASS_MICA_INTERACTIVE_CLASS` (or inherit via `MAP_PANEL_SHELL_CLASS` / `DISASTERS_NAV_LINK_CLASS`).
 - [ ] Text on dark glass uses white opacity scale (not `text-muted-foreground` on glass).
 - [ ] Citizen page has top padding for navbar.
 - [ ] Disaster detail uses `desastre.color` in hero + nav + phase headers.
@@ -320,4 +339,4 @@ Prefer native `<button>` / `<Link>` with glass styles (see SENAPRED link in disa
 
 ---
 
-**Last updated:** 2026-06-06 — disasters catalog + detail redesign (total steps in hero/cards, refined related mini-cards, step counts, glass meta headers), new patterns documented in §3.3, respects all glass/phase/color rules.
+**Last updated:** 2026-06-06 — `CitizenNavbar` aligned to glass + Mica (`CITIZEN_NAVBAR_SHELL_CLASS` / `CITIZEN_NAVBAR_LINK_CLASS`). Mica globalized via `MicaLightProvider`.

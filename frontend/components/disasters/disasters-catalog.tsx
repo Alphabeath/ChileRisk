@@ -8,7 +8,7 @@ import {
   type DesastreCategory,
 } from "@/lib/disasters-visual"
 import { DesastreCard } from "@/components/disasters/desastre-card"
-import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { Search, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -35,7 +35,9 @@ export function DisastersCatalog() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className={cn(GLASS_PANEL_CLASS, "flex flex-col gap-4 p-4")}>
+      <div
+        className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "flex flex-col gap-4 p-4")}
+      >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search
@@ -90,6 +92,7 @@ export function DisastersCatalog() {
         <div
           className={cn(
             GLASS_PANEL_CLASS,
+            GLASS_MICA_INTERACTIVE_CLASS,
             "border-dashed px-6 py-14 text-center",
           )}
         >
@@ -137,10 +140,10 @@ function FilterChip({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+        "border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] transition-all duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
         active
           ? "border-white/20 bg-white/15 text-white"
-          : "border-transparent text-white/50 hover:bg-white/[0.06] hover:text-white/75",
+          : "border-transparent text-white/50 hover:bg-white/[0.08] hover:text-white hover:border-white/15 active:scale-[0.985]",
       )}
     >
       {children}

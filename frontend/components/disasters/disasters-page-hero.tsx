@@ -1,4 +1,4 @@
-import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { AlertTriangle, Clock, ShieldAlert, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -15,7 +15,7 @@ const phaseHighlights = [
 
 export function DisastersPageHero({ disasterCount, totalSteps }: DisastersPageHeroProps) {
   return (
-    <header className={cn(GLASS_PANEL_CLASS, "relative w-full overflow-hidden")}>
+    <header className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "relative w-full overflow-hidden")}>
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-red-950/70 to-[var(--secondary-chile)]/45"
         aria-hidden
@@ -62,10 +62,10 @@ export function DisastersPageHero({ disasterCount, totalSteps }: DisastersPageHe
         {phaseHighlights.map(({ label, subtitle, icon: Icon }) => (
           <div
             key={label}
-            className="flex items-center justify-center gap-2.5 px-3 py-4 sm:gap-3 sm:px-5 sm:py-5"
+            className="flex items-center justify-center gap-2.5 px-3 py-4 sm:gap-3 sm:px-5 sm:py-5 transition-colors hover:bg-white/[0.03]"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10">
-              <Icon className="size-4 text-white/90 sm:size-[1.125rem]" aria-hidden />
+            <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10 transition-all hover:border-white/30 hover:bg-white/15">
+              <Icon className="size-4 text-white/90 sm:size-[1.125rem] transition-transform hover:scale-105" aria-hidden />
             </div>
             <div className="min-w-0 text-left">
               <p className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white">
@@ -82,11 +82,11 @@ export function DisastersPageHero({ disasterCount, totalSteps }: DisastersPageHe
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm sm:px-4 sm:py-4">
+    <div className="border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm sm:px-4 sm:py-4 transition-colors hover:bg-black/50 hover:border-white/25">
       <dt className="text-[9px] font-semibold uppercase tracking-[1.1px] text-white/55 sm:text-[10px]">
         {label}
       </dt>
-      <dd className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl">
+      <dd className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl transition-colors">
         {value}
       </dd>
     </div>

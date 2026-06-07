@@ -4,7 +4,7 @@ import {
   categoryLabels,
   getDesastreCategory,
 } from "@/lib/disasters-visual"
-import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { AlertTriangle, Clock, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { DisasterDescriptionBlock } from "./disaster-description-block"
@@ -25,7 +25,7 @@ export function DisasterDetailHero({ desastre, totalSteps }: DisasterDetailHeroP
   const category = getDesastreCategory(desastre.slug)
 
   return (
-    <header className={cn(GLASS_PANEL_CLASS, "relative w-full overflow-hidden")}>
+    <header className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "relative w-full overflow-hidden")}>
       <div
         className={cn(
           "pointer-events-none absolute inset-0 bg-gradient-to-br",

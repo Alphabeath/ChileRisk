@@ -14,7 +14,7 @@ import {
   getDesastreCategory,
 } from "@/lib/disasters-visual"
 import { DISASTERS_NAV_LINK_CLASS } from "@/lib/glass-panel"
-import { ArrowLeft, AlertTriangle, Clock, ShieldCheck } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function generateStaticParams() {
@@ -26,7 +26,6 @@ const phases: DisasterPhaseConfig[] = [
     key: "antes",
     title: "Antes",
     subtitle: "Prevención y preparación",
-    icon: Clock,
     accent: "text-blue-400",
     border: "border-l-blue-500",
   },
@@ -34,7 +33,6 @@ const phases: DisasterPhaseConfig[] = [
     key: "durante",
     title: "Durante",
     subtitle: "Acción inmediata",
-    icon: AlertTriangle,
     accent: "text-amber-400",
     border: "border-l-amber-500",
   },
@@ -42,7 +40,6 @@ const phases: DisasterPhaseConfig[] = [
     key: "despues",
     title: "Después",
     subtitle: "Recuperación y seguridad",
-    icon: ShieldCheck,
     accent: "text-emerald-400",
     border: "border-l-emerald-500",
   },

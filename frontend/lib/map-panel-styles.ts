@@ -1,9 +1,11 @@
 import { MAP_PANEL_WIDTH_CLASS } from "@/lib/citizen-layout"
+import { GLASS_MICA_INTERACTIVE_CLASS } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 /** Shared glass shell for draggable map overlays. */
 export const MAP_PANEL_SHELL_CLASS = cn(
   "z-20 border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl",
+  GLASS_MICA_INTERACTIVE_CLASS,
   MAP_PANEL_WIDTH_CLASS,
 )
 

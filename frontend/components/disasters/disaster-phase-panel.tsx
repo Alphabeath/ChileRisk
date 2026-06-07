@@ -1,12 +1,14 @@
+"use client"
+
+import { AlertTriangle, Clock, ShieldCheck } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { GLASS_DIVIDER, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 export interface DisasterPhaseConfig {
   key: "antes" | "durante" | "despues"
   title: string
   subtitle: string
-  icon: LucideIcon
   accent: string
   border: string
 }
@@ -24,13 +26,19 @@ export function DisasterPhasePanel({
   id,
   color,
 }: DisasterPhasePanelProps) {
-  const Icon = phase.icon
+  const phaseIcons: Record<DisasterPhaseConfig["key"], LucideIcon> = {
+    antes: Clock,
+    durante: AlertTriangle,
+    despues: ShieldCheck,
+  }
+  const Icon = phaseIcons[phase.key]
 
   return (
     <section
       id={id}
       className={cn(
         GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
         "scroll-mt-24 overflow-hidden border-l-[3px]",
         phase.border,
       )}
@@ -69,18 +77,18 @@ export function DisasterPhasePanel({
             <li
               key={i}
               className={cn(
-                "flex gap-3 border px-3 py-3 sm:px-4",
+                "group flex gap-3 border px-3 py-3 sm:px-4 transition-all duration-150 hover:-translate-y-px",
                 isPriority
-                  ? "col-span-1 border-amber-500/40 bg-amber-500/[0.08] sm:col-span-2"
-                  : "border-white/10 bg-white/[0.03]",
+                  ? "col-span-1 border-amber-500/40 bg-amber-500/[0.08] sm:col-span-2 hover:bg-amber-500/[0.13]"
+                  : "border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/25",
               )}
             >
               <span
                 className={cn(
-                  "flex size-6 shrink-0 items-center justify-center border font-mono text-[10px] font-semibold tabular-nums",
+                  "flex size-6 shrink-0 items-center justify-center border font-mono text-[10px] font-semibold tabular-nums transition-all duration-150",
                   isPriority
-                    ? "border-amber-500/35 bg-amber-500/15 text-amber-200"
-                    : "border-white/10 bg-white/[0.05] text-white/55",
+                    ? "border-amber-500/35 bg-amber-500/15 text-amber-200 group-hover:border-amber-400/50 group-hover:bg-amber-500/25"
+                    : "border-white/10 bg-white/[0.05] text-white/55 group-hover:border-white/25 group-hover:bg-white/[0.08] group-hover:text-white/70",
                 )}
               >
                 {i + 1}

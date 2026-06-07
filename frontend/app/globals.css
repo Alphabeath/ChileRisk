@@ -351,3 +351,50 @@
   }
 }
 
+/* Mica-style cursor light for glass surfaces (Windows-inspired specular highlight) */
+.glass-mica {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-mica::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.045),
+    rgba(255, 255, 255, 0.012) 38%,
+    transparent 56%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+  z-index: 0;
+  mix-blend-mode: screen;
+}
+
+.glass-mica:hover::after {
+  opacity: 0.65;
+}
+
+/* Slightly stronger on interactive cards/panels — still compact and subtle */
+.glass-mica.interactive-mica::after {
+  background: radial-gradient(
+    180px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.065),
+    rgba(255, 255, 255, 0.018) 32%,
+    transparent 52%
+  );
+}
+
+.glass-mica.interactive-mica:hover::after {
+  opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-mica::after {
+    display: none;
+  }
+}
+
