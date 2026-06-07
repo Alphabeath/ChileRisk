@@ -13,7 +13,7 @@ export type LoadingSource = (typeof LOADING_SOURCE)[keyof typeof LOADING_SOURCE]
 interface LoadingState {
   /** Refcount per source (e.g. parallel map fetches). */
   sources: Partial<Record<LoadingSource, number>>
-  /** /map: one session until first regions+comunas hydrate. */
+  /** /monitor: one session until first regions+comunas hydrate. */
   mapInitialPending: boolean
   /** Debounced signal for the top bar (nprogress). */
   visible: boolean

@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
-import { ExternalLink, Map } from "lucide-react"
+import { ExternalLink, Monitor } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DisasterDetailActionsProps {
@@ -18,15 +18,15 @@ export function DisasterDetailActions({ title }: DisasterDetailActionsProps) {
     >
       <p className="text-[12px] text-white/60">
         <span className="font-medium text-white/85">Actúa ahora</span> — consulta el
-        mapa de riesgo o el material oficial para {title.toLowerCase()}.
+        monitor de riesgo o el material oficial para {title.toLowerCase()}.
       </p>
       <div className="flex flex-wrap gap-2">
         <Link
-          href="/map"
+          href="/monitor"
           className="inline-flex items-center gap-2 border border-white/15 bg-white/[0.08] px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
         >
-          <Map className="size-3.5" aria-hidden />
-          Ver en el mapa
+          <Monitor className="size-3.5" aria-hidden />
+          Ver en el monitor
         </Link>
         <Link
           href="https://www.senapred.cl/recomendaciones/"

@@ -8,7 +8,7 @@ import { useGlobalLoadingVisible } from "@/stores/loading-store"
 
 /**
  * Syncs async work into Zustand, then drives nprogress via useTopLoader.
- * (No <NextTopLoader /> — its navigation hooks call done() too early on /map.)
+ * (No <NextTopLoader /> — its navigation hooks call done() too early on /monitor.)
  */
 export function GlobalTopLoaderBridge() {
   useSyncGlobalLoading()

@@ -42,7 +42,7 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 | Ruta | Propósito |
 |------|-----------|
 | `/` | Landing + globo |
-| `/map` | Mapa + `MapOverlays` |
+| `/monitor` | Monitor + `MapOverlays` |
 | `/dashboard` | Debug API |
 | `/disasters`, `/disasters/[tipo]` | Guías |
 | `/account` | Placeholder |
@@ -62,7 +62,7 @@ next@16.2.6 · react@19 · Tailwind v4 · maplibre-gl · @dnd-kit · react-day-p
 
 ```
 frontend/
-├── app/(citizen)/map/page.tsx
+├── app/(citizen)/monitor/page.tsx
 ├── components/map/     # chile-map, map-overlays, panels
 ├── hooks/
 ├── lib/                # api, types, query-date, citizen-layout

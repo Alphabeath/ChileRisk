@@ -6,9 +6,9 @@ import { useEffect } from "react"
 
 import { LOADING_SOURCE, useLoadingStore } from "@/stores/loading-store"
 
-const MAP_ROUTE = "/map"
+const MONITOR_ROUTE = "/monitor"
 
-/** Pushes React Query + /map route session into the loading store. */
+/** Pushes React Query + /monitor route session into the loading store. */
 export function useSyncGlobalLoading() {
   const pathname = usePathname()
   const fetching = useIsFetching()
@@ -23,7 +23,7 @@ export function useSyncGlobalLoading() {
   }, [queryBusy, setSourceActive])
 
   useEffect(() => {
-    if (pathname === MAP_ROUTE) {
+    if (pathname === MONITOR_ROUTE) {
       setMapInitialPending(true)
       return () => setMapInitialPending(false)
     }
