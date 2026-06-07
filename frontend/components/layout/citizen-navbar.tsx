@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Map, ShieldAlert, UserCircle } from "lucide-react"
 import { CITIZEN_NAVBAR_LINK_CLASS, CITIZEN_NAVBAR_SHELL_CLASS } from "@/lib/glass-panel"
+import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -20,10 +21,16 @@ function isNavActive(pathname: string, href: string, section?: boolean) {
 
 export function CitizenNavbar() {
   const pathname = usePathname()
+  const disasterPhaseNavPinned = useUIStore((s) => s.disasterPhaseNavPinned)
 
   return (
     <nav
-      className="fixed top-4 left-1/2 z-50 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2"
+      className={cn(
+        "fixed top-4 left-1/2 z-50 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 transition-[transform,opacity] duration-200 ease-out",
+        disasterPhaseNavPinned &&
+          "pointer-events-none -translate-y-[calc(100%+1.25rem)] opacity-0",
+      )}
+      aria-hidden={disasterPhaseNavPinned}
       aria-label="Navegación principal"
     >
       <div className={CITIZEN_NAVBAR_SHELL_CLASS}>

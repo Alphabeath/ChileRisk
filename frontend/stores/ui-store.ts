@@ -19,6 +19,8 @@ interface UIState {
   panelLayoutVersion: number
   /** Bumped to force map layers + query refetch from toolbar. */
   mapDataRefreshNonce: number
+  /** Disaster detail phase nav is sticky (hides main citizen navbar). */
+  disasterPhaseNavPinned: boolean
   setSelectedRegion: (region: number | null) => void
   setSelectedComuna: (comuna: number | null) => void
   setSelectedEventId: (eventId: number | null) => void
@@ -29,6 +31,7 @@ interface UIState {
   resetPanelPosition: (panelId: string) => void
   resetAllPanelPositions: () => void
   requestMapDataRefresh: () => void
+  setDisasterPhaseNavPinned: (pinned: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -41,6 +44,7 @@ export const useUIStore = create<UIState>((set) => ({
   panelPositions: {},
   panelLayoutVersion: 0,
   mapDataRefreshNonce: 0,
+  disasterPhaseNavPinned: false,
   setSelectedRegion: (region) => set({ selectedRegion: region }),
   setSelectedComuna: (comuna) => set({ selectedComuna: comuna }),
   setSelectedEventId: (eventId) => set({ selectedEventId: eventId }),
@@ -64,4 +68,5 @@ export const useUIStore = create<UIState>((set) => ({
     })),
   requestMapDataRefresh: () =>
     set((state) => ({ mapDataRefreshNonce: state.mapDataRefreshNonce + 1 })),
+  setDisasterPhaseNavPinned: (pinned) => set({ disasterPhaseNavPinned: pinned }),
 }))
