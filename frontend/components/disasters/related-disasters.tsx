@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
 import { desastres, type Desastre } from "@/data/disasters"
 import { DISASTERS_NAV_LINK_CLASS, GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { ArrowUpRight, LayoutGrid } from "lucide-react"
@@ -11,17 +10,24 @@ interface RelatedDisastersProps {
   currentSlug: string
 }
 
-function shuffleAndSlice(slug: string): Desastre[] {
+function seededShuffle(slug: string): Desastre[] {
   const filtered = desastres.filter((d) => d.slug !== slug)
+  // Simple hash from slug for deterministic order
+  let hash = 0
+  for (let i = 0; i < slug.length; i++) {
+    hash = ((hash << 5) - hash + slug.charCodeAt(i)) | 0
+  }
+  // Fisher-Yates with seeded PRNG
   for (let i = filtered.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    hash = (hash * 16807 + 1) % 2147483647
+    const j = Math.abs(hash) % (i + 1)
     ;[filtered[i], filtered[j]] = [filtered[j], filtered[i]]
   }
   return filtered.slice(0, 4)
 }
 
 export function RelatedDisasters({ currentSlug }: RelatedDisastersProps) {
-  const [others] = useState(() => shuffleAndSlice(currentSlug))
+  const others = seededShuffle(currentSlug)
 
   return (
     <section className="mt-8">

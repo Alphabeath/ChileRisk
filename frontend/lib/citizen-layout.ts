@@ -4,6 +4,9 @@ export const CITIZEN_NAVBAR_HEIGHT_PX = 40
 export const CITIZEN_NAVBAR_CLEARANCE_PX =
   CITIZEN_NAVBAR_TOP_PX + CITIZEN_NAVBAR_HEIGHT_PX + 8
 
+/** Sticky offset for disaster detail phase nav (below floating citizen navbar). */
+export const DISASTER_PHASE_NAV_STICKY_TOP_PX = 80
+
 /** Default `top` for map panels under the navbar (matches `useDraggablePanel` fixed default). */
 export const MAP_PANEL_DEFAULT_TOP_PX = CITIZEN_NAVBAR_CLEARANCE_PX
 

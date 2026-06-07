@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { AlertTriangle, Clock, ShieldCheck } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { DISASTER_PHASE_NAV_STICKY_TOP_PX } from "@/lib/citizen-layout"
 import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
@@ -24,9 +25,10 @@ const phaseIcons: Record<DisasterPhaseNavItem["phaseKey"], LucideIcon> = {
 interface DisasterDetailNavProps {
   color: string
   phases: DisasterPhaseNavItem[]
+  className?: string
 }
 
-export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
+export function DisasterDetailNav({ color, phases, className }: DisasterDetailNavProps) {
   const [activeId, setActiveId] = useState(phases[0]?.id ?? "")
 
   useEffect(() => {
@@ -64,8 +66,10 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
       className={cn(
         GLASS_PANEL_CLASS,
         GLASS_MICA_INTERACTIVE_CLASS,
-        "relative sticky top-14 z-10 overflow-hidden",
+        "relative overflow-hidden",
+        className,
       )}
+      style={{ top: DISASTER_PHASE_NAV_STICKY_TOP_PX }}
       aria-label="Fases de preparación"
     >
       <div
@@ -77,7 +81,13 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
       />
       <div className="pointer-events-none absolute inset-0 bg-black/50" aria-hidden />
 
-      <ul className={cn("relative grid grid-cols-3 divide-x", GLASS_DIVIDER)}>
+      <ul
+        className={cn(
+          "relative grid grid-cols-3 divide-x",
+          "lg:grid-cols-1 lg:divide-x-0 lg:divide-y",
+          GLASS_DIVIDER,
+        )}
+      >
         {phases.map((phase) => {
           const Icon = phaseIcons[phase.phaseKey]
           const isActive = phase.id === activeId
@@ -87,14 +97,15 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
                 href={`#${phase.id}`}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
-                  "flex h-full min-h-[5.5rem] flex-col items-center justify-center gap-1.5 px-2 py-4 text-center transition-all duration-200 sm:min-h-[6.5rem] sm:px-4",
+                  "flex h-full min-h-[4.25rem] flex-col items-center justify-center gap-1 px-2 py-3 text-center transition-all duration-200 sm:min-h-[5.5rem] sm:gap-1.5 sm:px-4 sm:py-4",
+                  "lg:min-h-0 lg:flex-row lg:items-center lg:justify-start lg:gap-3 lg:px-4 lg:py-3.5 lg:text-left",
                   "hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/35",
                   isActive && "bg-white/[0.1]",
                 )}
               >
                 <div
                   className={cn(
-                    "flex size-9 items-center justify-center border backdrop-blur-sm transition-all duration-200",
+                    "flex size-9 shrink-0 items-center justify-center border backdrop-blur-sm transition-all duration-200",
                     isActive
                       ? "border-white/30 bg-white/15"
                       : "border-white/15 bg-black/25 group-hover:border-white/25",
@@ -109,13 +120,15 @@ export function DisasterDetailNav({ color, phases }: DisasterDetailNavProps) {
                     aria-hidden
                   />
                 </div>
-                <span className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/95">
-                  {phase.label}
-                </span>
-                <span className="line-clamp-1 text-[10px] text-white/55 sm:line-clamp-2">
-                  {phase.subtitle}
-                </span>
-                <span className="font-mono text-[10px] tabular-nums text-white/60">
+                <div className="min-w-0 lg:flex-1">
+                  <span className="block text-[11px] font-semibold uppercase tracking-[1.2px] text-white/95">
+                    {phase.label}
+                  </span>
+                  <span className="mt-0.5 line-clamp-1 text-[10px] text-white/55 sm:line-clamp-2 lg:line-clamp-1">
+                    {phase.subtitle}
+                  </span>
+                </div>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums text-white/60 lg:ml-2">
                   {phase.count} pasos
                 </span>
               </a>

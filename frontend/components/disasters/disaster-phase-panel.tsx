@@ -39,13 +39,13 @@ export function DisasterPhasePanel({
       className={cn(
         GLASS_PANEL_CLASS,
         GLASS_MICA_INTERACTIVE_CLASS,
-        "scroll-mt-24 overflow-hidden border-l-[3px]",
+        "scroll-mt-32 overflow-hidden border-l-[3px]",
         phase.border,
       )}
     >
       <header
         className={cn(
-          "relative flex items-center gap-3 border-b px-4 py-4 sm:px-6",
+          "relative flex items-center gap-3 overflow-hidden border-b px-4 py-4 sm:px-6",
           GLASS_DIVIDER,
         )}
       >

@@ -89,21 +89,25 @@ export default async function DisasterDetailPage({
 
         <DisasterDetailActions title={desastre.title} />
 
-        <div className="mt-4">
-          <DisasterDetailNav color={desastre.color} phases={phaseNav} />
-        </div>
+        <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(220px,280px)_1fr] lg:items-start lg:gap-6">
+          <DisasterDetailNav
+            color={desastre.color}
+            phases={phaseNav}
+            className="z-10 lg:sticky lg:self-start"
+          />
 
-        <div className="mt-4 flex flex-col gap-4">
-          {phases.map((phase) => (
-            <DisasterPhasePanel
-              key={phase.key}
-              id={`fase-${phase.key}`}
-              phase={phase}
-              items={desastre[phase.key]}
-              color={desastre.color}
-            />
-          ))}
-        </div>
+          <div className="flex min-w-0 flex-col gap-4">
+            {phases.map((phase) => (
+              <DisasterPhasePanel
+                key={phase.key}
+                id={`fase-${phase.key}`}
+                phase={phase}
+                items={desastre[phase.key]}
+                color={desastre.color}
+              />
+            ))}
+          </div>
+        </section>
 
         <RelatedDisasters currentSlug={desastre.slug} />
       </div>
