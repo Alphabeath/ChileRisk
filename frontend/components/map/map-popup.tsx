@@ -26,7 +26,7 @@ import {
 import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
-import { POPUP_MAX_ALERTS, POPUP_MAX_SEISMIC } from "@/lib/alerts-display"
+import { POPUP_MAX_ALERTS } from "@/lib/alerts-display"
 import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { todayIsoDate } from "@/lib/query-date"
 import { ActiveAlertsSection } from "./alert-ui"
@@ -472,15 +472,6 @@ function HeaderExtras({ properties }: { properties: RegionProperties | ComunaPro
   return <SeverityBadge severity={properties.severity} />
 }
 
-function PopupMoreIndicator({ count, noun }: { count: number; noun: string }) {
-  if (count <= 0) return null
-  return (
-    <p className="px-3.5 py-1.5 font-mono text-[9px] text-white/45">
-      +{count} {noun} — ver panel de alertas
-    </p>
-  )
-}
-
 export function RegionPopupContent({
   properties,
   alerts = [],
@@ -490,8 +481,6 @@ export function RegionPopupContent({
   onViewDetail,
   onClose,
 }: RegionPopupContentProps) {
-  const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
-
   return (
     <PopupShell
       title={properties.Region}
@@ -509,8 +498,7 @@ export function RegionPopupContent({
         showRegion={false}
         collapsedLimit={POPUP_MAX_ALERTS}
       />
-      <PopupSeismicSection items={visibleSeismic} queryDate={queryDate} />
-      <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
+      <PopupSeismicSection items={seismicItems} queryDate={queryDate} collapsedLimit={2} />
       {properties.composite_score != null && (
         <div>
           <WeatherRow
@@ -533,8 +521,6 @@ export function ComunaPopupContent({
   onViewDetail,
   onClose,
 }: ComunaPopupContentProps) {
-  const visibleSeismic = seismicItems.slice(0, POPUP_MAX_SEISMIC)
-
   return (
     <PopupShell
       title={properties.Comuna}
@@ -552,8 +538,7 @@ export function ComunaPopupContent({
         showRegion={false}
         collapsedLimit={POPUP_MAX_ALERTS}
       />
-      <PopupSeismicSection items={visibleSeismic} queryDate={queryDate} />
-      <PopupMoreIndicator count={seismicItems.length - visibleSeismic.length} noun="sismos" />
+      <PopupSeismicSection items={seismicItems} queryDate={queryDate} collapsedLimit={2} />
       {properties.composite_score != null && (
         <div>
           <WeatherRow temp={properties.temperature_c} wind={properties.wind_speed_kmh} />

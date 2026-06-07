@@ -1,6 +1,7 @@
 "use client"
 
-import { Activity, Clock, ExternalLink } from "lucide-react"
+import { useState } from "react"
+import { Activity, ChevronDown, Clock, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   formatPopupSeismicMeta,
@@ -86,12 +87,29 @@ export function PopupSeismicSection({
   items,
   isLoading = false,
   queryDate = todayIsoDate(),
+  collapsedLimit,
 }: {
   items: PopupSeismicItem[]
   isLoading?: boolean
   queryDate?: string
+  /** Si se define, muestra solo N sismos hasta expandir. */
+  collapsedLimit?: number
 }) {
   const hasItems = items.length > 0
+  const collapseResetKey = `${items.length}:${collapsedLimit ?? ""}`
+  const [collapseState, setCollapseState] = useState({
+    resetKey: collapseResetKey,
+    expanded: false,
+  })
+  const expanded =
+    collapseState.resetKey === collapseResetKey ? collapseState.expanded : false
+  const setExpanded = (value: boolean) =>
+    setCollapseState({ resetKey: collapseResetKey, expanded: value })
+
+  const canCollapse =
+    collapsedLimit != null && items.length > collapsedLimit && !expanded
+  const displayedItems = canCollapse ? items.slice(0, collapsedLimit) : items
+  const hiddenCount = canCollapse ? items.length - collapsedLimit! : 0
 
   return (
     <section className="border-t border-white/[0.07]" aria-labelledby="popup-seismic-heading">
@@ -126,11 +144,33 @@ export function PopupSeismicSection({
           {formatSeismicEmptyForDate(queryDate)}
         </p>
       ) : (
-        <div className="divide-y divide-white/[0.06]">
-          {items.map((item) => (
-            <SeismicRow key={item.event.id} item={item} />
-          ))}
-        </div>
+        <>
+          <div className="divide-y divide-white/[0.06]">
+            {displayedItems.map((item) => (
+              <SeismicRow key={item.event.id} item={item} />
+            ))}
+          </div>
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded(true)}
+              className="flex w-full items-center justify-center gap-1 border-t border-white/[0.06] px-3 py-2 font-mono text-[9px] font-semibold uppercase tracking-wider text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+            >
+              Ver todos ({items.length})
+              <ChevronDown className="size-3" aria-hidden />
+            </button>
+          )}
+          {expanded && collapsedLimit != null && items.length > collapsedLimit && (
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="flex w-full items-center justify-center gap-1 border-t border-white/[0.06] px-3 py-2 font-mono text-[9px] font-semibold uppercase tracking-wider text-white/45 transition-colors hover:bg-white/[0.04] hover:text-white/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+            >
+              Mostrar menos
+              <ChevronDown className="size-3 rotate-180" aria-hidden />
+            </button>
+          )}
+        </>
       )}
     </section>
   )

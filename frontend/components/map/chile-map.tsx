@@ -132,6 +132,19 @@ export function ChileMap() {
   const alertAnimFrameRef = useRef<number>(0)
   const [mapLoaded, setMapLoaded] = useState(false)
 
+  const dismissAllPopups = useCallback(() => {
+    if (popupRef.current) {
+      popupRef.current.remove()
+      popupRef.current = null
+    }
+    if (popupDestroyRef.current) {
+      popupDestroyRef.current()
+      popupDestroyRef.current = null
+    }
+    eventPopupsRef.current.forEach((p) => p.remove())
+    eventPopupsRef.current = []
+  }, [])
+
   const startAlertPulse = useCallback(() => {
     if (alertAnimFrameRef.current) {
       cancelAnimationFrame(alertAnimFrameRef.current)
@@ -299,13 +312,13 @@ export function ChileMap() {
     })
 
     map.on("click", fillLayer, async (e) => {
+      // Skip if clicking on an earthquake point
+      const earthquakeFeatures = mapRef.current?.queryRenderedFeatures(e.point, { layers: ["earthquake-layer"] })
+      if (earthquakeFeatures && earthquakeFeatures.length > 0) return
+
       const props = e.features?.[0]?.properties as ComunaProperties | undefined
       if (!props) return
-      if (popupRef.current) popupRef.current.remove()
-      if (popupDestroyRef.current) {
-        popupDestroyRef.current()
-        popupDestroyRef.current = null
-      }
+      dismissAllPopups()
 
       let comunaWithRisk: ComunaProperties = props
       try {
@@ -362,20 +375,21 @@ export function ChileMap() {
         popupDestroyRef.current = null
         popupRef.current = null
       })
+      map.flyTo({ center: e.lngLat, zoom: Math.max(7, map.getZoom()), duration: 420 })
     })
   }, [fetchComunaRisk])
 
   const handleRegionClick = useCallback(
     (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
+      // Skip if clicking on an earthquake point
+      const earthquakeFeatures = mapRef.current?.queryRenderedFeatures(e.point, { layers: ["earthquake-layer"] })
+      if (earthquakeFeatures && earthquakeFeatures.length > 0) return
+
       const props = e.features?.[0]?.properties as RegionProperties | undefined
       const geometry = e.features?.[0]?.geometry
       if (!props || !mapRef.current) return
 
-      if (popupRef.current) popupRef.current.remove()
-      if (popupDestroyRef.current) {
-        popupDestroyRef.current()
-        popupDestroyRef.current = null
-      }
+      dismissAllPopups()
       const regionAlerts = sortActiveAlerts(
         filterAlertsForRegion(allAlertsRef.current, props.codregion)
       )
@@ -424,6 +438,7 @@ export function ChileMap() {
         popupDestroyRef.current = null
         popupRef.current = null
       })
+      map.flyTo({ center: e.lngLat, zoom: Math.max(5.5, map.getZoom()), duration: 420 })
     },
     []
   )
@@ -755,6 +770,11 @@ export function ChileMap() {
           map.moveLayer("region-alert-line")
         }
 
+        // Move earthquake layer on top of comunas
+        if (map.getLayer("earthquake-layer")) {
+          map.moveLayer("earthquake-layer")
+        }
+
         // Start alert pulse animation now that layers exist
         startAlertPulse()
 
@@ -765,13 +785,23 @@ export function ChileMap() {
         map.on("click", "earthquake-layer", (e) => {
           const feature = e.features?.[0]
           if (!feature) return
+
+          // Only trigger if clicking near the center dot (not the ripples)
+          const featureCoords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+          const featurePixel = map.project(featureCoords)
+          const clickPixel = e.point
+          const dx = featurePixel.x - clickPixel.x
+          const dy = featurePixel.y - clickPixel.y
+          const distancePx = Math.sqrt(dx * dx + dy * dy)
+          // Inner radius is ~28% of 150px icon * 0.6 scale ≈ 25px, use 20px for tight hitbox
+          if (distancePx > 20) return
+
           const props = feature.properties as { magnitude: number; event_id: number }
-          const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+          const coords: [number, number] = [e.lngLat.lng, e.lngLat.lat]
           const event = latestEventsRef.current.find((ev) => ev.id === props.event_id)
           if (!event) return
 
-          eventPopupsRef.current.forEach((p) => p.remove())
-          eventPopupsRef.current = []
+          dismissAllPopups()
 
           const popup = new maplibregl.Popup(MAP_POPUP_OPTIONS)
           const dismissPopup = () => popup.remove()
