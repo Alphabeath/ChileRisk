@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home, section: false },
   { href: "/monitor", label: "Monitor", icon: Monitor, section: false },
-  { href: "/preparacion", label: "Preparación", icon: Backpack, section: false },
-  { href: "/evacuacion", label: "Evacuación", icon: Route, section: false },
+  { href: "/preparation", label: "Preparación", icon: Backpack, section: false },
+  { href: "/evacuation", label: "Evacuación", icon: Route, section: false },
   { href: "/disasters", label: "Desastres", icon: ShieldAlert, section: true },
   { href: "/account", label: "Cuenta", icon: UserCircle, section: false },
 ] as const

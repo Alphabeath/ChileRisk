@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
         destination: "/monitor",
         permanent: true,
       },
+      {
+        source: "/evacuacion",
+        destination: "/evacuation",
+        permanent: true,
+      },
+      {
+        source: "/preparacion",
+        destination: "/preparation",
+        permanent: true,
+      },
     ];
   },
 };

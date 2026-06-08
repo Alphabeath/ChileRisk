@@ -63,12 +63,12 @@ const topics: Topic[] = [
   },
 ]
 
-export function PreparacionTopicGrid() {
+export function PreparationTopicGrid() {
   return (
-    <section aria-labelledby="preparacion-topics-heading">
+    <section aria-labelledby="preparation-topics-heading">
       <div className="mb-3">
         <h2
-          id="preparacion-topics-heading"
+          id="preparation-topics-heading"
           className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
         >
           Temas clave

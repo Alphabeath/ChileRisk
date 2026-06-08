@@ -1,5 +1,7 @@
 "use client"
 
+import type maplibregl from "maplibre-gl"
+import Link from "next/link"
 import { createRoot, type Root } from "react-dom/client"
 import type { ReactNode } from "react"
 import {
@@ -27,6 +29,7 @@ import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
 import { POPUP_MAX_ALERTS } from "@/lib/alerts-display"
+import { EVACUATION_DISASTER_DETAIL_HREF } from "@/lib/evacuation-popup"
 import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { todayIsoDate } from "@/lib/query-date"
 import { ActiveAlertsSection } from "./alert-ui"
@@ -179,6 +182,8 @@ function PopupShell({
   children,
   onViewDetail,
   actionLabel,
+  routeHref,
+  routeLabel,
   detailHref,
   detailLabel,
   onClose,
@@ -194,6 +199,8 @@ function PopupShell({
   children: ReactNode
   onViewDetail?: () => void
   actionLabel?: string
+  routeHref?: string
+  routeLabel?: string
   detailHref?: string
   detailLabel?: string
   onClose?: () => void
@@ -249,13 +256,19 @@ function PopupShell({
         {children}
       </div>
 
-      {(onViewDetail || detailHref || onClose) && (
+      {(onViewDetail || routeHref || detailHref || onClose) && (
         <div className="flex shrink-0 flex-col gap-1.5 border-t border-white/[0.07] px-3 py-2">
           {onViewDetail && (
             <button type="button" onClick={onViewDetail} className={actionClass}>
               <span>{actionLabel || "Ver detalle"}</span>
               <ChevronRight className="size-3" />
             </button>
+          )}
+          {routeHref && (
+            <Link href={routeHref} className={actionClass}>
+              <span>{routeLabel || "Ver guía"}</span>
+              <ChevronRight className="size-3 shrink-0" aria-hidden />
+            </Link>
           )}
           {detailHref && (
             <a href={detailHref} target="_blank" rel="noopener noreferrer" className={actionClass}>
@@ -567,6 +580,122 @@ interface ComunaPopupContentProps {
   queryDate?: string
   onViewDetail?: () => void
   onClose?: () => void
+}
+
+function PopupDetailRow({
+  label,
+  value,
+  Icon = MapPin,
+}: {
+  label: string
+  value: string
+  Icon?: typeof MapPin
+}) {
+  return (
+    <div className="flex gap-2.5 border-l-[2px] border-white/15 bg-white/[0.04] px-2.5 py-2">
+      <Icon className="mt-0.5 size-3.5 shrink-0 text-white/55" />
+      <div className="min-w-0 flex-1">
+        <div className="font-mono text-[9px] uppercase tracking-[1.1px] text-white/50">{label}</div>
+        <div className="mt-0.5 text-[11px] font-medium leading-snug text-white/90">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+export interface EvacuationAreaPopupProps {
+  comuna?: string
+  provincia?: string
+  sector?: string
+  onClose?: () => void
+}
+
+export function EvacuationAreaPopupContent({
+  comuna,
+  provincia,
+  sector,
+  onClose,
+}: EvacuationAreaPopupProps) {
+  return (
+    <PopupShell
+      title="Área de evacuación"
+      subtitle={
+        <span className="inline-flex items-center gap-1 rounded-sm border border-red-400/40 bg-red-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-red-200/90">
+          Tsunami · SENAPRED
+        </span>
+      }
+      parent={comuna}
+      accentColor="#ef4444"
+      routeHref={EVACUATION_DISASTER_DETAIL_HREF}
+      routeLabel="Guía de preparación · tsunami"
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-1.5 px-3 py-2.5">
+        {provincia ? <PopupDetailRow label="Provincia" value={provincia} /> : null}
+        {sector ? <PopupDetailRow label="Sector" value={sector} /> : null}
+      </div>
+    </PopupShell>
+  )
+}
+
+export interface EvacuationKmzPopupProps {
+  title: string
+  badge: string
+  accentColor: string
+  fields: { label: string; value: string }[]
+  detailHref?: string
+  detailLabel?: string
+  onClose?: () => void
+}
+
+export function EvacuationKmzPopupContent({
+  title,
+  badge,
+  accentColor,
+  fields,
+  detailHref,
+  detailLabel,
+  onClose,
+}: EvacuationKmzPopupProps) {
+  return (
+    <PopupShell
+      title={title}
+      subtitle={
+        <span
+          className="inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider"
+          style={{
+            borderColor: `${accentColor}66`,
+            backgroundColor: `${accentColor}22`,
+            color: accentColor,
+          }}
+        >
+          {badge}
+        </span>
+      }
+      accentColor={accentColor}
+      routeHref={EVACUATION_DISASTER_DETAIL_HREF}
+      routeLabel="Guía de preparación · tsunami"
+      detailHref={detailHref}
+      detailLabel={detailLabel}
+      onClose={onClose}
+    >
+      <div className="flex flex-col gap-1.5 px-3 py-2.5">
+        {fields.map((field) => (
+          <PopupDetailRow key={field.label} label={field.label} value={field.value} />
+        ))}
+      </div>
+    </PopupShell>
+  )
+}
+
+/** MapLibre popups live inside `.maplibregl-map` (overflow:hidden), which blocks backdrop-filter. */
+export function addPopupToOverlay(map: maplibregl.Map, popup: maplibregl.Popup): maplibregl.Popup {
+  popup.addTo(map)
+  const el = popup.getElement()
+  const overlay = map.getContainer().parentElement
+  if (el && overlay && el.parentElement !== overlay) {
+    overlay.appendChild(el)
+  }
+  return popup
 }
 
 export function createPopupContent(node: ReactNode): { element: HTMLDivElement; destroy: () => void } {

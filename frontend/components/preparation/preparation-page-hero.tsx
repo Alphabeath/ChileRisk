@@ -2,7 +2,7 @@ import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-pan
 import { Backpack } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export function PreparacionPageHero() {
+export function PreparationPageHero() {
   return (
     <header className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "relative overflow-hidden")}>
       <div

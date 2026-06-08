@@ -150,6 +150,8 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 | Antiguo | Actual |
 |---------|--------|
+| `/evacuacion`, `EvacuacionMap` | `/evacuation`, `EvacuationMap` |
+| `/preparacion`, `PreparacionPageHero` | `/preparation`, `PreparationPageHero` |
 | `SenapredAlertsPanel` | `ActiveAlertsPanel` |
 | `SenapredAlert` (type) | `ActiveAlert` |
 | `senapred_url` | `external_url` |
@@ -157,4 +159,4 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 ---
 
-*Last updated: 2026-06-06*
+*Last updated: 2026-06-07*

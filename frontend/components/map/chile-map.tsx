@@ -548,7 +548,7 @@ export function ChileMap() {
               const canvas = document.createElement("canvas")
               canvas.width = PULSING_DOT_SIZE
               canvas.height = PULSING_DOT_SIZE
-              context = canvas.getContext("2d")
+              context = canvas.getContext("2d", { willReadFrequently: true })
             },
 
             render() {

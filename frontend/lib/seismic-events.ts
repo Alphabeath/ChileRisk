@@ -30,7 +30,8 @@ export function filterRecentEventsInGeometry(
         e.latitude != null &&
         typeof e.magnitude === "number" &&
         (e.magnitude >= POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE ||
-          pointInGeometry(e.longitude, e.latitude, geometry))
+          pointInGeometry(e.longitude, e.latitude, geometry) ||
+          (isSeismicPerceived(e) && e.magnitude >= POPUP_SEISMIC_MIN_PERCEIVED_MAGNITUDE))
     )
     .sort((a, b) => {
       const magDiff = b.magnitude - a.magnitude

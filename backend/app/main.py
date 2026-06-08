@@ -19,6 +19,14 @@ from app.services.mock_service import generate_initial_seismic_events, seed_init
 from app.services.csn_service import sync_recent_csn_events
 from app.services.risk_service import recompute_all_scores
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+logging.getLogger("chilerisk").setLevel(logging.INFO)
+logging.getLogger("chilerisk.scheduler").setLevel(logging.INFO)
+logging.getLogger("apscheduler").setLevel(logging.INFO)
+
 _start_time = time.time()
 logger = logging.getLogger("chilerisk")
 

@@ -44,6 +44,8 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 | `/` | Landing + globo |
 | `/monitor` | Monitor + `MapOverlays` |
 | `/dashboard` | Debug API |
+| `/preparation` | Preparación ciudadana |
+| `/evacuation` | Mapa evacuación tsunami |
 | `/disasters`, `/disasters/[tipo]` | Guías |
 | `/account` | Placeholder |
 | `/api/health` | Docker health |
@@ -105,6 +107,7 @@ UI mapa/citizen: [docs/DESIGN.md](docs/DESIGN.md) primero.
 
 ## Pitfalls
 
+- **Naming:** rutas, carpetas, archivos, exports y tipos en **inglés** (`/evacuation`, `EvacuationMap`); texto visible al ciudadano en **español** (labels navbar, títulos).
 - `from "motion"` no `framer-motion`.
 - Popups: `createPopupContent()`.
 - GeoJSON: `data/` → `/data/*.geojson`.
@@ -128,4 +131,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-07*

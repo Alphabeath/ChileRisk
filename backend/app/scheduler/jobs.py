@@ -12,7 +12,9 @@ from app.services.senapred_service import sync_senapred_alerts
 
 logger = logging.getLogger("chilerisk.scheduler")
 
-scheduler = AsyncIOScheduler()
+scheduler = AsyncIOScheduler(
+    job_defaults={"misfire_grace_time": 120},
+)
 
 
 async def _refresh_risk_scores():

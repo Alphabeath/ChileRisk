@@ -68,6 +68,7 @@ export const desastres: Desastre[] = [
     icon: Waves,
     color: "from-blue-500/20 to-cyan-500/20",
     antes: [
+      "Consulta el mapa de evacuación de ChileRisk: áreas, rutas y puntos de encuentro oficiales (SENAPRED) de tu comuna.",
       "Conoce las rutas de evacuación de tu sector costero y practícalas.",
       "Identifica zonas altas (sobre 30 metros sobre el nivel del mar) a las que puedas llegar a pie en menos de 15 minutos.",
       "Ten un kit de emergencia listo para evacuar rápidamente.",
