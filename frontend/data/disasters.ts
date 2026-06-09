@@ -1,23 +1,22 @@
-import type { LucideIcon } from "lucide-react"
-import {
-  Activity,
-  Waves,
-  Mountain,
-  Flame,
-  Building2,
-  ArrowDownRight,
-  CloudRain,
-  Thermometer,
-  Snowflake,
-  Wind,
-  Zap,
-} from "lucide-react"
+import type { ComponentType, SVGAttributes } from "react"
+import { Thermometer, Snowflake, Wind } from "lucide-react"
+import { EarthquakeIcon } from "@/components/icons/earthquake"
+import { TsunamiIcon } from "@/components/icons/tsunami"
+import { VolcanoIcon } from "@/components/icons/volcano"
+import { WildfireIcon } from "@/components/icons/wildfire"
+import { StructuralFireIcon } from "@/components/icons/structural-fire"
+import { ThunderstormIcon } from "@/components/icons/thunderstorm"
+import { FloodsIcon } from "@/components/icons/floods"
+import { LandslideIcon } from "@/components/icons/landslide"
+import { MudflowsIcon } from "@/components/icons/mudflows"
+
+export type DisasterIcon = ComponentType<SVGAttributes<SVGSVGElement>>
 
 export interface Desastre {
   slug: string
   title: string
   description: string
-  icon: LucideIcon
+  icon: DisasterIcon
   color: string
   antes: string[]
   durante: string[]
@@ -30,7 +29,7 @@ export const desastres: Desastre[] = [
     title: "Sismos",
     description:
       "Los terremotos y sismos son movimientos de la corteza terrestre que pueden causar daños estructurales, deslizamientos y tsunami. Chile se encuentra en el Cinturón de Fuego del Pacífico.",
-    icon: Activity,
+    icon: EarthquakeIcon,
     color: "from-red-500/20 to-orange-500/20",
     antes: [
       "Identifica los lugares seguros en tu hogar: debajo de mesas resistentes, junto a muros de carga.",
@@ -65,7 +64,7 @@ export const desastres: Desastre[] = [
     title: "Tsunami",
     description:
       "Un tsunami es una serie de olas oceánicas causadas por un terremoto submarino, erupción volcánica o deslizamiento. Chile tiene más de 6.000 km de costa expuesta.",
-    icon: Waves,
+    icon: TsunamiIcon,
     color: "from-blue-500/20 to-cyan-500/20",
     antes: [
       "Consulta el mapa de evacuación de ChileRisk: áreas, rutas y puntos de encuentro oficiales (SENAPRED) de tu comuna.",
@@ -99,7 +98,7 @@ export const desastres: Desastre[] = [
     title: "Erupciones Volcánicas",
     description:
       "Chile tiene más de 2.000 volcanes, de los cuales aproximadamente 90 están activos. Las erupciones pueden generar flujos piroclásticos, lahares, ceniza y gases tóxicos.",
-    icon: Mountain,
+    icon: VolcanoIcon,
     color: "from-amber-500/20 to-red-500/20",
     antes: [
       "Conoce si vives en zona de riesgo volcánico y los planes de evacuación locales.",
@@ -132,7 +131,7 @@ export const desastres: Desastre[] = [
     title: "Incendios Forestales",
     description:
       "Los incendios forestales son una de las principales amenazas en Chile, especialmente en verano. Pueden propagarse rápidamente por vegetación seca y vientos fuertes.",
-    icon: Flame,
+    icon: WildfireIcon,
     color: "from-orange-500/20 to-red-500/20",
     antes: [
       "Mantén limpio de vegetación seca un perímetro de al menos 30 metros alrededor de tu vivienda.",
@@ -166,7 +165,7 @@ export const desastres: Desastre[] = [
     title: "Incendios Estructurales",
     description:
       "Los incendios en viviendas, edificios y recintos cerrados pueden ser causados por fallas eléctricas, gas, velas o cocinas. El humo es la principal causa de víctimas.",
-    icon: Building2,
+    icon: StructuralFireIcon,
     color: "from-slate-500/20 to-red-500/20",
     antes: [
       "Instala detectores de humo en cada piso de tu vivienda y revisa sus baterías.",
@@ -200,7 +199,7 @@ export const desastres: Desastre[] = [
     title: "Aluviones",
     description:
       "Los aluviones son flujos de lodo, rocas y escombros que descienden por quebradas y laderas, generalmente tras lluvias intensas. Son comunes en zonas montañosas de Chile.",
-    icon: ArrowDownRight,
+    icon: MudflowsIcon,
     color: "from-yellow-500/20 to-amber-500/20",
     antes: [
       "Conoce si tu vivienda está en zona de riesgo de aluvión (quebradas, lechos secos).",
@@ -232,7 +231,7 @@ export const desastres: Desastre[] = [
     title: "Deslizamientos",
     description:
       "Los deslizamientos de tierra ocurren cuando el suelo se desestabiliza por lluvias, sismos o intervención humana. Pueden sepultar viviendas y bloquear caminos.",
-    icon: ArrowDownRight,
+    icon: LandslideIcon,
     color: "from-stone-500/20 to-amber-500/20",
     antes: [
       "Observa si hay grietas en el suelo, muros inclinados o árboles inclinados en laderas.",
@@ -264,7 +263,7 @@ export const desastres: Desastre[] = [
     title: "Inundaciones",
     description:
       "Las inundaciones ocurren cuando el agua supera la capacidad de los cauces o sistemas de drenaje. Pueden ser causadas por lluvias intensas, deshielo o marejadas.",
-    icon: CloudRain,
+    icon: FloodsIcon,
     color: "from-blue-500/20 to-indigo-500/20",
     antes: [
       "Conoce si tu vivienda está en zona de inundación.",
@@ -392,7 +391,7 @@ export const desastres: Desastre[] = [
     title: "Tormentas Eléctricas",
     description:
       "Las tormentas eléctricas combinan rayos, lluvia intensa, granizo y vientos fuertes. Los rayos pueden causar incendios, daños eléctricos y lesiones graves.",
-    icon: Zap,
+    icon: ThunderstormIcon,
     color: "from-violet-500/20 to-purple-500/20",
     antes: [
       "Instala pararrayos si vives en una zona de alta exposición.",
