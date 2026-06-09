@@ -12,6 +12,12 @@ import {
   EVACUATION_STREETS_STYLE,
   isVolcanicHazardLayer,
   isVolcanoLayer,
+  isWildfireLayer,
+  WILDFIRE_COLOR_1,
+  WILDFIRE_COLOR_2,
+  WILDFIRE_COLOR_3,
+  WILDFIRE_COLOR_4,
+  WILDFIRE_COLOR_5,
 } from "./map-config"
 import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
 import {
@@ -25,6 +31,8 @@ import {
   evacuationAreaFields,
   evacuationKmzFields,
   fieldOrDash,
+  getDisasterGuideHref,
+  getDisasterGuideLabel,
   getEvacuationClickLayerIds,
   getEvacuationPopupMeta,
   isEvacuationMeetingPointLayer,
@@ -40,6 +48,7 @@ import {
 import {
   addEvacuationLayers,
   ensureVolcanicHazardsLayer,
+  ensureWildfireOccurrenceLayer,
   removeEvacuationLayers,
   setEvacuationLayerVisibility,
   type EvacuationLayerHandles,
@@ -66,6 +75,7 @@ const DEFAULT_LAYER_VISIBILITY: EvacuationLayerVisibility = {
   volcanoes: true,
   volcanicRadii: true,
   volcanicHazards: false,
+  wildfireOccurrence: false,
 }
 
 const USER_LOCATION_ZOOM = 13
@@ -292,6 +302,8 @@ export function EvacuationMap({
                 badge={meta.badge}
                 accentColor={meta.accentColor}
                 fields={rows}
+                routeHref={getDisasterGuideHref(layerId)}
+                routeLabel={getDisasterGuideLabel(layerId)}
                 onClose={dismiss}
               />,
             )
@@ -315,6 +327,8 @@ export function EvacuationMap({
                 badge={meta.badge}
                 accentColor={meta.accentColor}
                 fields={rows}
+                routeHref={getDisasterGuideHref(layerId)}
+                routeLabel={getDisasterGuideLabel(layerId)}
                 onClose={dismiss}
               />,
             )
@@ -339,6 +353,47 @@ export function EvacuationMap({
                 badge={meta.badge}
                 accentColor={meta.accentColor}
                 fields={rows}
+                routeHref={getDisasterGuideHref(layerId)}
+                routeLabel={getDisasterGuideLabel(layerId)}
+                onClose={dismiss}
+              />,
+            )
+          }
+          return
+        }
+
+        if (isWildfireLayer(layerId)) {
+          const meta = getEvacuationPopupMeta(layerId)
+          const gridcode = Number(properties.gridcode)
+          const wildfireLabels: Record<number, string> = {
+            1: "Muy baja (<1)",
+            2: "Baja (1-3)",
+            3: "Media (3-5)",
+            4: "Alta (5-10)",
+            5: "Muy alta (>10)",
+          }
+          const wildfireColors: Record<number, string> = {
+            1: WILDFIRE_COLOR_1,
+            2: WILDFIRE_COLOR_2,
+            3: WILDFIRE_COLOR_3,
+            4: WILDFIRE_COLOR_4,
+            5: WILDFIRE_COLOR_5,
+          }
+          const rows = [
+            { label: "Densidad", value: fieldOrDash(wildfireLabels[gridcode] ?? gridcode) },
+          ].filter((row): row is { label: string; value: string } => row.value !== "—")
+
+          if (rows.length) {
+            showPopup(
+              map,
+              e.lngLat,
+              <EvacuationKmzPopupContent
+                title={meta.title}
+                badge={meta.badge}
+                accentColor={wildfireColors[gridcode] ?? meta.accentColor}
+                fields={rows}
+                routeHref={getDisasterGuideHref(layerId)}
+                routeLabel={getDisasterGuideLabel(layerId)}
                 onClose={dismiss}
               />,
             )
@@ -373,6 +428,8 @@ export function EvacuationMap({
             badge={meta.badge}
             accentColor={meta.accentColor}
             fields={rows}
+            routeHref={getDisasterGuideHref(layerId)}
+            routeLabel={getDisasterGuideLabel(layerId)}
             detailHref={googleMapsHref}
             detailLabel="Abrir en Google Maps"
             onClose={dismiss}
@@ -522,6 +579,7 @@ export function EvacuationMap({
 
     setEvacuationLayerVisibility(map, handles, layerVisibility)
     void ensureVolcanicHazardsLayer(map, layerVisibility.volcanicHazards)
+    void ensureWildfireOccurrenceLayer(map, layerVisibility.wildfireOccurrence)
   }, [layerVisibility])
 
   useEffect(() => {

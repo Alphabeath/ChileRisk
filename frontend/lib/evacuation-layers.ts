@@ -32,6 +32,20 @@ import {
   VOLCANIC_HAZARD_LINE_LAYER_IDS,
   VOLCANIC_RADII_URL,
   VOLCANIC_ROUTE_COLOR,
+  WILDFIRE_OCCURRENCE_URL,
+  WILDFIRE_OCCURRENCE_MIN_ZOOM,
+  WILDFIRE_COLOR_1,
+  WILDFIRE_COLOR_2,
+  WILDFIRE_COLOR_3,
+  WILDFIRE_COLOR_4,
+  WILDFIRE_COLOR_5,
+  WILDFIRE_LINE_COLOR_1,
+  WILDFIRE_LINE_COLOR_2,
+  WILDFIRE_LINE_COLOR_3,
+  WILDFIRE_LINE_COLOR_4,
+  WILDFIRE_LINE_COLOR_5,
+  WILDFIRE_FILL_LAYER_IDS,
+  WILDFIRE_LINE_LAYER_IDS,
 } from "@/components/map/map-config"
 
 export interface EvacuationLayerVisibility {
@@ -43,6 +57,7 @@ export interface EvacuationLayerVisibility {
   volcanoes: boolean
   volcanicRadii: boolean
   volcanicHazards: boolean
+  wildfireOccurrence: boolean
 }
 
 export interface EvacuationLayerHandles {
@@ -510,30 +525,135 @@ function removeVolcanicHazardsLayer(map: maplibregl.Map): void {
   }
 }
 
+const WILDFIRE_TIERS = [
+  {
+    gridcode: 1,
+    fillId: EVACUATION_LAYER_IDS.wildfireOccurrenceFill1,
+    lineId: EVACUATION_LAYER_IDS.wildfireOccurrenceLine1,
+    fillColor: WILDFIRE_COLOR_1,
+    lineColor: WILDFIRE_LINE_COLOR_1,
+  },
+  {
+    gridcode: 2,
+    fillId: EVACUATION_LAYER_IDS.wildfireOccurrenceFill2,
+    lineId: EVACUATION_LAYER_IDS.wildfireOccurrenceLine2,
+    fillColor: WILDFIRE_COLOR_2,
+    lineColor: WILDFIRE_LINE_COLOR_2,
+  },
+  {
+    gridcode: 3,
+    fillId: EVACUATION_LAYER_IDS.wildfireOccurrenceFill3,
+    lineId: EVACUATION_LAYER_IDS.wildfireOccurrenceLine3,
+    fillColor: WILDFIRE_COLOR_3,
+    lineColor: WILDFIRE_LINE_COLOR_3,
+  },
+  {
+    gridcode: 4,
+    fillId: EVACUATION_LAYER_IDS.wildfireOccurrenceFill4,
+    lineId: EVACUATION_LAYER_IDS.wildfireOccurrenceLine4,
+    fillColor: WILDFIRE_COLOR_4,
+    lineColor: WILDFIRE_LINE_COLOR_4,
+  },
+  {
+    gridcode: 5,
+    fillId: EVACUATION_LAYER_IDS.wildfireOccurrenceFill5,
+    lineId: EVACUATION_LAYER_IDS.wildfireOccurrenceLine5,
+    fillColor: WILDFIRE_COLOR_5,
+    lineColor: WILDFIRE_LINE_COLOR_5,
+  },
+] as const
+
+async function addWildfireOccurrenceLayer(map: maplibregl.Map, visible: boolean): Promise<void> {
+  const res = await fetch(WILDFIRE_OCCURRENCE_URL)
+  if (!res.ok) {
+    throw new Error(`Failed to load wildfire occurrence data (${res.status})`)
+  }
+
+  const data = (await res.json()) as FeatureCollection
+
+  removeWildfireOccurrenceLayer(map)
+
+  map.addSource(EVACUATION_LAYER_IDS.wildfireOccurrenceSource, { type: "geojson", data })
+
+  for (const tier of WILDFIRE_TIERS) {
+    map.addLayer({
+      id: tier.fillId,
+      type: "fill",
+      source: EVACUATION_LAYER_IDS.wildfireOccurrenceSource,
+      filter: ["==", ["get", "gridcode"], tier.gridcode],
+      minzoom: WILDFIRE_OCCURRENCE_MIN_ZOOM,
+      layout: { visibility: layerVisibility(visible) },
+      paint: {
+        "fill-color": tier.fillColor,
+        "fill-opacity": 0.45,
+      },
+    })
+
+    map.addLayer({
+      id: tier.lineId,
+      type: "line",
+      source: EVACUATION_LAYER_IDS.wildfireOccurrenceSource,
+      filter: ["==", ["get", "gridcode"], tier.gridcode],
+      minzoom: WILDFIRE_OCCURRENCE_MIN_ZOOM,
+      layout: { visibility: layerVisibility(visible) },
+      paint: {
+        "line-color": tier.lineColor,
+        "line-width": 0.5,
+        "line-opacity": 0.5,
+      },
+    })
+  }
+}
+
+function removeWildfireOccurrenceLayer(map: maplibregl.Map): void {
+  for (const layerId of [...WILDFIRE_FILL_LAYER_IDS, ...WILDFIRE_LINE_LAYER_IDS]) {
+    if (map.getLayer(layerId)) map.removeLayer(layerId)
+  }
+  if (map.getSource(EVACUATION_LAYER_IDS.wildfireOccurrenceSource)) {
+    map.removeSource(EVACUATION_LAYER_IDS.wildfireOccurrenceSource)
+  }
+}
+
+/** Load wildfire occurrence polygons on demand (~4.5MB — skipped on initial map paint). */
+export async function ensureWildfireOccurrenceLayer(
+  map: maplibregl.Map,
+  visible: boolean,
+): Promise<void> {
+  if (!map.getSource(EVACUATION_LAYER_IDS.wildfireOccurrenceSource)) {
+    if (!visible) return
+    await addWildfireOccurrenceLayer(map, true)
+    return
+  }
+
+  for (const layerId of [...WILDFIRE_FILL_LAYER_IDS, ...WILDFIRE_LINE_LAYER_IDS]) {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, "visibility", layerVisibility(visible))
+    }
+  }
+}
+
 let heavyLayersLoadId = 0
 
-function scheduleHeavyEvacuationLayers(
+async function scheduleHeavyEvacuationLayers(
   map: maplibregl.Map,
   visibility: EvacuationLayerVisibility,
-): void {
+): Promise<void> {
   const loadId = ++heavyLayersLoadId
 
-  void (async () => {
-    try {
-      const tasks: Promise<void>[] = []
-      if (visibility.areas) tasks.push(addAreasLayer(map, visibility.areas))
-      if (visibility.volcanicRadii) tasks.push(addVolcanicRadiiLayer(map, visibility.volcanicRadii))
-      await Promise.all(tasks)
+  try {
+    const tasks: Promise<void>[] = []
+    if (visibility.areas) tasks.push(addAreasLayer(map, visibility.areas))
+    if (visibility.volcanicRadii) tasks.push(addVolcanicRadiiLayer(map, visibility.volcanicRadii))
+    await Promise.all(tasks)
 
-      if (loadId !== heavyLayersLoadId) return
-      if (visibility.volcanicHazards) {
-        await addVolcanicHazardsLayer(map, true)
-      }
-    } catch (error) {
-      if (loadId !== heavyLayersLoadId) return
-      console.error("Failed to load deferred evacuation layers", error)
+    if (loadId !== heavyLayersLoadId) return
+    if (visibility.volcanicHazards) {
+      await addVolcanicHazardsLayer(map, true)
     }
-  })()
+  } catch (error) {
+    if (loadId !== heavyLayersLoadId) return
+    console.error("Failed to load deferred evacuation layers", error)
+  }
 }
 
 /** Load hazard polygons on demand (20MB — skipped on initial map paint). */
@@ -600,7 +720,7 @@ export async function addEvacuationLayers(
   addRouteDirectionArrows(map, routes, visibility.routes)
   addRouteDirectionArrows(map, volcanicRoutes, visibility.volcanicRoutes, VOLCANIC_ARROW_CONFIG)
 
-  scheduleHeavyEvacuationLayers(map, visibility)
+  await scheduleHeavyEvacuationLayers(map, visibility)
 
   return { routes, meetingPoints, volcanicRoutes, volcanicMeetingPoints }
 }
@@ -662,6 +782,11 @@ export function setEvacuationLayerVisibility(
       map.setLayoutProperty(lid, "visibility", layerVisibility(visibility.volcanicHazards))
     }
   }
+  for (const lid of [...WILDFIRE_FILL_LAYER_IDS, ...WILDFIRE_LINE_LAYER_IDS]) {
+    if (map.getLayer(lid)) {
+      map.setLayoutProperty(lid, "visibility", layerVisibility(visibility.wildfireOccurrence))
+    }
+  }
 }
 
 export function removeEvacuationLayers(
@@ -689,4 +814,5 @@ export function removeEvacuationLayers(
   removeVolcanoesLayer(map)
   removeVolcanicRadiiLayer(map)
   removeVolcanicHazardsLayer(map)
+  removeWildfireOccurrenceLayer(map)
 }

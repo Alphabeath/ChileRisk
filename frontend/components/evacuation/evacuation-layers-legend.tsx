@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { AlertTriangle, ChevronDown, Flame, Layers, MapPin, Route, Waves } from "lucide-react"
+import { AlertTriangle, ChevronDown, Flame, Layers, MapPin, Mountain, Route, TreePine, Waves } from "lucide-react"
 import { useDraggablePanel } from "@/hooks"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -12,6 +12,11 @@ import {
   VOLCANIC_HAZARD_COLOR_MEDIO,
   VOLCANIC_MEETING_POINT_COLOR,
   VOLCANIC_ROUTE_COLOR,
+  WILDFIRE_COLOR_1,
+  WILDFIRE_COLOR_2,
+  WILDFIRE_COLOR_3,
+  WILDFIRE_COLOR_4,
+  WILDFIRE_COLOR_5,
 } from "@/components/map/map-config"
 import type { EvacuationLayerVisibility } from "@/lib/evacuation-layers"
 import {
@@ -22,7 +27,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type LayerKey = keyof EvacuationLayerVisibility
-type DisasterTab = "tsunami" | "volcanic"
+type DisasterTab = "tsunami" | "volcanic" | "wildfire"
 
 type LayerConfigItem = {
   key: LayerKey
@@ -101,9 +106,34 @@ const HAZARD_LEVELS = [
   { label: "Bajo", color: VOLCANIC_HAZARD_COLOR_BAJO },
 ] as const
 
+const WILDFIRE_LAYERS: LayerConfigItem[] = [
+  {
+    key: "wildfireOccurrence",
+    label: "Ocurrencia de incendios",
+    description: "Densidad kernel de ocurrencia de incendios forestales (enero 2025).",
+    icon: Flame,
+    swatchColor: WILDFIRE_COLOR_4,
+  },
+]
+
+const WILDFIRE_LEVELS = [
+  { label: "Muy alta (>10)", color: WILDFIRE_COLOR_5 },
+  { label: "Alta (5-10)", color: WILDFIRE_COLOR_4 },
+  { label: "Media (3-5)", color: WILDFIRE_COLOR_3 },
+  { label: "Baja (1-3)", color: WILDFIRE_COLOR_2 },
+  { label: "Muy baja (<1)", color: WILDFIRE_COLOR_1 },
+] as const
+
 const TAB_LAYERS: Record<DisasterTab, LayerConfigItem[]> = {
   tsunami: TSUNAMI_LAYERS,
   volcanic: VOLCANIC_LAYERS,
+  wildfire: WILDFIRE_LAYERS,
+}
+
+const TAB_META: Record<DisasterTab, { icon: typeof Waves; label: string }> = {
+  tsunami: { icon: Waves, label: "Tsunami" },
+  volcanic: { icon: Mountain, label: "Volcánico" },
+  wildfire: { icon: TreePine, label: "Incendios" },
 }
 
 function LayerSwatch({
@@ -190,6 +220,28 @@ function HazardLevelScale() {
       </p>
       <ul className="flex flex-col gap-1" role="list">
         {HAZARD_LEVELS.map((level) => (
+          <li key={level.label} className="flex items-center gap-1.5">
+            <span
+              className="size-3 shrink-0 rounded-[2px] border border-white/20"
+              style={{ backgroundColor: `${level.color}cc` }}
+              aria-hidden
+            />
+            <span className="text-[10px] text-white/75">{level.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function WildfireOccurrenceScale() {
+  return (
+    <div className="mt-2 border-t border-white/[0.06] pt-2">
+      <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[1.1px] text-white/45">
+        Densidad de ocurrencia
+      </p>
+      <ul className="flex flex-col gap-1" role="list">
+        {WILDFIRE_LEVELS.map((level) => (
           <li key={level.label} className="flex items-center gap-1.5">
             <span
               className="size-3 shrink-0 rounded-[2px] border border-white/20"
@@ -301,22 +353,33 @@ export function EvacuationLayersLegend({
         >
           <TabsList
             variant="line"
-            className="h-auto w-full justify-start gap-0 rounded-none border-b border-white/[0.06] bg-transparent px-2"
+            className="h-auto w-full justify-center gap-0.5 rounded-none border-b border-white/[0.06] bg-transparent px-2"
           >
-            <TabsTrigger
-              value="tsunami"
-              className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
-            >
-              <Waves aria-hidden />
-              Tsunami
-            </TabsTrigger>
-            <TabsTrigger
-              value="volcanic"
-              className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
-            >
-              <Flame aria-hidden />
-              Volcánico
-            </TabsTrigger>
+            {(Object.keys(TAB_META) as DisasterTab[]).map((tab) => {
+              const meta = TAB_META[tab]
+              const Icon = meta.icon
+              const isActive = activeTab === tab
+              return (
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  title={!isActive ? meta.label : undefined}
+                  className={cn(
+                    "relative items-center justify-center rounded-sm text-white/50 transition-all data-[state=active]:text-white/90 data-[state=active]:shadow-none",
+                    isActive
+                      ? "flex gap-1.5 px-2.5 py-1.5"
+                      : "flex size-7 px-0 py-0",
+                  )}
+                >
+                  <Icon className="size-3.5 shrink-0" aria-hidden />
+                  {isActive && (
+                    <span className="text-[9px] font-semibold uppercase tracking-[1.1px]">
+                      {meta.label}
+                    </span>
+                  )}
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
 
           <TabsContent
@@ -345,6 +408,21 @@ export function EvacuationLayersLegend({
             <HazardLevelScale />
             <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
               Fuente: SENAPRED / SERNAGEOMIN · Datos oficiales de evacuación y peligro volcánico.
+            </p>
+          </TabsContent>
+
+          <TabsContent
+            value="wildfire"
+            className="mt-0 max-h-[min(280px,36dvh)] overflow-y-auto px-2 py-2 data-[state=inactive]:hidden"
+          >
+            <p className="mb-2 text-[10px] leading-snug text-white/50">
+              Activa o desactiva la capa de ocurrencia de incendios forestales. Datos de densidad
+              kernel (enero 2025).
+            </p>
+            <LayerList layers={WILDFIRE_LAYERS} visibility={visibility} onToggle={onToggle} />
+            <WildfireOccurrenceScale />
+            <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
+              Fuente: Análisis de densidad kernel · Datos de ocurrencia enero 2025.
             </p>
           </TabsContent>
         </Tabs>

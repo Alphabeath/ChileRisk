@@ -29,7 +29,6 @@ import type { ActiveAlert, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
 import { POPUP_MAX_ALERTS } from "@/lib/alerts-display"
-import { EVACUATION_DISASTER_DETAIL_HREF } from "@/lib/evacuation-popup"
 import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import { todayIsoDate } from "@/lib/query-date"
 import { ActiveAlertsSection } from "./alert-ui"
@@ -625,7 +624,7 @@ export function EvacuationAreaPopupContent({
       }
       parent={comuna}
       accentColor="#ef4444"
-      routeHref={EVACUATION_DISASTER_DETAIL_HREF}
+      routeHref="/disasters/tsunami"
       routeLabel="Guía de preparación · tsunami"
       onClose={onClose}
     >
@@ -642,6 +641,8 @@ export interface EvacuationKmzPopupProps {
   badge: string
   accentColor: string
   fields: { label: string; value: string }[]
+  routeHref?: string
+  routeLabel?: string
   detailHref?: string
   detailLabel?: string
   onClose?: () => void
@@ -652,6 +653,8 @@ export function EvacuationKmzPopupContent({
   badge,
   accentColor,
   fields,
+  routeHref,
+  routeLabel,
   detailHref,
   detailLabel,
   onClose,
@@ -672,8 +675,8 @@ export function EvacuationKmzPopupContent({
         </span>
       }
       accentColor={accentColor}
-      routeHref={EVACUATION_DISASTER_DETAIL_HREF}
-      routeLabel="Guía de preparación · tsunami"
+      routeHref={routeHref}
+      routeLabel={routeLabel}
       detailHref={detailHref}
       detailLabel={detailLabel}
       onClose={onClose}

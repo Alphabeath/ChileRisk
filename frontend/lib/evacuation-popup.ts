@@ -4,12 +4,40 @@ import {
   EVACUATION_ROUTE_COLOR,
   isVolcanicHazardLayer,
   isVolcanoLayer,
+  isWildfireLayer,
   VOLCANIC_HAZARD_FILL_LAYER_IDS,
   VOLCANIC_HAZARD_LINE_LAYER_IDS,
+  WILDFIRE_FILL_LAYER_IDS,
+  WILDFIRE_LINE_LAYER_IDS,
 } from "@/components/map/map-config"
 
-/** Evacuation map data is tsunami-specific (SENAPRED). */
-export const EVACUATION_DISASTER_DETAIL_HREF = "/disasters/tsunami"
+const TSUNAMI_GUIDE_HREF = "/disasters/tsunami"
+const VOLCANIC_GUIDE_HREF = "/disasters/volcanes"
+const WILDFIRE_GUIDE_HREF = "/disasters/incendios-forestales"
+
+function isVolcanicLayer(layerId: string): boolean {
+  return (
+    layerId.startsWith(EVACUATION_LAYER_IDS.volcanicRoutes) ||
+    layerId.startsWith(EVACUATION_LAYER_IDS.volcanicMeetingPoints) ||
+    layerId === EVACUATION_LAYER_IDS.volcanoes ||
+    layerId === EVACUATION_LAYER_IDS.volcanoesLabels ||
+    layerId === EVACUATION_LAYER_IDS.volcanicRadii ||
+    layerId.startsWith(EVACUATION_LAYER_IDS.volcanicHazardsSource) ||
+    isVolcanicHazardLayer(layerId)
+  )
+}
+
+export function getDisasterGuideHref(layerId: string): string {
+  if (isWildfireLayer(layerId)) return WILDFIRE_GUIDE_HREF
+  return isVolcanicLayer(layerId) ? VOLCANIC_GUIDE_HREF : TSUNAMI_GUIDE_HREF
+}
+
+export function getDisasterGuideLabel(layerId: string): string {
+  if (isWildfireLayer(layerId)) return "Guía de preparación · incendios"
+  return isVolcanicLayer(layerId)
+    ? "Guía de preparación · volcán"
+    : "Guía de preparación · tsunami"
+}
 
 export function parseKmzDescriptionFields(description: unknown): Record<string, string> {
   if (typeof description !== "string" || !description) return {}
@@ -64,6 +92,8 @@ export function getEvacuationClickLayerIds(): string[] {
     EVACUATION_LAYER_IDS.volcanicRadii,
     ...VOLCANIC_HAZARD_FILL_LAYER_IDS,
     ...VOLCANIC_HAZARD_LINE_LAYER_IDS,
+    ...WILDFIRE_FILL_LAYER_IDS,
+    ...WILDFIRE_LINE_LAYER_IDS,
   ]
 }
 
@@ -125,6 +155,14 @@ export function getEvacuationPopupMeta(layerId: string): {
       title: "Zona de peligro volcánico",
       badge: "Peligro · SERNAGEOMIN",
       accentColor: "#b45309",
+    }
+  }
+
+  if (isWildfireLayer(layerId)) {
+    return {
+      title: "Ocurrencia de incendio",
+      badge: "Incendios forestales",
+      accentColor: "#d07020",
     }
   }
 

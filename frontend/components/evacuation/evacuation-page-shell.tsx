@@ -29,6 +29,7 @@ const initialVisibility: EvacuationLayerVisibility = {
   volcanoes: true,
   volcanicRadii: true,
   volcanicHazards: false,
+  wildfireOccurrence: false,
 }
 
 export function EvacuationPageShell() {

@@ -47,6 +47,8 @@ export const VOLCANIC_EVACUATION_MEETING_POINTS_URL = "/data/volcanos/volcanic-m
 export const VOLCANIC_RADII_URL = "/data/volcanos/volcanic-radii.geojson"
 export const VOLCANIC_HAZARDS_URL = "/data/volcanos/volcanic-hazards.geojson"
 
+export const WILDFIRE_OCCURRENCE_URL = "/data/wildfire/wildfire-occurrence.geojson"
+
 export const EVACUATION_LAYER_IDS = {
   areasSource: "tsunami-areas",
   areasFill: "tsunami-areas-fill",
@@ -74,6 +76,17 @@ export const EVACUATION_LAYER_IDS = {
   volcanicRoutesArrowImage: "volcanic-routes-arrow",
   volcanicRoutesArrowsSource: "volcanic-routes-arrows-source",
   volcanicRoutesArrows: "volcanic-routes-arrows",
+  wildfireOccurrenceSource: "wildfire-occurrence",
+  wildfireOccurrenceFill1: "wildfire-occurrence-1-fill",
+  wildfireOccurrenceFill2: "wildfire-occurrence-2-fill",
+  wildfireOccurrenceFill3: "wildfire-occurrence-3-fill",
+  wildfireOccurrenceFill4: "wildfire-occurrence-4-fill",
+  wildfireOccurrenceFill5: "wildfire-occurrence-5-fill",
+  wildfireOccurrenceLine1: "wildfire-occurrence-1-line",
+  wildfireOccurrenceLine2: "wildfire-occurrence-2-line",
+  wildfireOccurrenceLine3: "wildfire-occurrence-3-line",
+  wildfireOccurrenceLine4: "wildfire-occurrence-4-line",
+  wildfireOccurrenceLine5: "wildfire-occurrence-5-line",
 } as const
 
 /** Matches KML LineStyle00 in evacuation-routes.kmz (aabbggrr ffe65c00). */
@@ -104,6 +117,20 @@ export const VOLCANIC_HAZARD_LINE_COLOR_ALTO = "#b91c1c"
 export const VOLCANIC_HAZARD_LINE_COLOR_MEDIO = "#c2410c"
 export const VOLCANIC_HAZARD_LINE_COLOR_BAJO = "#ca8a04"
 
+/** Wildfire occurrence fill colors (gridcode 1-5, kernel density classes). */
+export const WILDFIRE_COLOR_1 = "#6b7fa0"
+export const WILDFIRE_COLOR_2 = "#5a9e82"
+export const WILDFIRE_COLOR_3 = "#d4b832"
+export const WILDFIRE_COLOR_4 = "#d07020"
+export const WILDFIRE_COLOR_5 = "#b82828"
+
+/** Matching outline colors for wildfire polygons. */
+export const WILDFIRE_LINE_COLOR_1 = "#4a5a72"
+export const WILDFIRE_LINE_COLOR_2 = "#3d7560"
+export const WILDFIRE_LINE_COLOR_3 = "#a89020"
+export const WILDFIRE_LINE_COLOR_4 = "#a05818"
+export const WILDFIRE_LINE_COLOR_5 = "#8a1e1e"
+
 /** Draw Bajo → Medio → Alto so higher severity paints above overlaps. */
 export const VOLCANIC_HAZARD_FILL_LAYER_IDS = [
   EVACUATION_LAYER_IDS.volcanicHazardsBajoFill,
@@ -115,6 +142,22 @@ export const VOLCANIC_HAZARD_LINE_LAYER_IDS = [
   EVACUATION_LAYER_IDS.volcanicHazardsBajoLine,
   EVACUATION_LAYER_IDS.volcanicHazardsMedioLine,
   EVACUATION_LAYER_IDS.volcanicHazardsAltoLine,
+] as const
+
+export const WILDFIRE_FILL_LAYER_IDS = [
+  EVACUATION_LAYER_IDS.wildfireOccurrenceFill1,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceFill2,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceFill3,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceFill4,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceFill5,
+] as const
+
+export const WILDFIRE_LINE_LAYER_IDS = [
+  EVACUATION_LAYER_IDS.wildfireOccurrenceLine1,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceLine2,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceLine3,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceLine4,
+  EVACUATION_LAYER_IDS.wildfireOccurrenceLine5,
 ] as const
 
 export function isVolcanoLayer(layerId: string): boolean {
@@ -131,8 +174,18 @@ export function isVolcanicHazardLayer(layerId: string): boolean {
   )
 }
 
+export function isWildfireLayer(layerId: string): boolean {
+  return (
+    (WILDFIRE_FILL_LAYER_IDS as readonly string[]).includes(layerId) ||
+    (WILDFIRE_LINE_LAYER_IDS as readonly string[]).includes(layerId)
+  )
+}
+
 /** Hide evacuation polygons until the user is zoomed into a comuna-scale view. */
 export const EVACUATION_AREAS_MIN_ZOOM = 10
+
+/** Wildfire occurrence polygons — visible at region level for overview. */
+export const WILDFIRE_OCCURRENCE_MIN_ZOOM = 5
 
 /** Meeting points only render when close enough to read labels and icons. */
 export const EVACUATION_MEETING_POINTS_MIN_ZOOM = 11

@@ -102,6 +102,7 @@ async def recompute_all_scores(session: AsyncSession) -> int:
 
     impact_map = await get_max_risk_per_comuna_from_impacts(session, hours=24)
 
+    now_utc = datetime.now(timezone.utc)
     updated = 0
     for rs in all_scores:
         drift = 2.8
@@ -132,6 +133,7 @@ async def recompute_all_scores(session: AsyncSession) -> int:
         rs.composite_score = composite
         rs.dominant_hazard = dominant
         rs.severity = sev
+        rs.computed_at = now_utc
         updated += 1
 
     await session.commit()
