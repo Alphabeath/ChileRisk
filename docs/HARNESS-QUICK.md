@@ -2,6 +2,8 @@
 
 **Read order:** root `AGENTS.md` (20 ln) → area `AGENTS.md` → this file if task type known → detail doc only if stuck.
 
+**Memoria:** Antes de editar: `engram_mem_context` + `engram_mem_search "<keywords>"`. Ver `docs/ENGRAM-PROTOCOL.md`. `engram_mem_session_summary` solo si `mem_save` esta sesión.
+
 **Close:** `make verify` · doc rules: `DOC-MAINTENANCE.md`
 
 ---
@@ -62,4 +64,4 @@ code (+tests) · docs optional · `make verify` anyway
 
 ---
 
-*2026-06-05*
+*2026-06-10*

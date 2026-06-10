@@ -41,6 +41,7 @@ Si un párrafo largo vive en dos sitios, **una sola fuente de verdad** y el otro
 - [ ] ¿Feature cross-cutting? → doc dedicada en `docs/` o sección en `ARCHITECTURE.md`
 - [ ] Fecha `Last updated` en el doc tocado (formato `YYYY-MM-DD`)
 - [ ] `make verify` en la raíz (o al menos el target del área: `verify-frontend` / `verify-backend`)
+- [ ] Si se guardó memoria persistente (`engram_mem_save`) → llamar `engram_mem_session_summary`. No editar ENGRAM-PROTOCOL.md salvo cambio real del protocolo.
 
 ---
 
@@ -50,4 +51,4 @@ Ediciones en `docs/` (raíz), `backend/docs/` y `frontend/docs/` están **permit
 
 ---
 
-*Last updated: 2026-06-05 (docs por área: backend/docs, frontend/docs)*
+*Last updated: 2026-06-10 (docs por área: backend/docs, frontend/docs)*

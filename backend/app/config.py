@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600
 
+    auth_secret: str = ""
+    auth_url: str = "http://localhost:3000"
+    resend_api_key: str = ""
+    auth_email_from: str = "noreply@chilerisk.local"
+
     model_config = {"env_file": ".env", "extra": "ignore"}
 
     @model_validator(mode="after")

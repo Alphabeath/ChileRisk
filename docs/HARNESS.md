@@ -10,8 +10,9 @@
 
 1. Identifica área: `frontend/`, `backend/`, o ambos.
 2. Abre el `AGENTS.md` de esa área (no leas el índice completo de la raíz salvo duda de scope).
-3. `Grep`/`Glob` un archivo vecino al cambio.
-4. Al cerrar: `make verify` + checklist en [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
+3. `engram_mem_context` + `engram_mem_search "<keywords>"` (ver [ENGRAM-PROTOCOL.md](./ENGRAM-PROTOCOL.md)). Guarda solo ARCH/PATTERN/BUG no triviales (máx 2-3/sesión). `engram_mem_session_summary` solo si `mem_save`.
+4. `Grep`/`Glob` un archivo vecino al cambio.
+5. Al cerrar: `make verify` + checklist en [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
 
 ---
 
@@ -114,9 +115,10 @@ make verify-backend
 | React/Next perf | `vercel-react-best-practices` |
 | shadcn en frontend | `frontend/.agents/skills/shadcn` |
 | Delegar subagentes comprimidos | `cavecrew` |
+| Memoria persistente (engram) | `engram_mem_*` tools (ver ENGRAM-PROTOCOL.md) |
 
 No sustituyen leer `AGENTS.md` del área; complementan tareas largas o formato.
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-10*

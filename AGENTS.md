@@ -41,10 +41,9 @@ Monitoreo multi-amenaza Chile (16 regiones, 346 comunas): CSN + Open-Meteo + SER
 ```bash
 make up              # stack Docker
 make verify          # harness: links + contract + lint/tsc + compileall
-make help
 ```
 
-Puertos: FE `3000`, BE `8000`, Postgres host `5434`. Detalle: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Puertos y stack: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
@@ -53,13 +52,28 @@ Puertos: FE `3000`, BE `8000`, Postgres host `5434`. Detalle: [docs/ARCHITECTURE
 | Uso | Skill |
 |-----|--------|
 | Modo breve | `caveman` |
-| Implement + review loop | Grok `/implement` |
-| Review diff | `/review` o `caveman-review` |
+| Review diff | `caveman-review` o `/review` |
+| Implement loop | Grok `/implement` |
 | UI pulida | `frontend-design` |
 | Next perf | `vercel-react-best-practices` |
-| shadcn | `frontend/.agents/skills/shadcn` |
+| Memoria persistente | `engram_mem_*` (ver docs/ENGRAM-PROTOCOL.md) |
 
 Skills detalle: [docs/HARNESS.md](docs/HARNESS.md) §8.
+
+---
+
+## Memoria (engram)
+
+**Antes de tocar archivos:**
+
+```
+engram_mem_context
+engram_mem_search "<área o keywords>"
+```
+
+Guarda solo ARCH/PATTERN/BUG no triviales (máx 2-3/sesión). Si guardaste memorias → `engram_mem_session_summary` al cerrar.
+
+Full protocol + formato: [docs/ENGRAM-PROTOCOL.md](docs/ENGRAM-PROTOCOL.md)
 
 ---
 
@@ -67,8 +81,8 @@ Skills detalle: [docs/HARNESS.md](docs/HARNESS.md) §8.
 
 No `git commit`/`push`/PRs. No tocar compose/root `.env`/.gitignore sin OK. No carpetas top-level nuevas sin proponer. No `TrueRisk/`. No commitear `.env`.
 
-Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verify`.
+Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verify`. Si usaste `engram_mem_save` → `engram_mem_session_summary`.
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-10*

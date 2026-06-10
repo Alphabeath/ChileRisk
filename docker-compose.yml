@@ -4,7 +4,11 @@ services:
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:3000"
     environment:
-      NEXT_PUBLIC_API_BASE: http://localhost:8000
+      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-in-production}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      BACKEND_INTERNAL_URL: http://backend:8000
     depends_on:
       backend:
         condition: service_healthy
@@ -25,6 +29,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://chilerisk:chilerisk@db:5432/chilerisk
       BACKEND_CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001"]'
+      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-in-production}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-noreply@chilerisk.local}
     depends_on:
       db:
         condition: service_healthy

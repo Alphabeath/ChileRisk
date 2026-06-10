@@ -12,6 +12,8 @@ App Router difiere de 14/15. Antes de `app/` o `next.config.ts`, lee `node_modul
 
 **Quick:** [../docs/HARNESS-QUICK.md](../docs/HARNESS-QUICK.md) · UI §3 · map §4 · contract §2 · `make verify`
 
+**Memoria:** `engram_mem_context` + `engram_mem_search "map|contrato|date"` antes de editar. Ver [../docs/ENGRAM-PROTOCOL.md](../docs/ENGRAM-PROTOCOL.md). Summary solo si `engram_mem_save`.
+
 ---
 
 ## Scope
@@ -41,8 +43,9 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 
 | Ruta | Propósito |
 |------|-----------|
-| `/` | Landing + globo |
-| `/monitor` | Monitor + `MapOverlays` |
+| `/` | Landing + globo (pública) |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Auth (públicas) |
+| `/monitor` | Monitor + `MapOverlays` (protegida) |
 | `/dashboard` | Debug API |
 | `/preparation` | Preparación ciudadana |
 | `/evacuation` | Mapa evacuación tsunami |
@@ -131,4 +134,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-06-07*
+*Last updated: 2026-06-10*

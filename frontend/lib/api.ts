@@ -11,8 +11,7 @@ import type {
   ActiveAlertParams,
 } from "@/lib/types"
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, "") || "http://localhost:8000"
+const API_BASE = "/api/backend"
 
 export function getApiBase(): string {
   return API_BASE

@@ -2,18 +2,20 @@ import logging
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, select, text
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, comunas, events, regiones, risk, stats
+from app.api import alerts, auth, comunas, events, regiones, risk, stats
+from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
 from app.data.seed_comunas import seed_comunas
 from app.data.seed_regions import seed_regions
 from app.database import async_session, engine, Base
+import app.models  # noqa: F401 — register ORM metadata
 from app.scheduler import setup_scheduler, shutdown_scheduler
 from app.services.mock_service import generate_initial_seismic_events, seed_initial_risk_scores
 from app.services.csn_service import sync_recent_csn_events
@@ -147,8 +149,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 
@@ -161,12 +163,26 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     )
 
 # Routers
-app.include_router(risk.router, prefix="/api/v1/risk", tags=["risk"])
-app.include_router(regiones.router, prefix="/api/v1/regiones", tags=["regiones"])
-app.include_router(comunas.router, prefix="/api/v1/comunas", tags=["comunas"])
-app.include_router(events.router, prefix="/api/v1/events", tags=["events"])
-app.include_router(alerts.router, prefix="/api/v1/alerts", tags=["alerts"])
-app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
+_auth_guard = [Depends(get_current_user)]
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(
+    risk.router, prefix="/api/v1/risk", tags=["risk"], dependencies=_auth_guard
+)
+app.include_router(
+    regiones.router, prefix="/api/v1/regiones", tags=["regiones"], dependencies=_auth_guard
+)
+app.include_router(
+    comunas.router, prefix="/api/v1/comunas", tags=["comunas"], dependencies=_auth_guard
+)
+app.include_router(
+    events.router, prefix="/api/v1/events", tags=["events"], dependencies=_auth_guard
+)
+app.include_router(
+    alerts.router, prefix="/api/v1/alerts", tags=["alerts"], dependencies=_auth_guard
+)
+app.include_router(
+    stats.router, prefix="/api/v1/stats", tags=["stats"], dependencies=_auth_guard
+)
 
 
 @app.get("/health", tags=["system"])

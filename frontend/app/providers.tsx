@@ -1,6 +1,7 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { SessionProvider } from "next-auth/react"
 import { useState, type ReactNode } from "react"
 
 import { AppTopLoader } from "@/components/app-top-loader"
@@ -25,10 +26,12 @@ export function Providers({ children }: ProvidersProps) {
   )
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppTopLoader />
-      <GlobalTopLoaderBridge />
-      {children}
-    </QueryClientProvider>
+    <SessionProvider>
+      <QueryClientProvider client={queryClient}>
+        <AppTopLoader />
+        <GlobalTopLoaderBridge />
+        {children}
+      </QueryClientProvider>
+    </SessionProvider>
   )
 }

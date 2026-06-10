@@ -45,8 +45,13 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 
 | Método | Path | Descripción |
 |--------|------|-------------|
-| GET | `/health` | `{ status, version, uptime_seconds }` |
-| GET | `/api/v1/risk/national?date=` | Riesgo agregado por región (mapa) |
+| GET | `/health` | `{ status, version, uptime_seconds }` — **público** |
+| POST | `/api/v1/auth/register` | Registro email/contraseña |
+| POST | `/api/v1/auth/verify-credentials` | Validación login (servidor Next) |
+| POST | `/api/v1/auth/oauth/google` | Upsert usuario Google |
+| POST | `/api/v1/auth/forgot-password` | Solicitud reset (Resend) |
+| POST | `/api/v1/auth/reset-password` | Cambio de contraseña |
+| GET | `/api/v1/risk/national?date=` | Riesgo agregado por región (mapa) — **JWT** |
 | GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (coropleta) |
 | GET | `/api/v1/regiones/{codregion}/risk` | Detalle región + comunas (live, sin `date`) |
 | GET | `/api/v1/comunas/{cod_comuna}/risk?date=` | Vector de hazards de la comuna |
@@ -98,6 +103,12 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `OPENMETEO_API_BASE` | api.open-meteo.com | Clima |
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
 | `CACHE_METEO_TTL_SECONDS` | 21600 | Cache meteo |
+| `AUTH_SECRET` | (requerido prod) | Mismo valor que Auth.js; valida `Authorization: Bearer` |
+| `AUTH_URL` | http://localhost:3000 | Base para enlaces de reset |
+| `RESEND_API_KEY` | — | Email recuperación contraseña |
+| `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |
+
+Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authorization: Bearer <JWT HS256>` emitido por el proxy Next (`lib/api-token.ts`). `/api/v1/auth/*` y `/health` son públicos.
 
 ---
 
@@ -138,6 +149,7 @@ Con CSN+Meteo true **no** se generan mocks. `DailyRiskScore` se calcula al consu
 | SeismicImpact | `seismic_impact.py` | Impacto precomputado evento↔comuna |
 | ClimateReading | `climate_reading.py` | Lecturas Open-Meteo |
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
+| User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
 
 Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic). Cambios de schema → `docker compose down -v` o migración explícita acordada.
 

@@ -68,7 +68,7 @@ export default function Home() {
               className="mt-10 flex flex-col gap-3 sm:flex-row"
             >
               <Link
-                href="/dashboard"
+                href="/login"
                 className="group inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-accent-green px-10 text-base font-semibold text-bg-primary transition-all hover:scale-[1.03] active:scale-[0.97]"
               >
                 <Button className="h-full px-6 py-0">Entrar a la plataforma</Button>

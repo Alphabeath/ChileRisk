@@ -159,4 +159,23 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 ---
 
-*Last updated: 2026-06-07*
+## Autenticación (Auth.js)
+
+| Ruta | Acceso |
+|------|--------|
+| `/` | Pública (landing) |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Públicas |
+| `(citizen)/*` | Requiere sesión (`middleware.ts`) |
+
+- Config: `auth.ts`, `auth.config.ts`
+- Handlers: `app/api/auth/[...nextauth]/route.ts`
+- Registro / reset: `app/api/auth/register|forgot-password|reset-password`
+- Proxy API autenticado: `app/api/backend/[...path]` → FastAPI con JWT HS256
+- Cliente HTTP: `lib/api.ts` usa base `/api/backend` (same-origin)
+- UI: `components/auth/*`, cuenta en `app/(citizen)/account/page.tsx`
+
+Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERNAL_URL`).
+
+---
+
+*Last updated: 2026-06-09*
