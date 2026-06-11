@@ -158,3 +158,148 @@ export interface EventImpactResponse {
   affected_comunas: EventImpact[]
   total_affected: number
 }
+
+export interface FamilyMember {
+  id: string
+  first_name: string
+  last_name: string
+  document: string
+  sex: string
+  age: number | null
+  nationality: string
+  phone: string
+  medical_conditions: string
+  contraindications: string
+  special_needs: string
+  flags: string[]
+}
+
+export interface Pet {
+  id: string
+  name: string
+  species: string
+  age: number | null
+  characteristics: string
+  special_needs: string
+}
+
+export interface Threat {
+  id: string
+  risk: string
+  category: "internal" | "external"
+  probability: number
+  impact: number
+  corrective_action: string
+  selected: boolean
+}
+
+export interface SafeZone {
+  emergency: string
+  safe_place: string
+  evacuation_route: string
+  safe_zone: string
+  meeting_point: string
+}
+
+export interface FloorMapPoint {
+  x: number
+  y: number
+}
+
+export interface FloorMapRoom {
+  id: string
+  type: string
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export interface FloorMapMarker {
+  id: string
+  type: string
+  x: number
+  y: number
+}
+
+export interface FloorMapRoute {
+  id: string
+  points: FloorMapPoint[]
+}
+
+export interface FloorMapZone {
+  id: string
+  type: "safe" | "risk"
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export interface FloorMap {
+  rooms: FloorMapRoom[]
+  markers: FloorMapMarker[]
+  routes: FloorMapRoute[]
+  zones: FloorMapZone[]
+  active_layer: "safe" | "risk" | "route"
+  /** ISO timestamp when the user confirmed the floor map in the review step. */
+  saved_at: string | null
+}
+
+export interface RoleAssignment {
+  task: string
+  member_id: string | null
+}
+
+export interface FamilyContact {
+  id: string
+  name: string
+  phone: string
+  address: string
+  type: "family" | "institution"
+}
+
+export interface EmergencyKit {
+  base: Record<string, boolean>
+  infant: Record<string, boolean>
+  pregnant: Record<string, boolean>
+  tea: Record<string, boolean>
+  pets: Record<string, boolean>
+}
+
+export interface DrillEvaluation {
+  knew_route: boolean | null
+  found_kit: boolean | null
+  evacuated: boolean | null
+  protected_pets: boolean | null
+  roles_worked: boolean | null
+  improvements: string
+}
+
+export interface Drill {
+  id: string
+  date: string
+  emergency_type: string
+  outcome: string
+  improvements: string[]
+  evaluation: DrillEvaluation
+}
+
+export interface FamilyPlanData {
+  members: FamilyMember[]
+  pets: Pet[]
+  threats: Threat[]
+  safe_zones: SafeZone[]
+  floor_map: FloorMap
+  roles: RoleAssignment[]
+  contacts: FamilyContact[]
+  emergency_kit: EmergencyKit
+  drills: Drill[]
+}
+
+export interface FamilyPlan {
+  id: string | null
+  data: FamilyPlanData
+  completion_pct: number
+  updated_at: string | null
+}

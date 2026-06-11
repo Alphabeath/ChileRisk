@@ -329,3 +329,195 @@
   }
 }
 
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #family-plan-print-root,
+  #family-plan-print-root * {
+    visibility: visible;
+  }
+
+  #family-plan-print-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: #111;
+    background: #fff;
+  }
+
+  #family-plan-print-root section,
+  #family-plan-print-root header {
+    break-inside: avoid;
+    border: 1px solid #ddd !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  #family-plan-print-root h1,
+  #family-plan-print-root h2,
+  #family-plan-print-root p,
+  #family-plan-print-root li,
+  #family-plan-print-root strong {
+    color: #111 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: 1px solid #bbb !important;
+    background: #f3f4f6 !important;
+    break-inside: avoid;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #family-plan-print-root .floor-map-preview,
+  #family-plan-print-root .floor-map-preview * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-canvas] {
+    background-color: #f3f4f6 !important;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 99px,
+        rgba(0, 0, 0, 0.08) 100px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 99px,
+        rgba(0, 0, 0, 0.08) 100px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 19px,
+        rgba(0, 0, 0, 0.04) 20px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 19px,
+        rgba(0, 0, 0, 0.04) 20px
+      ) !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="bedroom"] {
+    background-color: #5b21b6 !important;
+    border-color: #a78bfa !important;
+    color: #ede9fe !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="kitchen"] {
+    background-color: #92400e !important;
+    border-color: #fbbf24 !important;
+    color: #fef3c7 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="bathroom"] {
+    background-color: #075985 !important;
+    border-color: #38bdf8 !important;
+    color: #e0f2fe !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="dining"] {
+    background-color: #9a3412 !important;
+    border-color: #fb923c !important;
+    color: #ffedd5 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="living"] {
+    background-color: #3f3f46 !important;
+    border-color: #a1a1aa !important;
+    color: #fafafa !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="patio"] {
+    background-color: #065f46 !important;
+    border-color: #34d399 !important;
+    color: #d1fae5 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="stairs"] {
+    background-color: #334155 !important;
+    border-color: #94a3b8 !important;
+    color: #f1f5f9 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room="parking"] {
+    background-color: #27272a !important;
+    border-color: #71717a !important;
+    color: #f4f4f5 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="electrical_panel"] {
+    background-color: #854d0e !important;
+    border-color: #facc15 !important;
+    color: #fef9c3 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="water_valve"] {
+    background-color: #1e3a8a !important;
+    border-color: #60a5fa !important;
+    color: #dbeafe !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="gas_valve"] {
+    background-color: #9a3412 !important;
+    border-color: #fb923c !important;
+    color: #ffedd5 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="extinguisher"] {
+    background-color: #991b1b !important;
+    border-color: #f87171 !important;
+    color: #fee2e2 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="first_aid"] {
+    background-color: #9f1239 !important;
+    border-color: #fb7185 !important;
+    color: #ffe4e6 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="emergency_kit"] {
+    background-color: #065f46 !important;
+    border-color: #34d399 !important;
+    color: #d1fae5 !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="radio"] {
+    background-color: #3730a3 !important;
+    border-color: #818cf8 !important;
+    color: #e0e7ff !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker="flashlight"] {
+    background-color: #155e75 !important;
+    border-color: #22d3ee !important;
+    color: #cffafe !important;
+  }
+
+  #family-plan-print-root .floor-map-preview [data-floor-map-room] *,
+  #family-plan-print-root .floor-map-preview [data-floor-map-marker] * {
+    color: inherit !important;
+  }
+
+  #family-plan-print-root .floor-map-preview svg polyline,
+  #family-plan-print-root .floor-map-preview svg line,
+  #family-plan-print-root .floor-map-preview svg path,
+  #family-plan-print-root .floor-map-preview svg rect,
+  #family-plan-print-root .floor-map-preview svg text {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+

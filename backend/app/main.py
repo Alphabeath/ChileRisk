@@ -8,7 +8,7 @@ from sqlalchemy import inspect, select, text
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, comunas, events, regiones, risk, stats
+from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, stats
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
@@ -182,6 +182,12 @@ app.include_router(
 )
 app.include_router(
     stats.router, prefix="/api/v1/stats", tags=["stats"], dependencies=_auth_guard
+)
+app.include_router(
+    family_plan.router,
+    prefix="/api/v1/family-plan",
+    tags=["family-plan"],
+    dependencies=_auth_guard,
 )
 
 

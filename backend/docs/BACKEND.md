@@ -62,6 +62,8 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/stats/regiones/{codregion}` | Stats de región |
 | GET | `/api/v1/stats/trends?days=7` | Placeholder |
 | GET | `/api/v1/stats/compare?regiones=13,14,15` | Comparación (máx. 8) |
+| GET | `/api/v1/family-plan` | Plan Familia Preparada del usuario (JSON) — **JWT** |
+| PUT | `/api/v1/family-plan` | Upsert plan completo + `completion_pct` — **JWT** |
 
 Parámetro `date`: `YYYY-MM-DD`, día civil Chile; default hoy; ventana 30 días — ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
@@ -150,6 +152,7 @@ Con CSN+Meteo true **no** se generan mocks. `DailyRiskScore` se calcula al consu
 | ClimateReading | `climate_reading.py` | Lecturas Open-Meteo |
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
 | User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
+| FamilyPlan | `family_plan.py` | Plan Familia Preparada (1 por `user_id`, JSON) |
 
 Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic). Cambios de schema → `docker compose down -v` o migración explícita acordada.
 

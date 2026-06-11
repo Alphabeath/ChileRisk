@@ -57,3 +57,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
   const { path } = await context.params
   return proxyRequest(req, path)
 }
+
+export async function PUT(req: NextRequest, context: RouteContext) {
+  const { path } = await context.params
+  return proxyRequest(req, path)
+}

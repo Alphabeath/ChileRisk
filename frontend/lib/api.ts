@@ -9,6 +9,8 @@ import type {
   EventImpactResponse,
   ActiveAlert,
   ActiveAlertParams,
+  FamilyPlan,
+  FamilyPlanData,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -77,4 +79,15 @@ export async function getActiveAlerts(
   const qs = search.toString()
   const raw = await fetchJson<unknown[]>(`/api/v1/alerts/active${qs ? `?${qs}` : ""}`)
   return normalizeActiveAlerts(raw)
+}
+
+export async function getFamilyPlan(): Promise<FamilyPlan> {
+  return fetchJson<FamilyPlan>("/api/v1/family-plan")
+}
+
+export async function updateFamilyPlan(data: FamilyPlanData): Promise<FamilyPlan> {
+  return fetchJson<FamilyPlan>("/api/v1/family-plan", {
+    method: "PUT",
+    body: JSON.stringify({ data }),
+  })
 }

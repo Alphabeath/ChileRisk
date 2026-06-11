@@ -1,15 +1,35 @@
 import Link from "next/link"
 import { PreparationPageHero } from "@/components/preparation/preparation-page-hero"
 import { PreparationTopicGrid } from "@/components/preparation/preparation-topic-grid"
-import { DISASTERS_NAV_LINK_CLASS, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { FamilyPlanDashboard } from "@/components/preparation/family-plan/family-plan-dashboard"
+import {
+  DISASTERS_NAV_LINK_CLASS,
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { ArrowRight, ShieldAlert } from "lucide-react"
+import { WIZARD_STEPS } from "@/lib/family-plan-defaults"
+import { desastres } from "@/data/disasters"
+import {
+  EXTERNAL_THREATS,
+  INTERNAL_THREATS,
+} from "@/lib/family-plan-defaults"
 import { cn } from "@/lib/utils"
 
 export default function PreparationPage() {
+  const guides = desastres.length
+  const hazardTypes = EXTERNAL_THREATS.length + INTERNAL_THREATS.length
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-16 sm:gap-5 sm:px-6 lg:px-8">
-        <PreparationPageHero />
+        <PreparationPageHero
+          planSteps={WIZARD_STEPS.length}
+          guides={guides}
+          hazardTypes={hazardTypes}
+        />
+
+        <FamilyPlanDashboard />
 
         <PreparationTopicGrid />
 
@@ -25,8 +45,8 @@ export default function PreparationPage() {
               Siguiente paso
             </p>
             <p className="mt-1 max-w-xl text-[12px] text-white/50">
-              Revisa las guías por tipo de emergencia para acciones concretas en cada
-              fase: antes, durante y después.
+              Revisa las guías por tipo de emergencia para acciones concretas en
+              cada fase: antes, durante y después.
             </p>
           </div>
           <Link

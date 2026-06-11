@@ -9,6 +9,7 @@ from app.models.daily_risk_score import DailyRiskScore
 from app.models.user import User
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
+from app.models.family_plan import FamilyPlan
 
 __all__ = [
     "Region",
@@ -22,4 +23,5 @@ __all__ = [
     "User",
     "OAuthAccount",
     "PasswordResetToken",
+    "FamilyPlan",
 ]

@@ -4,6 +4,10 @@ import { cn } from "@/lib/utils"
 export const GLASS_PANEL_CLASS =
   "border border-white/10 bg-black/60 shadow-2xl shadow-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/50"
 
+/** Opaque dropdown panels (floor map tool flyouts). */
+export const SOLID_PANEL_CLASS =
+  "border border-white/15 bg-neutral-950 shadow-2xl shadow-black/60"
+
 export const GLASS_DIVIDER = "border-white/10"
 
 /** Mica cursor-light base class. Requires MicaLightProvider in citizen layout. */

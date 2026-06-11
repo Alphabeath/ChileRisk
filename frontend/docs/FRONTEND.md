@@ -141,8 +141,17 @@ useActiveAlerts(params?: {
 | `useMapData` | national + `/risk/comunas?date=` + GeoJSON |
 | `useRecentEvents` | `/api/v1/events?date=` |
 | `useComunaRisk` | `/api/v1/comunas/{id}/risk?date=` |
+| `useFamilyPlan` | `GET/PUT /api/v1/family-plan` (autosave debounced) |
 
 Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
+
+### Plan Familia Preparada
+
+Rutas: `/preparation` (dashboard), `/preparation/emergency-kit` (guía educativa del kit), `/preparation/family-plan/step/[1-8]`, `/preparation/family-plan/summary`.
+
+Componentes: `components/preparation/family-plan/*`, `components/preparation/emergency-kit/*`. Tipos: `FamilyPlan`, `FamilyPlanData` en `lib/types.ts`. Mapa de vivienda (paso 4): módulo `components/preparation/family-plan/floor-map/`; layout tipo mapa (plano full-width + toolbar flotante `floor-map-toolbar`); herramientas por toggle (habitación/marcador/anotación → clic en plano); constantes en `lib/floor-map-constants.ts`, tools en `lib/floor-map-tools.ts`; plantillas en `lib/floor-map-templates.ts`; miniatura en `family-plan-summary`.
+
+**Conexión bidireccional Kit ↔ Plan:** la página `/preparation/emergency-kit` tiene un CTA "Guardar en tu plan" que navega a `/preparation/family-plan/step/7?from=emergency-kit`. El step 7 detecta el query y muestra un banner superior con link de retorno. La banner `<EmergencyKitGuideLink variant="banner">` también aparece en la parte superior del step 7 fuera del flujo `?from=`.
 
 ---
 
@@ -178,4 +187,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-06-09*
+*Last updated: 2026-06-11*

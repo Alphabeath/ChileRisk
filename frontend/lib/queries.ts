@@ -7,4 +7,5 @@ export const queryKeys = {
   recentEvents: (date: string) => ["recentEvents", date] as const,
   eventImpact: (eventId: number) => ["eventImpact", eventId] as const,
   activeAlerts: (date: string) => ["activeAlerts", date] as const,
+  familyPlan: () => ["familyPlan"] as const,
 }

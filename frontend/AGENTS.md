@@ -47,7 +47,9 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Auth (públicas) |
 | `/monitor` | Monitor + `MapOverlays` (protegida) |
 | `/dashboard` | Debug API |
-| `/preparation` | Preparación ciudadana |
+| `/preparation` | Preparación + dashboard Plan Familia |
+| `/preparation/emergency-kit` | Guía educativa del Kit (conectada bidireccionalmente al step 7) |
+| `/preparation/family-plan/step/[n]` | Wizard Plan Familia (8 pasos) |
 | `/evacuation` | Mapa evacuación tsunami |
 | `/disasters`, `/disasters/[tipo]` | Guías |
 | `/account` | Placeholder |
@@ -134,4 +136,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-06-10*
+*Last updated: 2026-06-11*

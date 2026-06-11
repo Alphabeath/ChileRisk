@@ -73,7 +73,7 @@ engram_mem_search "<área o keywords>"
 
 Guarda solo ARCH/PATTERN/BUG no triviales (máx 2-3/sesión). Si guardaste memorias → `engram_mem_session_summary` al cerrar.
 
-Full protocol + formato: [docs/ENGRAM-PROTOCOL.md](docs/ENGRAM-PROTOCOL.md)
+Protocolo completo + formato: [docs/ENGRAM-PROTOCOL.md](docs/ENGRAM-PROTOCOL.md)
 
 ---
 
