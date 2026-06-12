@@ -1,6 +1,6 @@
-import { pointInGeometry } from "@/lib/geo"
+import { distanceToGeometryKm, pointInGeometry } from "@/lib/geo"
 import { formatDepth, formatMagnitude } from "@/lib/format"
-import { getSeismicAccentColor, getSeismicDetailUrl, getSeismicLocation, isSeismicPerceived } from "@/lib/seismic"
+import { getSeismicAccentColor, getSeismicDetailUrl, getSeismicLocation } from "@/lib/seismic"
 import type { SeismicEvent } from "@/lib/types"
 import type { ComunaProperties } from "@/components/map/map-config"
 
@@ -16,23 +16,26 @@ export interface PopupSeismicItem {
 
 /** Events above this magnitude are always shown (offshore/interplate). */
 export const POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE = 5
+/** Max distance (km) for M5+ events to appear in a region popup. */
+export const POPUP_SEISMIC_MAX_DISTANCE_MAJOR_KM = 300
+/** Max distance (km) for M4+ events to appear in a region popup. */
+export const POPUP_SEISMIC_MAX_DISTANCE_MODERATE_KM = 100
 
 export function filterRecentEventsInGeometry(
   events: SeismicEvent[],
   geometry: { type?: string; coordinates?: unknown } | null | undefined,
   minMagnitude = POPUP_SEISMIC_MIN_MAGNITUDE,
-  alertDetailUrls?: Set<string>
+  _alertDetailUrls?: Set<string>,
 ): SeismicEvent[] {
   return events
-    .filter(
-      (e) =>
-        e.longitude != null &&
-        e.latitude != null &&
-        typeof e.magnitude === "number" &&
-        (e.magnitude >= POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE ||
-          pointInGeometry(e.longitude, e.latitude, geometry) ||
-          (isSeismicPerceived(e) && e.magnitude >= POPUP_SEISMIC_MIN_PERCEIVED_MAGNITUDE))
-    )
+    .filter((e) => {
+      if (e.longitude == null || e.latitude == null || typeof e.magnitude !== "number") return false
+      if (pointInGeometry(e.longitude, e.latitude, geometry)) return e.magnitude >= minMagnitude
+      const distKm = distanceToGeometryKm(e.latitude, e.longitude, geometry)
+      if (e.magnitude >= POPUP_SEISMIC_OFFSHORE_MIN_MAGNITUDE) return distKm <= POPUP_SEISMIC_MAX_DISTANCE_MAJOR_KM
+      if (e.magnitude >= minMagnitude) return distKm <= POPUP_SEISMIC_MAX_DISTANCE_MODERATE_KM
+      return false
+    })
     .sort((a, b) => {
       const magDiff = b.magnitude - a.magnitude
       if (magDiff !== 0) return magDiff
