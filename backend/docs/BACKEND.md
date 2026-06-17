@@ -27,11 +27,11 @@ Si OpenAPI y esta doc divergen, **OpenAPI gana**; actualiza las tablas aquí en 
 # Desde la raíz del monorepo
 make up
 
-# Solo mock
-USE_REAL_CSN=false USE_REAL_METEO=false docker compose up --build
-
-# Datos reales
+# Datos reales (por defecto)
 USE_REAL_CSN=true USE_REAL_METEO=true USE_REAL_SENAPRED=true docker compose up --build
+
+# Para deshabilitar una fuente (sin datos mock de reemplazo):
+# USE_REAL_CSN=false USE_REAL_METEO=true ...
 
 # Reset DB
 make down-v && make up
@@ -95,9 +95,9 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `BACKEND_CORS_ORIGINS` | localhost:3000,3001 | JSON array |
 | `ENABLE_SCHEDULER` | true | Jobs en background |
 | `RISK_REFRESH_MINUTES` | 15 | Recompute `risk_scores` |
-| `USE_REAL_CSN` | true | Scraper sismologia.cl |
-| `USE_REAL_METEO` | true | Open-Meteo por comuna |
-| `USE_REAL_SENAPRED` | true | Sync GraphQL SERNAPRED |
+| `USE_REAL_CSN` | true | Scraper sismologia.cl (cuando false: sin eventos sísmicos) |
+| `USE_REAL_METEO` | true | Open-Meteo por comuna (cuando false: sin actualizaciones de clima) |
+| `USE_REAL_SENAPRED` | true | Sync GraphQL SERNAPRED (cuando false: sin alertas/eventos oficiales) |
 | `SENAPRED_REFRESH_MINUTES` | 10 | Intervalo sync alertas |
 | `SENAPRED_ALERT_BASE_URL` | https://senapred.cl/alerta/ | Link alertas |
 | `SENAPRED_EVENT_BASE_URL` | https://senapred.cl/evento/ | Link eventos |
@@ -107,7 +107,7 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `SIMULACROS_BASE_URL` | https://senapred.cl/simulacros/ | Calendario público (scraping) |
 | `SIMULACROS_LOOKBACK_DAYS` | 365 | Retención de simulacros pasados |
 | `SIMULACROS_LOOKFORWARD_DAYS` | 180 | (informativo) Calendario público solo expone año en curso |
-| `SIMULACROS_REFRESH_MINUTES` | 360 | Sync cada 6 h (no hay flag mock) |
+| `SIMULACROS_REFRESH_MINUTES` | 360 | Sync cada 6 h |
 | `SIMULACROS_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
 | `SIMULACROS_MAX_RECENT_PAGES` | 5 | Páginas `/simulacros/N/` a recorrer |
 | `CSN_BASE_URL` / `CSN_RECENT_PATH` | sismologia.cl | Scraper |
@@ -131,22 +131,20 @@ Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authori
 | `csn_sync` | 5 min | `USE_REAL_CSN=true` |
 | `meteo_update` | 60 min | `USE_REAL_METEO=true` |
 | `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | `USE_REAL_SENAPRED=true` |
-| `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | siempre (no hay flag mock) |
+| `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | siempre |
 
 Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicial, migraciones ligeras `senapred_alerts`).
 
 ---
 
-## Modo híbrido
+## Fuentes de datos reales
 
-| CSN | Meteo | SERNAPRED | Comportamiento startup |
-|-----|-------|-----------|------------------------|
-| false | false | * | Mock eventos + scores iniciales |
-| true | false | * | Sync CSN; clima mock |
-| false | true | * | Mock sismos; meteo real |
-| true | true | true | Solo fuentes reales; scores on-demand |
+| CSN | Meteo | SERNAPRED | Comportamiento |
+|-----|-------|-----------|----------------|
+| true | true | true | Datos 100% reales (recomendado) |
+| * | * | * | Fuentes deshabilitadas no aportan datos (sin mocks). Scores empiezan en 0 y se actualizan vía drift/recompute o la fuente activa. |
 
-Con CSN+Meteo true **no** se generan mocks. `DailyRiskScore` se calcula al consultar fechas históricas.
+`DailyRiskScore` siempre se calcula bajo demanda para el `?date=` pedido (sin generación sintética).
 
 ---
 
@@ -157,7 +155,7 @@ Con CSN+Meteo true **no** se generan mocks. `DailyRiskScore` se calcula al consu
 | Region, Comuna | `models/region.py`, `comuna.py` | Geografía 16 + 346 |
 | RiskScore | `risk_score.py` | Score “live” por comuna |
 | DailyRiskScore | `daily_risk_score.py` | Snapshot por `score_date` |
-| SeismicEvent | `seismic_event.py` | CSN o mock |
+| SeismicEvent | `seismic_event.py` | CSN (source="csn") |
 | SeismicImpact | `seismic_impact.py` | Impacto precomputado evento↔comuna |
 | ClimateReading | `climate_reading.py` | Lecturas Open-Meteo |
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
@@ -188,7 +186,7 @@ Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic)
 | `stats_service` | Endpoints `/stats/*` |
 | `query_date_window` | TZ Chile, clamp 30 días |
 | `aws_sigv4` | Cognito Identity + firma AppSync |
-| `mock_service` | Generadores cuando flags off |
+| `risk_utils` | Funciones puras de composite/severidad (sin generación de datos) |
 | `usgs_service` | **Deprecated** — no usar |
 
 Detalle de attenuation, radios de impacto, paginación SERNAPRED: sección “Pitfalls” en [AGENTS.md](../AGENTS.md).
@@ -227,4 +225,4 @@ backend/app/
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-17*

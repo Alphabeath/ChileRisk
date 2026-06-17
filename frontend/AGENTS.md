@@ -106,7 +106,7 @@ UI mapa/citizen: [docs/DESIGN.md](docs/DESIGN.md) primero.
 4. [docs/FRONTEND.md](docs/FRONTEND.md) si público
 5. [QUERY-DATE](../docs/QUERY-DATE.md) si usa `date`
 
-`lib/mocks.ts` vacío a propósito.
+(legacy mocks.ts eliminado; siempre usa backend real vía lib/api.ts)
 
 ---
 
@@ -136,4 +136,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-06-11*
+*Last updated: 2026-06-17*

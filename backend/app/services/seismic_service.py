@@ -1,11 +1,10 @@
 """
-Seismic impact model for ChileRisk MVP.
+Seismic utilities and attenuation (CSN-sourced events).
 
-Combined approach:
-- Mock events are generated with epicenter, magnitude, depth.
-- For any given point (comuna centroid), we compute an approximate intensity
-  using a simple distance + depth attenuation.
-- Intensity is then mapped to a 0-100 risk score.
+For any given point (comuna centroid), we compute an approximate intensity
+using a simple distance + depth attenuation.
+Intensity is then mapped to a 0-100 risk score.
+Events now originate exclusively from CSN (sismologia.cl) or are absent when disabled.
 """
 
 import math

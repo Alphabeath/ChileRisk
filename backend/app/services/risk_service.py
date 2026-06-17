@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.comuna import Comuna
 from app.models.risk_score import RiskScore
 from app.services.impact_service import get_max_risk_per_comuna_from_impacts
-from app.services.mock_service import (
+from app.services.risk_utils import (
     compute_composite_and_dominant,
     severity_from_score,
 )
@@ -138,3 +138,32 @@ async def recompute_all_scores(session: AsyncSession) -> int:
 
     await session.commit()
     return updated
+
+
+async def ensure_risk_scores_exist(session: AsyncSession) -> int:
+    """Create a zeroed RiskScore row for every comuna that lacks one (neutral bootstrap, no synthetic data)."""
+    comunas = (await session.execute(select(Comuna))).scalars().all()
+    existing_cods = set(
+        (await session.execute(select(RiskScore.cod_comuna))).scalars().all()
+    )
+    to_add = []
+    now = datetime.now(timezone.utc)
+    for c in comunas:
+        if c.cod_comuna not in existing_cods:
+            to_add.append(
+                RiskScore(
+                    cod_comuna=c.cod_comuna,
+                    sismo_score=0.0,
+                    ola_calor_score=0.0,
+                    ola_frio_score=0.0,
+                    viento_score=0.0,
+                    composite_score=0.0,
+                    dominant_hazard="sismo",
+                    severity="bajo",
+                    computed_at=now,
+                )
+            )
+    if to_add:
+        session.add_all(to_add)
+        await session.commit()
+    return len(to_add)

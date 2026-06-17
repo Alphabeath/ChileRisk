@@ -35,7 +35,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Dashboard de Verificación</h1>
           <p className="text-muted-foreground mt-1">
-            Conectado a backend mock: <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{getApiBase()}</code>
+            Conectado al backend: <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{getApiBase()}</code>
           </p>
         </div>
         <Button onClick={handleRefresh} disabled={loading} variant="outline">
@@ -56,7 +56,7 @@ export default function DashboardPage() {
           </div>
 
           {risksLoading && risks.length === 0 ? (
-            <div className="text-muted-foreground">Cargando datos mock del backend...</div>
+            <div className="text-muted-foreground">Cargando datos del backend...</div>
           ) : (
             <div className="flex flex-col gap-2 text-sm">
               {risks.map((r) => (
@@ -103,7 +103,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="text-xs text-muted-foreground border-t pt-4">
-        Verificación de conexión: si ves números arriba (no errores), el frontend está consumiendo exitosamente los datos mockeados del backend vía fetch en <code>lib/api.ts</code>.
+        Verificación de conexión: si ves números arriba (no errores), el frontend está consumiendo exitosamente los datos del backend vía fetch en <code>lib/api.ts</code>.
         Los scores cambian levemente cada 15 minutos por el scheduler.
       </div>
     </div>

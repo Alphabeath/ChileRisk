@@ -187,7 +187,7 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 **Path:** `app/(citizen)/preparation/simulacros/page.tsx`
 
-Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. Sin flag mock — si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
+Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
 
 **Composición (top → bottom):**
 
@@ -253,4 +253,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-06-11*
+*Last updated: 2026-06-17*

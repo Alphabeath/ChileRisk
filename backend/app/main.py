@@ -17,9 +17,8 @@ from app.data.seed_regions import seed_regions
 from app.database import async_session, engine, Base
 import app.models  # noqa: F401 — register ORM metadata
 from app.scheduler import setup_scheduler, shutdown_scheduler
-from app.services.mock_service import generate_initial_seismic_events, seed_initial_risk_scores
 from app.services.csn_service import sync_recent_csn_events
-from app.services.risk_service import recompute_all_scores
+from app.services.risk_service import ensure_risk_scores_exist, recompute_all_scores
 
 logging.basicConfig(
     level=logging.INFO,
@@ -80,28 +79,9 @@ async def lifespan(app: FastAPI):
         if n_regions or n_comunas:
             logger.info("Seeded %d regions and %d comunas", n_regions, n_comunas)
 
-        n_events = 0
-        n_scores = 0
-
-        if not settings.use_real_csn:
-            n_events = await generate_initial_seismic_events(session)
-
-            from app.models.seismic_event import SeismicEvent
-            from app.services.impact_service import compute_and_store_event_impact
-
-            mock_events = (
-                await session.execute(
-                    select(SeismicEvent).where(SeismicEvent.source == "mock")
-                )
-            ).scalars().all()
-            for ev in mock_events:
-                await compute_and_store_event_impact(session, ev)
-
-        if not (settings.use_real_csn and settings.use_real_meteo):
-            n_scores = await seed_initial_risk_scores(session)
-
-        if n_events or n_scores:
-            logger.info("Generated %d initial seismic events and %d risk scores", n_events, n_scores)
+        n_scores = await ensure_risk_scores_exist(session)
+        if n_scores:
+            logger.info("Ensured %d initial zeroed risk scores for comunas", n_scores)
 
         if settings.use_real_csn:
             real_events = await sync_recent_csn_events(session, hours=168)

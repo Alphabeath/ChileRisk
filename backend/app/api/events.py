@@ -127,15 +127,3 @@ async def get_event_impact(request: Request, event_id: int, db: AsyncSession = D
         "total_affected": len(impacts),
     }
 
-
-@router.get("/artificial")
-@limiter.limit("10/minute")
-async def create_artificial_event(request: Request, mag: float = 6.1, lat: float = -33.45, lon: float = -70.65, depth: float = 25.0, db: AsyncSession = Depends(get_db)):
-    from app.services.mock_service import generate_artificial_seismic_event
-    from app.services.risk_service import recompute_all_scores
-    ev = await generate_artificial_seismic_event(db, mag, lat, lon, depth)
-    await recompute_all_scores(db)
-    from app.services.region_service import _national_cache, _region_cache
-    _national_cache.clear()
-    _region_cache.clear()
-    return (await event_to_response_async(ev, db)).model_dump()

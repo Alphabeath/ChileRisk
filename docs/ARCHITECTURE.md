@@ -34,8 +34,8 @@ Vista de sistema. Detalle: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md)
 ## Data flow
 
 1. **Geografía** — seed idempotente: 16 regiones + 346 comunas (`regional.geojson`, `comunas.geojson`).
-2. **Sismos** — mock o CSN → `seismic_events`; impacto → `seismic_impacts` al insertar.
-3. **Clima** — mock o Open-Meteo (lotes) → `climate_readings` + actualización `risk_scores`.
+2. **Sismos** — CSN (sismologia.cl) → `seismic_events`; impacto → `seismic_impacts` al insertar.
+3. **Clima** — Open-Meteo (lotes) → `climate_readings` + actualización `risk_scores`.
 4. **Riesgo live** — `risk_service.recompute_all_scores` cada N min (scheduler).
 5. **Riesgo histórico** — `daily_risk_service` materializa `daily_risk_scores` por `score_date` bajo demanda.
 6. **Alertas** — SERNAPRED sync → `senapred_alerts`; evaluador → alertas ChileRisk; API unifica `/alerts/active`.
@@ -45,15 +45,11 @@ Consulta por día: [QUERY-DATE.md](./QUERY-DATE.md).
 
 ---
 
-## Hybrid mode
+## Data sources
 
-| `USE_REAL_CSN` | `USE_REAL_METEO` | `USE_REAL_SENAPRED` | Sismos | Clima | Alertas |
-|----------------|------------------|---------------------|--------|-------|---------|
-| false | false | false | Mock | Mock | Vacío / mock |
-| true | false | true | CSN | Mock | SERNAPRED |
-| true | true | true | CSN | Open-Meteo | SERNAPRED |
+All data comes from real providers (CSN, Open-Meteo, SERNAPRED) when the corresponding `USE_REAL_*` flags are enabled. When disabled, the source contributes no data (no synthetic/mock fallbacks).
 
-Variables en root `.env`. Matriz startup: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
+Variables documented in [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 
 ---
 
@@ -101,4 +97,4 @@ Nueva área (worker, etc.): mismo patrón + entrada en [README.md](./README.md) 
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-06-17*

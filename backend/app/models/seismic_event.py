@@ -16,7 +16,7 @@ class SeismicEvent(Base):
     depth_km: Mapped[float] = mapped_column(Float, default=30.0)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     occurred_at_local: Mapped[datetime | None] = mapped_column(DateTime(timezone=False))
-    source: Mapped[str] = mapped_column(String(20), default="mock")
+    source: Mapped[str] = mapped_column(String(20), default="csn")
     raw_data: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

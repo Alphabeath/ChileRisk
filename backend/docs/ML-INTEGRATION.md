@@ -29,7 +29,7 @@ Incorporar ML **sin romper** el contrato frontend ↔ backend ni sustituir de go
 ## 2. Baseline actual (punto de partida)
 
 ```
-CSN / mock ──▶ seismic_events ──▶ impact_service (Haversine + estimate_intensity)
+CSN ──▶ seismic_events ──▶ impact_service (Haversine + estimate_intensity)
                                         │
                                         ▼
                                  seismic_impacts ──▶ risk_service ──▶ risk_scores

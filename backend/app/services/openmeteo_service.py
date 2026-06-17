@@ -17,7 +17,7 @@ from app.config import settings
 from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
 from app.models.risk_score import RiskScore
-from app.services.mock_service import compute_composite_and_dominant, severity_from_score
+from app.services.risk_utils import compute_composite_and_dominant, severity_from_score
 
 logger = logging.getLogger(__name__)
 

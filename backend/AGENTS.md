@@ -4,7 +4,7 @@
 
 **Quick:** [../docs/HARNESS-QUICK.md](../docs/HARNESS-QUICK.md) · endpoint §1 · JSON §2 · bugfix §6 · `make verify`
 
-**Memoria:** `engram_mem_context` + `engram_mem_search "contrato|riesgo|date|hybrid"` antes de editar. Ver [../docs/ENGRAM-PROTOCOL.md](../docs/ENGRAM-PROTOCOL.md). Summary solo si `engram_mem_save`.
+**Memoria:** `engram_mem_context` + `engram_mem_search "contrato|riesgo|date"` antes de editar. Ver [../docs/ENGRAM-PROTOCOL.md](../docs/ENGRAM-PROTOCOL.md). Summary solo si `engram_mem_save`.
 
 ---
 
@@ -101,4 +101,4 @@ make psql
 
 ---
 
-*Last updated: 2026-06-10*
+*Last updated: 2026-06-17*

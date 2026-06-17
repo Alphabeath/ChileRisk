@@ -18,10 +18,9 @@ from app.models.daily_risk_score import DailyRiskScore
 from app.models.region import Region
 from app.models.risk_score import RiskScore
 from app.services.impact_service import get_max_risk_per_comuna_from_impacts
-from app.services.mock_service import compute_composite_and_dominant, severity_from_score
+from app.services.risk_utils import compute_composite_and_dominant, severity_from_score
 from app.services.query_date_window import clamp_query_date, day_bounds_utc, today_chile
 from app.services.risk_service import aggregate_region_scores
-from app.services.mock_service import generate_baseline_scores
 
 _compute_locks: dict[date, asyncio.Lock] = {}
 
@@ -198,10 +197,9 @@ async def compute_and_store_daily_scores(
                 ola_frio = latest.ola_frio_score
                 viento = latest.viento_score
             else:
-                base = generate_baseline_scores(comuna.codregion, seed=cod)
-                ola_calor = base["ola_calor"]
-                ola_frio = base["ola_frio"]
-                viento = base["viento"]
+                ola_calor = 0.0
+                ola_frio = 0.0
+                viento = 0.0
 
         sismo = float(sismo_map.get(cod, 0.0))
         if sismo > 0:
@@ -211,8 +209,7 @@ async def compute_and_store_daily_scores(
             if latest and latest.sismo_score > 0:
                 sismo = latest.sismo_score * 0.3
             else:
-                base = generate_baseline_scores(comuna.codregion, seed=cod)
-                sismo = base["sismo"] * 0.5
+                sismo = 0.0
 
         scores_dict = {
             "sismo": round(sismo, 1),
