@@ -87,7 +87,7 @@ export function StepFamilyGroup() {
           {data.members.map((member, index) => (
             <article
               key={member.id}
-              className="border border-white/10 bg-white/[0.03] p-4"
+              className="glass-mica interactive-mica border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h4 className="text-[12px] font-medium text-white/85">
@@ -228,7 +228,7 @@ export function StepFamilyGroup() {
           {data.pets.map((pet, index) => (
             <article
               key={pet.id}
-              className="border border-white/10 bg-white/[0.03] p-4"
+              className="glass-mica interactive-mica border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h4 className="text-[12px] font-medium text-white/85">

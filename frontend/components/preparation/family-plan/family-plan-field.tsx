@@ -16,7 +16,7 @@ export function FamilyPlanField({
 }: FamilyPlanFieldProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label htmlFor={htmlFor} className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/55">
+      <Label htmlFor={htmlFor} className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65">
         {label}
       </Label>
       {children}
@@ -36,9 +36,9 @@ export function FamilyPlanSection({
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h3 className="text-[13px] font-medium text-white/90">{title}</h3>
+        <h3 className="text-[12px] font-semibold uppercase tracking-[1.2px] text-white/85">{title}</h3>
         {description ? (
-          <p className="mt-0.5 text-[12px] text-white/50">{description}</p>
+          <p className="mt-1 text-[12.5px] leading-snug text-white/55">{description}</p>
         ) : null}
       </div>
       {children}

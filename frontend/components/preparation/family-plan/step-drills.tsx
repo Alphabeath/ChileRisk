@@ -171,7 +171,7 @@ export function StepDrills() {
         {data.drills.map((drill, index) => (
           <article
             key={drill.id}
-            className="border border-white/10 bg-white/[0.03] p-4"
+            className="glass-mica interactive-mica border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
           >
             <div className="mb-4 flex items-center justify-between">
               <h4 className="text-[12px] font-medium text-white/85">

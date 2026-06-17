@@ -169,25 +169,7 @@ export const STEP_DESCRIPTIONS: Record<number, string> = {
 }
 
 function makeThreats(): Threat[] {
-  const internal = INTERNAL_THREATS.map((risk, i) => ({
-    id: `internal-${i}`,
-    risk,
-    category: "internal" as const,
-    probability: 1,
-    impact: 1,
-    corrective_action: "",
-    selected: false,
-  }))
-  const external = EXTERNAL_THREATS.map((risk, i) => ({
-    id: `external-${i}`,
-    risk,
-    category: "external" as const,
-    probability: 1,
-    impact: 1,
-    corrective_action: "",
-    selected: false,
-  }))
-  return [...internal, ...external]
+  return []
 }
 
 function makeSafeZones(): SafeZone[] {

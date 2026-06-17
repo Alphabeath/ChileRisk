@@ -59,7 +59,7 @@ export function StepContacts() {
           {NATIONAL_EMERGENCY_NUMBERS.map((item) => (
             <div
               key={item.service}
-              className="flex items-center justify-between border border-white/10 bg-white/[0.03] px-3 py-2"
+              className="glass-mica interactive-mica flex items-center justify-between border border-white/15 bg-white/[0.04] px-3 py-2"
             >
               <span className="text-[12px] text-white/75">{item.service}</span>
               <span className="font-mono text-sm text-emerald-300">{item.phone}</span>
@@ -106,7 +106,7 @@ function ContactList({
         {contacts.map((contact, index) => (
           <article
             key={contact.id}
-            className="border border-white/10 bg-white/[0.03] p-4"
+            className="glass-mica interactive-mica border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/20 hover:bg-white/[0.06]"
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="text-[12px] text-white/70">Contacto {index + 1}</span>

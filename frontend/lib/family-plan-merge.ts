@@ -21,10 +21,12 @@ export function mergeFamilyPlanData(partial: Partial<FamilyPlanData> | undefined
 
   const defaultThreatsById = new Map(defaults.threats.map((t) => [t.id, t]))
   const threats = partial.threats?.length
-    ? partial.threats.map((t) => ({
-        ...defaultThreatsById.get(t.id),
-        ...t,
-      }))
+    ? partial.threats
+        .filter((t) => t.selected)
+        .map((t) => ({
+          ...defaultThreatsById.get(t.id),
+          ...t,
+        }))
     : defaults.threats
 
   const defaultZonesByEmergency = new Map(
