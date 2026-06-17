@@ -101,7 +101,6 @@ export function EvacuationMap({
 
   const [basemap, setBasemap] = useState<BasemapMode>("satellite")
   const [layersError, setLayersError] = useState<string | null>(null)
-  const [layersReady, setLayersReady] = useState(false)
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [locationPromptStatus, setLocationPromptStatus] =
     useState<EvacuationLocationPromptStatus>("idle")
@@ -472,24 +471,18 @@ export function EvacuationMap({
 
       layerHandlesRef.current = handles
       layersReadyRef.current = true
-      setLayersReady(true)
       setLayersError(null)
       onLayersReady?.(handles)
-      if (locationOfferedMapRef.current !== map) {
-        locationOfferedMapRef.current = map
-        void offerUserLocation(map)
-      }
       return handles
     } catch (error) {
       if (loadId !== layersLoadIdRef.current) return
 
       layersReadyRef.current = false
-      setLayersReady(false)
       setLayersError(
         error instanceof Error ? error.message : "No se pudieron cargar las capas de evacuación",
       )
     }
-  }, [offerUserLocation, onLayersReady])
+  }, [onLayersReady])
 
   useEffect(() => {
     const container = containerRef.current
@@ -520,6 +513,10 @@ export function EvacuationMap({
         detachInteractions?.()
         detachInteractions = attachMapInteractions(map)
       })
+      if (locationOfferedMapRef.current !== map) {
+        locationOfferedMapRef.current = map
+        void offerUserLocation(map)
+      }
       map.resize()
     }
 
@@ -543,9 +540,8 @@ export function EvacuationMap({
       map.remove()
       mapRef.current = null
       layersReadyRef.current = false
-      setLayersReady(false)
     }
-  }, [attachMapInteractions, dismissPopup, getStyle, loadLayers])
+  }, [attachMapInteractions, dismissPopup, getStyle, loadLayers, offerUserLocation])
 
   useEffect(() => {
     const map = mapRef.current
@@ -594,8 +590,8 @@ export function EvacuationMap({
   }, [focusMeetingPoint])
 
   useEffect(() => {
-    onLocationPromptVisibleChange?.(showLocationPrompt && layersReady)
-  }, [showLocationPrompt, layersReady, onLocationPromptVisibleChange])
+    onLocationPromptVisibleChange?.(showLocationPrompt)
+  }, [showLocationPrompt, onLocationPromptVisibleChange])
 
   const toggleBasemap = useCallback(() => {
     setBasemap((prev) => (prev === "satellite" ? "streets" : "satellite"))
@@ -611,7 +607,7 @@ export function EvacuationMap({
         </div>
       ) : null}
 
-      {showLocationPrompt && layersReady ? (
+      {showLocationPrompt ? (
         <EvacuationLocationPrompt
           status={locationPromptStatus}
           onAccept={acceptUserLocation}
@@ -619,7 +615,7 @@ export function EvacuationMap({
         />
       ) : null}
 
-      {!(showLocationPrompt && layersReady) ? (
+      {!showLocationPrompt ? (
         <button
           type="button"
           onClick={toggleBasemap}

@@ -13,12 +13,12 @@ import {
 } from "react"
 
 import { getFamilyPlan, updateFamilyPlan } from "@/lib/api"
-import { computeCompletionPct } from "@/lib/family-plan-completion"
+import { computeCompletionPct, getStepStatuses } from "@/lib/family-plan-completion"
 import { mergeFamilyPlanData } from "@/lib/family-plan-merge"
 import { queryKeys } from "@/lib/queries"
 import type { FamilyPlan, FamilyPlanData } from "@/lib/types"
 
-const FLOOR_MAP_BACKUP_KEY = "chilerisk.floorMapBackup"
+const FAMILY_PLAN_BACKUP_KEY = "chilerisk.familyPlanBackup"
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error"
 
@@ -35,32 +35,36 @@ type FamilyPlanContextValue = {
 
 const FamilyPlanContext = createContext<FamilyPlanContextValue | null>(null)
 
-function saveFloorMapBackup(floorMap: FamilyPlanData["floor_map"]): void {
+function saveFamilyPlanBackup(data: FamilyPlanData): void {
   try {
     localStorage.setItem(
-      FLOOR_MAP_BACKUP_KEY,
-      JSON.stringify({ floor_map: floorMap, ts: Date.now() }),
+      FAMILY_PLAN_BACKUP_KEY,
+      JSON.stringify({ data, ts: Date.now() }),
     )
   } catch {}
 }
 
-function loadFloorMapBackup(): {
-  floor_map: FamilyPlanData["floor_map"]
+function loadFamilyPlanBackup(): {
+  data: FamilyPlanData
   ts: number
 } | null {
   try {
-    const raw = localStorage.getItem(FLOOR_MAP_BACKUP_KEY)
+    const raw = localStorage.getItem(FAMILY_PLAN_BACKUP_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as { floor_map: FamilyPlanData["floor_map"]; ts: number }
+    return JSON.parse(raw) as { data: FamilyPlanData; ts: number }
   } catch {
     return null
   }
 }
 
-function clearFloorMapBackup(): void {
+function clearFamilyPlanBackup(): void {
   try {
-    localStorage.removeItem(FLOOR_MAP_BACKUP_KEY)
+    localStorage.removeItem(FAMILY_PLAN_BACKUP_KEY)
   } catch {}
+}
+
+function countCompletedSteps(data: FamilyPlanData): number {
+  return getStepStatuses(data).filter((s) => s.completed).length
 }
 
 function useFamilyPlanState(): FamilyPlanContextValue {
@@ -71,6 +75,7 @@ function useFamilyPlanState(): FamilyPlanContextValue {
   const pendingRef = useRef<FamilyPlanData | null>(null)
   const draftRef = useRef<FamilyPlanData | null>(null)
   const flushSaveRef = useRef<(next: FamilyPlanData) => void>(() => {})
+  const mountedRef = useRef(true)
 
   const query = useQuery({
     queryKey: queryKeys.familyPlan(),
@@ -82,18 +87,32 @@ function useFamilyPlanState(): FamilyPlanContextValue {
     [query.data],
   )
 
-  // Restore floor map from localStorage backup if server data lost it
+  // Restore from localStorage backup when server data lost fields the user
+  // previously completed (e.g. safe_zones with safe_place, or floor_map with
+  // saved_at). This protects against debounced saves that were cancelled by
+  // navigation, and against the saved_at-reset bug in step-floor-map.
   const restoredBaseData = useMemo(() => {
     if (!baseData) return null
-    const backup = loadFloorMapBackup()
-    if (!backup?.floor_map?.rooms?.length) return baseData
-    // Restore if server has no rooms or no saved_at (save didn't persist)
-    if (
-      baseData.floor_map.rooms.length === 0 ||
-      (baseData.floor_map.saved_at === null && backup.floor_map.saved_at !== null)
-    ) {
-      return { ...baseData, floor_map: backup.floor_map }
+    const backup = loadFamilyPlanBackup()
+    if (!backup?.data) return baseData
+
+    const serverSteps = countCompletedSteps(baseData)
+    const backupSteps = countCompletedSteps(backup.data)
+
+    // Whole-plan replacement: backup has strictly more completed steps
+    if (backupSteps > serverSteps) {
+      return backup.data
     }
+
+    // Field-level merge: only restore floor_map if server lost saved_at
+    const floorMapLooksLost =
+      baseData.floor_map.rooms.length === 0 ||
+      (baseData.floor_map.saved_at === null &&
+        backup.data.floor_map.saved_at !== null)
+    if (floorMapLooksLost) {
+      return { ...baseData, floor_map: backup.data.floor_map }
+    }
+
     return baseData
   }, [baseData])
 
@@ -119,6 +138,7 @@ function useFamilyPlanState(): FamilyPlanContextValue {
   const mutation = useMutation({
     mutationFn: updateFamilyPlan,
     onMutate: (variables) => {
+      if (!mountedRef.current) return
       setSaveStatus("saving")
       syncCache(variables)
     },
@@ -128,7 +148,8 @@ function useFamilyPlanState(): FamilyPlanContextValue {
         data: mergeFamilyPlanData(variables),
         completion_pct: computeCompletionPct(variables),
       })
-      clearFloorMapBackup()
+      clearFamilyPlanBackup()
+      if (!mountedRef.current) return
       const pending = pendingRef.current
       if (pending) {
         setDraft(pending)
@@ -142,7 +163,10 @@ function useFamilyPlanState(): FamilyPlanContextValue {
         setSaveStatus("saved")
       }
     },
-    onError: () => setSaveStatus("error"),
+    onError: () => {
+      if (!mountedRef.current) return
+      setSaveStatus("error")
+    },
   })
 
   const flushSave = useCallback(
@@ -166,7 +190,7 @@ function useFamilyPlanState(): FamilyPlanContextValue {
       draftRef.current = next
       setDraft(next)
       syncCache(next)
-      saveFloorMapBackup(next.floor_map)
+      saveFamilyPlanBackup(next)
       setSaveStatus("idle")
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
@@ -185,17 +209,36 @@ function useFamilyPlanState(): FamilyPlanContextValue {
     [restoredBaseData, flushSave],
   )
 
+  // Cleanup: flush pending save on unmount so a navigation away during the
+  // 1500ms debounce window doesn't drop the user's changes.
   useEffect(() => {
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
+      mountedRef.current = false
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+        debounceRef.current = null
+      }
+      if (pendingRef.current) {
+        flushSaveRef.current(pendingRef.current)
+      }
     }
   }, [])
 
-  // beforeunload: warn if save in-flight or pending changes
+  // beforeunload: warn if save in-flight or pending changes; also try
+  // sendBeacon as a last-resort flush for tab close.
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
       if (mutation.isPending || pendingRef.current) {
         e.preventDefault()
+        if (pendingRef.current && typeof navigator !== "undefined" && navigator.sendBeacon) {
+          try {
+            const blob = new Blob(
+              [JSON.stringify({ data: pendingRef.current })],
+              { type: "application/json" },
+            )
+            navigator.sendBeacon("/api/backend/api/v1/family-plan", blob)
+          } catch {}
+        }
       }
     }
     window.addEventListener("beforeunload", handler)

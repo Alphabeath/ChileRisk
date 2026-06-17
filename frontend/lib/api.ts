@@ -11,6 +11,9 @@ import type {
   ActiveAlertParams,
   FamilyPlan,
   FamilyPlanData,
+  Simulacro,
+  SimulacroListResponse,
+  SimulacrosParams,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -90,4 +93,31 @@ export async function updateFamilyPlan(data: FamilyPlanData): Promise<FamilyPlan
     method: "PUT",
     body: JSON.stringify({ data }),
   })
+}
+
+export async function listSimulacros(
+  params: SimulacrosParams = {}
+): Promise<SimulacroListResponse> {
+  const search = new URLSearchParams()
+  if (params.from) search.set("from", params.from)
+  if (params.to) search.set("to", params.to)
+  if (params.region !== undefined) search.set("region", String(params.region))
+  if (params.type) search.set("type", params.type)
+  if (params.source) search.set("source", params.source)
+  if (params.upcoming_only) search.set("upcoming_only", "true")
+  if (params.past_only) search.set("past_only", "true")
+  if (params.limit !== undefined) search.set("limit", String(params.limit))
+  if (params.offset !== undefined) search.set("offset", String(params.offset))
+  const qs = search.toString()
+  return fetchJson<SimulacroListResponse>(
+    `/api/v1/simulacros${qs ? `?${qs}` : ""}`,
+  )
+}
+
+export async function getNextSimulacro(): Promise<Simulacro | null> {
+  return fetchJson<Simulacro | null>("/api/v1/simulacros/next")
+}
+
+export async function getSimulacro(slug: string): Promise<Simulacro> {
+  return fetchJson<Simulacro>(`/api/v1/simulacros/${encodeURIComponent(slug)}`)
 }

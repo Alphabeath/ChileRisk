@@ -157,6 +157,17 @@ export const WIZARD_STEPS = [
   { step: 8, slug: "drills", title: "Simulación" },
 ] as const
 
+export const STEP_DESCRIPTIONS: Record<number, string> = {
+  1: "Integrantes y mascotas.",
+  2: "Riesgos internos y externos.",
+  3: "Lugares y rutas seguras.",
+  4: "Plano con puntos clave.",
+  5: "Tareas por integrante.",
+  6: "Números y contactos.",
+  7: "Recursos para 72 horas.",
+  8: "Simulacros y mejoras.",
+}
+
 function makeThreats(): Threat[] {
   const internal = INTERNAL_THREATS.map((risk, i) => ({
     id: `internal-${i}`,

@@ -9,14 +9,29 @@ import {
   AlertTriangle,
   Bell,
   BellOff,
+  Check,
   CheckCircle2,
   ChevronDown,
+  Filter,
 } from "lucide-react"
 import { useActiveAlerts, useDraggablePanel } from "@/hooks"
 import { sortActiveAlerts } from "@/lib/alerts-display"
 import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { ActiveAlertCard } from "./alert-ui"
+
+type AlertFilter = "all" | "chilerisk" | "senapred"
+
+const FILTER_OPTIONS: { value: AlertFilter; label: string }[] = [
+  { value: "all", label: "Todas" },
+  { value: "chilerisk", label: "Chile Risk" },
+  { value: "senapred", label: "Sernapred" },
+]
 
 function SkeletonCard() {
   return (
@@ -32,14 +47,21 @@ function SkeletonCard() {
   )
 }
 
-function EmptyState() {
+function EmptyState({ filter }: { filter: AlertFilter }) {
+  const { title, hint } =
+    filter === "chilerisk"
+      ? { title: "Sin alertas ChileRisk", hint: "El motor de riesgo no reporta emergencias" }
+      : filter === "senapred"
+        ? { title: "Sin alertas SERNAPRED", hint: "No hay alertas ni eventos publicados" }
+        : {
+            title: "Sin alertas activas",
+            hint: "SERNAPRED y ChileRisk sin emergencias reportadas",
+          }
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
       <CheckCircle2 className="size-6 text-emerald-400/70" />
-      <div className="text-[12px] font-medium text-white/80">Sin alertas activas</div>
-      <div className="text-[10px] text-white/45">
-        SERNAPRED y ChileRisk sin emergencias reportadas
-      </div>
+      <div className="text-[12px] font-medium text-white/80">{title}</div>
+      <div className="text-[10px] text-white/45">{hint}</div>
     </div>
   )
 }
@@ -77,6 +99,7 @@ function hasViewportSpaceForAlertsExpanded(): boolean {
 export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
   const [openOverride, setOpenOverride] = useState<boolean | null>(null)
   const [spaceExpanded, setSpaceExpanded] = useState(false)
+  const [filter, setFilter] = useState<AlertFilter>("all")
 
   const syncSpaceExpanded = useCallback(() => {
     if (!flow) return
@@ -107,7 +130,23 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
   const senapredEventos = sorted.filter(
     (a) => a.source === "senapred" && a.record_kind === "evento"
   ).length
+  const senapredCount = senapredAlerts + senapredEventos
   const chileriskCount = sorted.filter((a) => a.source === "chilerisk").length
+
+  const counts: Record<AlertFilter, number> = {
+    all: sorted.length,
+    chilerisk: chileriskCount,
+    senapred: senapredCount,
+  }
+
+  const filtered = useMemo(() => {
+    if (filter === "chilerisk") return sorted.filter((a) => a.source === "chilerisk")
+    if (filter === "senapred") return sorted.filter((a) => a.source === "senapred")
+    return sorted
+  }, [sorted, filter])
+
+  const activeFilterLabel = FILTER_OPTIONS.find((o) => o.value === filter)?.label ?? "Todas"
+  const isFiltered = filter !== "all"
 
   const hasAlerts = sorted.length > 0
   const Icon = hasAlerts ? Bell : BellOff
@@ -118,7 +157,7 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
       className={cn(
         MAP_PANEL_SHELL_CLASS,
         "flex flex-col",
-        "max-h-[min(380px,42dvh)]",
+        "max-h-[min(380px,44dvh)]",
       )}
       style={style}
       aria-label="Alertas activas SERNAPRED y ChileRisk"
@@ -145,16 +184,84 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
             <span className="block text-[10.5px] font-semibold uppercase tracking-[1.4px] text-white/85">
               Alertas
             </span>
-            {hasAlerts && (
-              <span className="mt-0.5 block font-mono text-[9px] text-white/45">
-                {senapredAlerts} alertas
-                {senapredEventos > 0 ? ` · ${senapredEventos} eventos` : ""}
-                {" · "}
-                {chileriskCount} ChileRisk
+            {isFiltered && (
+              <span className="mt-0.5 block truncate text-[9px] uppercase tracking-wider text-white/45">
+                · {activeFilterLabel}
               </span>
             )}
           </div>
         </div>
+
+        <Popover>
+          <PopoverTrigger
+            aria-label="Filtrar alertas por fuente"
+            className={cn(
+              "relative flex shrink-0 items-center justify-center border-l border-white/10 px-2.5 transition-colors",
+              "hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+              isFiltered ? "text-white" : "text-white/60 hover:text-white/85",
+            )}
+          >
+            <Filter className="size-3.5" aria-hidden />
+            {isFiltered && (
+              <span
+                className="absolute right-1 top-1 size-1.5 rounded-full bg-[#DA291C]"
+                aria-hidden
+              />
+            )}
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={6}
+            className="w-56 gap-2 border-white/10 bg-black/85 p-2 text-white shadow-2xl shadow-black/60 backdrop-blur-xl"
+          >
+            <div className="px-2 pt-1 text-[9.5px] font-semibold uppercase tracking-[1.2px] text-white/55">
+              Filtrar por fuente
+            </div>
+            <div role="radiogroup" aria-label="Fuente de alertas" className="flex flex-col gap-0.5">
+              {FILTER_OPTIONS.map((opt) => {
+                const active = filter === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setFilter(opt.value)}
+                    className={cn(
+                      "group flex items-center gap-2 rounded-none px-2 py-1.5 text-left text-[11.5px] transition-colors",
+                      "hover:bg-white/[0.06] focus-visible:bg-white/[0.08] focus-visible:outline-none",
+                      active && "bg-white/[0.06]",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex size-3.5 shrink-0 items-center justify-center border",
+                        active
+                          ? "border-[#DA291C] bg-[#DA291C]/15 text-[#ff9a9a]"
+                          : "border-white/20 text-transparent",
+                      )}
+                      aria-hidden
+                    >
+                      <Check className="size-2.5" strokeWidth={3} />
+                    </span>
+                    <span className="flex-1 truncate">{opt.label}</span>
+                    <span
+                      className={cn(
+                        "rounded-sm border px-1 font-mono text-[9.5px] font-semibold leading-none tabular-nums",
+                        counts[opt.value] > 0
+                          ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
+                          : "border-white/10 bg-white/[0.04] text-white/40",
+                      )}
+                    >
+                      {counts[opt.value]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+
         <button
           type="button"
           onClick={() => setOpenOverride((v) => !(v ?? open))}
@@ -186,7 +293,7 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
       <div
         id="active-alerts-list"
         className={cn(
-          "divide-y divide-white/[0.06] overflow-y-auto max-h-[min(260px,32dvh)]",
+          "divide-y divide-white/[0.06] overflow-y-auto max-h-[min(320px,38dvh)]",
           !open && "hidden"
         )}
         role="region"
@@ -200,11 +307,15 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
           </>
         ) : error ? (
           <ErrorState onRetry={() => refetch()} />
-        ) : !hasAlerts ? (
-          <EmptyState />
+        ) : filtered.length === 0 ? (
+          <EmptyState filter={filter} />
         ) : (
-          sorted.map((alert) => (
-            <ActiveAlertCard key={`${alert.source}-${alert.id}`} alert={alert} showRegion />
+          filtered.map((alert) => (
+            <ActiveAlertCard
+              key={`${alert.source}-${alert.id}`}
+              alert={alert}
+              showRegion
+            />
           ))
         )}
       </div>

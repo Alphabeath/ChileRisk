@@ -303,3 +303,46 @@ export interface FamilyPlan {
   completion_pct: number
   updated_at: string | null
 }
+
+export type DrillType =
+  | "sismo_tsunami_borde_costero"
+  | "sismo_tsunami_educacion"
+  | "erupcion_volcanica"
+  | "remocion_en_masa"
+  | "otro"
+
+export type DrillSource = "future" | "recent" | "archive"
+
+export interface Simulacro {
+  slug: string
+  title: string
+  /** YYYY-MM-DD */
+  drill_date: string
+  region_code: number | null
+  region_name: string | null
+  drill_type: DrillType
+  participating_comunas: string[]
+  summary: string | null
+  detail_url: string
+  mensaje_sae: boolean
+  source: DrillSource
+  synced_at: string
+}
+
+export interface SimulacroListResponse {
+  items: Simulacro[]
+  total: number
+  next_synced_at: string | null
+}
+
+export interface SimulacrosParams {
+  from?: string
+  to?: string
+  region?: number
+  type?: DrillType
+  source?: DrillSource
+  upcoming_only?: boolean
+  past_only?: boolean
+  limit?: number
+  offset?: number
+}

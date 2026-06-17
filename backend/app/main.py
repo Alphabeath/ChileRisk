@@ -8,7 +8,7 @@ from sqlalchemy import inspect, select, text
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, stats
+from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, simulacros, stats
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
@@ -61,7 +61,17 @@ async def lifespan(app: FastAPI):
                     )
                 )
 
+        def _migrate_simulacros(sync_conn):
+            if not inspect(sync_conn).has_table("simulacros"):
+                return
+            cols = {c["name"] for c in inspect(sync_conn).get_columns("simulacros")}
+            if "thumbnail_url" in cols:
+                sync_conn.execute(
+                    text("ALTER TABLE simulacros DROP COLUMN thumbnail_url")
+                )
+
         await conn.run_sync(_migrate_senapred_alerts)
+        await conn.run_sync(_migrate_simulacros)
 
     # Seed reference geography (regions + comunas)
     async with async_session() as session:
@@ -119,6 +129,19 @@ async def lifespan(app: FastAPI):
             except Exception as e:
                 await session.rollback()
                 logger.exception("Initial SERNAPRED sync failed: %s", e)
+
+        from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
+
+        try:
+            n_sim = await sync_simulacros(session)
+            if n_sim:
+                logger.info("Synced %d SERNAPRED simulacros at startup", n_sim)
+            await prune_old_simulacros(
+                session, lookback_days=settings.simulacros_lookback_days
+            )
+        except Exception as e:
+            await session.rollback()
+            logger.exception("Initial simulacros sync failed: %s", e)
 
         n_recomputed = await recompute_all_scores(session)
         if n_recomputed:
@@ -187,6 +210,12 @@ app.include_router(
     family_plan.router,
     prefix="/api/v1/family-plan",
     tags=["family-plan"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    simulacros.router,
+    prefix="/api/v1/simulacros",
+    tags=["simulacros"],
     dependencies=_auth_guard,
 )
 

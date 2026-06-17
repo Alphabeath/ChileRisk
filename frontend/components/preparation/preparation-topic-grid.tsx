@@ -2,9 +2,20 @@ import Link from "next/link"
 import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 import {
   Backpack,
-  Home,
-  Megaphone,
+  Droplet,
+  Flashlight,
+  FileText,
   Users,
+  MapPin,
+  Phone,
+  Route,
+  Home,
+  Wrench,
+  Zap,
+  Bell,
+  Megaphone,
+  Radio,
+  ShieldCheck,
   ArrowUpRight,
   type LucideIcon,
 } from "lucide-react"
@@ -13,12 +24,17 @@ import { cn } from "@/lib/utils"
 interface Topic {
   title: string
   summary: string
+  /** 3 short bullet labels rendered as <span class="sr-only"> for a11y. */
   bullets: string[]
+  /** 3 icons rendered as visible chips, paired 1:1 with `bullets`. */
+  icons: LucideIcon[]
   icon: LucideIcon
-  /** Tailwind gradient stops (e.g. "from-blue-950/60 to-cyan-900/40") */
+  /** Tailwind gradient stops (e.g. "from-blue-950/70 to-cyan-900/40") */
   color: string
   /** Accent text color for icon */
   accent: string
+  /** Chip background + border color (tailwind classes) for the bullet icon wrappers. */
+  iconChip: string
   href: string
   cta: string
 }
@@ -27,57 +43,49 @@ const topics: Topic[] = [
   {
     title: "Kit de emergencia",
     summary: "Recursos para 72 horas sin servicios.",
-    bullets: [
-      "Agua, alimentos no perecederos y botiquín.",
-      "Linterna, pilas y radio a pilas o manual.",
-      "Documentos copiados y efectivo en moneda pequeña.",
-    ],
+    bullets: ["Agua", "Linterna", "Documentos"],
+    icons: [Droplet, Flashlight, FileText],
     icon: Backpack,
-    color: "from-blue-950/70 via-blue-900/40 to-cyan-900/40",
-    accent: "text-blue-300",
+    color: "from-blue-700/80 via-blue-800/60 to-cyan-900/60",
+    accent: "text-blue-200",
+    iconChip: "bg-blue-500/20 border-blue-400/40",
     href: "/preparation/emergency-kit",
     cta: "Leer guía",
   },
   {
     title: "Plan familiar",
     summary: "Quién hace qué y dónde reunirse.",
-    bullets: [
-      "Puntos de encuentro dentro y fuera del barrio.",
-      "Contacto de referencia fuera de la zona afectada.",
-      "Rutas alternativas desde casa, trabajo y colegio.",
-    ],
+    bullets: ["Punto de encuentro", "Contacto externo", "Ruta alternativa"],
+    icons: [MapPin, Phone, Route],
     icon: Users,
-    color: "from-emerald-950/70 via-emerald-900/40 to-teal-900/40",
-    accent: "text-emerald-300",
+    color: "from-emerald-700/80 via-emerald-800/60 to-teal-900/60",
+    accent: "text-emerald-200",
+    iconChip: "bg-emerald-500/20 border-emerald-400/40",
     href: "/preparation/family-plan",
     cta: "Iniciar plan",
   },
   {
     title: "Hogar y entorno",
     summary: "Reducir vulnerabilidades antes del evento.",
-    bullets: [
-      "Fijar muebles pesados y revisar instalaciones eléctricas.",
-      "Identificar zonas seguras según el tipo de amenaza.",
-      "Conocer alarmas y señales oficiales de tu comuna.",
-    ],
+    bullets: ["Fijaciones", "Instalación eléctrica", "Alarmas comunales"],
+    icons: [Wrench, Zap, Bell],
     icon: Home,
-    color: "from-amber-950/70 via-orange-900/40 to-yellow-900/30",
-    accent: "text-amber-300",
+    color: "from-amber-700/80 via-orange-800/60 to-yellow-900/50",
+    accent: "text-amber-200",
+    iconChip: "bg-amber-500/20 border-amber-400/40",
     href: "/preparation/family-plan/step/2",
     cta: "Evaluar riesgos",
   },
   {
     title: "Comunicación y simulacros",
     summary: "Practicar para responder con calma.",
-    bullets: [
-      "Definir cómo avisar a la familia si no hay señal.",
-      "Participar en simulacros escolares y comunitarios.",
-      "Seguir solo fuentes oficiales durante la emergencia.",
-    ],
+    bullets: ["Avisa sin señal", "Simulacros", "Fuentes oficiales"],
+    icons: [Radio, Megaphone, ShieldCheck],
     icon: Megaphone,
-    color: "from-rose-950/70 via-red-900/40 to-pink-900/30",
-    accent: "text-rose-300",
-    href: "/preparation/family-plan/step/8",
+    color: "from-rose-700/80 via-red-800/60 to-pink-900/50",
+    accent: "text-rose-200",
+    iconChip: "bg-rose-500/20 border-rose-400/40",
+    href: "/preparation/simulacros",
     cta: "Ver simulacros",
   },
 ]
@@ -85,19 +93,21 @@ const topics: Topic[] = [
 export function PreparationTopicGrid() {
   return (
     <section aria-labelledby="preparation-topics-heading">
-      <div className="mb-3">
-        <h2
-          id="preparation-topics-heading"
-          className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
-        >
-          Temas clave
-        </h2>
-        <p className="mt-0.5 text-[12px] text-white/50">
-          Recursos educativos y herramientas para complementar tu plan familiar.
-        </p>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h2
+            id="preparation-topics-heading"
+            className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
+          >
+            Temas clave
+          </h2>
+          <p className="mt-0.5 text-[12px] text-white/50">
+            Recursos educativos y herramientas para complementar tu plan familiar.
+          </p>
+        </div>
       </div>
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {topics.map((topic) => (
           <TopicCard key={topic.title} topic={topic} />
         ))}
@@ -124,46 +134,59 @@ function TopicCard({ topic }: { topic: Topic }) {
         >
           <div
             className={cn(
-              "flex items-center justify-between border-b px-4 py-3",
+              "relative flex flex-col gap-3 border-b px-4 py-4",
               GLASS_DIVIDER,
               "bg-gradient-to-br",
               topic.color,
             )}
           >
-            <div className="flex size-10 items-center justify-center border border-white/15 bg-black/40 backdrop-blur-sm transition-colors group-hover:border-white/25 group-hover:bg-black/50">
-              <Icon
-                className={cn("size-5 transition-transform group-hover:scale-[1.2]", topic.accent)}
+            <div className="flex items-center justify-between">
+              <div
+                className={cn(
+                  "flex size-12 items-center justify-center border bg-black/40 backdrop-blur-sm transition-all group-hover:scale-[1.05]",
+                  topic.iconChip,
+                )}
+              >
+                <Icon className={cn("size-6", topic.accent)} aria-hidden />
+              </div>
+              <ArrowUpRight
+                className="size-4 text-white/55 transition-all duration-200 group-hover:-translate-y-[2px] group-hover:translate-x-[2px] group-hover:text-white group-hover:scale-[1.25]"
                 aria-hidden
               />
             </div>
-            <ArrowUpRight
-              className="size-4 text-white/45 transition-all duration-200 group-hover:-translate-y-[2px] group-hover:translate-x-[2px] group-hover:text-white group-hover:scale-[1.25]"
-              aria-hidden
-            />
-          </div>
-
-          <div className="flex flex-1 flex-col gap-2 px-4 py-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90 transition-colors duration-200 group-hover:text-white">
+            <h3 className="text-[13px] font-semibold uppercase tracking-[1.1px] text-white">
               {topic.title}
             </h3>
-            <p className="line-clamp-2 text-[12px] leading-snug text-white/55">
+          </div>
+
+          <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+            <p className="line-clamp-2 text-[12px] leading-snug text-white/65">
               {topic.summary}
             </p>
-            <ul className="mt-2 flex flex-1 flex-col gap-1.5">
-              {topic.bullets.map((bullet) => (
-                <li
-                  key={bullet}
-                  className="flex gap-2 text-[12px] leading-snug text-white/70"
-                >
-                  <span
-                    className="mt-1.5 size-1 shrink-0 rounded-full bg-white/35"
-                    aria-hidden
-                  />
-                  {bullet}
-                </li>
-              ))}
+
+            <ul className="mt-auto flex flex-col gap-2">
+              {topic.bullets.map((label, i) => {
+                const BulletIcon = topic.icons[i]
+                return (
+                  <li
+                    key={label}
+                    className="flex items-center gap-2.5 text-[11.5px] text-white/75"
+                  >
+                    <span
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center border",
+                        topic.iconChip,
+                      )}
+                    >
+                      <BulletIcon className={cn("size-3.5", topic.accent)} aria-hidden />
+                    </span>
+                    <span className="truncate">{label}</span>
+                  </li>
+                )
+              })}
             </ul>
-            <p className="mt-auto pt-2 font-mono text-[10px] uppercase tracking-wider text-white/55 transition-colors group-hover:text-white/80">
+
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-white/55 transition-colors group-hover:text-white/80">
               {topic.cta} →
             </p>
           </div>

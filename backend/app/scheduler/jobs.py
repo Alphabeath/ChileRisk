@@ -9,6 +9,7 @@ from app.services.risk_service import recompute_all_scores
 from app.services.csn_service import sync_recent_csn_events
 from app.services.openmeteo_service import update_climate_scores_from_real_data
 from app.services.senapred_service import sync_senapred_alerts
+from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
 
 logger = logging.getLogger("chilerisk.scheduler")
 
@@ -57,6 +58,21 @@ async def _sync_senapred_alerts():
         logger.exception("SERNAPRED sync failed: %s", e)
 
 
+async def _sync_simulacros():
+    try:
+        async with async_session() as session:
+            n = await sync_simulacros(session)
+            pruned = await prune_old_simulacros(
+                session, lookback_days=settings.simulacros_lookback_days
+            )
+        if n or pruned:
+            logger.info(
+                "Synced %d SERNAPRED simulacros (pruned %d)", n, pruned
+            )
+    except Exception as e:
+        logger.exception("SERNAPRED simulacros sync failed: %s", e)
+
+
 def setup_scheduler():
     if not settings.enable_scheduler:
         logger.info("Scheduler disabled via settings")
@@ -97,6 +113,14 @@ def setup_scheduler():
             replace_existing=True,
         )
 
+    scheduler.add_job(
+        _sync_simulacros,
+        trigger=IntervalTrigger(minutes=settings.simulacros_refresh_minutes),
+        id="simulacros_sync",
+        name="Sync SERNAPRED simulacros calendar",
+        replace_existing=True,
+    )
+
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
     if settings.use_real_csn:
@@ -108,6 +132,10 @@ def setup_scheduler():
             "SERNAPRED alerts sync enabled (every %d min)",
             settings.senapred_refresh_minutes,
         )
+    logger.info(
+        "SERNAPRED simulacros sync enabled (every %d min)",
+        settings.simulacros_refresh_minutes,
+    )
 
 
 def shutdown_scheduler():

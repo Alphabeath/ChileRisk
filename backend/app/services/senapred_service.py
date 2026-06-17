@@ -384,7 +384,7 @@ async def _fetch_paginated(
     return all_items
 
 
-async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> list[dict]:
+async def fetch_senapred_alerts(lookback_days: int = 30, max_pages: int = 40) -> list[dict]:
     return await _fetch_paginated(
         query=_LIST_QUERY,
         data_key="alertasByDate",
@@ -393,7 +393,7 @@ async def fetch_senapred_alerts(lookback_days: int = 7, max_pages: int = 20) -> 
     )
 
 
-async def fetch_senapred_eventos(lookback_days: int = 7, max_pages: int = 20) -> list[dict]:
+async def fetch_senapred_eventos(lookback_days: int = 30, max_pages: int = 40) -> list[dict]:
     return await _fetch_paginated(
         query=_LIST_EVENTOS_QUERY,
         data_key="eventosByDate",

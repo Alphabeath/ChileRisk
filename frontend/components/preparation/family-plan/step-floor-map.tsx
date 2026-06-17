@@ -122,14 +122,19 @@ export function StepFloorMap() {
     updater: (prev: FloorMap) => FloorMap,
     options?: { keepSaved?: boolean },
   ) {
-    updateData((prev) => ({
-      ...prev,
-      floor_map: (() => {
-        const next = updater(prev.floor_map)
-        if (options?.keepSaved) return next
-        return { ...next, saved_at: null }
-      })(),
-    }))
+    updateData((prev) => {
+      const next = updater(prev.floor_map)
+      if (options?.keepSaved) {
+        return { ...prev, floor_map: next }
+      }
+      return {
+        ...prev,
+        floor_map: {
+          ...next,
+          saved_at: prev.floor_map.saved_at,
+        },
+      }
+    })
   }
 
   function handleCanvasPlace(coords: { x: number; y: number }) {

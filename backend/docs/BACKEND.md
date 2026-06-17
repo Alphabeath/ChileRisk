@@ -64,6 +64,9 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/stats/compare?regiones=13,14,15` | Comparación (máx. 8) |
 | GET | `/api/v1/family-plan` | Plan Familia Preparada del usuario (JSON) — **JWT** |
 | PUT | `/api/v1/family-plan` | Upsert plan completo + `completion_pct` — **JWT** |
+| GET | `/api/v1/simulacros?from=&to=&region=&type=&source=&upcoming_only=&past_only=&limit=&offset=` | Calendario SERNAPRED (próximos + pasados) — **JWT** |
+| GET | `/api/v1/simulacros/next` | Próximo simulacro (`drill_date >= hoy`) o `null` — **JWT** |
+| GET | `/api/v1/simulacros/{slug}` | Detalle (incluye `summary`, `participating_comunas`, `mensaje_sae`) — **JWT** |
 
 Parámetro `date`: `YYYY-MM-DD`, día civil Chile; default hoy; ventana 30 días — ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
@@ -100,7 +103,13 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `SENAPRED_EVENT_BASE_URL` | https://senapred.cl/evento/ | Link eventos |
 | `SENAPRED_COGNITO_IDENTITY_POOL_ID` | (público) | Pool anónimo AppSync |
 | `SENAPRED_APPSYNC_ENDPOINT` | (URL GraphQL) | Endpoint AWS |
-| `SENAPRED_LOOKBACK_DAYS` | 7 | Retención en tabla local |
+| `SENAPRED_LOOKBACK_DAYS` | 30 | Retención en tabla local (alineado con `?date=` de 30 días) |
+| `SIMULACROS_BASE_URL` | https://senapred.cl/simulacros/ | Calendario público (scraping) |
+| `SIMULACROS_LOOKBACK_DAYS` | 365 | Retención de simulacros pasados |
+| `SIMULACROS_LOOKFORWARD_DAYS` | 180 | (informativo) Calendario público solo expone año en curso |
+| `SIMULACROS_REFRESH_MINUTES` | 360 | Sync cada 6 h (no hay flag mock) |
+| `SIMULACROS_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
+| `SIMULACROS_MAX_RECENT_PAGES` | 5 | Páginas `/simulacros/N/` a recorrer |
 | `CSN_BASE_URL` / `CSN_RECENT_PATH` | sismologia.cl | Scraper |
 | `OPENMETEO_API_BASE` | api.open-meteo.com | Clima |
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
@@ -122,6 +131,7 @@ Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authori
 | `csn_sync` | 5 min | `USE_REAL_CSN=true` |
 | `meteo_update` | 60 min | `USE_REAL_METEO=true` |
 | `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | `USE_REAL_SENAPRED=true` |
+| `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | siempre (no hay flag mock) |
 
 Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicial, migraciones ligeras `senapred_alerts`).
 
@@ -151,6 +161,7 @@ Con CSN+Meteo true **no** se generan mocks. `DailyRiskScore` se calcula al consu
 | SeismicImpact | `seismic_impact.py` | Impacto precomputado evento↔comuna |
 | ClimateReading | `climate_reading.py` | Lecturas Open-Meteo |
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
+| Simulacro | `simulacro.py` | Calendario público de simulacros (próximos + pasados) |
 | User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
 | FamilyPlan | `family_plan.py` | Plan Familia Preparada (1 por `user_id`, JSON) |
 
@@ -168,6 +179,9 @@ Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic)
 | `csn_service` | Scrape + dedup ±3 min |
 | `openmeteo_service` | Batch 40 comunas/request |
 | `senapred_service` | GraphQL paginado + upsert |
+| `simulacro_parsers` | HTML → dict solo bloque **CALENDARIO SIMULACROS \<year\>** (ignora "Simulacros recientes") |
+| `simulacro_sync` | httpx fetch índice + enrich páginas detalle con link + upsert |
+| `simulacro_service` | Lectura DB (`list`, `next`, `by_slug`, `prune`) |
 | `alert_service` | Lista unificada `/alerts/active` |
 | `alert_evaluator` | Umbrales → alertas ChileRisk |
 | `region_service` | Agregación regional + cache |

@@ -21,7 +21,14 @@ class Settings(BaseSettings):
     senapred_appsync_endpoint: str = "https://rz2uv7ifxbgflh2bqmp6kmh4le.appsync-api.us-east-1.amazonaws.com/graphql"
     senapred_alert_base_url: str = "https://senapred.cl/alerta/"
     senapred_event_base_url: str = "https://senapred.cl/evento/"
-    senapred_lookback_days: int = 7
+    senapred_lookback_days: int = 30
+
+    simulacros_base_url: str = "https://senapred.cl/simulacros/"
+    simulacros_lookback_days: int = 365
+    simulacros_lookforward_days: int = 180
+    simulacros_refresh_minutes: int = 1440
+    simulacros_request_timeout_seconds: int = 30
+    simulacros_max_recent_pages: int = 5
 
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600

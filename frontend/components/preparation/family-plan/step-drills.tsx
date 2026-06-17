@@ -1,6 +1,8 @@
 "use client"
 
-import { Plus, Trash2 } from "lucide-react"
+import { useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { Calendar, Plus, Trash2 } from "lucide-react"
 
 import {
   FamilyPlanField,
@@ -22,9 +24,67 @@ const EVALUATION_QUESTIONS = [
   { key: "roles_worked" as const, label: "¿Funcionaron los roles asignados?" },
 ]
 
+function buildPrefillFromQuery(
+  search: URLSearchParams
+): Pick<Drill, "date" | "emergency_type" | "outcome"> | null {
+  const source = search.get("source")
+  if (source !== "senapred") return null
+  const date = search.get("date") ?? ""
+  const emergencyRaw = search.get("emergency_type") ?? ""
+  const outcome = search.get("outcome") ?? ""
+  if (!date && !emergencyRaw && !outcome) return null
+  return { date, emergency_type: emergencyRaw, outcome }
+}
+
 export function StepDrills() {
   const { data, updateData } = useFamilyPlan()
+  const searchParams = useSearchParams()
+  const prefilledRef = useRef(false)
+
+  useEffect(() => {
+    if (!data || prefilledRef.current) return
+    const prefill = buildPrefillFromQuery(searchParams)
+    if (!prefill) {
+      prefilledRef.current = true
+      return
+    }
+    const lastDrill = data.drills[data.drills.length - 1]
+    const lastEmpty =
+      lastDrill &&
+      !lastDrill.date &&
+      !lastDrill.emergency_type &&
+      !lastDrill.outcome
+    if (lastEmpty) {
+      updateData((prev) => ({
+        ...prev,
+        drills: prev.drills.map((d, i) =>
+          i === prev.drills.length - 1 ? { ...d, ...prefill } : d,
+        ),
+      }))
+    } else {
+      const drill: Drill = {
+        id: newId(),
+        date: prefill.date,
+        emergency_type: prefill.emergency_type,
+        outcome: prefill.outcome,
+        improvements: [],
+        evaluation: {
+          knew_route: null,
+          found_kit: null,
+          evacuated: null,
+          protected_pets: null,
+          roles_worked: null,
+          improvements: "",
+        },
+      }
+      updateData((prev) => ({ ...prev, drills: [...prev.drills, drill] }))
+    }
+    prefilledRef.current = true
+  }, [data, searchParams, updateData])
+
   if (!data) return null
+
+  const fromSimulacros = searchParams.get("source") === "senapred"
 
   function updateDrill(id: string, patch: Partial<Drill>) {
     updateData((prev) => ({
@@ -79,6 +139,34 @@ export function StepDrills() {
       title="Registro de simulacros"
       description="Practica y documenta mejoras continuas del plan."
     >
+      {!fromSimulacros ? (
+        <a
+          href="/preparation/simulacros"
+          className="inline-flex w-fit items-center gap-1.5 border border-rose-300/30 bg-rose-500/10 px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-rose-100/95 transition-colors hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+        >
+          Ver calendario oficial de SERNAPRED →
+        </a>
+      ) : null}
+      {fromSimulacros ? (
+        <aside
+          className="flex flex-col gap-2 border border-rose-300/30 bg-rose-500/10 p-3 text-[12px] text-white/80 sm:flex-row sm:items-center sm:justify-between"
+          role="status"
+        >
+          <p className="flex items-start gap-2">
+            <Calendar className="mt-0.5 size-3.5 shrink-0 text-rose-200" aria-hidden />
+            <span>
+              Datos pre-cargados desde el calendario SERNAPRED. Edita los
+              campos y registra tu evaluación.
+            </span>
+          </p>
+          <a
+            href="/preparation/simulacros"
+            className="inline-flex shrink-0 items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider text-rose-100/85 underline underline-offset-2 hover:text-white"
+          >
+            Volver al calendario
+          </a>
+        </aside>
+      ) : null}
       <div className="flex flex-col gap-4">
         {data.drills.map((drill, index) => (
           <article

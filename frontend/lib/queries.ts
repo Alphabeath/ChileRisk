@@ -8,4 +8,8 @@ export const queryKeys = {
   eventImpact: (eventId: number) => ["eventImpact", eventId] as const,
   activeAlerts: (date: string) => ["activeAlerts", date] as const,
   familyPlan: () => ["familyPlan"] as const,
+  simulacros: (params: Record<string, unknown>) =>
+    ["simulacros", params] as const,
+  nextSimulacro: () => ["nextSimulacro"] as const,
+  simulacro: (slug: string) => ["simulacro", slug] as const,
 }
