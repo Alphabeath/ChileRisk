@@ -253,44 +253,50 @@ function AddThreatForm({
   }
 
   return (
-    <div className="flex flex-col gap-3 border-t border-white/10 pt-4">
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end">
-        <div className="flex-1">
-          <label
-            htmlFor="threat-custom"
-            className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65"
-          >
-            Agregar personalizada
-          </label>
-          <div className="mt-1 flex gap-2">
-            <Input
-              id="threat-custom"
-              value={customValue}
-              onChange={(e) => setCustomValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  submitCustom()
-                }
-              }}
-              placeholder="Ej. Mascotera suelta en patio"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={submitCustom}
-              disabled={!customValue.trim()}
-            >
-              <Plus data-icon="inline-start" />
-              Agregar
-            </Button>
-          </div>
+    <div className="flex flex-col gap-4 border border-dashed border-white/25 bg-white/[0.025] p-4 transition-colors hover:border-white/35 hover:bg-white/[0.04]">
+      <header className="flex items-center gap-2.5">
+        <span
+          className="flex size-7 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white"
+          aria-hidden
+        >
+          <Plus className="size-3.5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
+            Agregar nueva amenaza
+          </p>
+          <p className="mt-0.5 text-[11px] text-white/45">
+            Escribe un nombre o elige una sugerencia predefinida.
+          </p>
         </div>
+      </header>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Input
+          value={customValue}
+          onChange={(e) => setCustomValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              submitCustom()
+            }
+          }}
+          placeholder="Nombre de la amenaza (ej. Mascarilla suelta en patio)"
+          aria-label="Nombre de la nueva amenaza"
+          className="flex-1"
+        />
+        <Button
+          type="button"
+          onClick={submitCustom}
+          disabled={!customValue.trim()}
+        >
+          <Plus data-icon="inline-start" />
+          Agregar
+        </Button>
       </div>
       {suggestions.length > 0 ? (
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
           <span className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/45">
-            Sugerencias
+            Sugerencias predefinidas
           </span>
           <div className="flex flex-wrap gap-1.5">
             {suggestions.map((suggestion) => (
@@ -299,8 +305,8 @@ function AddThreatForm({
                 type="button"
                 onClick={() => onAddSuggested(suggestion)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 border border-white/10 bg-white/[0.03] px-2.5 text-[11px] text-white/70 transition-all duration-150",
-                  "hover:-translate-y-px hover:border-white/25 hover:bg-white/[0.08] hover:text-white",
+                  "inline-flex h-7 items-center gap-1.5 border border-white/15 bg-white/[0.04] px-2.5 text-[11px] text-white/75 transition-all duration-150",
+                  "hover:-translate-y-px hover:border-white/30 hover:bg-white/[0.10] hover:text-white",
                   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
                   "active:translate-y-0",
                 )}

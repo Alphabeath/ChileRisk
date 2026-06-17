@@ -2,7 +2,15 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Backpack, Home, Monitor, Route, ShieldAlert, UserCircle } from "lucide-react"
+import {
+  Backpack,
+  CalendarCheck2,
+  Home,
+  Monitor,
+  Route,
+  ShieldAlert,
+  UserCircle,
+} from "lucide-react"
 import { CITIZEN_NAVBAR_LINK_CLASS, CITIZEN_NAVBAR_SHELL_CLASS } from "@/lib/glass-panel"
 import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
@@ -11,6 +19,7 @@ const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home, section: false },
   { href: "/monitor", label: "Monitor", icon: Monitor, section: false },
   { href: "/preparation", label: "Preparación", icon: Backpack, section: false },
+  { href: "/preparation/simulacros", label: "Simulacros", icon: CalendarCheck2, section: true },
   { href: "/evacuation", label: "Evacuación", icon: Route, section: false },
   { href: "/disasters", label: "Desastres", icon: ShieldAlert, section: true },
   { href: "/account", label: "Cuenta", icon: UserCircle, section: false },

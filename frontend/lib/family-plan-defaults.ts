@@ -39,6 +39,32 @@ export const EMERGENCY_TYPES = [
   "Fuga de gas",
 ] as const
 
+export const SAFE_ZONE_GLOSSARY: Record<
+  "safe_place" | "evacuation_route" | "safe_zone" | "meeting_point",
+  { label: string; definition: string }
+> = {
+  safe_place: {
+    label: "Lugar seguro",
+    definition:
+      "Espacio dentro o cerca de la vivienda donde resguardarte de forma inmediata (bajo una mesa, baño, pasillo reforzado).",
+  },
+  evacuation_route: {
+    label: "Ruta de evacuación",
+    definition:
+      "Camino más corto y seguro para salir de la vivienda hacia el lugar seguro o la zona segura.",
+  },
+  safe_zone: {
+    label: "Zona segura",
+    definition:
+      "Área amplia y despejada alejada de la amenaza (plaza, parque, estacionamiento abierto) donde la familia puede reunirse.",
+  },
+  meeting_point: {
+    label: "Punto de encuentro",
+    definition:
+      "Lugar específico y conocido por todos donde se reunirán si se separan. En tsunami, suele ser una zona elevada.",
+  },
+}
+
 export const ROLE_TASKS = [
   "Cortar electricidad",
   "Cerrar gas",
