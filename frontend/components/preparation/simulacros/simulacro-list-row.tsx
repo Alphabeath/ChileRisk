@@ -1,17 +1,27 @@
 "use client"
 
 import Link from "next/link"
-import { CalendarPlus, ExternalLink, Smartphone } from "lucide-react"
+import {
+  CalendarPlus,
+  CheckCircle2,
+  ClipboardList,
+  ExternalLink,
+  MapPin,
+  Smartphone,
+} from "lucide-react"
 
 import {
   GLASS_MICA_INTERACTIVE_CLASS,
   GLASS_PANEL_CLASS,
 } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
-import { simulacroCountdown } from "@/lib/simulacros-format"
+import { cleanComunas, simulacroCountdown } from "@/lib/simulacros-format"
 import { REGION_LABELS } from "@/lib/simulacros-labels"
 import { getDrillTypeVisual } from "@/lib/simulacros-visual"
-import { buildSimulacroDrillHref } from "@/lib/simulacros-to-drill"
+import {
+  buildSimulacroDrillHref,
+  downloadSimulacroIcs,
+} from "@/lib/simulacros-to-drill"
 import type { Simulacro } from "@/lib/types"
 
 interface SimulacroListRowProps {
@@ -79,7 +89,7 @@ function DateCell({
   return (
     <div
       className={cn(
-        "flex w-[6.75rem] shrink-0 flex-col items-center justify-center border px-3 py-3",
+        "flex w-[7rem] shrink-0 flex-col items-center justify-center border px-3 py-3 sm:w-[7.5rem] sm:py-3.5",
         isToday
           ? "border-amber-300/40 bg-amber-300/15"
           : "border-white/10 bg-white/[0.04]",
@@ -98,7 +108,7 @@ function DateCell({
       <div className="flex items-baseline gap-1">
         <span
           className={cn(
-            "font-mono text-2xl font-semibold tabular-nums leading-none",
+            "font-mono text-[26px] font-semibold leading-none tabular-nums sm:text-3xl",
             isToday ? "text-amber-50" : "text-white",
           )}
         >
@@ -153,7 +163,7 @@ function TypeCell({
   return (
     <div
       className={cn(
-        "flex w-[6.25rem] shrink-0 flex-col items-center justify-center gap-1.5 border border-white/10 bg-black/35 px-2 py-2.5",
+        "flex w-[6.5rem] shrink-0 flex-col items-center justify-center gap-1.5 border border-white/10 bg-black/35 px-2 py-3",
         visual.chipBorder,
       )}
     >
@@ -188,8 +198,8 @@ function CountdownCell({
 }) {
   if (!isUpcoming || countdown.past) {
     return (
-      <div className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center border border-white/8 bg-white/[0.02] px-2 py-2.5">
-        <span className="font-mono text-[8px] font-semibold uppercase tracking-[1px] text-white/35">
+      <div className="flex h-full w-[4.75rem] shrink-0 flex-col items-center justify-center border border-white/10 bg-white/[0.02] px-2 py-2.5">
+        <span className="inline-flex h-6 items-center font-mono text-[9px] font-semibold uppercase tracking-[1px] text-white/40">
           Realizado
         </span>
       </div>
@@ -210,14 +220,14 @@ function CountdownCell({
       className={cn(
         "flex w-[4.75rem] shrink-0 flex-col items-center justify-center border px-2 py-2.5",
         isToday
-          ? "border-amber-300/35 bg-amber-300/10"
+          ? "border-amber-300/40 bg-amber-300/10"
           : "border-white/10 bg-white/[0.04]",
       )}
     >
       <span
         className={cn(
-          "font-mono text-[8px] font-semibold uppercase tracking-[1px]",
-          isToday ? "text-amber-200/70" : "text-white/45",
+          "font-mono text-[8.5px] font-semibold uppercase tracking-[1px]",
+          isToday ? "text-amber-200/80" : "text-white/55",
         )}
       >
         {label}
@@ -232,14 +242,41 @@ function CountdownCell({
       </span>
       <span
         className={cn(
-          "font-mono text-[8px] font-semibold uppercase tracking-[0.8px]",
-          isToday ? "text-amber-200/60" : "text-white/40",
+          "font-mono text-[8.5px] font-semibold uppercase tracking-[0.8px]",
+          isToday ? "text-amber-200/70" : "text-white/45",
         )}
       >
         {unit}
       </span>
     </div>
   )
+}
+
+function StatusBadge({
+  isToday,
+  isUpcoming,
+  countdown,
+}: {
+  isToday: boolean
+  isUpcoming: boolean
+  countdown: ReturnType<typeof simulacroCountdown>
+}) {
+  if (isToday) {
+    return (
+      <span className="inline-flex h-7 items-center gap-1.5 border border-amber-300/50 bg-amber-300/20 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-amber-50">
+        <CheckCircle2 className="size-3" aria-hidden />
+        Hoy
+      </span>
+    )
+  }
+  if (!isUpcoming || countdown.past) {
+    return (
+      <span className="inline-flex h-7 items-center border border-white/15 bg-white/[0.04] px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-white/55">
+        Pasado
+      </span>
+    )
+  }
+  return null
 }
 
 function RegionContent({
@@ -254,28 +291,35 @@ function RegionContent({
   isToday: boolean
 }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+    <div className="flex min-w-0 flex-1 flex-col justify-center gap-2">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         {regionLabel ? (
-          <h4 className="min-w-0 text-[12.5px] font-semibold uppercase tracking-[0.5px] leading-snug text-white">
+          <h4 className="min-w-0 text-[14px] font-semibold uppercase tracking-[0.4px] leading-snug text-white">
             {regionLabel}
           </h4>
         ) : null}
         {mensajeSae ? (
-          <span className="inline-flex shrink-0 items-center gap-1 border border-emerald-300/40 bg-emerald-500/15 px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-[0.8px] text-emerald-100">
-            <Smartphone className="size-2.5" aria-hidden />
+          <span className="inline-flex h-7 shrink-0 items-center gap-1.5 border border-emerald-300/40 bg-emerald-500/15 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-emerald-100">
+            <Smartphone className="size-3" aria-hidden />
             SAE
           </span>
         ) : null}
         {isToday ? (
-          <span className="inline-flex shrink-0 items-center border border-amber-300/50 bg-amber-300/25 px-1.5 py-0.5 text-[8.5px] font-semibold uppercase tracking-[0.8px] text-amber-50">
+          <span className="inline-flex h-7 shrink-0 items-center border border-amber-300/50 bg-amber-300/25 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-amber-50">
             Hoy
           </span>
         ) : null}
       </div>
       {comunas.length > 0 ? (
-        <p className="text-[11.5px] leading-relaxed text-white/65">
-          {comunas.join(", ")}
+        <p className="flex items-start gap-1.5 text-[12px] leading-snug text-white/70">
+          <MapPin
+            className="mt-0.5 size-3 shrink-0 text-white/45"
+            aria-hidden
+          />
+          <span>
+            <span className="text-white/45">Comunas:</span>{" "}
+            <span className="text-white/80">{comunas.join(", ")}</span>
+          </span>
         </p>
       ) : null}
     </div>
@@ -318,6 +362,19 @@ function ActionButtons({
         </a>
       ) : null}
       {isUpcoming ? (
+        <button
+          type="button"
+          onClick={() => downloadSimulacroIcs(simulacro)}
+          aria-label="Descargar archivo .ics para agendar"
+          className={cn(
+            _ACTION_BTN,
+            "border-white/20 bg-white/[0.08] text-white/90 hover:bg-white/[0.14]",
+          )}
+        >
+          <CalendarPlus className="size-3" aria-hidden />
+          Agendar
+        </button>
+      ) : (
         <Link
           href={buildSimulacroDrillHref(simulacro)}
           className={cn(
@@ -325,10 +382,10 @@ function ActionButtons({
             "border-white/20 bg-white/[0.08] text-white/90 hover:bg-white/[0.14]",
           )}
         >
-          <CalendarPlus className="size-3" aria-hidden />
-          Agregar
+          <ClipboardList className="size-3" aria-hidden />
+          Agregar al plan
         </Link>
-      ) : null}
+      )}
     </div>
   )
 }
@@ -350,6 +407,7 @@ export function SimulacroListRow({
     (simulacro.region_code
       ? `Región de ${REGION_LABELS[simulacro.region_code] ?? simulacro.region_code}`
       : null)
+  const cleanComunasList = cleanComunas(simulacro.participating_comunas)
 
   const hasDetailPage = simulacro.detail_url.includes("/simulacros_t/")
 
@@ -377,11 +435,11 @@ export function SimulacroListRow({
             isToday={isToday}
             chipBorder={visual.chipBorder}
           />
-          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 border border-white/8 bg-white/[0.02] px-3 py-2">
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 border border-white/8 bg-white/[0.02] px-3 py-2.5">
             <TypeCell drillType={simulacro.drill_type} layout="inline" />
             <RegionContent
               regionLabel={regionLabel}
-              comunas={simulacro.participating_comunas}
+              comunas={cleanComunasList}
               mensajeSae={simulacro.mensaje_sae}
               isToday={isToday}
             />
@@ -392,7 +450,12 @@ export function SimulacroListRow({
             isToday={isToday}
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <StatusBadge
+            isToday={isToday}
+            isUpcoming={isUpcoming}
+            countdown={countdown}
+          />
           <ActionButtons
             hasDetailPage={hasDetailPage}
             detailUrl={simulacro.detail_url}
@@ -403,7 +466,7 @@ export function SimulacroListRow({
       </div>
 
       {/* Desktop — meta | divider | content | actions */}
-      <div className="hidden items-stretch gap-5 px-4 py-3.5 sm:flex lg:gap-6 lg:px-5 lg:py-4">
+      <div className="hidden items-stretch gap-5 px-4 py-4 sm:flex lg:gap-6 lg:px-5 lg:py-5">
         <div className="flex shrink-0 items-stretch gap-3">
           <DateCell
             day={day}
@@ -427,7 +490,7 @@ export function SimulacroListRow({
 
         <RegionContent
           regionLabel={regionLabel}
-          comunas={simulacro.participating_comunas}
+          comunas={cleanComunasList}
           mensajeSae={simulacro.mensaje_sae}
           isToday={isToday}
         />
@@ -437,13 +500,20 @@ export function SimulacroListRow({
           aria-hidden
         />
 
-        <ActionButtons
-          hasDetailPage={hasDetailPage}
-          detailUrl={simulacro.detail_url}
-          isUpcoming={isUpcoming}
-          simulacro={simulacro}
-          layout="col"
-        />
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <StatusBadge
+            isToday={isToday}
+            isUpcoming={isUpcoming}
+            countdown={countdown}
+          />
+          <ActionButtons
+            hasDetailPage={hasDetailPage}
+            detailUrl={simulacro.detail_url}
+            isUpcoming={isUpcoming}
+            simulacro={simulacro}
+            layout="col"
+          />
+        </div>
       </div>
     </article>
   )

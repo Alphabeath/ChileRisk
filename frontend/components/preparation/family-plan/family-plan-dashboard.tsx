@@ -23,7 +23,6 @@ import {
   WIZARD_STEPS,
 } from "@/lib/family-plan-defaults"
 import {
-  DISASTERS_NAV_LINK_CLASS,
   GLASS_MICA_INTERACTIVE_CLASS,
   GLASS_PANEL_CLASS,
 } from "@/lib/glass-panel"
@@ -100,26 +99,6 @@ export function FamilyPlanDashboard() {
       />
 
       <StepGrid statuses={statuses} />
-
-      {pct >= 50 ? (
-        <aside
-          className={cn(
-            GLASS_PANEL_CLASS,
-            "flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between",
-          )}
-        >
-          <p className="text-[12px] text-white/55">
-            Ya tienes suficiente información para revisar y exportar tu plan.
-          </p>
-          <Link
-            href="/preparation/family-plan/summary"
-            className={cn(DISASTERS_NAV_LINK_CLASS, "inline-flex shrink-0 items-center gap-2")}
-          >
-            Ver resumen y PDF
-            <ArrowRight className="size-3.5" aria-hidden />
-          </Link>
-        </aside>
-      ) : null}
     </div>
   )
 }
@@ -140,12 +119,12 @@ function CompletionPanel({
       className={cn(
         GLASS_PANEL_CLASS,
         GLASS_MICA_INTERACTIVE_CLASS,
-        "flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6",
+        "flex flex-col items-center gap-5 p-5 md:gap-6 md:p-6 lg:flex-row lg:items-center lg:justify-between",
       )}
     >
-      <div className="flex items-center gap-5">
+      <div className="flex w-fit items-center gap-5">
         <CompletionRing pct={pct} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/75">
             Plan Familia Preparada
           </p>
@@ -157,12 +136,22 @@ function CompletionPanel({
           </p>
         </div>
       </div>
-      <Button asChild size="lg" className="shrink-0">
-        <Link href={`/preparation/family-plan/step/${continueStep}`}>
-          {pct === 100 ? "Revisar plan" : "Continuar plan"}
-          <ArrowRight data-icon="inline-end" />
-        </Link>
-      </Button>
+      <div className="flex w-full shrink-0 flex-col items-stretch gap-2 sm:w-fit sm:flex-row sm:items-center">
+        {pct >= 50 ? (
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/preparation/family-plan/summary">
+              Ver resumen y PDF
+              <ArrowRight data-icon="inline-end" />
+            </Link>
+          </Button>
+        ) : null}
+        <Button asChild size="lg" className="w-full sm:w-auto">
+          <Link href={`/preparation/family-plan/step/${continueStep}`}>
+            {pct === 100 ? "Revisar plan" : "Continuar plan"}
+            <ArrowRight data-icon="inline-end" />
+          </Link>
+        </Button>
+      </div>
     </div>
   )
 }

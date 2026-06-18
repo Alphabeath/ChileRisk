@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import { Button } from "@/components/ui/button"
 import { useCallback, useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 const RotatingEarth = dynamic(
   () => import('@/components/globe/rotating-earth').then((m) => m.RotatingEarth),
   { ssr: false }

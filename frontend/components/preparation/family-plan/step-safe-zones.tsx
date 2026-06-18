@@ -167,7 +167,7 @@ function SafeZoneCard({
         </div>
         <span
           className={cn(
-            "inline-flex items-center gap-1.5 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+            "inline-flex h-8 items-center gap-1.5 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
             complete
               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
               : "border-white/10 bg-white/[0.03] text-white/45",

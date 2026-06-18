@@ -85,7 +85,7 @@ const topics: Topic[] = [
     color: "from-rose-700/80 via-red-800/60 to-pink-900/50",
     accent: "text-rose-200",
     iconChip: "bg-rose-500/20 border-rose-400/40",
-    href: "/preparation/simulacros",
+    href: "/simulacros",
     cta: "Ver simulacros",
   },
 ]

@@ -300,7 +300,7 @@ function ContactCard({
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
               complete
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                 : "border-white/10 bg-white/[0.03] text-white/45",
@@ -453,7 +453,7 @@ function ContactCategoryCard({
         </div>
         <span
           className={cn(
-            "shrink-0 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
             contacts.length === 0
               ? "border-white/10 bg-white/[0.03] text-white/45"
               : completed === contacts.length

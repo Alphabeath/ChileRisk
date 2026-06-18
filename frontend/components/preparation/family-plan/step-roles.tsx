@@ -282,7 +282,7 @@ function CategoryCard({
         </div>
         <span
           className={cn(
-            "shrink-0 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
             assignedCount === total
               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
               : assignedCount === 0

@@ -39,6 +39,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-bg-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-accent-green: var(--accent-green);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -128,6 +131,7 @@
   --sidebar-ring: oklch(0.556 0 0);
   --primary-chile: #0032A0;
   --secondary-chile: #DA291C;
+  --accent-green: oklch(0.723 0.219 149.579);
   --ocean: oklch( 0 0 0 );
   --scrollbar-size: 6px;
   --scrollbar-thumb: oklch(1 0 0 / 0.2);

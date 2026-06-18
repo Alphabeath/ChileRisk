@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Megaphone } from "lucide-react"
+import { Siren } from "lucide-react"
 
 import {
   GLASS_DIVIDER,
@@ -53,7 +53,7 @@ export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroPr
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
         aria-hidden
       />
-      <Megaphone
+      <Siren
         className="pointer-events-none absolute -right-6 top-1/2 size-40 -translate-y-1/2 text-white/[0.08] sm:size-56 lg:size-64"
         strokeWidth={1}
         aria-hidden
@@ -75,18 +75,22 @@ export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroPr
 
         <dl className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3 lg:min-w-[20rem]">
           <StatBox
-            label="Simulacro en"
+            label="Próximo en"
             value={daysLeft}
             suffix={daysLeft === 1 ? "día" : "días"}
           />
-          <StatBox label="Próximos" value={upcomingTotal} />
-          <StatBox label="Tipos" value={DRILL_TYPE_HIGHLIGHTS.length} />
+          <StatBox
+            label="A efectuarse"
+            value={upcomingTotal}
+            suffix="simulacros"
+          />
+          <StatBox label="Tipos de simulacros" value={DRILL_TYPE_HIGHLIGHTS.length} />
         </dl>
       </div>
 
       <div
         className={cn(
-          "relative grid grid-cols-2 divide-x border-t sm:grid-cols-4",
+          "relative flex overflow-x-auto border-t divide-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:grid sm:grid-cols-4 sm:overflow-visible",
           GLASS_DIVIDER,
         )}
       >
@@ -94,13 +98,13 @@ export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroPr
           ({ drillType, shortLabel, icon: Icon, accent }) => (
             <div
               key={drillType}
-              className="flex items-center justify-center gap-2.5 px-3 py-4 transition-colors hover:bg-white/[0.03] sm:gap-3 sm:px-4 sm:py-5"
+              className="flex min-w-[7rem] shrink-0 items-center justify-center gap-2.5 px-3 py-4 transition-colors hover:bg-white/[0.03] sm:min-w-0 sm:flex-1 sm:gap-3 sm:px-4 sm:py-5"
             >
               <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10">
                 <Icon className={cn("size-4 sm:size-[1.125rem]", accent)} aria-hidden />
               </div>
               <div className="min-w-0 text-left">
-                <p className="text-[10px] font-semibold uppercase tracking-[1.1px] text-white sm:text-[11px]">
+                <p className="truncate text-[10px] font-semibold uppercase tracking-[1.1px] text-white sm:text-[11px]">
                   {shortLabel}
                 </p>
               </div>

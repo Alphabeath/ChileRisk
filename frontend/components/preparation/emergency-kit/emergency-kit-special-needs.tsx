@@ -79,17 +79,42 @@ export function EmergencyKitSpecialNeeds() {
                 <article
                   className={cn(
                     GLASS_PANEL_CLASS,
-                    "flex h-full flex-col overflow-hidden",
+                    "relative flex h-full flex-col overflow-hidden",
                   )}
                 >
-                  <header className="flex items-start gap-3 border-b border-white/10 p-4">
-                    <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-black/40">
+                  <span
+                    className={cn("absolute inset-x-0 top-0 h-[3px]", kit.topAccent)}
+                    aria-hidden
+                  />
+                  <header
+                    className={cn(
+                      "flex items-start gap-3 border-b border-white/10 bg-gradient-to-b p-4",
+                      kit.headerTint,
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center border",
+                        kit.iconChip,
+                      )}
+                    >
                       <Icon className={cn("size-4", kit.accent)} aria-hidden />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/95">
-                        {kit.title}
-                      </h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/95">
+                          {kit.title}
+                        </h3>
+                        <span
+                          className="inline-flex h-5 shrink-0 items-center gap-1 border border-white/15 bg-white/[0.04] px-1.5 font-mono text-[10px] tabular-nums text-white/65"
+                          aria-label={`${kit.examples.length} ${kit.examples.length === 1 ? "ítem" : "ítems"}`}
+                        >
+                          <span className="font-semibold">{kit.examples.length}</span>
+                          <span className="text-[9px] font-semibold uppercase tracking-[1.1px] text-white/45">
+                            {kit.examples.length === 1 ? "ítem" : "ítems"}
+                          </span>
+                        </span>
+                      </div>
                       <p className="mt-0.5 text-[12px] leading-snug text-white/55">
                         {kit.description}
                       </p>

@@ -1,12 +1,13 @@
 export { SimulacrosCalendarSection } from "./simulacros-calendar-section"
 export { SimulacrosCountdown } from "./simulacros-countdown"
-export { SimulacrosEducation } from "./simulacros-education"
+export { SimulacrosImportanceAccordion } from "./simulacros-importance-accordion"
 export { SimulacrosPageHero } from "./simulacros-page-hero"
 export {
   SimulacrosFilterBar,
   type SimulacrosRange,
   type SimulacrosView,
 } from "./simulacros-filter-bar"
+export { SimulacrosTypesChips } from "./simulacros-types-chips"
 export { SimulacroCard } from "./simulacro-card"
 export { SimulacroListRow } from "./simulacro-list-row"
 export { SimulacrosTimeline } from "./simulacros-timeline"

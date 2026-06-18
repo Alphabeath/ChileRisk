@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ExternalLink, Megaphone, Plus, Smartphone } from "lucide-react"
+import { ExternalLink, Plus, Smartphone, Tag } from "lucide-react"
 
 import {
   GLASS_DIVIDER,
@@ -73,7 +73,7 @@ export function SimulacroCard({ simulacro, variant, now }: SimulacroCardProps) {
                 visual.accent,
               )}
             >
-              <Megaphone className="size-2.5" aria-hidden />
+              <Tag className="size-2.5" aria-hidden />
               {SIMULACRO_TYPE_LABELS[simulacro.drill_type]}
             </span>
             {simulacro.mensaje_sae ? (

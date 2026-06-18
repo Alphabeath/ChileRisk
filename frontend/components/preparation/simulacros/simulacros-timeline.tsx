@@ -96,18 +96,19 @@ export function SimulacrosTimeline({
     >
       {!embedded ? (
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
           aria-hidden
         />
       ) : null}
 
-      <div className={cn("relative", embedded ? "py-1" : "px-4 py-5 sm:px-6 sm:py-6")}>
+      <div className={cn("relative", embedded ? "py-1" : "px-4 py-6 sm:px-6 sm:py-7")}>
+        {/* Vertical rail — thicker and more visible */}
         <div
-          className="pointer-events-none absolute bottom-4 left-3 top-4 w-px bg-gradient-to-b from-white/30 via-white/12 to-transparent sm:left-4"
+          className="pointer-events-none absolute top-6 bottom-6 left-3 w-0.5 bg-gradient-to-b from-white/60 via-white/30 to-white/5 sm:left-5"
           aria-hidden
         />
 
-        <div className="relative flex flex-col gap-6 pl-5 sm:gap-7 sm:pl-6">
+        <div className="relative flex flex-col gap-8 pl-7 sm:gap-10 sm:pl-8">
           {groups.map((group) => {
             const visual = group.dominantType
               ? getDrillTypeVisual(group.dominantType)
@@ -115,7 +116,7 @@ export function SimulacrosTimeline({
             return (
               <section
                 key={group.key}
-                className="relative flex flex-col gap-2"
+                className="relative flex flex-col gap-3"
                 aria-label={`${group.monthLabel} ${group.year}`}
               >
                 <SimulacrosMonthHeader
@@ -126,7 +127,7 @@ export function SimulacrosTimeline({
                   chipBorder={visual?.chipBorder}
                   showRail
                 />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-3">
                   {group.items.map((sim) => (
                     <SimulacroListRow
                       key={sim.slug}

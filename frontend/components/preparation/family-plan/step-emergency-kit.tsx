@@ -188,7 +188,7 @@ function KitSectionCard({
           </button>
           <span
             className={cn(
-              "shrink-0 border px-2 py-0.5 font-mono text-[10px] tabular-nums",
+              "inline-flex h-7 shrink-0 items-center border px-2 font-mono text-[10px] tabular-nums",
               checkedCount === 0
                 ? "border-white/10 bg-white/[0.03] text-white/45"
                 : checkedCount === items.length

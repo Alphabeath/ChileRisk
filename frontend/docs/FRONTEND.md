@@ -183,22 +183,21 @@ useSimulacro(slug)              // GET /api/v1/simulacros/{slug}
 
 Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
-### `/preparation/simulacros` — Calendario SERNAPRED
+### `/simulacros` — Calendario SERNAPRED
 
-**Path:** `app/(citizen)/preparation/simulacros/page.tsx`
+**Path:** `app/(citizen)/simulacros/page.tsx`
 
 Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
 
 **Composición (top → bottom):**
 
-1. Back link + botón glass "Actualizar".
-2. `<SimulacrosPageHero next={useNextSimulacro()} upcomingTotal={…} />` — hero glass con gradiente Chile, stat boxes (cuenta regresiva, total próximos, tipos) y barra de 4 tipos SENAPRED.
-3. `<SimulacrosEducation />` — contenido institucional SENAPRED: importancia (5 puntos) + guía de tipos con imágenes oficiales (`lib/simulacros-content.ts`).
-4. `<SimulacrosFilterBar>` — tabs `Próximos` (default) / `Pasados` + chips de filtro (región 1-16, tipo de simulacro). Solo datos del bloque **CALENDARIO SIMULACROS 2026** (scraping).
-5. Grid de `<SimulacroCard variant="upcoming" | "past">` — título SERNAPRED, banda por `drill_type` (`lib/simulacros-visual.ts`), badge `Mensaje SAE`, badge `HOY`, botón "Ver en SENAPRED" solo si `detail_url` apunta a `/simulacros_t/` (pasados con informe publicado) + "Agregar a mi plan" (solo próximos).
-6. `<SimulacrosFooter>` — referencia oficial + link + `next_synced_at`.
+1. `<SimulacrosPageHero next={useNextSimulacro()} upcomingTotal={…} />` — hero glass con gradiente Chile, stat boxes (cuenta regresiva, total próximos, tipos) y barra de 4 tipos SENAPRED.
+2. `<SimulacrosTypesChips>` — chips clickeables por `drill_type` que filtran el calendario (incluye `region` y `type`).
+3. `<SimulacrosCalendarSection>` — header + `<SimulacrosFilterBar>` sticky (tabs `Próximos` (default) / `Pasados` + región + rango rápido) + `<SimulacrosTimeline>` agrupado por mes. Solo datos del bloque **CALENDARIO SIMULACROS 2026** (scraping).
+4. `<SimulacrosImportanceAccordion>` — colapsable, expandido por defecto: 5 puntos sobre la importancia de los simulacros SERNAPRED + closing.
+5. `<SimulacrosFooter>` — referencia oficial + link + `next_synced_at` + botón "Actualizar" opcional.
 
-**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-education, simulacros-filter-bar, simulacro-card, simulacros-empty-state, simulacros-skeleton, simulacros-footer}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`, `lib/simulacros-content.ts`.
+**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacro-card, simulacros-empty-state, simulacros-skeleton, simulacros-footer}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`.
 
 **Estados:** skeleton mientras `isLoading`, error state con botón "Reintentar", empty state separado para upcoming vs past.
 
@@ -210,7 +209,7 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 
 **Conexión bidireccional Kit ↔ Plan:** la página `/preparation/emergency-kit` tiene un CTA "Guardar en tu plan" que navega a `/preparation/family-plan/step/7?from=emergency-kit`. El step 7 detecta el query y muestra un banner superior con link de retorno. La banner `<EmergencyKitGuideLink variant="banner">` también aparece en la parte superior del step 7 fuera del flujo `?from=`.
 
-**Conexión Calendario SERNAPRED ↔ Plan:** la página `/preparation/simulacros` lista los simulacros oficiales con countdown al próximo. Cada simulacro futuro tiene un CTA "Agregar a mi plan" que navega a `/preparation/family-plan/step/8?source=senapred&slug=…&date=…&emergency_type=…&outcome=…`. El `StepDrills` detecta `?source=senapred`, pre-rellena el form con esos datos (reutilizando el último drill si está vacío, o creando uno nuevo), y muestra un banner superior con link de retorno al calendario. La página `/preparation` apunta el CTA del topic card "Comunicación y simulacros" al calendario (`/preparation/simulacros`), y el `StepDrills` añade un link "Ver calendario oficial de SERNAPRED →" en la parte superior cuando el usuario NO viene del calendario.
+**Conexión Calendario SERNAPRED ↔ Plan:** la página `/simulacros` lista los simulacros oficiales con countdown al próximo. Cada simulacro futuro tiene un CTA "Agregar a mi plan" que navega a `/preparation/family-plan/step/8?source=senapred&slug=…&date=…&emergency_type=…&outcome=…`. El `StepDrills` detecta `?source=senapred`, pre-rellena el form con esos datos (reutilizando el último drill si está vacío, o creando uno nuevo), y muestra un banner superior con link de retorno al calendario. La página `/preparation` apunta el CTA del topic card "Comunicación y simulacros" al calendario (`/simulacros`), y el `StepDrills` añade un link "Ver calendario oficial de SERNAPRED →" en la parte superior cuando el usuario NO viene del calendario.
 
 **Dashboard `/preparation` — bloques (orden top → bottom):**
 

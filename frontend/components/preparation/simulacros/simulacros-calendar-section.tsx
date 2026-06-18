@@ -9,27 +9,30 @@ import {
   type SimulacrosView,
   SimulacrosSkeleton,
   SimulacrosTimeline,
+  SimulacrosTypesChips,
 } from "@/components/preparation/simulacros"
 import {
   GLASS_MICA_INTERACTIVE_CLASS,
   GLASS_PANEL_CLASS,
 } from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
-import type { Simulacro, SimulacrosParams } from "@/lib/types"
+import type { DrillType, Simulacro, SimulacrosParams } from "@/lib/types"
 
 interface SimulacrosCalendarSectionProps {
   view: SimulacrosView
   range: SimulacrosRange
   params: SimulacrosParams
-  total: number
   items: Simulacro[]
   now: number
   isLoading: boolean
   error: unknown
   isFetching: boolean
+  selectedType: DrillType | undefined
   onParamsChange: (next: SimulacrosParams) => void
   onRangeChange: (next: SimulacrosRange) => void
   onViewChange: (next: SimulacrosView) => void
+  onTypeToggle: (type: DrillType) => void
+  onTypeClear: () => void
   onRetry: () => void
 }
 
@@ -37,15 +40,17 @@ export function SimulacrosCalendarSection({
   view,
   range,
   params,
-  total,
   items,
   now,
   isLoading,
   error,
   isFetching,
+  selectedType,
   onParamsChange,
   onRangeChange,
   onViewChange,
+  onTypeToggle,
+  onTypeClear,
   onRetry,
 }: SimulacrosCalendarSectionProps) {
   return (
@@ -57,29 +62,26 @@ export function SimulacrosCalendarSection({
         "flex flex-col overflow-hidden",
       )}
     >
-      <div className="flex flex-col gap-1 border-b border-white/10 bg-black/30 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center border border-white/15 bg-white/[0.06]">
-            <CalendarDays className="size-4 text-white/80" aria-hidden />
-          </span>
-          <div>
-            <h2
-              id="simulacros-calendar-heading"
-              className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
-            >
-              Calendario de ejercicios
-            </h2>
-            <p className="text-[12px] text-white/55">
-              Calendario oficial SERNAPRED 2026 — próximos y realizados
-            </p>
-          </div>
-        </div>
-        <p className="font-mono text-[10px] uppercase tracking-wider text-white/45 sm:text-right">
-          Fuente: senapred.cl/simulacros
-        </p>
-      </div>
+      <header className="flex items-center gap-3 border-b border-white/10 bg-black/30 px-5 py-4 sm:px-6">
+        <span className="flex size-9 items-center justify-center border border-white/15 bg-white/[0.06]">
+          <CalendarDays className="size-4 text-white/80" aria-hidden />
+        </span>
+        <h2
+          id="simulacros-calendar-heading"
+          className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
+        >
+          Calendario de simulacros
+        </h2>
+      </header>
 
-      <div className="sticky top-20 z-10 border-b border-white/10 bg-black/50 backdrop-blur-xl">
+      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
+        <div className="border-b border-white/10 pb-3">
+          <SimulacrosTypesChips
+            selected={selectedType}
+            onToggle={onTypeToggle}
+            onClear={onTypeClear}
+          />
+        </div>
         <SimulacrosFilterBar
           value={params}
           view={view}
@@ -87,7 +89,6 @@ export function SimulacrosCalendarSection({
           onChange={onParamsChange}
           onRangeChange={onRangeChange}
           onViewChange={onViewChange}
-          total={total}
           embedded
         />
       </div>

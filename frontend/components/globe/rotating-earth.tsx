@@ -327,7 +327,15 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
         return d3.json<Topology>('/geo/countries-110m.json').catch(() => null);
       };
       loadTopology().then((data) => {
-        if (!data) return;
+        if (!data) {
+          // Fallback: si el globo no carga (CDN bloqueado, ruta local rota, etc.),
+          // desbloqueamos el contenido de la landing en lugar de dejar la página en blanco.
+          if (!introCompleteRef.current) {
+            introCompleteRef.current = true;
+            onIntroComplete?.();
+          }
+          return;
+        }
         const land = topojson.feature(data, data.objects.countries) as FeatureCollection<GeometryObject, GeoJsonProperties>;
         geoDataRef.current = land;
         renderLand(land);

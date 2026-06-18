@@ -265,7 +265,7 @@ function MemberCard({
         <div className="flex items-center gap-2">
           {member.flags.length > 0 ? (
             <span
-              className="inline-flex items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-amber-200"
+              className="inline-flex h-7 items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-2 text-[9px] font-semibold uppercase tracking-[1.2px] text-amber-200"
               title={member.flags
                 .map(
                   (f) =>
@@ -280,7 +280,7 @@ function MemberCard({
           ) : null}
           <span
             className={cn(
-              "inline-flex items-center gap-1 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
               complete
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                 : "border-white/10 bg-white/[0.03] text-white/45",
@@ -499,7 +499,7 @@ function PetCard({
         <div className="flex items-center gap-2">
           <span
             className={cn(
-              "inline-flex items-center gap-1 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
               complete
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                 : "border-white/10 bg-white/[0.03] text-white/45",
@@ -665,7 +665,7 @@ function CategorySection({
         </div>
         <span
           className={cn(
-            "shrink-0 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
             count === 0
               ? "border-white/10 bg-white/[0.03] text-white/45"
               : doneCount === count

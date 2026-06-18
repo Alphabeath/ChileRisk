@@ -148,7 +148,7 @@ function DrillCompletionBadge({
   return (
     <span
       className={cn(
-        "shrink-0 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+        "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
         state === "empty"
           ? "border-white/10 bg-white/[0.03] text-white/45"
           : state === "complete"
@@ -321,7 +321,7 @@ export function StepDrills() {
         <div className="flex items-center gap-2 sm:shrink-0">
           <span
             className={cn(
-              "shrink-0 border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[1.2px]",
+              "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
               evaluatedCount === drills.length && drills.length > 0
                 ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
                 : evaluatedCount > 0
@@ -332,7 +332,7 @@ export function StepDrills() {
             {evaluatedCount}/{drills.length} evaluados
           </span>
           <Link
-            href="/preparation/simulacros"
+            href="/simulacros"
             className="inline-flex h-7 items-center gap-1.5 border border-rose-500/30 bg-rose-500/10 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-rose-100/95 transition-colors hover:border-rose-500/50 hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
           >
             <CalendarCheck2 className="size-3" aria-hidden />
@@ -354,7 +354,7 @@ export function StepDrills() {
             </span>
           </p>
           <Link
-            href="/preparation/simulacros"
+            href="/simulacros"
             className="inline-flex shrink-0 items-center gap-1 text-[10.5px] font-semibold uppercase tracking-wider text-rose-100/85 underline underline-offset-2 hover:text-white"
           >
             Volver al calendario

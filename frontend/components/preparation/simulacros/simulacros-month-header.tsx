@@ -1,3 +1,11 @@
+"use client"
+
+import { CalendarRange } from "lucide-react"
+
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 interface SimulacrosMonthHeaderProps {
@@ -22,35 +30,53 @@ export function SimulacrosMonthHeader({
       {showRail ? (
         <span
           className={cn(
-            "absolute -left-[1.625rem] top-1/2 z-10 size-3 -translate-y-1/2 border-2 bg-[var(--background)] sm:-left-[2.125rem] sm:size-3.5",
-            accent ? cn(chipBorder, accent) : "border-white/30",
+            "absolute top-1/2 z-10 size-5 -translate-x-1/2 -translate-y-1/2 border-[3px] bg-[var(--background)] ring-4 ring-[var(--background)] sm:size-6",
+            "-left-3 sm:-left-3.5",
+            accent ? cn(chipBorder, accent) : "border-white/40",
           )}
           aria-hidden
         />
       ) : null}
       <div
         className={cn(
-          "flex flex-1 items-end justify-between gap-3 border border-white/10 bg-white/[0.03] px-3 py-2 sm:px-4",
+          GLASS_PANEL_CLASS,
+          GLASS_MICA_INTERACTIVE_CLASS,
+          "flex flex-1 items-center gap-3 px-4 py-3 sm:px-5 sm:py-3.5",
           chipBorder && "border-l-[3px]",
           chipBorder,
         )}
       >
-        <div className="flex items-baseline gap-2">
+        <span
+          className="flex size-9 shrink-0 items-center justify-center border border-white/15 bg-white/[0.05] text-white/80 sm:size-10"
+          aria-hidden
+        >
+          <CalendarRange className="size-4 sm:size-[1.125rem]" />
+        </span>
+        <div className="min-w-0 flex-1">
           <h3
             className={cn(
-              "text-[12px] font-semibold uppercase tracking-[1.3px] text-white",
+              "text-[13px] font-semibold uppercase tracking-[1.3px] text-white sm:text-[14px]",
               accent,
             )}
           >
             {monthLabel}
           </h3>
-          <span className="font-mono text-[10px] uppercase tracking-wider text-white/45">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-white/45">
             {year}
-          </span>
+          </p>
         </div>
-        <span className="font-mono text-[10px] uppercase tracking-wider text-white/55">
-          <span className="text-white/85">{count}</span>{" "}
-          {count === 1 ? "ejercicio" : "ejercicios"}
+        <span
+          className={cn(
+            "inline-flex h-7 shrink-0 items-center gap-1 border border-white/15 bg-white/[0.04] px-2.5 font-mono text-[10.5px] tabular-nums",
+            count === 0
+              ? "text-white/45"
+              : "text-white/85",
+          )}
+        >
+          <span className="font-semibold tabular-nums">{count}</span>
+          <span className="text-[9.5px] font-semibold uppercase tracking-[1.1px] text-white/55">
+            {count === 1 ? "ejercicio" : "ejercicios"}
+          </span>
         </span>
       </div>
     </header>
