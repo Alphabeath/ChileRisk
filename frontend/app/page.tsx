@@ -1,6 +1,5 @@
 "use client"
 import dynamic from 'next/dynamic'
-import { Button } from "@/components/ui/button"
 import { useCallback, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react';
@@ -69,9 +68,9 @@ export default function Home() {
             >
               <Link
                 href="/login"
-                className="group inline-flex h-14 items-center justify-center gap-2 rounded-xl bg-accent-green px-10 text-base font-semibold text-bg-primary transition-all hover:scale-[1.03] active:scale-[0.97]"
+                className="group inline-flex h-14 items-center justify-center gap-2 bg-[var(--primary-chile)] px-10 text-base font-semibold text-white shadow-lg shadow-black/40 transition-all hover:scale-[1.03] hover:bg-[var(--primary-chile)]/90 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <Button className="h-full px-6 py-0">Entrar a la plataforma</Button>
+                Entrar a la plataforma
               </Link>
             </motion.div>
           </motion.div>

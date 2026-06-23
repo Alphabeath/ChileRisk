@@ -361,12 +361,8 @@
     backdrop-filter: none !important;
   }
 
-  #family-plan-print-root h1,
-  #family-plan-print-root h2,
-  #family-plan-print-root p,
-  #family-plan-print-root li,
-  #family-plan-print-root strong {
-    color: #111 !important;
+  #family-plan-print-root :where(h1, h2, p, li, strong) {
+    color: #111;
   }
 
   #family-plan-print-root .floor-map-preview {
@@ -520,6 +516,12 @@
   #family-plan-print-root .floor-map-preview svg path,
   #family-plan-print-root .floor-map-preview svg rect,
   #family-plan-print-root .floor-map-preview svg text {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #family-plan-print-root .summary-step,
+  #family-plan-print-root .summary-step * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
