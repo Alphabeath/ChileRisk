@@ -82,7 +82,16 @@ Ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
 **Path:** `components/map/risk-legend-panel.tsx`
 
-Leyenda de buckets de riesgo (`MAP_RISK_BUCKETS` en `lib/risk-scale.ts`). Ancla `bottom-right`, collapsible, draggable (`id: "risk-legend-panel"`).
+Leyenda de buckets de riesgo (`MAP_RISK_BUCKETS` en `lib/risk-scale.ts`) y glosario de niveles de alerta (`ALERT_LEVEL_META`). Ancla `bottom-right`, collapsible, draggable (`id: "risk-legend-panel"`).
+
+**Selector de modo Riesgo / Alertas:** las tabs internas (`shadcn Tabs`) están **controladas por el store global** (`useUIStore.mapColorMode` + `setMapColorMode`). Cambiar la tab actualiza el color del mapa en `ChileMap`:
+
+- **`risk`** (default) → `region-fill` y `comuna-fill` usan `mapRiskFillColorExpression()` (color por `composite_score`).
+- **`alerts`** → `region-fill` y `comuna-fill` usan `mapAlertFillColorExpression()` (match por `alert_level` por feature). El **relleno oscila** (`fill-opacity` interpola con `requestAnimationFrame`, período 1500–3000 ms según severidad). Sin alerta activa → fill verde `#085e08` (bucket "bajo") con entrada propia en el glosario.
+
+Bordes siempre blancos (`#ffffff`) — no codifican severidad. La capa legacy `region-alert-line` (borde con color de alerta) fue eliminada.
+
+**Estado:** `useUIStore.mapColorMode: "risk" | "alerts"` (default `"risk"`, session-only, no `persist`).
 
 ---
 

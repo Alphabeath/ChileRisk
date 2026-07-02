@@ -82,6 +82,7 @@ Detalle: [docs/BACKEND.md](docs/BACKEND.md).
 - CSN dedup ±3 min + magnitud.
 - Meteo lotes de 40.
 - SERNAPRED máx. 20×100 ítems; Cognito cache ~50 min.
+- `_CANCEL_RE` solo matchea cancelaciones puras (`^se cancel(?!.*\bdeclara\b)`); alertas "se cancela X y declara Y" permanecen activas.
 - Schema: `create_all` + ALTER ad-hoc en `main.py`.
 - `settings` singleton al import.
 

@@ -28,6 +28,8 @@ ChileRisk is a **citizen risk monitor** for Chile: serious, clear, data-forward.
 
 Used for: map popups, floating panels (`MapOverlays`), **Disasters** (`/disasters`), alert lists, query-date control, risk legend.
 
+**Map fill pulse (alerts mode):** Cuando `mapColorMode === "alerts"` y hay alertas activas, el `fill-opacity` de `region-fill` y `comuna-fill` oscila con `requestAnimationFrame`. Período: 1500 ms (roja) → 2000 (naranja) → 2500 (amarilla) → 3000 (preventiva/informativa). Respetar `prefers-reduced-motion: reduce` (no iniciar el loop, dejar opacidad base). Bordes siempre blancos; no oscilan.
+
 **Always import** from `@/lib/glass-panel`:
 
 ```ts

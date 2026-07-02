@@ -33,7 +33,7 @@ _LEVEL_FROM_CODE: dict[str, str] = {
     "az": "informativa",
 }
 
-_CANCEL_RE = re.compile(r"cancel", re.IGNORECASE)
+_CANCEL_RE = re.compile(r"^se cancel(?!.*\bdeclara\b)", re.IGNORECASE)
 _MONITOR_RE = re.compile(r"monitoreo", re.IGNORECASE)
 
 _cognito_client: CognitoIdentityClient | None = None

@@ -27,7 +27,8 @@ import {
 import { useMapData } from "@/hooks/use-map-data"
 import { useActiveAlerts, useQueryDate, useRecentEvents } from "@/hooks"
 import {
-  ALERT_LEVEL_META,
+  buildComunasByRegionIndex,
+  computeComunaAlertLevels,
   computeRegionAlertLevels,
   filterAlertsForComuna,
   filterAlertsForRegion,
@@ -37,7 +38,7 @@ import {
   buildPopupSeismicItems,
   filterRecentEventsInGeometry,
 } from "@/lib/seismic-events"
-import { mapRiskFillColorExpression } from "@/lib/risk-scale"
+import { mapAlertFillColorExpression, mapRiskFillColorExpression } from "@/lib/risk-scale"
 import { getSeismicDetailUrl } from "@/lib/seismic"
 import { useLoadingStore } from "@/stores/loading-store"
 import { useUIStore } from "@/stores/ui-store"
@@ -152,28 +153,53 @@ export function ChileMap() {
     }
 
     const map = mapRef.current
-    if (!map || !map.getLayer("region-alert-line")) return
+    if (!map) return
 
-    const levels = regionAlertLevelsRef.current
-    if (levels.size === 0) {
-      (map as maplibregl.Map).setPaintProperty("region-alert-line", "line-opacity", 0)
+    // Respect prefers-reduced-motion: skip animation, leave fills at base opacity.
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      if (map.getLayer("region-fill")) {
+        map.setPaintProperty("region-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65])
+      }
+      if (map.getLayer("comuna-fill")) {
+        map.setPaintProperty("comuna-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55])
+      }
       return
     }
 
-    const SPEED: Record<string, number> = { roja: 1500, naranja: 2000, amarilla: 2500 }
+    const levels = regionAlertLevelsRef.current
+    if (levels.size === 0 && comunaAlertLevelsRef.current.size === 0) {
+      if (map.getLayer("region-fill")) {
+        map.setPaintProperty("region-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65])
+      }
+      if (map.getLayer("comuna-fill")) {
+        map.setPaintProperty("comuna-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55])
+      }
+      return
+    }
+
+    const SPEED: Record<string, number> = { roja: 3000, naranja: 4000, amarilla: 5000, preventiva: 6000, informativa: 6000 }
     let max = 3000
-    for (const lv of levels.values()) {
+    const consider = (lv: string) => {
       const s = SPEED[lv]
       if (s && s < max) max = s
     }
+    for (const lv of levels.values()) consider(lv)
+    for (const lv of comunaAlertLevelsRef.current.values()) consider(lv)
     const period = max
 
     const tick = () => {
       const t = (Date.now() % period) / period
-      const opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * Math.PI * 2))
+      // Pulse: region 0.50–0.70, comuna 0.40–0.65 (range wider, max lower).
+      const regionOp = 0.60 + 0.10 * Math.sin(t * Math.PI * 2)
+      const comunaOp = 0.525 + 0.125 * Math.sin(t * Math.PI * 2)
       const m = mapRef.current
-      if (m && m.getLayer("region-alert-line")) {
-        (m as maplibregl.Map).setPaintProperty("region-alert-line", "line-opacity", opacity)
+      if (m) {
+        if (m.getLayer("region-fill")) {
+          m.setPaintProperty("region-fill", "fill-opacity", regionOp)
+        }
+        if (m.getLayer("comuna-fill")) {
+          m.setPaintProperty("comuna-fill", "fill-opacity", comunaOp)
+        }
       }
       alertAnimFrameRef.current = requestAnimationFrame(tick)
     }
@@ -182,6 +208,7 @@ export function ChileMap() {
 
   const {
     regionsGeojson,
+    comunasGeojson,
     loadRegions,
     loadComunas,
     refreshMapRisk,
@@ -197,6 +224,25 @@ export function ChileMap() {
   useEffect(() => {
     regionAlertLevelsRef.current = regionAlertLevels
   }, [regionAlertLevels])
+
+  const mapColorMode = useUIStore((s) => s.mapColorMode)
+  const mapColorModeRef = useRef(mapColorMode)
+  useEffect(() => {
+    mapColorModeRef.current = mapColorMode
+  }, [mapColorMode])
+
+  const comunasByRegionIndex = useMemo(
+    () => buildComunasByRegionIndex(comunasGeojson),
+    [comunasGeojson]
+  )
+  const comunaAlertLevels = useMemo(
+    () => computeComunaAlertLevels(allAlerts, comunasByRegionIndex),
+    [allAlerts, comunasByRegionIndex]
+  )
+  const comunaAlertLevelsRef = useRef(comunaAlertLevels)
+  useEffect(() => {
+    comunaAlertLevelsRef.current = comunaAlertLevels
+  }, [comunaAlertLevels])
 
   const mapDataRefreshNonce = useUIStore((s) => s.mapDataRefreshNonce)
   const selectedDateRef = useRef(selectedDate)
@@ -229,6 +275,12 @@ export function ChileMap() {
       }
       const comunasSource = map.getSource("comunas") as maplibregl.GeoJSONSource | undefined
       if (comunasSource && result.comunas) {
+        const comunaMap = comunaAlertLevelsRef.current
+        for (const f of result.comunas.features) {
+          const cod = f.properties?.cod_comuna as number | undefined
+          const level = cod != null ? comunaMap.get(cod) : undefined
+          f.properties.alert_level = level ?? ""
+        }
         comunasSource.setData(
           result.comunas as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
         )
@@ -282,11 +334,56 @@ export function ChileMap() {
     source.setData(geojson as Parameters<maplibregl.GeoJSONSource["setData"]>[0])
   }, [regionAlertLevels, regionsGeojson, selectedDate])
 
-  // Restart pulse when alerts change
+  // Re-inject alert_level into comuna features when alerts or date change
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+    const source = map.getSource("comunas") as maplibregl.GeoJSONSource | undefined
+    if (!source) return
+
+    const base = comunasGeojson
+    if (!base?.features) return
+
+    const geojson = structuredClone(base) as typeof base
+    for (const f of geojson.features) {
+      const cod = f.properties?.cod_comuna as number | undefined
+      const level = cod != null ? comunaAlertLevels.get(cod) : undefined
+      f.properties.alert_level = level ?? ""
+    }
+    source.setData(geojson as Parameters<maplibregl.GeoJSONSource["setData"]>[0])
+  }, [comunaAlertLevels, comunasGeojson, selectedDate])
+
+  // Restart pulse when alerts change (region or comuna) or map color mode changes
   useEffect(() => {
     if (!mapReadyRef.current) return
     startAlertPulse()
-  }, [regionAlertLevels, mapLoaded, startAlertPulse])
+  }, [regionAlertLevels, comunaAlertLevels, mapColorMode, mapLoaded, startAlertPulse])
+
+  // Switch fill-color expression + remove/keep region-alert-line based on mapColorMode
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReadyRef.current) return
+
+    if (mapColorMode === "alerts") {
+      if (map.getLayer("region-fill")) {
+        map.setPaintProperty("region-fill", "fill-color", mapAlertFillColorExpression())
+      }
+      if (map.getLayer("comuna-fill")) {
+        map.setPaintProperty("comuna-fill", "fill-color", mapAlertFillColorExpression())
+      }
+      // region-alert-line removed (no more alert-colored border)
+      if (map.getLayer("region-alert-line")) {
+        map.removeLayer("region-alert-line")
+      }
+    } else {
+      if (map.getLayer("region-fill")) {
+        map.setPaintProperty("region-fill", "fill-color", mapRiskFillColorExpression())
+      }
+      if (map.getLayer("comuna-fill")) {
+        map.setPaintProperty("comuna-fill", "fill-color", mapRiskFillColorExpression())
+      }
+    }
+  }, [mapColorMode, mapLoaded])
 
   const attachComunaListeners = useCallback((map: maplibregl.Map) => {
     const fillLayer = "comuna-fill"
@@ -613,7 +710,9 @@ export function ChileMap() {
         source: "regions",
         maxzoom: COMUNAS_MIN_ZOOM,
         paint: {
-          "fill-color": mapRiskFillColorExpression(),
+          "fill-color": mapColorModeRef.current === "alerts"
+            ? mapAlertFillColorExpression()
+            : mapRiskFillColorExpression(),
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65],
         },
         filter: ["!=", ["get", "codregion"], 0],
@@ -625,32 +724,13 @@ export function ChileMap() {
         source: "regions",
         paint: {
           "line-color": ["case", ["boolean", ["feature-state", "hover"], false], REGION_LINE_HOVER, REGION_LINE_COLOR],
-          "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2.5, 1.5],
+          "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 3.5, 2.5],
         },
         filter: ["!=", ["get", "codregion"], 0],
       })
 
-      const alertColorExpr: maplibregl.ExpressionSpecification = [
-        "match", ["get", "alert_level"],
-        "roja", ALERT_LEVEL_META.roja.hex,
-        "naranja", ALERT_LEVEL_META.naranja.hex,
-        "amarilla", ALERT_LEVEL_META.amarilla.hex,
-        "preventiva", ALERT_LEVEL_META.preventiva.hex,
-        "informativa", ALERT_LEVEL_META.informativa.hex,
-        "transparent",
-      ]
-
-      map.addLayer({
-        id: "region-alert-line",
-        type: "line",
-        source: "regions",
-        paint: {
-          "line-color": alertColorExpr,
-          "line-width": 2.5,
-          "line-opacity": 0,
-        },
-        filter: ["!=", ["get", "alert_level"], ""],
-      })
+      // region-alert-line removed: alert color now drives the FILL (oscillating)
+      // and the border stays white. See setMapColorMode effect above.
 
       // Earthquake pulsing dot layer
       map.addSource("earthquakes", {
@@ -757,7 +837,7 @@ export function ChileMap() {
       )
       if (comunasData && !map.getSource("comunas")) {
         map.addSource("comunas", { type: "geojson", data: comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
-        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": mapRiskFillColorExpression(), "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
+        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": mapColorModeRef.current === "alerts" ? mapAlertFillColorExpression() : mapRiskFillColorExpression(), "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
         map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
         map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
         if (map.getLayer("region-label-custom")) {
@@ -765,9 +845,6 @@ export function ChileMap() {
         }
         if (map.getLayer("region-line")) {
           map.moveLayer("region-line")
-        }
-        if (map.getLayer("region-alert-line")) {
-          map.moveLayer("region-alert-line")
         }
 
         // Move earthquake layer on top of comunas

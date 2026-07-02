@@ -1,4 +1,5 @@
 import type { ExpressionSpecification } from "maplibre-gl"
+import { ALERT_LEVEL_META } from "@/lib/alerts-display"
 
 /** Map choropleth colors — must stay in sync with MapLibre `fill-color` step expressions. */
 
@@ -64,5 +65,25 @@ export function mapRiskFillColorExpression(): ExpressionSpecification {
     alto.color,
     critico.minScore,
     critico.color,
+  ] as ExpressionSpecification
+}
+
+/**
+ * MapLibre `match` expression for region/comuna fill from `alert_level`.
+ * Used when `mapColorMode === "alerts"`. When a feature has no active alert,
+ * the fill defaults to the "bajo" risk bucket color (green) so the map still
+ * reads geographically and the user can see "no alert here".
+ */
+export function mapAlertFillColorExpression(): ExpressionSpecification {
+  const bajo = MAP_RISK_BUCKETS[0]
+  return [
+    "match",
+    ["get", "alert_level"],
+    "roja", ALERT_LEVEL_META.roja.hex,
+    "naranja", ALERT_LEVEL_META.naranja.hex,
+    "amarilla", ALERT_LEVEL_META.amarilla.hex,
+    "preventiva", ALERT_LEVEL_META.preventiva.hex,
+    "informativa", ALERT_LEVEL_META.informativa.hex,
+    /* default (sin alerta activa) */ bajo.color,
   ] as ExpressionSpecification
 }

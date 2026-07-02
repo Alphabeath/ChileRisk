@@ -203,11 +203,11 @@ export const CHILE_BOUNDS: [number, number, number, number] = [-76, -56, -66, -1
 
 export const COMUNAS_MIN_ZOOM = 7
 
-export const REGION_LINE_COLOR = "#e2e8f0"
+export const REGION_LINE_COLOR = "#ffffff"
 export const REGION_LINE_HOVER = "#ffffff"
 
-export const COMUNA_LINE_COLOR = "#94a3b8"
-export const COMUNA_LINE_HOVER = "#cbd5e1"
+export const COMUNA_LINE_COLOR = "#ffffff"
+export const COMUNA_LINE_HOVER = "#ffffff"
 
 export interface RegionProperties {
   codregion: number

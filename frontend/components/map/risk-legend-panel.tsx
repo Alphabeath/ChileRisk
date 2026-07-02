@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { BookOpenText, ChevronDown, Layers, ShieldAlert } from "lucide-react"
+import { ChevronDown, Eye, Layers, ShieldAlert } from "lucide-react"
 import { useDraggablePanel } from "@/hooks"
 import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_HEADER_LABEL_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
 import { MAP_RISK_BUCKETS } from "@/lib/risk-scale"
@@ -9,6 +9,7 @@ import { ALERT_LEVEL_META } from "@/lib/alerts-display"
 import type { AlertLevel } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useUIStore } from "@/stores/ui-store"
 
 const ALERT_GLOSSARY: { level: AlertLevel; description: string }[] = [
   {
@@ -38,7 +39,10 @@ const ALERT_GLOSSARY: { level: AlertLevel; description: string }[] = [
   },
 ]
 
-function MapIndicators() {
+/** Color shown on the map in `alerts` mode when no active alert applies to a region/comuna. */
+const NO_ACTIVE_ALERT_HEX = MAP_RISK_BUCKETS[0].color
+
+function MapIndicators({ mode }: { mode: "risk" | "alerts" }) {
   return (
     <div className="mt-1 border-t border-white/[0.06] pt-1.5">
       <p className="text-[10px] font-semibold leading-tight text-white/70">
@@ -46,11 +50,33 @@ function MapIndicators() {
       </p>
       <ul className="mt-1 flex flex-col gap-1" role="list">
         <li className="flex items-start gap-1.5">
-          <span className="mt-[3px] inline-block size-2 shrink-0 rounded-full bg-white/30 shadow-[0_0_4px_rgba(255,255,255,0.4)]" aria-hidden />
+          <span
+            className="mt-[3px] inline-block size-2 shrink-0 rounded-full"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.85)",
+              boxShadow: "0 0 4px rgba(255,255,255,0.4)",
+            }}
+            aria-hidden
+          />
           <span className="text-[9px] leading-snug text-white/50">
-            <strong className="text-white/70">Borde pulsante:</strong> indica alertas activas en la región, no un riesgo compuesto alto. Color y velocidad varían según el nivel de alerta.
+            <strong className="text-white/70">Borde blanco:</strong> delimita regiones y comunas; no codifica severidad.
           </span>
         </li>
+        {mode === "alerts" && (
+          <li className="flex items-start gap-1.5">
+            <span
+              className="mt-[3px] inline-block size-2 shrink-0 rounded-full"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.5)",
+                animation: "pulse 1.5s ease-in-out infinite",
+              }}
+              aria-hidden
+            />
+            <span className="text-[9px] leading-snug text-white/50">
+              <strong className="text-white/70">Relleno oscilante:</strong> el color del relleno late con la severidad de la alerta (roja → más rápido).
+            </span>
+          </li>
+        )}
       </ul>
     </div>
   )
@@ -84,7 +110,7 @@ function RiskLegendContent() {
       <p className="mt-1.5 border-t border-white/[0.06] pt-1.5 text-[9px] leading-tight text-white/40">
         Regiones al alejar; comunas al acercar. Sin dato → moderado (35).
       </p>
-      <MapIndicators />
+      <MapIndicators mode="risk" />
     </>
   )
 }
@@ -93,7 +119,8 @@ function AlertGlossaryContent() {
   return (
     <div className="flex flex-col gap-1.5 py-1.5">
       <p className="text-[10px] leading-tight text-white/50">
-        Niveles de alerta según SERNAPRED, de mayor a menor gravedad.
+        Niveles de alerta según SERNAPRED, de mayor a menor gravedad. El
+        relleno del mapa usa estos colores y oscila según la severidad.
       </p>
       <ul className="flex flex-col gap-1.5" role="list">
         {ALERT_GLOSSARY.map(({ level, description }) => {
@@ -119,14 +146,35 @@ function AlertGlossaryContent() {
             </li>
           )
         })}
+        <li className="flex items-start gap-2 border-t border-white/[0.06] pt-1.5">
+          <span
+            className="mt-[3px] size-2.5 shrink-0 rounded-[2px]"
+            style={{
+              backgroundColor: NO_ACTIVE_ALERT_HEX,
+              boxShadow: `0 0 6px ${NO_ACTIVE_ALERT_HEX}66`,
+            }}
+            aria-hidden
+          />
+          <div className="min-w-0 flex-1">
+            <span className="block text-[11px] font-semibold leading-none text-white/90">
+              Sin alerta activa — riesgo bajo
+            </span>
+            <span className="mt-0.5 block text-[10px] leading-snug text-white/50">
+              Color de relleno cuando no hay alerta vigente en la región o
+              comuna. Mismo verde que el bucket &ldquo;Bajo&rdquo; en el modo Riesgo.
+            </span>
+          </div>
+        </li>
       </ul>
-      <MapIndicators />
+      <MapIndicators mode="alerts" />
     </div>
   )
 }
 
 export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
   const [expanded, setExpanded] = useState(true)
+  const mapColorMode = useUIStore((s) => s.mapColorMode)
+  const setMapColorMode = useUIStore((s) => s.setMapColorMode)
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: "risk-legend-panel",
     corner: flow ? undefined : "bottom-right",
@@ -140,7 +188,7 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
       className={cn(MAP_PANEL_SHELL_CLASS, "flex flex-col", "max-h-[min(420px,50dvh)]")}
       style={style}
       role="group"
-      aria-label="Leyenda de colores de riesgo"
+      aria-label="Vistas de mapa (Riesgo / Alertas)"
     >
       <div
         className={cn(
@@ -153,20 +201,29 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
           className={cn(MAP_PANEL_DRAG_HANDLE_CLASS, "gap-1.5 py-1.5")}
           style={{ touchAction: "none" }}
           data-dragging={isDragging || undefined}
-          aria-label="Arrastrar leyenda de riesgo"
+          aria-label="Arrastrar panel de vistas"
         >
-          <BookOpenText className="size-3 shrink-0 text-white/55" aria-hidden />
-          <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Glosario</span>
+          <Eye className="size-3 shrink-0 text-white/55" aria-hidden />
+          <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Vistas</span>
           {!expanded && (
             <div
               className="flex h-2 w-[4.5rem] shrink-0 overflow-hidden rounded-[2px] border border-white/15"
               aria-hidden
             >
-              {[...MAP_RISK_BUCKETS].reverse().map((bucket) => (
+              {(mapColorMode === "alerts"
+                ? [
+                    ALERT_LEVEL_META.informativa.hex,
+                    ALERT_LEVEL_META.preventiva.hex,
+                    ALERT_LEVEL_META.amarilla.hex,
+                    ALERT_LEVEL_META.naranja.hex,
+                    ALERT_LEVEL_META.roja.hex,
+                  ]
+                : [...MAP_RISK_BUCKETS].reverse().map((b) => b.color)
+              ).map((color, i) => (
                 <span
-                  key={bucket.severity}
+                  key={i}
                   className="min-w-0 flex-1"
-                  style={{ backgroundColor: bucket.color }}
+                  style={{ backgroundColor: color }}
                 />
               ))}
             </div>
@@ -181,7 +238,7 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
           }}
           aria-expanded={expanded}
           aria-controls="risk-legend-panel-body"
-          aria-label={expanded ? "Colapsar leyenda" : "Expandir leyenda"}
+          aria-label={expanded ? "Colapsar panel de vistas" : "Expandir panel de vistas"}
           className="flex shrink-0 items-center border-l border-white/10 px-2 text-white/55 transition-colors hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
         >
           <ChevronDown
@@ -199,7 +256,11 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
         className={cn(!expanded && "hidden")}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <Tabs defaultValue="riesgo" className="flex flex-col">
+        <Tabs
+          value={mapColorMode === "risk" ? "riesgo" : "alertas"}
+          onValueChange={(v) => setMapColorMode(v === "riesgo" ? "risk" : "alerts")}
+          className="flex flex-col"
+        >
           <TabsList
             variant="line"
             className="h-auto w-full justify-start gap-0 rounded-none border-b border-white/[0.06] bg-transparent px-2"

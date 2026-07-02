@@ -255,6 +255,19 @@ export function sortActiveAlerts(alerts: ActiveAlert[]): ActiveAlert[] {
   )
 }
 
+/**
+ * Sort by severity (gravedad): roja > naranja > amarilla > preventiva > informativa.
+ * Ties broken by `issued_at` DESC (most recent first).
+ */
+export function sortActiveAlertsBySeverity(alerts: ActiveAlert[]): ActiveAlert[] {
+  return [...alerts].sort((a, b) => {
+    const pa = ALERT_LEVEL_PRIORITY[a.level] ?? 9
+    const pb = ALERT_LEVEL_PRIORITY[b.level] ?? 9
+    if (pa !== pb) return pa - pb
+    return new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime()
+  })
+}
+
 export const POPUP_MAX_ALERTS = 3
 export const POPUP_MAX_SEISMIC = 3
 
@@ -315,6 +328,65 @@ export function computeRegionAlertLevels(
     }
   }
   return result
+}
+
+/**
+ * Returns the highest-priority alert level per comuna code.
+ *
+ * Hybrid resolution (max priority between region-scope and comuna-scope):
+ *   - If an alert has `affected_scope === "region"` it applies to ALL comunas
+ *     of that region (uses the `comunasByRegion` index built from the GeoJSON).
+ *   - If an alert has `affected_scope === "comuna"` it applies only to the
+ *     comunas in `comuna_codes`.
+ *   - If multiple alerts apply, the one with the highest priority (roja >
+ *     naranja > amarilla > preventiva > informativa) wins.
+ *   - Alerts with `affected_scope === "unknown"` are ignored (no geo info).
+ */
+export function computeComunaAlertLevels(
+  alerts: ActiveAlert[],
+  comunasByRegion: Map<number, readonly number[]>
+): Map<number, AlertLevel> {
+  const result = new Map<number, AlertLevel>()
+  const upgrade = (codComuna: number, level: AlertLevel) => {
+    const prev = result.get(codComuna)
+    if (!prev || ALERT_LEVEL_PRIORITY[level] < ALERT_LEVEL_PRIORITY[prev]) {
+      result.set(codComuna, level)
+    }
+  }
+
+  for (const a of alerts) {
+    if (a.region_code == null) continue
+    const scope = a.affected_scope ?? "unknown"
+    if (scope === "comuna") {
+      for (const cod of a.comuna_codes ?? []) {
+        upgrade(cod, a.level)
+      }
+    } else if (scope === "region") {
+      const comunasInRegion = comunasByRegion.get(a.region_code) ?? []
+      for (const cod of comunasInRegion) {
+        upgrade(cod, a.level)
+      }
+    }
+    // scope === "unknown": no geo info, skip
+  }
+  return result
+}
+
+/** Builds a `region_code → cod_comuna[]` index from a comunas GeoJSON. */
+export function buildComunasByRegionIndex(
+  geojson: { features: Array<{ properties?: Record<string, unknown> }> } | null
+): Map<number, number[]> {
+  const index = new Map<number, number[]>()
+  if (!geojson?.features) return index
+  for (const f of geojson.features) {
+    const cod = f.properties?.cod_comuna as number | undefined
+    const codregion = f.properties?.codregion as number | undefined
+    if (cod == null || codregion == null) continue
+    const list = index.get(codregion) ?? []
+    list.push(cod)
+    index.set(codregion, list)
+  }
+  return index
 }
 
 /** @deprecated Use sortActiveAlerts */

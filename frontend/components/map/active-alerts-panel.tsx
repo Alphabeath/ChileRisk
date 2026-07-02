@@ -15,7 +15,7 @@ import {
   Filter,
 } from "lucide-react"
 import { useActiveAlerts, useDraggablePanel } from "@/hooks"
-import { sortActiveAlerts } from "@/lib/alerts-display"
+import { sortActiveAlertsBySeverity } from "@/lib/alerts-display"
 import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
 import {
   Popover,
@@ -123,7 +123,7 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
 
   const { data: alerts = [], isLoading, error, refetch } = useActiveAlerts()
 
-  const sorted = useMemo(() => sortActiveAlerts(alerts), [alerts])
+  const sorted = useMemo(() => sortActiveAlertsBySeverity(alerts), [alerts])
   const senapredAlerts = sorted.filter(
     (a) => a.source === "senapred" && (a.record_kind ?? "alerta") === "alerta"
   ).length
