@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { ClipboardList } from "lucide-react"
 
 import {
   type SimulacrosRange,
@@ -11,12 +12,19 @@ import {
   SimulacrosImportanceAccordion,
   SimulacrosPageHero,
 } from "@/components/preparation/simulacros"
+import { PreparationBreadcrumb } from "@/components/preparation/preparation-breadcrumb"
+import { PreparationContextBanner } from "@/components/preparation/preparation-context-banner"
 import { queryKeys } from "@/lib/queries"
+import {
+  PREPARATION_PAGE_INNER_CLASS,
+  PREPARATION_PAGE_SHELL_CLASS,
+} from "@/lib/preparation-ui"
 import {
   useNextSimulacro,
   useSimulacros,
 } from "@/hooks/use-simulacros"
 import type { DrillType, SimulacrosParams } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
 interface FilterState {
   view: SimulacrosView
@@ -82,9 +90,25 @@ export default function SimulacrosPage() {
   const selectedType = state.params.type
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-16 sm:px-6 lg:px-8">
+    <div className={PREPARATION_PAGE_SHELL_CLASS}>
+      <div className={cn(PREPARATION_PAGE_INNER_CLASS, "pb-8")}>
+        <PreparationBreadcrumb
+          items={[
+            { label: "Preparación", href: "/preparation" },
+            { label: "Simulacros" },
+          ]}
+        />
+
         <SimulacrosPageHero next={nextDrill} upcomingTotal={upcomingTotal} />
+
+        <PreparationContextBanner
+          eyebrow="Registra en tu plan"
+          body="Anota la fecha del próximo simulacro en el paso 8 del Plan Familia Preparada."
+          href="/preparation/family-plan/step/8?from=simulacros"
+          cta="Ir a mi plan"
+          icon={ClipboardList}
+          accent="rose"
+        />
 
         <SimulacrosImportanceAccordion />
 

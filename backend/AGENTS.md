@@ -41,7 +41,7 @@ Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 async · asyncpg · Post
 backend/app/
 ├── api/           # risk (+date), events, alerts, comunas, regiones, stats
 ├── models/        # daily_risk_score, senapred_alert, …
-├── schemas/       # contrato → frontend/lib/types.ts
+├── schemas/       # contrato → make sync-contract → frontend/lib/api-schema.d.ts (+ types.ts)
 ├── services/      # daily_risk, alert_service, senapred, csn, …
 └── scheduler/jobs.py
 backend/docs/      # BACKEND.md, ML-INTEGRATION.md
@@ -68,7 +68,7 @@ Detalle: [docs/BACKEND.md](docs/BACKEND.md).
 
 ## Contrato frontend
 
-- `app/schemas/*` ↔ `frontend/lib/types.ts` (mismo task).
+- `app/schemas/*` → `make sync-contract` + `frontend/lib/types.ts` (mismo task).
 - JSON público → [docs/BACKEND.md](docs/BACKEND.md) + [../frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md) si UI.
 - Tipo canónico alertas: `ActiveAlertOut`.
 
@@ -82,8 +82,11 @@ Detalle: [docs/BACKEND.md](docs/BACKEND.md).
 - CSN dedup ±3 min + magnitud.
 - Meteo lotes de 40.
 - SERNAPRED máx. 20×100 ítems; Cognito cache ~50 min.
-- `_CANCEL_RE` solo matchea cancelaciones puras (`^se cancel(?!.*\bdeclara\b)`); alertas "se cancela X y declara Y" permanecen activas.
-- Schema: `create_all` + ALTER ad-hoc en `main.py`.
+- `_is_active`: `isActive` + `isPrincipal` (alertas **y** eventos, parity con senapred.cl) + cancel puro.
+- `_CANCEL_RE` / `is_cancel_title` solo matchea cancelaciones puras (`^se cancel(?!.*\bdeclara\b)`); alertas "se cancela X y declara Y" permanecen activas.
+- `/alerts/active`: dedupe por hilo (`url_access` canónico, fallback `parentId`) **antes** de filtrar `is_active`; clave incluye `region_code` (multi-región). Boletines solo-cancelación **nunca** se reexponen (hoy ni histórico).
+- Geografía: título región → `metaData.comunas` → NLP título/contenido → `metaData.provincias` (scope región).
+- Schema: Alembic (`alembic upgrade head` en entrypoint). No `create_all` en lifespan.
 - `settings` singleton al import.
 
 ---
@@ -102,4 +105,4 @@ make psql
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-23*

@@ -125,9 +125,9 @@ UI mapa/citizen: [docs/DESIGN.md](docs/DESIGN.md) primero.
 ## Entregables
 
 1. Carpeta correcta
-2. Contrato → `types.ts` + backend schemas
+2. Contrato → `make sync-contract` + `types.ts` + backend schemas
 3. [docs/FRONTEND.md](docs/FRONTEND.md) / DESIGN
-4. `bun run lint` + `npx tsc --noEmit`
+4. `bun run lint` + `bunx tsc --noEmit` + `bun test`
 
 ```bash
 cd frontend && bun run dev
@@ -136,4 +136,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-13*

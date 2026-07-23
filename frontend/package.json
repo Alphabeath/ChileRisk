@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "bun test",
     "rewind-volcanic-hazards": "bun scripts/rewind-volcanic-hazards.mjs"
   },
   "dependencies": {
@@ -58,6 +59,7 @@
     "@types/topojson-specification": "^1.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

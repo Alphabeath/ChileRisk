@@ -220,8 +220,10 @@ export function ChileMap() {
   const recentEvents = recentEventsData ?? EMPTY_SEISMIC_EVENTS
   const { data: allAlerts = [], isLoading: alertsLoading } = useActiveAlerts()
   const regionAlertLevels = useMemo(() => computeRegionAlertLevels(allAlerts), [allAlerts])
-  const regionAlertLevelsRef = useRef(regionAlertLevels)
+  const regionAlertLevelsRef = useRef(new Map<number, string>())
   useEffect(() => {
+    // Sync latest alert levels for MapLibre paint callbacks (imperative, not render).
+    // eslint-disable-next-line react-hooks/immutability -- intentional ref mirror for map callbacks
     regionAlertLevelsRef.current = regionAlertLevels
   }, [regionAlertLevels])
 
@@ -239,8 +241,9 @@ export function ChileMap() {
     () => computeComunaAlertLevels(allAlerts, comunasByRegionIndex),
     [allAlerts, comunasByRegionIndex]
   )
-  const comunaAlertLevelsRef = useRef(comunaAlertLevels)
+  const comunaAlertLevelsRef = useRef(new Map<number, string>())
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- intentional ref mirror for map callbacks
     comunaAlertLevelsRef.current = comunaAlertLevels
   }, [comunaAlertLevels])
 
@@ -323,9 +326,10 @@ export function ChileMap() {
     const source = map.getSource("regions") as maplibregl.GeoJSONSource | undefined
     if (!source) return
 
-    const geojson = regionsGeojson
-    if (!geojson?.features) return
+    const base = regionsGeojson
+    if (!base?.features) return
 
+    const geojson = structuredClone(base) as typeof base
     for (const f of geojson.features) {
       const cod = f.properties?.codregion as number | undefined
       const level = cod != null ? regionAlertLevels.get(cod) : undefined

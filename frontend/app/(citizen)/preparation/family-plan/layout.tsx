@@ -1,4 +1,8 @@
 import { FamilyPlanProvider } from "@/hooks/use-family-plan"
+import {
+  PREPARATION_PAGE_SHELL_CLASS,
+  PREPARATION_WIZARD_INNER_CLASS,
+} from "@/lib/preparation-ui"
 
 export default function FamilyPlanLayout({
   children,
@@ -7,10 +11,8 @@ export default function FamilyPlanLayout({
 }) {
   return (
     <FamilyPlanProvider>
-      <div className="min-h-screen bg-background">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <div className={PREPARATION_PAGE_SHELL_CLASS}>
+        <div className={PREPARATION_WIZARD_INNER_CLASS}>{children}</div>
       </div>
     </FamilyPlanProvider>
   )

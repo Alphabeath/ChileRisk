@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Siren } from "lucide-react"
 
+import { SimulacrosCountdown } from "@/components/preparation/simulacros/simulacros-countdown"
+import { GLASS_DIVIDER } from "@/lib/glass-panel"
 import {
-  GLASS_DIVIDER,
-  GLASS_MICA_INTERACTIVE_CLASS,
-  GLASS_PANEL_CLASS,
-} from "@/lib/glass-panel"
+  PREPARATION_EYEBROW_CLASS,
+  PREPARATION_HERO_SHELL_CLASS,
+} from "@/lib/preparation-ui"
 import { DRILL_TYPE_HIGHLIGHTS } from "@/data/simulacros"
-import { daysUntil } from "@/lib/simulacros-format"
+import { formatDrillDate } from "@/lib/simulacros-format"
 import { cn } from "@/lib/utils"
 import type { Simulacro } from "@/lib/types"
 
@@ -19,28 +19,8 @@ interface SimulacrosPageHeroProps {
 }
 
 export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroProps) {
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    const tick = () => setNow(Date.now())
-    tick()
-    const id = setInterval(tick, 60_000)
-    return () => clearInterval(id)
-  }, [])
-
-  const daysLeft =
-    next?.drill_date !== undefined && next.drill_date !== null
-      ? Math.max(0, daysUntil(next.drill_date, now))
-      : null
-
   return (
-    <header
-      className={cn(
-        GLASS_PANEL_CLASS,
-        GLASS_MICA_INTERACTIVE_CLASS,
-        "relative w-full overflow-hidden",
-      )}
-    >
+    <header className={PREPARATION_HERO_SHELL_CLASS}>
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-red-950/70 to-[var(--secondary-chile)]/45"
         aria-hidden
@@ -73,20 +53,35 @@ export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroPr
           </p>
         </div>
 
-        <dl className="grid shrink-0 grid-cols-3 gap-2 sm:gap-3 lg:min-w-[20rem]">
-          <StatBox
-            label="Próximo en"
-            value={daysLeft}
-            suffix={daysLeft === 1 ? "día" : "días"}
-          />
+        <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[16rem]">
           <StatBox
             label="A efectuarse"
             value={upcomingTotal}
             suffix="simulacros"
           />
-          <StatBox label="Tipos de simulacros" value={DRILL_TYPE_HIGHLIGHTS.length} />
+          <StatBox label="Tipos" value={DRILL_TYPE_HIGHLIGHTS.length} />
         </dl>
       </div>
+
+      {next?.drill_date ? (
+        <div className="relative border-t border-white/10 bg-black/40 px-5 py-5 sm:px-8">
+          <p className={cn(PREPARATION_EYEBROW_CLASS, "text-amber-200/90")}>
+            Próximo simulacro
+          </p>
+          <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold text-white sm:text-lg">
+                {next.title || "Simulacro SENAPRED"}
+              </p>
+              <p className="mt-1 text-[12.5px] text-white/55">
+                {formatDrillDate(next.drill_date)}
+                {next.region_name ? ` · ${next.region_name}` : null}
+              </p>
+            </div>
+            <SimulacrosCountdown drillDate={next.drill_date} />
+          </div>
+        </div>
+      ) : null}
 
       <div
         className={cn(
@@ -101,7 +96,10 @@ export function SimulacrosPageHero({ next, upcomingTotal }: SimulacrosPageHeroPr
               className="flex min-w-[7rem] shrink-0 items-center justify-center gap-2.5 px-3 py-4 transition-colors hover:bg-white/[0.03] sm:min-w-0 sm:flex-1 sm:gap-3 sm:px-4 sm:py-5"
             >
               <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10">
-                <Icon className={cn("size-4 sm:size-[1.125rem]", accent)} aria-hidden />
+                <Icon
+                  className={cn("size-4 sm:size-[1.125rem]", accent)}
+                  aria-hidden
+                />
               </div>
               <div className="min-w-0 text-left">
                 <p className="truncate text-[10px] font-semibold uppercase tracking-[1.1px] text-white sm:text-[11px]">
@@ -127,9 +125,7 @@ function StatBox({
 }) {
   return (
     <div className="border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-black/50 sm:px-4 sm:py-4">
-      <dt className="text-[9px] font-semibold uppercase tracking-[1.1px] text-white/55 sm:text-[10px]">
-        {label}
-      </dt>
+      <dt className={cn(PREPARATION_EYEBROW_CLASS, "text-white/55")}>{label}</dt>
       <dd className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl">
         {value === null ? (
           "—"

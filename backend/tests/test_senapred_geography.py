@@ -37,3 +37,37 @@ def test_infer_unknown_without_region_code():
     scope, codes = infer_geography("Región de Valparaíso", None, None)
     assert scope == "unknown"
     assert codes == []
+
+
+def test_infer_prefers_meta_comunas():
+    scope, codes = infer_geography(
+        "Alerta meteorológica costera",
+        None,
+        13,
+        meta_comunas="Santiago, Puente Alto",
+    )
+    assert scope == "comuna"
+    assert 13101 in codes  # Santiago
+    assert 13201 in codes  # Puente Alto
+
+
+def test_infer_meta_provincias_as_region_when_no_comunas():
+    scope, codes = infer_geography(
+        "Alerta por evento meteorológico",
+        None,
+        13,
+        meta_provincias="Provincia de Santiago",
+    )
+    assert scope == "region"
+    assert codes == []
+
+
+def test_infer_title_region_beats_meta_comunas():
+    scope, codes = infer_geography(
+        "Monitoreo Alerta Temprana Preventiva para la Región de Valparaíso",
+        None,
+        5,
+        meta_comunas="Viña del Mar",
+    )
+    assert scope == "region"
+    assert codes == []

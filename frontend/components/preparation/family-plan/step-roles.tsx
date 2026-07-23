@@ -17,7 +17,14 @@ import {
   Zap,
 } from "lucide-react"
 
-import { FamilyPlanSection } from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FamilyPlanCategoryShell,
+  FamilyPlanEmptyState,
+  FamilyPlanItemCard,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import {
   Select,
   SelectContent,
@@ -197,7 +204,7 @@ function TaskRow({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-t border-white/10 px-3 py-3 transition-colors first:border-t-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
+        "flex min-h-11 flex-col gap-3 border-t border-white/10 px-3 py-3 transition-colors first:border-t-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
         assigned && "bg-white/[0.015]",
       )}
     >
@@ -213,7 +220,7 @@ function TaskRow({
         </span>
         <span className="text-[12.5px] text-white/90">{role.task}</span>
       </div>
-      <div className="flex items-center gap-2 sm:max-w-xs sm:flex-1">
+      <div className="flex w-full items-center gap-2 sm:max-w-xs sm:flex-1">
         {assigned ? (
           <MemberAvatar member={assigned} />
         ) : null}
@@ -255,55 +262,49 @@ function CategoryCard({
   const Icon = meta.icon
   const assignedCount = roles.filter((r) => r.member_id).length
   const total = roles.length
+  const tone =
+    assignedCount === total
+      ? "complete"
+      : assignedCount === 0
+        ? "empty"
+        : "pending"
 
   return (
-    <section
-      className={cn(
-        "glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] transition-colors hover:border-white/25",
-        meta.accent,
-      )}
-    >
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <span
-            className="flex size-7 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white/90"
-            aria-hidden
-          >
-            <Icon className="size-3.5" />
-          </span>
-          <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              {meta.title}
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-white/45">
-              {meta.description}
-            </p>
+    <FamilyPlanCategoryShell
+      accentClassName={meta.accent}
+      header={
+        <>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className="flex size-7 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white/90"
+              aria-hidden
+            >
+              <Icon className="size-3.5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                {meta.title}
+              </h3>
+              <p className="mt-0.5 truncate text-[11.5px] text-white/45">
+                {meta.description}
+              </p>
+            </div>
           </div>
-        </div>
-        <span
-          className={cn(
-            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-            assignedCount === total
-              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-              : assignedCount === 0
-                ? "border-white/10 bg-white/[0.03] text-white/45"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-200",
-          )}
-        >
-          {assignedCount}/{total}
-        </span>
-      </header>
-      <div>
-        {roles.map((role) => (
-          <TaskRow
-            key={role.task}
-            role={role}
-            members={members}
-            onAssign={(memberId) => onAssign(role.task, memberId)}
-          />
-        ))}
-      </div>
-    </section>
+          <FamilyPlanStatusChip tone={tone}>
+            {assignedCount}/{total}
+          </FamilyPlanStatusChip>
+        </>
+      }
+    >
+      {roles.map((role) => (
+        <TaskRow
+          key={role.task}
+          role={role}
+          members={members}
+          onAssign={(memberId) => onAssign(role.task, memberId)}
+        />
+      ))}
+    </FamilyPlanCategoryShell>
   )
 }
 
@@ -315,12 +316,10 @@ function ProgressBanner({
   total: number
 }) {
   const pct = total === 0 ? 0 : Math.round((assigned / total) * 100)
+  const unassigned = total - assigned
+
   return (
-    <div
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-2 border border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
-      )}
-    >
+    <FamilyPlanStatusBanner>
       <div className="flex items-center gap-3">
         <span
           className={cn(
@@ -341,16 +340,31 @@ function ProgressBanner({
           </p>
         </div>
       </div>
-      <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
-        <span
-          className={cn(
-            "block h-full transition-all duration-300",
-            pct === 100 ? "bg-emerald-400/80" : "bg-white/40",
-          )}
-          style={{ width: `${pct}%` }}
-        />
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[12rem] sm:items-end">
+        <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+          <span
+            className={cn(
+              "block h-full transition-all duration-300",
+              pct === 100 ? "bg-emerald-400/80" : "bg-white/40",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {total > 0 ? (
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            {unassigned > 0 ? (
+              <FamilyPlanStatusChip tone="pending">
+                {unassigned} sin asignar
+              </FamilyPlanStatusChip>
+            ) : (
+              <FamilyPlanStatusChip tone="complete">
+                Todo asignado
+              </FamilyPlanStatusChip>
+            )}
+          </div>
+        ) : null}
       </div>
-    </div>
+    </FamilyPlanStatusBanner>
   )
 }
 
@@ -374,12 +388,8 @@ function ResumenCard({
   if (ranked.length === 0) return null
 
   return (
-    <section
-      className={cn(
-        "glass-mica interactive-mica border border-white/15 bg-white/[0.04] p-4",
-      )}
-    >
-      <header className="mb-3 flex items-center gap-2">
+    <FamilyPlanItemCard>
+      <header className="flex items-center gap-2">
         <span className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
           Resumen por integrante
         </span>
@@ -402,17 +412,13 @@ function ResumenCard({
           </li>
         ))}
       </ul>
-    </section>
+    </FamilyPlanItemCard>
   )
 }
 
 function NoMembersEmpty() {
   return (
-    <div
-      className={cn(
-        "glass-mica interactive-mica flex flex-col items-start gap-3 border border-dashed border-amber-400/30 bg-amber-500/[0.04] p-4 sm:flex-row sm:items-center sm:justify-between",
-      )}
-    >
+    <FamilyPlanEmptyState className="items-start gap-3 border-amber-400/30 bg-amber-500/[0.04] p-4 text-left sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
         <span
           className="flex size-8 shrink-0 items-center justify-center border border-amber-500/30 bg-amber-500/10 text-amber-200"
@@ -440,7 +446,7 @@ function NoMembersEmpty() {
         Ir al paso 1
         <ArrowRight className="size-3.5" aria-hidden />
       </Link>
-    </div>
+    </FamilyPlanEmptyState>
   )
 }
 
@@ -471,16 +477,13 @@ export function StepRoles() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <FamilyPlanStepRoot>
       <ProgressBanner assigned={totalAssigned} total={data.roles.length} />
 
-      <FamilyPlanSection
-        title="Roles por categoría"
-        description="Asigna a cada integrante las acciones que deberá ejecutar según el escenario."
-      >
-        {memberOptions.length === 0 ? (
-          <NoMembersEmpty />
-        ) : (
+      {memberOptions.length === 0 ? (
+        <NoMembersEmpty />
+      ) : (
+        <>
           <div className="flex flex-col gap-3">
             {(Object.keys(groupedRoles) as CategoryId[]).map((categoryId) => (
               <CategoryCard
@@ -492,12 +495,9 @@ export function StepRoles() {
               />
             ))}
           </div>
-        )}
-      </FamilyPlanSection>
-
-      {memberOptions.length > 0 ? (
-        <ResumenCard members={memberOptions} roles={data.roles} />
-      ) : null}
-    </div>
+          <ResumenCard members={memberOptions} roles={data.roles} />
+        </>
+      )}
+    </FamilyPlanStepRoot>
   )
 }

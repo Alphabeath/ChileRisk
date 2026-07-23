@@ -13,6 +13,13 @@ import {
 } from "lucide-react"
 
 import { EmergencyKitGuideLink } from "@/components/preparation/emergency-kit/emergency-kit-guide-link"
+import {
+  FamilyPlanCategoryShell,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  type FamilyPlanStatusChipTone,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   KIT_ITEMS_BASE,
@@ -82,6 +89,93 @@ const SECTION_ITEMS: Record<KitSectionKey, readonly string[]> = {
   pets: KIT_ITEMS_PETS,
 }
 
+function KitSummaryBanner({
+  sections,
+  itemsBySection,
+  valuesBySection,
+}: {
+  sections: KitSectionKey[]
+  itemsBySection: Record<KitSectionKey, readonly string[]>
+  valuesBySection: Record<KitSectionKey, Record<string, boolean>>
+}) {
+  let total = 0
+  let checked = 0
+  let sectionsComplete = 0
+  for (const section of sections) {
+    const items = itemsBySection[section]
+    const values = valuesBySection[section]
+    const sectionChecked = items.reduce(
+      (acc, item) => (values[item] ? acc + 1 : acc),
+      0,
+    )
+    total += items.length
+    checked += sectionChecked
+    if (items.length > 0 && sectionChecked === items.length) {
+      sectionsComplete += 1
+    }
+  }
+  const pct = total === 0 ? 0 : Math.round((checked / total) * 100)
+  const allDone = total > 0 && checked === total
+
+  return (
+    <FamilyPlanStatusBanner>
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center border font-mono text-[13px] font-semibold tabular-nums",
+            allDone
+              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+              : "border-white/20 bg-white/10 text-white",
+          )}
+        >
+          {allDone ? <Check className="size-4" /> : `${pct}%`}
+        </span>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
+            Kit de emergencia
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-white/55">
+            {total === 0
+              ? "Aún no marcas ítems del kit"
+              : `${checked} de ${total} ítems listos · ${sections.length} kit${
+                  sections.length === 1 ? "" : "s"
+                } activo${sections.length === 1 ? "" : "s"}`}
+          </p>
+        </div>
+      </div>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[12rem] sm:items-end">
+        <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+          <span
+            className={cn(
+              "block h-full transition-all duration-300",
+              allDone ? "bg-emerald-400/80" : "bg-amber-400/70",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FamilyPlanStatusChip tone={sections.length === 0 ? "empty" : "started"}>
+            <Backpack className="size-3" aria-hidden />
+            {sections.length}
+          </FamilyPlanStatusChip>
+          <FamilyPlanStatusChip
+            tone={
+              sectionsComplete === 0
+                ? "empty"
+                : sectionsComplete === sections.length
+                  ? "complete"
+                  : "pending"
+            }
+          >
+            <Check className="size-3" aria-hidden />
+            {sectionsComplete}/{sections.length}
+          </FamilyPlanStatusChip>
+        </div>
+      </div>
+    </FamilyPlanStatusBanner>
+  )
+}
+
 function KitItemRow({
   label,
   checked,
@@ -94,7 +188,7 @@ function KitItemRow({
   return (
     <label
       className={cn(
-        "glass-mica interactive-mica flex items-start gap-2 border px-3 py-2 text-[12px] transition-colors",
+        "glass-mica interactive-mica flex min-h-11 items-start gap-2 border px-3 py-2 text-[12px] transition-colors",
         checked
           ? "border-emerald-500/30 bg-emerald-500/[0.06] text-white"
           : "border-white/15 bg-white/[0.04] text-white/80 hover:border-white/25 hover:bg-white/[0.07]",
@@ -134,73 +228,68 @@ function KitSectionCard({
   )
   const allChecked = checkedCount === items.length
   const noneChecked = checkedCount === 0
+  const countTone: FamilyPlanStatusChipTone = noneChecked
+    ? "empty"
+    : allChecked
+      ? "complete"
+      : "pending"
 
   return (
-    <section
-      className={cn(
-        "glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] transition-colors hover:border-white/25",
-        meta.accent,
-      )}
-    >
-      <header className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center border",
-              meta.chip,
-            )}
-            aria-hidden
-          >
-            <Icon className="size-3.5" />
-          </span>
-          <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              {meta.title}
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-white/45">
-              {meta.description}
-            </p>
+    <FamilyPlanCategoryShell
+      accentClassName={meta.accent}
+      header={
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5">
+            <span
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center border",
+                meta.chip,
+              )}
+              aria-hidden
+            >
+              <Icon className="size-3.5" />
+            </span>
+            <div>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                {meta.title}
+              </h3>
+              <p className="mt-0.5 text-[11.5px] text-white/45">
+                {meta.description}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 sm:shrink-0">
+            <button
+              type="button"
+              onClick={() => onBulk(!allChecked)}
+              disabled={items.length === 0}
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-white/65 transition-colors",
+                "hover:border-white/25 hover:bg-white/[0.08] hover:text-white",
+                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+                "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:bg-white/[0.03] disabled:hover:text-white/65",
+              )}
+            >
+              {allChecked ? (
+                <>
+                  <X className="size-3" aria-hidden />
+                  Limpiar
+                </>
+              ) : (
+                <>
+                  <Check className="size-3" aria-hidden />
+                  Marcar todos
+                </>
+              )}
+            </button>
+            <FamilyPlanStatusChip tone={countTone} className="font-mono normal-case tracking-normal">
+              {checkedCount}/{items.length}
+            </FamilyPlanStatusChip>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:shrink-0">
-          <button
-            type="button"
-            onClick={() => onBulk(!allChecked)}
-            disabled={noneChecked && !allChecked ? false : allChecked}
-            className={cn(
-              "inline-flex h-7 items-center gap-1.5 border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-white/65 transition-colors",
-              "hover:border-white/25 hover:bg-white/[0.08] hover:text-white",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-              "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:bg-white/[0.03] disabled:hover:text-white/65",
-            )}
-          >
-            {allChecked ? (
-              <>
-                <X className="size-3" aria-hidden />
-                Limpiar
-              </>
-            ) : (
-              <>
-                <Check className="size-3" aria-hidden />
-                Marcar todos
-              </>
-            )}
-          </button>
-          <span
-            className={cn(
-              "inline-flex h-7 shrink-0 items-center border px-2 font-mono text-[10px] tabular-nums",
-              checkedCount === 0
-                ? "border-white/10 bg-white/[0.03] text-white/45"
-                : checkedCount === items.length
-                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
-                  : "border-amber-500/40 bg-amber-500/15 text-amber-200",
-            )}
-          >
-            {checkedCount}/{items.length}
-          </span>
-        </div>
-      </header>
-      <ul className="grid gap-2 p-3 sm:grid-cols-2">
+      }
+    >
+      <ul className="grid gap-2 sm:grid-cols-2">
         {items.map((item) => (
           <li key={item}>
             <KitItemRow
@@ -211,7 +300,7 @@ function KitSectionCard({
           </li>
         ))}
       </ul>
-    </section>
+    </FamilyPlanCategoryShell>
   )
 }
 
@@ -325,8 +414,21 @@ export function StepEmergencyKit() {
     })
   }
 
+  const valuesBySection = Object.fromEntries(
+    visibleSections.map((section) => [section, kit[section]]),
+  ) as Record<KitSectionKey, Record<string, boolean>>
+  const itemsBySection = Object.fromEntries(
+    visibleSections.map((section) => [section, SECTION_ITEMS[section]]),
+  ) as Record<KitSectionKey, readonly string[]>
+
   return (
-    <div className="flex flex-col gap-4">
+    <FamilyPlanStepRoot>
+      <KitSummaryBanner
+        sections={visibleSections}
+        itemsBySection={itemsBySection}
+        valuesBySection={valuesBySection}
+      />
+
       <EmergencyKitGuideLink variant="banner" />
 
       <div className="flex flex-col gap-3">
@@ -394,6 +496,6 @@ export function StepEmergencyKit() {
           </div>
         </div>
       ) : null}
-    </div>
+    </FamilyPlanStepRoot>
   )
 }

@@ -198,36 +198,44 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
 
+Shell: `PREPARATION_PAGE_*` (`lib/preparation-ui.ts`) + `PreparationBreadcrumb` + `PreparationContextBanner` (CTA al paso 8 del plan).
+
 **Composición (top → bottom):**
 
-1. `<SimulacrosPageHero next={useNextSimulacro()} upcomingTotal={…} />` — hero glass con gradiente Chile, stat boxes (cuenta regresiva, total próximos, tipos) y barra de 4 tipos SENAPRED.
-2. `<SimulacrosTypesChips>` — chips clickeables por `drill_type` que filtran el calendario (incluye `region` y `type`).
-3. `<SimulacrosCalendarSection>` — header + `<SimulacrosFilterBar>` sticky (tabs `Próximos` (default) / `Pasados` + región + rango rápido) + `<SimulacrosTimeline>` agrupado por mes. Solo datos del bloque **CALENDARIO SIMULACROS 2026** (scraping).
-4. `<SimulacrosImportanceAccordion>` — colapsable, expandido por defecto: 5 puntos sobre la importancia de los simulacros SERNAPRED + closing.
-5. `<SimulacrosFooter>` — referencia oficial + link + `next_synced_at` + botón "Actualizar" opcional.
+1. `<SimulacrosPageHero next={…} upcomingTotal={…} />` — hero glass (`PREPARATION_HERO_SHELL_CLASS`), stats (próximos / tipos), **countdown dominante** del próximo simulacro (`SimulacrosCountdown`) y barra de 4 tipos SENAPRED.
+2. `<PreparationContextBanner>` — “Registra en tu plan” → `/preparation/family-plan/step/8?from=simulacros`.
+3. `<SimulacrosImportanceAccordion>` — colapsable: importancia de los simulacros SERNAPRED.
+4. `<SimulacrosCalendarSection>` — header + filtros **sticky** (`PREPARATION_STICKY_SUBNAV_CLASS`: chips de tipo + `<SimulacrosFilterBar>` tabs Próximos/Pasados + región + rango) + `<SimulacrosTimeline>` agrupado por mes (rail por evento, headers tipo CategoryShell, filas compactas sin “Hoy” duplicado). Sin React Chrono / rejilla.
+5. `<SimulacrosFooter>` — referencia oficial + `next_synced_at` + “Actualizar”.
 
-**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacro-card, simulacros-empty-state, simulacros-skeleton, simulacros-footer}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`.
+**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacros-empty-state, simulacros-skeleton, simulacros-footer, simulacros-countdown}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`. Tokens compartidos: `lib/preparation-ui.ts`.
 
-**Estados:** skeleton mientras `isLoading`, error state con botón "Reintentar", empty state separado para upcoming vs past.
+**Estados:** skeleton mientras `isLoading`, error state con botón "Reintentar", empty state (`PREPARATION_EMPTY_STATE_CLASS`) separado para upcoming vs past.
 
 ### Plan Familia Preparada
 
-Rutas: `/preparation` (dashboard), `/preparation/emergency-kit` (guía educativa del kit), `/preparation/family-plan/step/[1-8]`, `/preparation/family-plan/summary`.
+Rutas: `/preparation` (hub), `/preparation/emergency-kit` (guía del kit), `/preparation/family-plan/step/[1-8]`, `/preparation/family-plan/summary`.
 
-Componentes: `components/preparation/family-plan/*`, `components/preparation/emergency-kit/*`. Tipos: `FamilyPlan`, `FamilyPlanData` en `lib/types.ts`. Mapa de vivienda (paso 4): módulo `components/preparation/family-plan/floor-map/`; layout tipo mapa (plano full-width + toolbar flotante `floor-map-toolbar`); herramientas por toggle (habitación/marcador/anotación → clic en plano); constantes en `lib/floor-map-constants.ts`, tools en `lib/floor-map-tools.ts`; plantillas en `lib/floor-map-templates.ts`; miniatura en `family-plan-summary`.
+**Tokens UI:** `lib/preparation-ui.ts` (page shell `py-24`, sticky subnav, hero shell, save pill). Banners cruzados: `PreparationContextBanner`. Breadcrumbs: `PreparationBreadcrumb`.
 
-**Conexión bidireccional Kit ↔ Plan:** la página `/preparation/emergency-kit` tiene un CTA "Guardar en tu plan" que navega a `/preparation/family-plan/step/7?from=emergency-kit`. El step 7 detecta el query y muestra un banner superior con link de retorno. La banner `<EmergencyKitGuideLink variant="banner">` también aparece en la parte superior del step 7 fuera del flujo `?from=`.
+Componentes: `components/preparation/family-plan/*`, `components/preparation/emergency-kit/*`, `components/preparation/preparation-{page-hero,topic-grid,context-banner,breadcrumb}.tsx`. Tipos: `FamilyPlan`, `FamilyPlanData` en `lib/types.ts`. Mapa de vivienda (paso 4): módulo `components/preparation/family-plan/floor-map/` (chrome + tip “Cómo editar”; canvas sin rediseño profundo). Summary: checklist de pasos incompletos con deep-link al step + CTA PDF.
 
-**Conexión Calendario SERNAPRED ↔ Plan:** la página `/simulacros` lista los simulacros oficiales con countdown al próximo. Cada simulacro futuro tiene un CTA "Agregar a mi plan" que navega a `/preparation/family-plan/step/8?source=senapred&slug=…&date=…&emergency_type=…&outcome=…`. El `StepDrills` detecta `?source=senapred`, pre-rellena el form con esos datos (reutilizando el último drill si está vacío, o creando uno nuevo), y muestra un banner superior con link de retorno al calendario. La página `/preparation` apunta el CTA del topic card "Comunicación y simulacros" al calendario (`/simulacros`), y el `StepDrills` añade un link "Ver calendario oficial de SERNAPRED →" en la parte superior cuando el usuario NO viene del calendario.
+**Wizard chrome:** `FamilyPlanStepNav` — desktop pills; móvil sticky (paso + pct + prev/next) + expand “Ver todos los pasos”. `FamilyPlanWizardShell` — breadcrumb Preparación → Plan → Paso N; save pill semántica; footer sticky móvil (Anterior | Guardado | Siguiente) que se oculta al focus de input.
 
-**Dashboard `/preparation` — bloques (orden top → bottom):**
+**Step content layout:** primitivas en `family-plan-layout.tsx` (`FamilyPlanStepRoot`, `StatusBanner`, `CategoryShell`, `ItemCard`, `FormGrid`, `EmptyState`/`AddPanel`, `StatusChip`) + `FamilyPlanField`/`FamilyPlanSection`. Todos los pasos 1–8 (y chrome exterior del floor-map) usan el mismo ritmo `gap-4` y grids `sm:grid-cols-2`.
 
-1. `PreparationPageHero` — glass + gradient Chile, watermark SVG silueta de Chile, 4 stat boxes (`Pasos pendientes` live + pasos del plan / guías / amenazas). **Sin strip inferior** — la taxonomía Antes/Durante/Después es de `/disasters`, no se reusa acá.
-2. `FamilyPlanDashboard` — anillo de progreso SVG (`r=40`, `stroke-dasharray`) + grilla de 8 step chips (`grid-cols-2 sm:grid-cols-4`). Cada chip usa color **temático del step** (no por fase): `STEP_ACCENT[step]` mappea step→color (1=blue, 2=amber, 3=emerald, 4=orange, 5=cyan, 6=violet, 7=rose, 8=pink) para el ícono + número. Chips completados = `bg-emerald-500/[0.06]`, ícono + check en emerald uniforme. Pendientes = `<Link>` al step. **Sin leyenda ni border-left de fase**.
-3. `PreparationTopicGrid` — 4 cards (`grid-cols-1 sm:grid-cols-2 xl:grid-cols-4`), header con gradient saturado + ícono `size-12`, 3 bullet rows con íconos lucide en chip de color.
-4. Aside `Siguiente paso` → gradient Chile + watermark `ShieldAlert`, link a `/disasters`.
+**Conexión bidireccional Kit ↔ Plan:** `/preparation/emergency-kit` usa `PreparationContextBanner` (desktop) + CTA sticky móvil → `/preparation/family-plan/step/7?from=emergency-kit`. Categorías y necesidades especiales usan `FamilyPlanCategoryShell`. Kits especiales siempre visibles; chip “En tu hogar” si el plan los marca. El wizard muestra el mismo patrón de banner de contexto cuando viene del kit.
 
-**Hooks compartidos:** `lib/use-plan-stats.ts` (`usePlanStats`) — read-only sobre `["familyPlan"]` query, calcula `completionPct`, `pendingCount` (= 8 − completed) y `steps[]`. Reutiliza el cache de React Query con `useFamilyPlan` (mismo query key → sin doble fetch).
+**Conexión Calendario SERNAPRED ↔ Plan:** `/simulacros` → banner + CTA “Agregar a mi plan” por card hacia step 8 (`?source=senapred&…`). `StepDrills` pre-rellena y muestra banner de retorno. Hub apunta topic “Comunicación y simulacros” a `/simulacros`.
+
+**Hub `/preparation` — bloques (orden top → bottom):**
+
+1. `PreparationPageHero` — identidad de sección (título + copy + meta estática pasos/guías). **Sin progreso del plan** (evita duplicar el dashboard).
+2. `FamilyPlanDashboard` — dueño único del progreso: `FamilyPlanStatusBanner` (anillo + chip + CTA Continuar/Resumen) + grilla de 8 steps (todos links, también completados).
+3. `PreparationTopicGrid` — 4 recursos complementarios (`FamilyPlanCategoryShell`): kit / evacuación / hogar / simulacros. No incluye “Plan familiar” (ya cubierto arriba).
+4. Aside desastres → `/disasters`.
+
+**Hooks compartidos:** `lib/use-plan-stats.ts` (`usePlanStats`) — read-only sobre `["familyPlan"]` query (`completionPct`, `pendingCount`, `steps[]`). Reutiliza cache de `useFamilyPlan`.
 
 ---
 
@@ -261,4 +269,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-23*

@@ -19,7 +19,8 @@
         backend-sh psql adminer \
         check-ignores \
         verify verify-docs verify-contract verify-frontend verify-backend \
-        export-openapi
+        export-openapi sync-contract \
+        db-migrate db-revision db-stamp
 
 .DEFAULT_GOAL := help
 
@@ -90,6 +91,26 @@ adminer: ## Remind how to reach Adminer (started automatically with compose)
 	@echo "Adminer should be at http://localhost:8080"
 	@echo "Server: db | User: chilerisk | Pass: chilerisk | DB: chilerisk"
 
+# --- Database migrations (Alembic) ---
+
+db-migrate: ## Run alembic upgrade head (inside backend container, or local venv)
+	@if docker compose ps --status running --services 2>/dev/null | grep -qx backend; then \
+		docker compose exec backend alembic upgrade head; \
+	else \
+		cd backend && alembic upgrade head; \
+	fi
+
+db-revision: ## Autogenerate revision: make db-revision MSG="describe change"
+	@test -n "$(MSG)" || (echo 'Usage: make db-revision MSG="describe change"' >&2; exit 1)
+	cd backend && alembic revision --autogenerate -m "$(MSG)"
+
+db-stamp: ## Stamp DB at head (legacy volumes already matching schema)
+	@if docker compose ps --status running --services 2>/dev/null | grep -qx backend; then \
+		docker compose exec backend alembic stamp head; \
+	else \
+		cd backend && alembic stamp head; \
+	fi
+
 # --- Verification helpers (monorepo structure) ---
 
 check-ignores: ## Quick test that key ignore rules are working
@@ -112,12 +133,13 @@ verify: verify-docs verify-contract verify-frontend verify-backend ## Full harne
 verify-docs: ## Markdown local links in AGENTS + docs trees
 	@bash docs/scripts/verify-doc-links.sh
 
-verify-contract: ## Heuristic Pydantic field names vs frontend/lib/types.ts
-	@python3 docs/scripts/check-contract.py
+verify-contract: ## OpenAPI → api-schema.d.ts must match committed file
+	@bash docs/scripts/sync-contract.sh
 
-verify-frontend: ## eslint + TypeScript (requires bun in frontend/)
+verify-frontend: ## eslint + TypeScript + unit tests (requires bun in frontend/)
 	@cd frontend && bun run lint
 	@cd frontend && bunx tsc --noEmit
+	@cd frontend && bun test
 
 verify-backend: ## Python syntax compile (pytest if installed)
 	@cd backend && python3 -m compileall -q app
@@ -128,4 +150,7 @@ verify-backend: ## Python syntax compile (pytest if installed)
 	fi
 
 export-openapi: ## Write backend/docs/openapi.json from FastAPI app (needs backend deps)
-	@python3 docs/scripts/export-openapi.py
+	@ENABLE_SCHEDULER=false $(if $(wildcard backend/.venv/bin/python),backend/.venv/bin/python,python3) docs/scripts/export-openapi.py
+
+sync-contract: ## Export OpenAPI + write frontend/lib/api-schema.d.ts
+	@SYNC_CONTRACT_WRITE=1 bash docs/scripts/sync-contract.sh

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useLayoutEffect, useMemo, useState } from "react"
+import { useLayoutEffect, useMemo, useState } from "react"
 import {
   CITIZEN_NAVBAR_CLEARANCE_PX,
   MAP_PANEL_LEFT_INSET_PX,
@@ -98,21 +98,17 @@ function hasViewportSpaceForAlertsExpanded(): boolean {
 
 export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
   const [openOverride, setOpenOverride] = useState<boolean | null>(null)
-  const [spaceExpanded, setSpaceExpanded] = useState(false)
+  const [, setResizeEpoch] = useState(0)
   const [filter, setFilter] = useState<AlertFilter>("all")
 
-  const syncSpaceExpanded = useCallback(() => {
+  useLayoutEffect(() => {
     if (!flow) return
-    setSpaceExpanded(hasViewportSpaceForAlertsExpanded())
+    const onResize = () => setResizeEpoch((n) => n + 1)
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
   }, [flow])
 
-  useLayoutEffect(() => {
-    syncSpaceExpanded()
-    if (!flow) return
-    window.addEventListener("resize", syncSpaceExpanded)
-    return () => window.removeEventListener("resize", syncSpaceExpanded)
-  }, [flow, syncSpaceExpanded])
-
+  const spaceExpanded = flow ? hasViewportSpaceForAlertsExpanded() : false
   const open = openOverride ?? (flow ? spaceExpanded : false)
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: "active-alerts-panel",

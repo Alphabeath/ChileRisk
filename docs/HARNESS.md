@@ -42,7 +42,7 @@
 | 3 | `frontend/lib/api.ts` — query/body si aplica |
 | 4 | `frontend/lib/alerts-display.ts` u otros normalizadores |
 | 5 | `backend/docs/BACKEND.md` + `frontend/docs/FRONTEND.md` |
-| 6 | `make verify` (incluye `check-contract`) |
+| 6 | `make verify` (incluye `verify-contract` / OpenAPI→TS) |
 
 ---
 
@@ -92,9 +92,10 @@
 ## 7. Comandos de verificación
 
 ```bash
-make verify          # docs links + contract heurístico + lint/tsc FE + compileall BE
+make verify          # docs links + OpenAPI contract + lint/tsc/tests FE + compileall BE
 make verify-docs     # solo enlaces markdown
-make verify-contract # solo schemas ↔ types
+make verify-contract # OpenAPI → api-schema.d.ts drift check
+make sync-contract   # regenera api-schema.d.ts tras cambiar schemas
 make verify-frontend
 make verify-backend
 ```

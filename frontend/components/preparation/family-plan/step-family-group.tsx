@@ -15,8 +15,22 @@ import {
   Users,
 } from "lucide-react"
 
-import { newId } from "@/components/preparation/family-plan/family-plan-field"
-import { FamilyPlanSection } from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FamilyPlanField,
+  newId,
+} from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FAMILY_PLAN_ADD_CTA_CLASS,
+  FAMILY_PLAN_FORM_FULL_CLASS,
+  FamilyPlanAddPanel,
+  FamilyPlanCategoryShell,
+  FamilyPlanEmptyState,
+  FamilyPlanFormGrid,
+  FamilyPlanItemCard,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import {
@@ -32,6 +46,8 @@ import { useFamilyPlan } from "@/hooks/use-family-plan"
 import type { FamilyMember, Pet } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
+type GroupCategory = "members" | "pets"
+
 const SEX_OPTIONS = [
   { value: "Femenino", label: "Femenino" },
   { value: "Masculino", label: "Masculino" },
@@ -45,8 +61,10 @@ const CATEGORY_META = {
     icon: Users,
     accent: "border-l-blue-500/60",
     chip: "border-blue-500/30 bg-blue-500/10 text-blue-200",
+    itemAccent: "border-l-blue-500/50",
     emptyHint:
       "Agrega al primer integrante para empezar a registrar el grupo familiar.",
+    addLabel: "Agregar integrante",
   },
   pets: {
     title: "Mascotas",
@@ -54,8 +72,10 @@ const CATEGORY_META = {
     icon: PawPrint,
     accent: "border-l-emerald-500/60",
     chip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+    itemAccent: "border-l-emerald-500/50",
     emptyHint:
       "Si tienes mascotas, agrégalas. Necesitarás cuidarlas en la emergencia.",
+    addLabel: "Agregar mascota",
   },
 } as const
 
@@ -145,54 +165,103 @@ function PersonAvatar({ name, id }: { name: string; id: string }) {
   )
 }
 
-function GroupSummary({
-  membersTotal,
-  petsTotal,
+function RemoveButton({
+  onClick,
+  label,
 }: {
-  membersTotal: number
-  petsTotal: number
+  onClick: () => void
+  label: string
 }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
       className={cn(
-        "glass-mica interactive-mica flex flex-col gap-3 border border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "inline-flex size-9 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
+        "hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
       )}
     >
+      <Trash2 className="size-3.5" aria-hidden />
+    </button>
+  )
+}
+
+function GroupSummaryBanner({
+  members,
+  pets,
+}: {
+  members: FamilyMember[]
+  pets: Pet[]
+}) {
+  const membersDone = members.filter(isMemberComplete).length
+  const petsDone = pets.filter(isPetComplete).length
+  const total = members.length + pets.length
+  const done = membersDone + petsDone
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+  const specialNeeds = members.filter((m) => m.flags.length > 0).length
+  const allDone = total > 0 && done === total
+
+  return (
+    <FamilyPlanStatusBanner>
       <div className="flex items-center gap-3">
         <span
-          className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white"
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center border font-mono text-[13px] font-semibold tabular-nums",
+            allDone
+              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+              : "border-white/20 bg-white/10 text-white",
+          )}
           aria-hidden
         >
-          <Users className="size-4" />
+          {allDone ? <Check className="size-4" /> : `${pct}%`}
         </span>
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
             Grupo familiar
           </p>
           <p className="mt-0.5 text-[11.5px] text-white/55">
-            {membersTotal === 0 && petsTotal === 0
-              ? "Sin integrantes ni mascotas registrados"
-              : `Resumen de personas y mascotas en el hogar`}
+            {total === 0
+              ? "Registra personas y mascotas del hogar"
+              : `${done} de ${total} fichas completas · ${members.length} integrantes · ${pets.length} mascotas`}
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span
-          className="inline-flex items-center gap-2 border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[1.2px] text-blue-200"
-        >
-          <Users className="size-3" aria-hidden />
-          <span className="font-mono tabular-nums">{membersTotal}</span>
-          Integrantes
-        </span>
-        <span
-          className="inline-flex items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[1.2px] text-emerald-200"
-        >
-          <PawPrint className="size-3" aria-hidden />
-          <span className="font-mono tabular-nums">{petsTotal}</span>
-          Mascotas
-        </span>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[12rem] sm:items-end">
+        {total > 0 ? (
+          <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+            <span
+              className={cn(
+                "block h-full transition-all duration-300",
+                allDone ? "bg-emerald-400/80" : "bg-blue-400/70",
+              )}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FamilyPlanStatusChip
+            tone={members.length === 0 ? "empty" : membersDone === members.length ? "complete" : "started"}
+          >
+            <Users className="size-3" aria-hidden />
+            {members.length}
+          </FamilyPlanStatusChip>
+          <FamilyPlanStatusChip
+            tone={pets.length === 0 ? "empty" : petsDone === pets.length ? "complete" : "started"}
+          >
+            <PawPrint className="size-3" aria-hidden />
+            {pets.length}
+          </FamilyPlanStatusChip>
+          {specialNeeds > 0 ? (
+            <FamilyPlanStatusChip tone="pending">
+              <Accessibility className="size-3" aria-hidden />
+              {specialNeeds} cond.
+            </FamilyPlanStatusChip>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </FamilyPlanStatusBanner>
   )
 }
 
@@ -213,23 +282,19 @@ function SectionHeader({
   )
 }
 
-function FieldLabel({
-  htmlFor,
-  icon: Icon,
-  children,
-}: {
-  htmlFor?: string
-  icon?: LucideIcon
-  children: React.ReactNode
-}) {
+function CardStatusChip({ complete }: { complete: boolean }) {
   return (
-    <label
-      htmlFor={htmlFor}
-      className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[1.4px] text-white/55"
-    >
-      {Icon ? <Icon className="size-3" aria-hidden /> : null}
-      {children}
-    </label>
+    <FamilyPlanStatusChip tone={complete ? "complete" : "empty"}>
+      {complete ? (
+        <Check className="size-3" aria-hidden />
+      ) : (
+        <span
+          className="inline-block size-1.5 rounded-full bg-white/40"
+          aria-hidden
+        />
+      )}
+      {complete ? "Completo" : "Pendiente"}
+    </FamilyPlanStatusChip>
   )
 }
 
@@ -243,101 +308,67 @@ function MemberCard({
   onRemove: () => void
 }) {
   const complete = isMemberComplete(member)
+  const flagLabels = member.flags
+    .map((f) => FAMILY_MEMBER_FLAGS.find((flag) => flag.id === f)?.label ?? f)
+    .join(", ")
+
   return (
-    <article
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-4 border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/25",
-        !complete && "border-dashed",
-      )}
+    <FamilyPlanItemCard
+      accentClassName={CATEGORY_META.members.itemAccent}
+      className={!complete ? "border-dashed" : undefined}
     >
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <PersonAvatar name={memberFullName(member)} id={member.id} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] text-white/90">
+            <p className="truncate text-[13px] font-medium text-white/90">
               {memberFullName(member)}
             </p>
             <p className="truncate text-[11px] text-white/45">
-              {memberSummary(member) || "Sin datos adicionales"}
+              {memberSummary(member) || "Completa nombre y apellidos"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
           {member.flags.length > 0 ? (
-            <span
-              className="inline-flex h-7 items-center gap-1 border border-amber-500/40 bg-amber-500/10 px-2 text-[9px] font-semibold uppercase tracking-[1.2px] text-amber-200"
-              title={member.flags
-                .map(
-                  (f) =>
-                    FAMILY_MEMBER_FLAGS.find((flag) => flag.id === f)?.label ??
-                    f,
-                )
-                .join(", ")}
-            >
+            <FamilyPlanStatusChip tone="pending" title={flagLabels}>
               <Accessibility className="size-3" aria-hidden />
-              {member.flags.length}
-            </span>
+              {member.flags.length} cond.
+            </FamilyPlanStatusChip>
           ) : null}
-          <span
-            className={cn(
-              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-              complete
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-white/10 bg-white/[0.03] text-white/45",
-            )}
-          >
-            {complete ? (
-              <Check className="size-3" aria-hidden />
-            ) : (
-              <span
-                className="inline-block size-1.5 rounded-full bg-white/40"
-                aria-hidden
-              />
-            )}
-            {complete ? "Completo" : "Pendiente"}
-          </span>
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label="Eliminar integrante"
-            className={cn(
-              "inline-flex size-7 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
-              "hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-            )}
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-          </button>
+          <CardStatusChip complete={complete} />
+          <RemoveButton onClick={onRemove} label="Eliminar integrante" />
         </div>
       </header>
 
       <div className="flex flex-col gap-3">
         <SectionHeader icon={User} title="Datos personales" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-first`} icon={User}>
-              Nombre
-            </FieldLabel>
+        <FamilyPlanFormGrid>
+          <FamilyPlanField
+            htmlFor={`${member.id}-first`}
+            icon={User}
+            label="Nombre"
+          >
             <Input
               id={`${member.id}-first`}
               value={member.first_name}
               onChange={(e) => onUpdate({ first_name: e.target.value })}
               placeholder="Ej. María"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-last`} icon={User}>
-              Apellidos
-            </FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField
+            htmlFor={`${member.id}-last`}
+            icon={User}
+            label="Apellidos"
+          >
             <Input
               id={`${member.id}-last`}
               value={member.last_name}
               onChange={(e) => onUpdate({ last_name: e.target.value })}
               placeholder="Ej. González Pérez"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-age`}>Edad</FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField htmlFor={`${member.id}-age`} label="Edad">
             <Input
               id={`${member.id}-age`}
               type="number"
@@ -351,9 +382,8 @@ function MemberCard({
               }
               placeholder="—"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-sex`}>Sexo</FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField htmlFor={`${member.id}-sex`} label="Sexo">
             <Select
               value={member.sex || "none"}
               onValueChange={(value) =>
@@ -372,98 +402,110 @@ function MemberCard({
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-nat`}>Nacionalidad</FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField htmlFor={`${member.id}-nat`} label="Nacionalidad">
             <Input
               id={`${member.id}-nat`}
               value={member.nationality}
               onChange={(e) => onUpdate({ nationality: e.target.value })}
               placeholder="Ej. Chilena"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel htmlFor={`${member.id}-doc`} icon={IdCard}>
-              Documento
-            </FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField
+            htmlFor={`${member.id}-doc`}
+            icon={IdCard}
+            label="Documento"
+          >
             <Input
               id={`${member.id}-doc`}
               value={member.document}
               onChange={(e) => onUpdate({ document: e.target.value })}
               placeholder="RUN / DNI"
             />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor={`${member.id}-phone`} icon={Phone}>
-            Teléfono
-          </FieldLabel>
-          <Input
-            id={`${member.id}-phone`}
-            value={member.phone}
-            onChange={(e) => onUpdate({ phone: e.target.value })}
-            placeholder="+56 9 ..."
-            inputMode="tel"
-          />
-        </div>
+          </FamilyPlanField>
+          <FamilyPlanField
+            htmlFor={`${member.id}-phone`}
+            icon={Phone}
+            label="Teléfono"
+            className={FAMILY_PLAN_FORM_FULL_CLASS}
+          >
+            <Input
+              id={`${member.id}-phone`}
+              value={member.phone}
+              onChange={(e) => onUpdate({ phone: e.target.value })}
+              placeholder="+56 9 ..."
+              inputMode="tel"
+            />
+          </FamilyPlanField>
+        </FamilyPlanFormGrid>
       </div>
 
       <div className="flex flex-col gap-3">
         <SectionHeader icon={HeartPulse} title="Salud" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel icon={Stethoscope}>Condiciones médicas</FieldLabel>
+        <FamilyPlanFormGrid>
+          <FamilyPlanField icon={Stethoscope} label="Condiciones médicas">
             <Textarea
               value={member.medical_conditions}
               onChange={(e) => onUpdate({ medical_conditions: e.target.value })}
               rows={2}
               placeholder="Diabetes, hipertensión, alergias…"
             />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <FieldLabel>Contraindicaciones</FieldLabel>
+          </FamilyPlanField>
+          <FamilyPlanField label="Contraindicaciones">
             <Textarea
               value={member.contraindications}
               onChange={(e) => onUpdate({ contraindications: e.target.value })}
               rows={2}
               placeholder="Medicamentos contraindicados, alergias a fármacos…"
             />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel icon={Accessibility}>Necesidades especiales</FieldLabel>
-          <Textarea
-            value={member.special_needs}
-            onChange={(e) => onUpdate({ special_needs: e.target.value })}
-            rows={2}
-            placeholder="Asistencia, dispositivos, apoyo permanente…"
-          />
-        </div>
+          </FamilyPlanField>
+          <FamilyPlanField
+            icon={Accessibility}
+            label="Necesidades especiales"
+            className={FAMILY_PLAN_FORM_FULL_CLASS}
+            helper="Apoyo permanente, dispositivos o asistencia en evacuación."
+          >
+            <Textarea
+              value={member.special_needs}
+              onChange={(e) => onUpdate({ special_needs: e.target.value })}
+              rows={2}
+              placeholder="Asistencia, dispositivos, apoyo permanente…"
+            />
+          </FamilyPlanField>
+        </FamilyPlanFormGrid>
       </div>
 
       <div className="flex flex-col gap-3">
         <SectionHeader icon={Accessibility} title="Condiciones especiales" />
-        <div className="grid gap-2 sm:grid-cols-2">
-          {FAMILY_MEMBER_FLAGS.map((flag) => (
-            <label
-              key={flag.id}
-              className="glass-mica interactive-mica flex items-center gap-2 border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] text-white/80 transition-colors hover:border-white/25 hover:bg-white/[0.06]"
-            >
-              <Checkbox
-                checked={member.flags.includes(flag.id)}
-                onCheckedChange={(checked) => {
-                  const flags = checked
-                    ? [...member.flags, flag.id]
-                    : member.flags.filter((f) => f !== flag.id)
-                  onUpdate({ flags })
-                }}
-              />
-              {flag.label}
-            </label>
-          ))}
-        </div>
+        <FamilyPlanFormGrid className="gap-2">
+          {FAMILY_MEMBER_FLAGS.map((flag) => {
+            const checked = member.flags.includes(flag.id)
+            return (
+              <label
+                key={flag.id}
+                className={cn(
+                  "glass-mica interactive-mica flex min-h-11 items-center gap-2.5 border px-3 py-2.5 text-[12px] transition-colors",
+                  checked
+                    ? "border-amber-400/35 bg-amber-500/[0.08] text-amber-50"
+                    : "border-white/10 bg-white/[0.03] text-white/80 hover:border-white/25 hover:bg-white/[0.06]",
+                )}
+              >
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(next) => {
+                    const flags = next
+                      ? [...member.flags, flag.id]
+                      : member.flags.filter((f) => f !== flag.id)
+                    onUpdate({ flags })
+                  }}
+                />
+                {flag.label}
+              </label>
+            )
+          })}
+        </FamilyPlanFormGrid>
       </div>
-    </article>
+    </FamilyPlanItemCard>
   )
 }
 
@@ -478,77 +520,44 @@ function PetCard({
 }) {
   const complete = isPetComplete(pet)
   return (
-    <article
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-4 border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/25",
-        !complete && "border-dashed",
-      )}
+    <FamilyPlanItemCard
+      accentClassName={CATEGORY_META.pets.itemAccent}
+      className={!complete ? "border-dashed" : undefined}
     >
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <PersonAvatar name={pet.name} id={pet.id} />
           <div className="min-w-0">
-            <p className="truncate text-[13px] text-white/90">
+            <p className="truncate text-[13px] font-medium text-white/90">
               {pet.name.trim() || "Mascota sin nombre"}
             </p>
             <p className="truncate text-[11px] text-white/45">
-              {petSummary(pet) || "Sin datos"}
+              {petSummary(pet) || "Completa nombre y especie"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-              complete
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-white/10 bg-white/[0.03] text-white/45",
-            )}
-          >
-            {complete ? (
-              <Check className="size-3" aria-hidden />
-            ) : (
-              <span
-                className="inline-block size-1.5 rounded-full bg-white/40"
-                aria-hidden
-              />
-            )}
-            {complete ? "Completo" : "Pendiente"}
-          </span>
-          <button
-            type="button"
-            onClick={onRemove}
-            aria-label="Eliminar mascota"
-            className={cn(
-              "inline-flex size-7 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
-              "hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-            )}
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-          </button>
+        <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+          <CardStatusChip complete={complete} />
+          <RemoveButton onClick={onRemove} label="Eliminar mascota" />
         </div>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel icon={PawPrint}>Nombre</FieldLabel>
+      <FamilyPlanFormGrid>
+        <FamilyPlanField icon={PawPrint} label="Nombre">
           <Input
             value={pet.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder="Ej. Firulais"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel>Especie</FieldLabel>
+        </FamilyPlanField>
+        <FamilyPlanField label="Especie">
           <Input
             value={pet.species}
             onChange={(e) => onUpdate({ species: e.target.value })}
             placeholder="Perro, gato, ..."
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <FieldLabel>Edad</FieldLabel>
+        </FamilyPlanField>
+        <FamilyPlanField label="Edad">
           <Input
             type="number"
             min={0}
@@ -559,26 +568,29 @@ function PetCard({
             }
             placeholder="—"
           />
-        </div>
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel>Características</FieldLabel>
-        <Input
-          value={pet.characteristics}
-          onChange={(e) => onUpdate({ characteristics: e.target.value })}
-          placeholder="Tamaño, raza, señas particulares..."
-        />
-      </div>
-      <div className="flex flex-col gap-1.5">
-        <FieldLabel icon={Accessibility}>Necesidades especiales</FieldLabel>
-        <Textarea
-          value={pet.special_needs}
-          onChange={(e) => onUpdate({ special_needs: e.target.value })}
-          rows={2}
-          placeholder="Medicación, dieta, apoyo..."
-        />
-      </div>
-    </article>
+        </FamilyPlanField>
+        <FamilyPlanField label="Características">
+          <Input
+            value={pet.characteristics}
+            onChange={(e) => onUpdate({ characteristics: e.target.value })}
+            placeholder="Tamaño, raza, señas particulares..."
+          />
+        </FamilyPlanField>
+        <FamilyPlanField
+          icon={Accessibility}
+          label="Necesidades especiales"
+          className={FAMILY_PLAN_FORM_FULL_CLASS}
+          helper="Medicación, dieta o apoyo en evacuación."
+        >
+          <Textarea
+            value={pet.special_needs}
+            onChange={(e) => onUpdate({ special_needs: e.target.value })}
+            rows={2}
+            placeholder="Medicación, dieta, apoyo..."
+          />
+        </FamilyPlanField>
+      </FamilyPlanFormGrid>
+    </FamilyPlanItemCard>
   )
 }
 
@@ -586,13 +598,13 @@ function AddCategoryPanel({
   category,
   onAdd,
 }: {
-  category: "members" | "pets"
+  category: GroupCategory
   onAdd: () => void
 }) {
   const meta = CATEGORY_META[category]
   const Icon = meta.icon
   return (
-    <div className="flex flex-col gap-3 border border-dashed border-white/25 bg-white/[0.025] p-4 transition-colors hover:border-white/35 hover:bg-white/[0.04]">
+    <FamilyPlanAddPanel>
       <header className="flex items-center gap-2.5">
         <span
           className="flex size-7 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white"
@@ -611,81 +623,95 @@ function AddCategoryPanel({
         type="button"
         onClick={onAdd}
         className={cn(
-          "inline-flex w-fit items-center gap-2 self-start border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[1.2px] text-white transition-colors",
+          FAMILY_PLAN_ADD_CTA_CLASS,
           "hover:border-white/30 hover:bg-white/15",
           "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
         )}
       >
         <Icon className="size-3.5" aria-hidden />
-        {category === "members" ? "Agregar integrante" : "Agregar mascota"}
+        {meta.addLabel}
       </button>
-    </div>
+    </FamilyPlanAddPanel>
   )
 }
 
 function CategorySection({
   category,
-  children,
   count,
   doneCount,
+  onAdd,
+  children,
 }: {
-  category: "members" | "pets"
-  children: React.ReactNode
+  category: GroupCategory
   count: number
   doneCount: number
+  onAdd: () => void
+  children: React.ReactNode
 }) {
   const meta = CATEGORY_META[category]
   const Icon = meta.icon
+  const chipTone =
+    count === 0 ? "empty" : doneCount === count ? "complete" : "pending"
+
   return (
-    <section
-      className={cn(
-        "glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] transition-colors hover:border-white/25",
-        meta.accent,
-      )}
-    >
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center border",
-              meta.chip,
-            )}
-            aria-hidden
-          >
-            <Icon className="size-3.5" />
-          </span>
-          <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              {meta.title}
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-white/45">
-              {meta.description}
-            </p>
+    <FamilyPlanCategoryShell
+      accentClassName={meta.accent}
+      header={
+        <>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center border",
+                meta.chip,
+              )}
+              aria-hidden
+            >
+              <Icon className="size-3.5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                {meta.title}
+              </h3>
+              <p className="mt-0.5 truncate text-[11.5px] text-white/45">
+                {meta.description}
+              </p>
+            </div>
           </div>
-        </div>
-        <span
-          className={cn(
-            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-            count === 0
-              ? "border-white/10 bg-white/[0.03] text-white/45"
-              : doneCount === count
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-200",
-          )}
-        >
-          {count === 0 ? "Vacío" : `${doneCount}/${count}`}
-        </span>
-      </header>
-      <div className="flex flex-col gap-2 p-3">
-        {count === 0 ? (
-          <p className="border border-dashed border-white/10 bg-white/[0.02] px-3 py-4 text-center text-[11.5px] text-white/45">
+          <FamilyPlanStatusChip tone={chipTone}>
+            {count === 0 ? "Vacío" : `${doneCount}/${count}`}
+          </FamilyPlanStatusChip>
+        </>
+      }
+    >
+      {count === 0 ? (
+        <FamilyPlanEmptyState className="gap-3 px-3 py-6">
+          <Icon className="size-6 text-white/35" aria-hidden />
+          <p className="text-[12px] text-white/55">
             Aún no hay registros en esta categoría.
           </p>
-        ) : (
-          children
-        )}
-      </div>
-    </section>
+          <p className="max-w-sm text-[11px] text-white/40">{meta.emptyHint}</p>
+          <button
+            type="button"
+            onClick={onAdd}
+            className={cn(
+              FAMILY_PLAN_ADD_CTA_CLASS,
+              "sm:self-center",
+              "hover:border-white/30 hover:bg-white/15",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+            )}
+          >
+            <Plus className="size-3.5" aria-hidden />
+            {meta.addLabel}
+          </button>
+        </FamilyPlanEmptyState>
+      ) : (
+        <div className="flex flex-col gap-2">{children}</div>
+      )}
+
+      {count > 0 ? (
+        <AddCategoryPanel category={category} onAdd={onAdd} />
+      ) : null}
+    </FamilyPlanCategoryShell>
   )
 }
 
@@ -753,75 +779,42 @@ export function StepFamilyGroup() {
 
   const membersDone = data.members.filter(isMemberComplete).length
   const petsDone = data.pets.filter(isPetComplete).length
-  const total = data.members.length + data.pets.length
-  const totalEmpty = total === 0
 
   return (
-    <div className="flex flex-col gap-4">
-      <GroupSummary
-        membersTotal={data.members.length}
-        petsTotal={data.pets.length}
-      />
+    <FamilyPlanStepRoot>
+      <GroupSummaryBanner members={data.members} pets={data.pets} />
 
-      <FamilyPlanSection
-        title="Personas y mascotas"
-        description="Registra integrantes del hogar y, si tienes, las mascotas que viven contigo."
+      <CategorySection
+        category="members"
+        count={data.members.length}
+        doneCount={membersDone}
+        onAdd={addMember}
       >
-        {totalEmpty ? (
-          <div
-            className={cn(
-              "glass-mica interactive-mica flex flex-col items-center gap-2 border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center",
-            )}
-          >
-            <Users className="size-6 text-white/35" aria-hidden />
-            <p className="text-[12px] text-white/55">
-              Aún no has agregado integrantes ni mascotas.
-            </p>
-            <p className="max-w-md text-[11.5px] text-white/40">
-              Usa los botones &quot;Agregar integrante&quot; o &quot;Agregar mascota&quot; en
-              cada categoría para empezar.
-            </p>
-          </div>
-        ) : null}
+        {data.members.map((member) => (
+          <MemberCard
+            key={member.id}
+            member={member}
+            onUpdate={(patch) => updateMember(member.id, patch)}
+            onRemove={() => removeMember(member.id)}
+          />
+        ))}
+      </CategorySection>
 
-        <div className="flex flex-col gap-3">
-          <CategorySection
-            category="members"
-            count={data.members.length}
-            doneCount={membersDone}
-          >
-            {data.members.map((member) => (
-              <MemberCard
-                key={member.id}
-                member={member}
-                onUpdate={(patch) => updateMember(member.id, patch)}
-                onRemove={() => removeMember(member.id)}
-              />
-            ))}
-          </CategorySection>
-
-          <div className="rounded-none">
-            <AddCategoryPanel category="members" onAdd={addMember} />
-          </div>
-
-          <CategorySection
-            category="pets"
-            count={data.pets.length}
-            doneCount={petsDone}
-          >
-            {data.pets.map((pet) => (
-              <PetCard
-                key={pet.id}
-                pet={pet}
-                onUpdate={(patch) => updatePet(pet.id, patch)}
-                onRemove={() => removePet(pet.id)}
-              />
-            ))}
-          </CategorySection>
-
-          <AddCategoryPanel category="pets" onAdd={addPet} />
-        </div>
-      </FamilyPlanSection>
-    </div>
+      <CategorySection
+        category="pets"
+        count={data.pets.length}
+        doneCount={petsDone}
+        onAdd={addPet}
+      >
+        {data.pets.map((pet) => (
+          <PetCard
+            key={pet.id}
+            pet={pet}
+            onUpdate={(patch) => updatePet(pet.id, patch)}
+            onRemove={() => removePet(pet.id)}
+          />
+        ))}
+      </CategorySection>
+    </FamilyPlanStepRoot>
   )
 }

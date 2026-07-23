@@ -17,6 +17,7 @@ from app.services.impact_service import get_max_seismic_metrics_by_region
 from app.services.query_date_window import day_bounds_utc, today_chile
 from app.services.region_service import get_all_regions_for_alerts
 from app.services.senapred_service import (
+    is_cancel_title,
     normalize_hazard_type,
     pick_latest_senapred_per_thread,
     senapred_thread_root,
@@ -138,27 +139,46 @@ def _hazard_risk_detail(
     return f"índice compuesto {score:.1f}/100"
 
 
+def filter_senapred_rows_for_active_list(
+    rows: list[SenapredAlert], *, include_inactive: bool
+) -> list[SenapredAlert]:
+    """Dedupe by thread, drop pure cancels, then optionally drop inactive.
+
+    Cancels are loaded even for \"today\" so a later cancel can close the thread
+    (latest wins in dedupe, then the cancel row is discarded).
+    """
+    latest = pick_latest_senapred_per_thread(list(rows))
+    out: list[SenapredAlert] = []
+    for row in latest:
+        if is_cancel_title(row.title):
+            continue
+        if not include_inactive and not row.is_active:
+            continue
+        out.append(row)
+    return out
+
+
 async def _senapred_rows_to_out(
     session: AsyncSession, *, query_date: date, include_inactive: bool = False
 ) -> list[ActiveAlertOut]:
     start, end = day_bounds_utc(query_date)
-    conditions = [
-        SenapredAlert.senapred_issued_at >= start,
-        SenapredAlert.senapred_issued_at < end,
-    ]
-    if not include_inactive:
-        conditions.append(SenapredAlert.is_active.is_(True))
+    # Always load inactive (incl. cancels) so thread dedupe can close a chain.
     stmt = (
         select(SenapredAlert)
-        .where(*conditions)
+        .where(
+            SenapredAlert.senapred_issued_at >= start,
+            SenapredAlert.senapred_issued_at < end,
+        )
         .order_by(SenapredAlert.senapred_issued_at.desc())
     )
     rows = (await session.execute(stmt)).scalars().all()
     by_id = {r.senapred_id: r for r in rows}
-    latest = pick_latest_senapred_per_thread(rows)
+    filtered = filter_senapred_rows_for_active_list(
+        rows, include_inactive=include_inactive
+    )
     return [
         _row_to_out(r, thread_root_id=senapred_thread_root(r, by_id))
-        for r in latest
+        for r in filtered
     ]
 
 

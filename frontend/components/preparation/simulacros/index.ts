@@ -8,7 +8,6 @@ export {
   type SimulacrosView,
 } from "./simulacros-filter-bar"
 export { SimulacrosTypesChips } from "./simulacros-types-chips"
-export { SimulacroCard } from "./simulacro-card"
 export { SimulacroListRow } from "./simulacro-list-row"
 export { SimulacrosTimeline } from "./simulacros-timeline"
 export { SimulacrosMonthHeader } from "./simulacros-month-header"

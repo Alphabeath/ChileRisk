@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useState } from "react"
 
 import {
   createMarkerAt,
@@ -15,12 +15,18 @@ import { FloorMapToolBadge } from "@/components/preparation/family-plan/floor-ma
 import { FloorMapToolbar } from "@/components/preparation/family-plan/floor-map/floor-map-toolbar"
 import type { LayerVisibility } from "@/components/preparation/family-plan/floor-map-layer-toggles"
 import { newId } from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { useFamilyPlan } from "@/hooks/use-family-plan"
 import {
   FLOOR_MAP_TEMPLATES,
   type FloorMapTemplate,
 } from "@/lib/floor-map-templates"
 import {
+  FLOOR_MAP_PHASES,
   floorMapPhaseIndex,
   type FloorMapPhase,
 } from "@/lib/floor-map-phases"
@@ -29,6 +35,8 @@ import {
   type FloorMapTool,
 } from "@/lib/floor-map-tools"
 import type { FloorMap, FloorMapRoom } from "@/lib/types"
+import { Check, Map } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 const DEFAULT_PREVIEW =
   FLOOR_MAP_TEMPLATES.find((t) => t.id === "apartment-1b") ?? FLOOR_MAP_TEMPLATES[1]
@@ -43,6 +51,79 @@ function initialMaxPhase(hasRooms: boolean, hasZones: boolean): FloorMapPhase {
   if (hasZones) return "zones"
   if (hasRooms) return "layout"
   return "template"
+}
+
+function FloorMapChromeBanner({
+  phase,
+  saved,
+  roomCount,
+  zoneCount,
+}: {
+  phase?: FloorMapPhase
+  saved?: boolean
+  roomCount: number
+  zoneCount: number
+}) {
+  const phaseMeta = phase
+    ? FLOOR_MAP_PHASES.find((p) => p.id === phase)
+    : null
+  const stepIndex = phase ? floorMapPhaseIndex(phase) + 1 : 3
+  const pct = Math.round((stepIndex / FLOOR_MAP_PHASES.length) * 100)
+
+  return (
+    <FamilyPlanStatusBanner>
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center border",
+            saved
+              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+              : "border-white/20 bg-white/10 text-white",
+          )}
+          aria-hidden
+        >
+          {saved ? <Check className="size-4" /> : <Map className="size-4" />}
+        </span>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
+            {saved ? "Plano guardado" : "Mapa de la vivienda"}
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-white/55">
+            {saved
+              ? `${roomCount} habitaciones · ${zoneCount} zonas`
+              : phaseMeta
+                ? `Fase ${phaseMeta.step} de ${FLOOR_MAP_PHASES.length}: ${phaseMeta.label} — ${phaseMeta.description}`
+                : "Representa tu hogar paso a paso"}
+          </p>
+        </div>
+      </div>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[10rem] sm:items-end">
+        {!saved ? (
+          <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+            <span
+              className="block h-full bg-cyan-400/70 transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {saved ? (
+            <FamilyPlanStatusChip tone="complete">Listo</FamilyPlanStatusChip>
+          ) : (
+            <FamilyPlanStatusChip tone="started">
+              {phaseMeta?.label ?? "Edición"}
+            </FamilyPlanStatusChip>
+          )}
+          <FamilyPlanStatusChip tone={roomCount > 0 ? "started" : "empty"}>
+            {roomCount} hab.
+          </FamilyPlanStatusChip>
+          <FamilyPlanStatusChip tone={zoneCount > 0 ? "started" : "empty"}>
+            {zoneCount} zonas
+          </FamilyPlanStatusChip>
+        </div>
+      </div>
+    </FamilyPlanStatusBanner>
+  )
 }
 
 function visibilityForPhase(phase: FloorMapPhase): LayerVisibility {
@@ -65,19 +146,15 @@ export function StepFloorMap() {
   const { data, updateData, saveNow, saveStatus } = useFamilyPlan()
   const hasRooms = (data?.floor_map.rooms.length ?? 0) > 0
   const hasZones = (data?.floor_map.zones.length ?? 0) > 0
-  const isSaved = data?.floor_map.saved_at !== null
+  const defaultSavedView =
+    data != null &&
+    data.floor_map.saved_at !== null &&
+    data.floor_map.rooms.length > 0
 
   type ViewMode = "saved" | "editing"
-  const [viewMode, setViewMode] = useState<ViewMode>("editing")
-  const didInitView = useRef(false)
-
-  useEffect(() => {
-    if (didInitView.current || !data) return
-    didInitView.current = true
-    if (data.floor_map.saved_at !== null && data.floor_map.rooms.length > 0) {
-      setViewMode("saved")
-    }
-  }, [data])
+  const [viewOverride, setViewOverride] = useState<ViewMode | null>(null)
+  const viewMode: ViewMode = viewOverride ?? (defaultSavedView ? "saved" : "editing")
+  const setViewMode = (mode: ViewMode) => setViewOverride(mode)
 
   const showSavedView = hasRooms && viewMode === "saved"
   const [activeTool, setActiveTool] = useState<FloorMapTool>(FLOOR_MAP_SELECT_TOOL)
@@ -294,18 +371,42 @@ export function StepFloorMap() {
 
   if (showSavedView) {
     return (
-      <div className="flex flex-col gap-3 border border-white/15">
-        <FloorMapReviewStep
-          floorMap={floorMap}
-          saveStatus={saveStatus}
-          onEdit={startEditing}
+      <FamilyPlanStepRoot>
+        <FloorMapChromeBanner
+          saved
+          roomCount={floorMap.rooms.length}
+          zoneCount={floorMap.zones.length}
         />
-      </div>
+        <div className="border border-white/15">
+          <FloorMapReviewStep
+            floorMap={floorMap}
+            saveStatus={saveStatus}
+            onEdit={startEditing}
+          />
+        </div>
+      </FamilyPlanStepRoot>
     )
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <FamilyPlanStepRoot>
+      <FloorMapChromeBanner
+        phase={phase}
+        roomCount={floorMap.rooms.length}
+        zoneCount={floorMap.zones.length}
+      />
+
+      <details className="border border-white/15 bg-white/[0.04] px-4 py-3 open:bg-white/[0.05]">
+        <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-[1.2px] text-white/70">
+          Cómo editar el plano
+        </summary>
+        <p className="mt-2 text-[12.5px] leading-snug text-white/55">
+          Elige una plantilla, luego habitaciones y zonas. En móvil la barra de
+          herramientas queda arriba del plano: activa una herramienta y toca el
+          mapa para colocar elementos.
+        </p>
+      </details>
+
       <FloorMapPhaseNav
         current={phase}
         maxReached={maxPhase}
@@ -363,6 +464,6 @@ export function StepFloorMap() {
           ) : null}
         </div>
       </div>
-    </div>
+    </FamilyPlanStepRoot>
   )
 }

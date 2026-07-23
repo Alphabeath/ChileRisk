@@ -15,6 +15,7 @@
 | **Runtime** | `GET /openapi.json` con el backend en marcha (`http://localhost:8000/openapi.json`) |
 | **Swagger UI** | `http://localhost:8000/docs` |
 | **Snapshot opcional** | `make export-openapi` → `backend/docs/openapi.json` (requiere deps Python del backend) |
+| **Contrato FE** | `make sync-contract` → `frontend/lib/api-schema.d.ts` (commiteado; `make verify-contract` falla si hay drift) |
 | **Resumen humano** | Tablas de esta página |
 
 Si OpenAPI y esta doc divergen, **OpenAPI gana**; actualiza las tablas aquí en el mismo task.
@@ -45,7 +46,8 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 
 | Método | Path | Descripción |
 |--------|------|-------------|
-| GET | `/health` | `{ status, version, uptime_seconds }` — **público** |
+| GET | `/health` | `{ status, version, uptime_seconds, sync[] }` — **público** (`sync` = resumen sin errores) |
+| GET | `/api/v1/system/sync-status` | Última corrida por job (`csn_sync`, `meteo_update`, …) — **JWT** |
 | POST | `/api/v1/auth/register` | Registro email/contraseña |
 | POST | `/api/v1/auth/verify-credentials` | Validación login (servidor Next) |
 | POST | `/api/v1/auth/oauth/google` | Upsert usuario Google |
@@ -80,6 +82,8 @@ Fuentes unificadas en `ActiveAlertOut` (`app/schemas/alert.py`):
 Filtros opcionales: `region` (1–16), `comuna`, `level`, `kind`, `hazard` (`sismo`, `volcan`, `incendio`, …).
 
 Campos notables: `external_url`, `affected_scope`, `comuna_codes`, `thread_root_id`, `hazard_type`, scores ChileRisk cuando `source=chilerisk`.
+
+SERNAPRED (parity con [senapred.cl/alertas](https://senapred.cl/alertas) / `/eventos`): vigente = `isActive` + `isPrincipal` (ATP y eventos). Dedupe por hilo (`url_access` canónico, fallback cadena `parentId`) + `region_code` para expansiones multi-región. Geografía: `metaData.comunas` / `provincias` + NLP. Boletines de **solo cancelación** (`Se cancela…` sin `declara`) no se listan ni hoy ni en `?date=` histórico. En días pasados sí pueden incluirse otras filas `is_active=False` (p. ej. no principales / ya cerradas por la fuente).
 
 Rate limits: lectura 100/min; events 60; impact 30; stats 50; alerts 60.
 
@@ -162,8 +166,9 @@ Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicia
 | Simulacro | `simulacro.py` | Calendario público de simulacros (próximos + pasados) |
 | User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
 | FamilyPlan | `family_plan.py` | Plan Familia Preparada (1 por `user_id`, JSON) |
+| SyncRun | `sync_run.py` | Últimas corridas de jobs del scheduler |
 
-Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic). Cambios de schema → `docker compose down -v` o migración explícita acordada.
+Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` antes de uvicorn. Volúmenes legacy ya alineados: `make db-stamp`. Schema roto en dev: `make down-v` + `make up`. Nueva revisión: `make db-revision MSG="…"`.
 
 ---
 
@@ -176,7 +181,7 @@ Schema MVP: `Base.metadata.create_all` + ALTER puntual en lifespan (sin Alembic)
 | `impact_service` | Precompute al llegar evento |
 | `csn_service` | Scrape + dedup ±3 min |
 | `openmeteo_service` | Batch 40 comunas/request |
-| `senapred_service` | GraphQL paginado + upsert |
+| `senapred_service` | GraphQL paginado + upsert; `isPrincipal` ATP/eventos; dedupe `url_access` |
 | `simulacro_parsers` | HTML → dict solo bloque **CALENDARIO SIMULACROS \<year\>** (ignora "Simulacros recientes") |
 | `simulacro_sync` | httpx fetch índice + enrich páginas detalle con link + upsert |
 | `simulacro_service` | Lectura DB (`list`, `next`, `by_slug`, `prune`) |
@@ -225,4 +230,4 @@ backend/app/
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-23*

@@ -7,7 +7,6 @@ import {
   Copy,
   Flame,
   HeartPulse,
-  Plus,
   Shield,
   ShieldCheck,
   Trash2,
@@ -17,8 +16,23 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { newId } from "@/components/preparation/family-plan/family-plan-field"
-import { FamilyPlanSection } from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FamilyPlanField,
+  FamilyPlanSection,
+  newId,
+} from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FAMILY_PLAN_FORM_FULL_CLASS,
+  FamilyPlanAddCta,
+  FamilyPlanAddPanel,
+  FamilyPlanCategoryShell,
+  FamilyPlanEmptyState,
+  FamilyPlanFormGrid,
+  FamilyPlanItemCard,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { Input } from "@/components/ui/input"
 import { NATIONAL_EMERGENCY_NUMBERS } from "@/lib/family-plan-defaults"
 import { useFamilyPlan } from "@/hooks/use-family-plan"
@@ -35,6 +49,7 @@ const CATEGORY_META: Record<
     icon: LucideIcon
     accent: string
     chip: string
+    itemAccent: string
     emptyHint: string
   }
 > = {
@@ -44,6 +59,7 @@ const CATEGORY_META: Record<
     icon: Users,
     accent: "border-l-emerald-500/60",
     chip: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
+    itemAccent: "border-l-emerald-500/50",
     emptyHint:
       "Agrega al menos un familiar o amigo de confianza. Te servirá si necesitas apoyo inmediato.",
   },
@@ -53,6 +69,7 @@ const CATEGORY_META: Record<
     icon: Building2,
     accent: "border-l-blue-500/60",
     chip: "border-blue-500/30 bg-blue-500/10 text-blue-200",
+    itemAccent: "border-l-blue-500/50",
     emptyHint:
       "Agrega instituciones que te interese tener a mano (clínica, colegio, veterinaria, etc.).",
   },
@@ -149,28 +166,31 @@ function ContactAvatar({ name, id }: { name: string; id: string }) {
   )
 }
 
-function ProgressBanner({ done, total }: { done: number; total: number }) {
+function ProgressBanner({
+  done,
+  total,
+  familyCount,
+  institutionCount,
+}: {
+  done: number
+  total: number
+  familyCount: number
+  institutionCount: number
+}) {
   const pct = total === 0 ? 0 : Math.round((done / total) * 100)
+  const allDone = total > 0 && done === total
   return (
-    <div
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-2 border border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
-      )}
-    >
+    <FamilyPlanStatusBanner>
       <div className="flex items-center gap-3">
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center border font-mono text-[13px] font-semibold tabular-nums",
-            total > 0 && done === total
+            allDone
               ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
               : "border-white/20 bg-white/10 text-white",
           )}
         >
-          {total > 0 && done === total ? (
-            <Check className="size-4" />
-          ) : (
-            `${pct}%`
-          )}
+          {allDone ? <Check className="size-4" /> : `${pct}%`}
         </span>
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
@@ -183,16 +203,30 @@ function ProgressBanner({ done, total }: { done: number; total: number }) {
           </p>
         </div>
       </div>
-      <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
-        <span
-          className={cn(
-            "block h-full transition-all duration-300",
-            total > 0 && done === total ? "bg-emerald-400/80" : "bg-white/40",
-          )}
-          style={{ width: `${pct}%` }}
-        />
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[12rem] sm:items-end">
+        <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+          <span
+            className={cn(
+              "block h-full transition-all duration-300",
+              allDone ? "bg-emerald-400/80" : "bg-white/40",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FamilyPlanStatusChip tone={familyCount === 0 ? "empty" : "started"}>
+            <Users className="size-3" aria-hidden />
+            {familyCount}
+          </FamilyPlanStatusChip>
+          <FamilyPlanStatusChip
+            tone={institutionCount === 0 ? "empty" : "started"}
+          >
+            <Building2 className="size-3" aria-hidden />
+            {institutionCount}
+          </FamilyPlanStatusChip>
+        </div>
       </div>
-    </div>
+    </FamilyPlanStatusBanner>
   )
 }
 
@@ -208,7 +242,7 @@ function ServiceRow({
   return (
     <div
       className={cn(
-        "glass-mica interactive-mica flex items-center justify-between gap-2 border border-white/15 bg-white/[0.04] px-3 py-2.5 transition-colors hover:border-white/25",
+        "glass-mica interactive-mica flex min-h-11 items-center justify-between gap-2 border border-white/15 bg-white/[0.04] px-3 py-2 transition-colors hover:border-white/25",
       )}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -254,7 +288,7 @@ function CopyButton({
       onClick={handleCopy}
       aria-label={label}
       className={cn(
-        "inline-flex size-7 shrink-0 items-center justify-center border border-white/15 bg-white/[0.04] text-white/55 transition-colors",
+        "inline-flex size-9 shrink-0 items-center justify-center border border-white/15 bg-white/[0.04] text-white/55 transition-colors",
         "hover:border-white/30 hover:bg-white/[0.10] hover:text-white",
         "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
       )}
@@ -278,14 +312,13 @@ function ContactCard({
   onRemove: () => void
 }) {
   const complete = isContactComplete(contact)
+  const meta = CATEGORY_META[contact.type]
   return (
-    <article
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-3 border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/25",
-        !complete && "border-dashed",
-      )}
+    <FamilyPlanItemCard
+      accentClassName={meta.itemAccent}
+      className={cn(!complete && "border-dashed")}
     >
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-2.5">
           <ContactAvatar name={contact.name} id={contact.id} />
           <div className="min-w-0">
@@ -297,15 +330,8 @@ function ContactCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex h-7 items-center gap-1 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-              complete
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-white/10 bg-white/[0.03] text-white/45",
-            )}
-          >
+        <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+          <FamilyPlanStatusChip tone={complete ? "complete" : "empty"}>
             {complete ? (
               <Check className="size-3" aria-hidden />
             ) : (
@@ -315,13 +341,13 @@ function ContactCard({
               />
             )}
             {complete ? "Completo" : "Pendiente"}
-          </span>
+          </FamilyPlanStatusChip>
           <button
             type="button"
             onClick={onRemove}
             aria-label="Eliminar contacto"
             className={cn(
-              "inline-flex size-7 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
+              "inline-flex size-9 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
               "hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
             )}
@@ -330,40 +356,31 @@ function ContactCard({
           </button>
         </div>
       </header>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/55">
-            Nombre
-          </label>
+      <FamilyPlanFormGrid>
+        <FamilyPlanField label="Nombre">
           <Input
             value={contact.name}
             onChange={(e) => onUpdate({ name: e.target.value })}
             placeholder="Ej. Mamá"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/55">
-            Teléfono
-          </label>
+        </FamilyPlanField>
+        <FamilyPlanField label="Teléfono">
           <Input
             value={contact.phone}
             onChange={(e) => onUpdate({ phone: e.target.value })}
             placeholder="+56 9 ..."
             inputMode="tel"
           />
-        </div>
-        <div className="flex flex-col gap-1.5 sm:col-span-2">
-          <label className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/55">
-            Dirección
-          </label>
+        </FamilyPlanField>
+        <FamilyPlanField label="Dirección" className={FAMILY_PLAN_FORM_FULL_CLASS}>
           <Input
             value={contact.address}
             onChange={(e) => onUpdate({ address: e.target.value })}
             placeholder="Calle, número, comuna"
           />
-        </div>
-      </div>
-    </article>
+        </FamilyPlanField>
+      </FamilyPlanFormGrid>
+    </FamilyPlanItemCard>
   )
 }
 
@@ -377,13 +394,13 @@ function AddContactPanel({
   const meta = CATEGORY_META[category]
   const Icon = meta.icon
   return (
-    <div className="flex flex-col gap-3 border border-dashed border-white/25 bg-white/[0.025] p-4 transition-colors hover:border-white/35 hover:bg-white/[0.04]">
+    <FamilyPlanAddPanel>
       <header className="flex items-center gap-2.5">
         <span
           className="flex size-7 shrink-0 items-center justify-center border border-white/20 bg-white/10 text-white"
           aria-hidden
         >
-          <Plus className="size-3.5" />
+          <Icon className="size-3.5" />
         </span>
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
@@ -392,19 +409,8 @@ function AddContactPanel({
           <p className="mt-0.5 text-[11.5px] text-white/45">{meta.emptyHint}</p>
         </div>
       </header>
-      <button
-        type="button"
-        onClick={onAdd}
-        className={cn(
-          "inline-flex w-fit items-center gap-2 self-start border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[1.2px] text-white transition-colors",
-          "hover:border-white/30 hover:bg-white/15",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-        )}
-      >
-        <Icon className="size-3.5" aria-hidden />
-        Agregar contacto
-      </button>
-    </div>
+      <FamilyPlanAddCta onClick={onAdd} label="Agregar contacto" icon={Icon} />
+    </FamilyPlanAddPanel>
   )
 }
 
@@ -424,88 +430,73 @@ function ContactCategoryCard({
   const meta = CATEGORY_META[category]
   const Icon = meta.icon
   const completed = contacts.filter(isContactComplete).length
+  const tone =
+    contacts.length === 0
+      ? "empty"
+      : completed === contacts.length
+        ? "complete"
+        : "pending"
+
   return (
-    <section
-      className={cn(
-        "glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] transition-colors hover:border-white/25",
-        meta.accent,
-      )}
-    >
-      <header className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-3">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-7 shrink-0 items-center justify-center border",
-              meta.chip,
-            )}
-            aria-hidden
-          >
-            <Icon className="size-3.5" />
-          </span>
-          <div>
-            <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              {meta.title}
-            </h3>
-            <p className="mt-0.5 text-[11.5px] text-white/45">
-              {meta.description}
-            </p>
+    <FamilyPlanCategoryShell
+      accentClassName={meta.accent}
+      header={
+        <>
+          <div className="flex items-center gap-2.5">
+            <span
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center border",
+                meta.chip,
+              )}
+              aria-hidden
+            >
+              <Icon className="size-3.5" />
+            </span>
+            <div>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                {meta.title}
+              </h3>
+              <p className="mt-0.5 text-[11.5px] text-white/45">
+                {meta.description}
+              </p>
+            </div>
           </div>
-        </div>
-        <span
-          className={cn(
-            "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-            contacts.length === 0
-              ? "border-white/10 bg-white/[0.03] text-white/45"
-              : completed === contacts.length
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : "border-amber-500/40 bg-amber-500/10 text-amber-200",
-          )}
-        >
-          {contacts.length === 0
-            ? "Vacío"
-            : `${completed}/${contacts.length}`}
-        </span>
-      </header>
-      <div className="flex flex-col gap-2 p-3">
-        {contacts.length === 0 ? (
-          <p className="border border-dashed border-white/10 bg-white/[0.02] px-3 py-4 text-center text-[11.5px] text-white/45">
+          <FamilyPlanStatusChip tone={tone}>
+            {contacts.length === 0 ? "Vacío" : `${completed}/${contacts.length}`}
+          </FamilyPlanStatusChip>
+        </>
+      }
+    >
+      {contacts.length === 0 ? (
+        <FamilyPlanEmptyState className="gap-3 px-3 py-6">
+          <Icon className="size-6 text-white/35" aria-hidden />
+          <p className="text-[12px] text-white/55">
             Aún no has agregado contactos en esta categoría.
           </p>
-        ) : (
-          contacts.map((contact) => (
+          <p className="max-w-sm text-[11px] text-white/40">{meta.emptyHint}</p>
+          <FamilyPlanAddCta
+            onClick={onAdd}
+            label="Agregar contacto"
+            icon={Icon}
+            className="sm:self-center"
+          />
+        </FamilyPlanEmptyState>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {contacts.map((contact) => (
             <ContactCard
               key={contact.id}
               contact={contact}
               onUpdate={(patch) => onUpdate(contact.id, patch)}
               onRemove={() => onRemove(contact.id)}
             />
-          ))
-        )}
-      </div>
-      <div className="border-t border-white/10 p-3">
-        <AddContactPanel category={category} onAdd={onAdd} />
-      </div>
-    </section>
-  )
-}
-
-function EmptyState() {
-  return (
-    <div
-      className={cn(
-        "glass-mica interactive-mica flex flex-col items-center gap-2 border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center",
+          ))}
+        </div>
       )}
-    >
-      <Users className="size-6 text-white/35" aria-hidden />
-      <p className="text-[12px] text-white/55">
-        Aún no has agregado contactos al directorio.
-      </p>
-      <p className="max-w-md text-[11.5px] text-white/40">
-        Usa los botones &quot;Agregar contacto&quot; en cada categoría para registrar
-        familiares, amigos o instituciones que podrías necesitar en una
-        emergencia.
-      </p>
-    </div>
+      {contacts.length > 0 ? (
+        <AddContactPanel category={category} onAdd={onAdd} />
+      ) : null}
+    </FamilyPlanCategoryShell>
   )
 }
 
@@ -546,8 +537,13 @@ export function StepContacts() {
   const completedContacts = data.contacts.filter(isContactComplete).length
 
   return (
-    <div className="flex flex-col gap-4">
-      <ProgressBanner done={completedContacts} total={totalContacts} />
+    <FamilyPlanStepRoot>
+      <ProgressBanner
+        done={completedContacts}
+        total={totalContacts}
+        familyCount={familyContacts.length}
+        institutionCount={institutionContacts.length}
+      />
 
       <FamilyPlanSection
         title="Emergencias nacionales (Chile)"
@@ -564,8 +560,6 @@ export function StepContacts() {
         </div>
       </FamilyPlanSection>
 
-      {totalContacts === 0 ? <EmptyState /> : null}
-
       <ContactCategoryCard
         category="family"
         contacts={familyContacts}
@@ -580,6 +574,6 @@ export function StepContacts() {
         onUpdate={updateContact}
         onRemove={removeContact}
       />
-    </div>
+    </FamilyPlanStepRoot>
   )
 }

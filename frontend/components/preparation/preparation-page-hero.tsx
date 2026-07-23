@@ -1,34 +1,21 @@
-"use client"
-
 import {
-  GLASS_MICA_INTERACTIVE_CLASS,
-  GLASS_PANEL_CLASS,
-} from "@/lib/glass-panel"
-import { usePlanStats } from "@/lib/use-plan-stats"
+  PREPARATION_EYEBROW_CLASS,
+  PREPARATION_HERO_SHELL_CLASS,
+} from "@/lib/preparation-ui"
 import { cn } from "@/lib/utils"
-import type { ReactNode } from "react"
 
 interface PreparationPageHeroProps {
   planSteps: number
   guides: number
-  hazardTypes: number
 }
 
+/** Section identity only — plan progress lives in FamilyPlanDashboard. */
 export function PreparationPageHero({
   planSteps,
   guides,
-  hazardTypes,
 }: PreparationPageHeroProps) {
-  const { pendingCount, isLoading } = usePlanStats()
-
   return (
-    <header
-      className={cn(
-        GLASS_PANEL_CLASS,
-        GLASS_MICA_INTERACTIVE_CLASS,
-        "relative w-full overflow-hidden",
-      )}
-    >
+    <header className={PREPARATION_HERO_SHELL_CLASS}>
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-emerald-950/70 to-[var(--secondary-chile)]/45"
         aria-hidden
@@ -38,72 +25,27 @@ export function PreparationPageHero({
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(0,50,160,0.25),transparent_45%)]"
-        aria-hidden
-      />
-      <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
         aria-hidden
       />
       <ChileWatermark />
 
-      <div className="relative flex flex-col gap-6 p-5 sm:p-8 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
-        <div className="min-w-0 flex-1">
-          <span className="inline-flex w-fit items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[1.2px] text-emerald-200/90">
-            Metodología SENAPRED
-          </span>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-            Preparación
-          </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-white/80 sm:text-base">
-            Construye tu Plan Familia Preparada paso a paso y complementa con guías
-            por tipo de emergencia para anticiparte ante desastres en Chile.
-          </p>
-        </div>
-
-        <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[22rem] lg:grid-cols-4">
-          <StatBox
-            label="Pasos pendientes"
-            value={isLoading ? "—" : pendingCount}
-            accent="emerald"
-          />
-          <StatBox label="Pasos del plan" value={planSteps} />
-          <StatBox label="Guías" value={guides} />
-          <StatBox label="Amenazas" value={hazardTypes} />
-        </dl>
+      <div className="relative p-5 sm:p-8">
+        <span className="inline-flex w-fit items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[1.2px] text-emerald-200/90">
+          Metodología SENAPRED
+        </span>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          Preparación
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80 sm:text-base">
+          Construye tu Plan Familia Preparada, completa tu kit y sigue los
+          simulacros oficiales para anticiparte ante desastres en Chile.
+        </p>
+        <p className={cn(PREPARATION_EYEBROW_CLASS, "mt-5 text-white/45")}>
+          {planSteps} pasos del plan · {guides} guías por desastre
+        </p>
       </div>
     </header>
-  )
-}
-
-function StatBox({
-  label,
-  value,
-  accent,
-}: {
-  label: string
-  value: ReactNode
-  accent?: "emerald"
-}) {
-  return (
-    <div
-      className={cn(
-        "border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm sm:px-4 sm:py-4 transition-colors hover:bg-black/50 hover:border-white/25",
-        accent === "emerald" && "border-emerald-500/30 bg-emerald-950/30",
-      )}
-    >
-      <dt className="text-[9px] font-semibold uppercase tracking-[1.1px] text-white/55 sm:text-[10px]">
-        {label}
-      </dt>
-      <dd
-        className={cn(
-          "mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl transition-colors",
-          accent === "emerald" && "text-emerald-200",
-        )}
-      >
-        {value}
-      </dd>
-    </div>
   )
 }
 

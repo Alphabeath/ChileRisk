@@ -1,6 +1,7 @@
 """Tests for SERNAPRED simulacros scraping + parse helpers."""
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -17,6 +18,10 @@ from app.services.simulacro_parsers import (
     slug_from_href,
     year_from_slug,
 )
+
+FIXTURES = Path(__file__).parent / "fixtures"
+INDEX_HTML = (FIXTURES / "simulacros_index_sample.html").read_text(encoding="utf-8")
+
 
 
 def test_slug_from_href_valid():
@@ -67,44 +72,6 @@ def test_parse_short_date_future_in_year():
     today = date(2026, 4, 1)
     parsed = _parse_short_date("16", "abril", today=today)
     assert parsed == date(2026, 4, 16)
-
-
-INDEX_HTML = """
-<html>
-  <body>
-    <h3>CALENDARIO SIMULACROS 2026</h3>
-    <div class="e-con-inner">
-      <a href="/simulacros_t/sbc-magallanes-2026/">
-        <h2>Jueves</h2>
-        <h2>16 abril</h2>
-        <h2>Región de Magallanes</h2>
-        <p>Simulacro por Sismo y Tsunami para el Borde Costero, participan todas las comunas del borde costero de la región.</p>
-      </a>
-    </div>
-    <div class="e-con-inner">
-      <a href="https://senapred.cl/simulacros_t/sbc-antofagasta-2026/">
-        <h2>Jueves</h2>
-        <h2>04 junio</h2>
-        <h2>Región de Antofagasta</h2>
-        <p>Simulacro por Sismo y Tsunami para el Borde Costero, participan todas las comunas del borde costero de la región.</p>
-      </a>
-    </div>
-    <div class="e-con-full">
-      <h2>Jueves</h2>
-      <h2>13 agosto</h2>
-      <h2>Región de O'Higgins</h2>
-      <p>Simulacro por Remoción en masa, participan las localidades de Cantarrana y Caracoles de la comuna de Malloa.</p>
-    </div>
-
-    <h1>Simulacros recientes</h1>
-    <div class="elementor-post__card">
-      <a href="/simulacros_t/biobio-2025/">
-        <h3>Biobío (2025)</h3>
-      </a>
-    </div>
-  </body>
-</html>
-"""
 
 
 DETAIL_HTML = """
@@ -170,6 +137,10 @@ def test_parse_calendar_section_handles_empty_html():
 def test_year_from_slug_fallback():
     assert year_from_slug("sbc-magallanes-2026") == date(2026, 1, 1)
     assert year_from_slug("no-year-here") is None
+
+
+if __name__ == "__main__":
+    raise SystemExit(pytest.main([__file__, "-v"]))
 
 
 if __name__ == "__main__":

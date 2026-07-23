@@ -67,7 +67,7 @@ function countCompletedSteps(data: FamilyPlanData): number {
   return getStepStatuses(data).filter((s) => s.completed).length
 }
 
-function useFamilyPlanState(): FamilyPlanContextValue {
+function useFamilyPlanState(enabled = true): FamilyPlanContextValue {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState<FamilyPlanData | null>(null)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
@@ -80,6 +80,7 @@ function useFamilyPlanState(): FamilyPlanContextValue {
   const query = useQuery({
     queryKey: queryKeys.familyPlan(),
     queryFn: getFamilyPlan,
+    enabled,
   })
 
   const baseData = useMemo(
@@ -264,6 +265,6 @@ export function FamilyPlanProvider({ children }: { children: React.ReactNode }) 
 
 export function useFamilyPlan(): FamilyPlanContextValue {
   const context = useContext(FamilyPlanContext)
-  if (context) return context
-  return useFamilyPlanState()
+  const standalone = useFamilyPlanState(context == null)
+  return context ?? standalone
 }

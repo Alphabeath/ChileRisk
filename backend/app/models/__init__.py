@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
 from app.models.family_plan import FamilyPlan
+from app.models.sync_run import SyncRun
 
 __all__ = [
     "Region",
@@ -26,4 +27,5 @@ __all__ = [
     "OAuthAccount",
     "PasswordResetToken",
     "FamilyPlan",
+    "SyncRun",
 ]

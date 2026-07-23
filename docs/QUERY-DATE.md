@@ -26,7 +26,7 @@ El mapa y varios endpoints permiten ver **riesgo, sismos y alertas de un día ca
 | GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (coropleta) |
 | GET | `/api/v1/comunas/{cod}/risk?date=` | Vector de hazards del día |
 | GET | `/api/v1/events?date=` | Sismos en ventana del día (sustituye `hours=` en rutas con date) |
-| GET | `/api/v1/alerts/active?date=` | Alertas/eventos visibles ese día |
+| GET | `/api/v1/alerts/active?date=` | Alertas/eventos visibles ese día (SERNAPRED: `isPrincipal` + dedupe `url_access`; sin solo-cancelación; histórico puede incluir otras filas `is_active=False`) |
 
 Sin `date` → hoy Chile.
 
@@ -62,4 +62,4 @@ Cambios en ventana, TZ, o campos devueltos → actualizar **este archivo**, `bac
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-07-23*

@@ -20,7 +20,7 @@ Docs **cross-cutting** (ambas áreas). Referencia por stack:
 | [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Cuándo actualizar docs (obligatorio en cambios importantes) |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Sistema, flujo de datos, Docker, monorepo |
 | [QUERY-DATE.md](./QUERY-DATE.md) | Parámetro `?date=` (backend + frontend) |
-| [scripts/](./scripts/) | `verify-doc-links.sh`, `check-contract.py`, `export-openapi.py` |
+| [scripts/](./scripts/) | `verify-doc-links.sh`, `sync-contract.sh`, `export-openapi.py` |
 
 ---
 

@@ -2,10 +2,7 @@
 
 import { CalendarCheck2, CalendarOff, ExternalLink } from "lucide-react"
 
-import {
-  GLASS_MICA_INTERACTIVE_CLASS,
-  GLASS_PANEL_CLASS,
-} from "@/lib/glass-panel"
+import { PREPARATION_EMPTY_STATE_CLASS } from "@/lib/preparation-ui"
 import { cn } from "@/lib/utils"
 
 interface SimulacrosEmptyStateProps {
@@ -27,13 +24,9 @@ export function SimulacrosEmptyState({ view, embedded = false }: SimulacrosEmpty
   return (
     <div
       className={cn(
-        embedded
-          ? "flex flex-col items-center justify-center gap-3 border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 text-center"
-          : cn(
-              GLASS_PANEL_CLASS,
-              GLASS_MICA_INTERACTIVE_CLASS,
-              "flex flex-col items-center justify-center gap-3 border-dashed px-6 py-14 text-center",
-            ),
+        PREPARATION_EMPTY_STATE_CLASS,
+        "border-dashed py-14",
+        embedded && "border border-dashed border-white/15 bg-white/[0.02]",
       )}
     >
       <span

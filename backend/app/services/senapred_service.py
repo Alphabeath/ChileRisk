@@ -39,6 +39,11 @@ _MONITOR_RE = re.compile(r"monitoreo", re.IGNORECASE)
 _cognito_client: CognitoIdentityClient | None = None
 
 
+def is_cancel_title(title: str) -> bool:
+    """True for pure cancel bulletins; False for \"cancela X y declara Y\"."""
+    return bool(_CANCEL_RE.search(title or ""))
+
+
 def _get_cognito_client() -> CognitoIdentityClient:
     global _cognito_client
     if _cognito_client is None:
@@ -74,13 +79,16 @@ def normalize_hazard_type(category: str | None) -> str | None:
 
 
 def _is_active(title: str, raw: dict, *, kind: str = "alerta") -> bool:
+    """Parity with senapred.cl list filters: active + principal (alertas y eventos)."""
+    _ = kind  # signature kept for call sites; both kinds require isPrincipal
     if not raw.get("isActive", True):
         return False
     if raw.get("isDeleted", False):
         return False
-    if _CANCEL_RE.search(title or ""):
+    if is_cancel_title(title):
         return False
-    if kind == "alerta" and not raw.get("isPrincipal", True):
+    # SENAPRED UI: isPrincipal eq true for /alertas and /eventos
+    if not raw.get("isPrincipal", True):
         return False
     return True
 
@@ -155,10 +163,17 @@ def _parse_record(raw: dict, *, kind: str) -> list[dict[str, Any]]:
         "raw": raw,
     }
 
+    meta_comunas = (meta.get("comunas") or "").strip() or None
+    meta_provincias = (meta.get("provincias") or "").strip() or None
+
     if len(region_codes) <= 1:
         region_name = region_name_raw[:128] if region_name_raw else None
         affected_scope, comuna_codes = infer_geography(
-            title_stripped, content_str, primary_code
+            title_stripped,
+            content_str,
+            primary_code,
+            meta_comunas=meta_comunas,
+            meta_provincias=meta_provincias,
         )
         return [{**base, "senapred_id": senapred_id, "region_code": primary_code,
                  "region_name": region_name, "affected_scope": affected_scope,
@@ -168,7 +183,11 @@ def _parse_record(raw: dict, *, kind: str) -> list[dict[str, Any]]:
     for code in region_codes:
         name = resolve_region_name(code) or region_name_raw
         affected_scope, comuna_codes = infer_geography(
-            title_stripped, content_str, code
+            title_stripped,
+            content_str,
+            code,
+            meta_comunas=meta_comunas,
+            meta_provincias=meta_provincias,
         )
         records.append({**base, "senapred_id": f"{senapred_id}-{code}",
                         "region_code": code, "region_name": name[:128] if name else None,
@@ -195,7 +214,15 @@ def senapred_thread_root(
     Handles expanded multi-region records whose parent_id points to an
     original (unsuffixed) ID that was replaced by suffixed variants
     (e.g. ``uuid-5``, ``uuid-13``).
+
+    Prefer ``url_access`` when present — that is SENAPRED's canonical
+    bulletin slug (``/alerta/{urlAccess}``); ``parentId`` chains are often
+    incomplete for eventos.
     """
+    url = (row.url_access or "").strip()
+    if url:
+        return url
+
     root_id = row.senapred_id
     parent_id = row.parent_id
     seen: set[str] = {root_id}
@@ -226,13 +253,17 @@ def senapred_thread_root(
 def pick_latest_senapred_per_thread(
     rows: list[SenapredAlert],
 ) -> list[SenapredAlert]:
-    """Una fila por hilo de actualización: conserva la versión con issued_at más reciente."""
+    """Una fila por hilo de actualización: conserva la versión con issued_at más reciente.
+
+    Thread key = (kind, url_access|parent-root, region_code) so multi-region
+    expansions of the same bulletin stay distinct.
+    """
     if len(rows) <= 1:
         return list(rows)
     by_id = {r.senapred_id: r for r in rows}
-    best: dict[tuple[str, str], SenapredAlert] = {}
+    best: dict[tuple[str, str, int | None], SenapredAlert] = {}
     for row in rows:
-        key = (row.kind, senapred_thread_root(row, by_id))
+        key = (row.kind, senapred_thread_root(row, by_id), row.region_code)
         prev = best.get(key)
         if prev is None or row.senapred_issued_at > prev.senapred_issued_at:
             best[key] = row

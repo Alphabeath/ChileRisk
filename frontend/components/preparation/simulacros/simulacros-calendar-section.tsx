@@ -15,6 +15,7 @@ import {
   GLASS_MICA_INTERACTIVE_CLASS,
   GLASS_PANEL_CLASS,
 } from "@/lib/glass-panel"
+import { PREPARATION_STICKY_SUBNAV_CLASS } from "@/lib/preparation-ui"
 import { cn } from "@/lib/utils"
 import type { DrillType, Simulacro, SimulacrosParams } from "@/lib/types"
 
@@ -66,15 +67,25 @@ export function SimulacrosCalendarSection({
         <span className="flex size-9 items-center justify-center border border-white/15 bg-white/[0.06]">
           <CalendarDays className="size-4 text-white/80" aria-hidden />
         </span>
-        <h2
-          id="simulacros-calendar-heading"
-          className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
-        >
-          Calendario de simulacros
-        </h2>
+        <div className="min-w-0">
+          <h2
+            id="simulacros-calendar-heading"
+            className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white/90"
+          >
+            Calendario de simulacros
+          </h2>
+          <p className="mt-0.5 text-[12px] text-white/50">
+            Agrupados por mes · datos SERNAPRED
+          </p>
+        </div>
       </header>
 
-      <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:px-5 sm:py-4">
+      <div
+        className={cn(
+          PREPARATION_STICKY_SUBNAV_CLASS,
+          "flex flex-col gap-3 border-b border-white/10 bg-black/80 px-4 py-3 backdrop-blur-xl sm:px-5 sm:py-4",
+        )}
+      >
         <div className="border-b border-white/10 pb-3">
           <SimulacrosTypesChips
             selected={selectedType}

@@ -10,7 +10,7 @@ Actualiza documentación en el **mismo task** (mismo PR / misma sesión) si el c
 
 | Tipo de cambio | Qué actualizar |
 |----------------|----------------|
-| Nuevo endpoint, query param, o forma de respuesta | `backend/docs/BACKEND.md`, `backend/app/schemas/`, `frontend/lib/types.ts`, `frontend/lib/api.ts` |
+| Nuevo endpoint, query param, o forma de respuesta | `backend/docs/BACKEND.md`, `backend/app/schemas/`, `make sync-contract`, `frontend/lib/types.ts`, `frontend/lib/api.ts` |
 | Nuevo modelo/tabla o job del scheduler | `backend/docs/BACKEND.md`, `backend/AGENTS.md` (índice si cambia ruta de archivo) |
 | Nuevo componente/hook/página visible al usuario | `frontend/docs/FRONTEND.md`, `frontend/docs/DESIGN.md` si afecta UI |
 | Flujo cross-stack (ej. `?date=`) | `docs/QUERY-DATE.md` + ambos lados del contrato |
@@ -35,7 +35,7 @@ Si un párrafo largo vive en dos sitios, **una sola fuente de verdad** y el otro
 
 ## Checklist antes de cerrar un task
 
-- [ ] ¿Cambió contrato HTTP? → `backend/docs/BACKEND.md` + `frontend/lib/types.ts` + `frontend/lib/api.ts`
+- [ ] ¿Cambió contrato HTTP? → `backend/docs/BACKEND.md` + `make sync-contract` + `frontend/lib/types.ts` + `frontend/lib/api.ts`
 - [ ] ¿Cambió UI pública? → `frontend/docs/FRONTEND.md` (+ `DESIGN.md` si tokens/superficies)
 - [ ] ¿Nuevo archivo “hot path” que otros agentes buscarán? → fila en índice del `AGENTS.md` correspondiente
 - [ ] ¿Feature cross-cutting? → doc dedicada en `docs/` o sección en `ARCHITECTURE.md`
@@ -51,4 +51,4 @@ Ediciones en `docs/` (raíz), `backend/docs/` y `frontend/docs/` están **permit
 
 ---
 
-*Last updated: 2026-06-10 (docs por área: backend/docs, frontend/docs)*
+*Last updated: 2026-07-13*

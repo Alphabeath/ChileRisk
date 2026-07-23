@@ -30,7 +30,7 @@
 `backend/AGENTS` → `schemas/` → `api/` + `main.py` → `services/` → `backend/docs/BACKEND` → FE? see contract → `make verify`
 
 **Contract change**
-`schemas/*` ↔ `lib/types.ts` + `lib/api.ts` · `BACKEND.md` + `FRONTEND.md` · OpenAPI `/openapi.json` wins · `make verify-contract`
+`schemas/*` → `make sync-contract` (OpenAPI → `frontend/lib/api-schema.d.ts`) · update `lib/types.ts` / `lib/api.ts` · `BACKEND.md` + `FRONTEND.md` · OpenAPI wins · `make verify-contract`
 
 **Cross-stack**
 `QUERY-DATE.md` → BE `query_date_window` · FE `query-date.ts` `ui-store` hooks `api.ts`
@@ -54,7 +54,7 @@ code (+tests) · docs optional · `make verify` anyway
 
 ## verify
 
-`make verify` = links + contract + `bun lint` + `tsc` + `compileall` (+ pytest if host has it)
+`make verify` = links + OpenAPI contract + `bun lint` + `tsc` + `bun test` + `compileall` (+ pytest if host has it)
 
 ---
 
@@ -64,4 +64,4 @@ code (+tests) · docs optional · `make verify` anyway
 
 ---
 
-*2026-06-10*
+*2026-07-13*

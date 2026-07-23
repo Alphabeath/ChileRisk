@@ -4,21 +4,22 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, select, text
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, simulacros, stats
+from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, simulacros, stats, system
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
 from app.data.seed_comunas import seed_comunas
 from app.data.seed_regions import seed_regions
-from app.database import async_session, engine, Base
+from app.database import async_session
 import app.models  # noqa: F401 — register ORM metadata
 from app.scheduler import setup_scheduler, shutdown_scheduler
+from app.schemas.system import HealthSyncSummary
 from app.services.csn_service import sync_recent_csn_events
 from app.services.risk_service import ensure_risk_scores_exist, recompute_all_scores
+from app.services.sync_status_service import latest_sync_runs
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,44 +35,7 @@ logger = logging.getLogger("chilerisk")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup (idempotent for MVP)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-        def _migrate_senapred_alerts(sync_conn):
-            if not inspect(sync_conn).has_table("senapred_alerts"):
-                return
-            sync_conn.execute(
-                text("ALTER TABLE senapred_alerts ALTER COLUMN content TYPE TEXT")
-            )
-            cols = {c["name"] for c in inspect(sync_conn).get_columns("senapred_alerts")}
-            if "affected_scope" not in cols:
-                sync_conn.execute(
-                    text(
-                        "ALTER TABLE senapred_alerts "
-                        "ADD COLUMN affected_scope VARCHAR(16) NOT NULL DEFAULT 'unknown'"
-                    )
-                )
-            if "comuna_codes" not in cols:
-                sync_conn.execute(
-                    text(
-                        "ALTER TABLE senapred_alerts "
-                        "ADD COLUMN comuna_codes JSON NOT NULL DEFAULT '[]'"
-                    )
-                )
-
-        def _migrate_simulacros(sync_conn):
-            if not inspect(sync_conn).has_table("simulacros"):
-                return
-            cols = {c["name"] for c in inspect(sync_conn).get_columns("simulacros")}
-            if "thumbnail_url" in cols:
-                sync_conn.execute(
-                    text("ALTER TABLE simulacros DROP COLUMN thumbnail_url")
-                )
-
-        await conn.run_sync(_migrate_senapred_alerts)
-        await conn.run_sync(_migrate_simulacros)
-
+    # Schema is applied by Alembic (scripts/entrypoint.sh) before uvicorn starts.
     # Seed reference geography (regions + comunas)
     async with async_session() as session:
         n_regions = await seed_regions(session)
@@ -198,12 +162,34 @@ app.include_router(
     tags=["simulacros"],
     dependencies=_auth_guard,
 )
+app.include_router(
+    system.router,
+    prefix="/api/v1/system",
+    tags=["system"],
+    dependencies=_auth_guard,
+)
 
 
 @app.get("/health", tags=["system"])
 async def health():
+    sync_summary: list[HealthSyncSummary] = []
+    try:
+        async with async_session() as session:
+            rows = await latest_sync_runs(session)
+            sync_summary = [
+                HealthSyncSummary(
+                    job_id=r.job_id,
+                    status=r.status,
+                    finished_at=r.finished_at,
+                )
+                for r in rows
+            ]
+    except Exception:
+        logger.exception("health: failed to load sync summary")
+
     return {
         "status": "ok",
         "version": "0.1.0",
         "uptime_seconds": round(time.time() - _start_time, 1),
+        "sync": sync_summary,
     }

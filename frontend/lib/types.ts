@@ -1,3 +1,26 @@
+/**
+ * Frontend API types.
+ *
+ * Canonical HTTP contract: OpenAPI → `lib/api-schema.d.ts` (`make sync-contract`).
+ * Named OpenAPI schemas are aliased below when shapes match app usage.
+ * Remaining interfaces are hand-maintained until those routes expose named schemas
+ * (e.g. NationalRisk, SeismicEvent) or FE defaults make optional OpenAPI fields safe.
+ */
+import type { components } from "./api-schema"
+
+type Schemas = components["schemas"]
+
+/** OpenAPI mirror helpers for new code / contract checks. */
+export type ApiActiveAlert = Schemas["ActiveAlertOut"]
+export type ApiSimulacro = Schemas["SimulacroOut"]
+export type ApiFamilyPlan = Schemas["FamilyPlanOut"]
+export type ApiSyncRun = Schemas["SyncRunOut"]
+export type ApiSyncStatusResponse = Schemas["SyncStatusResponse"]
+
+export type ComunaMapScore = Schemas["ComunaMapScore"]
+export type SyncRun = Schemas["SyncRunOut"]
+export type SyncStatusResponse = Schemas["SyncStatusResponse"]
+
 export interface NationalRisk {
   codregion: number
   name: string
@@ -11,11 +34,6 @@ export interface NationalRisk {
   viento_score?: number
   avg_temperature_c?: number | null
   avg_wind_speed_kmh?: number | null
-}
-
-export interface ComunaMapScore {
-  cod_comuna: number
-  composite_score: number
 }
 
 export interface RegionRisk {

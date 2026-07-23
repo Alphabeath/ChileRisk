@@ -1,26 +1,25 @@
 import {
-  GLASS_DIVIDER,
-  GLASS_MICA_INTERACTIVE_CLASS,
-  GLASS_PANEL_CLASS,
-} from "@/lib/glass-panel"
-import { Backpack, Clock, ShieldCheck, Users } from "lucide-react"
+  PREPARATION_EYEBROW_CLASS,
+  PREPARATION_HERO_SHELL_CLASS,
+} from "@/lib/preparation-ui"
+import { GLASS_DIVIDER } from "@/lib/glass-panel"
+import { Backpack, Clock, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const phaseHighlights = [
   { label: "Antes", subtitle: "Prepara", icon: Clock, accent: "text-blue-300" },
   { label: "Durante", subtitle: "Usa", icon: Backpack, accent: "text-amber-300" },
-  { label: "Después", subtitle: "Repón", icon: ShieldCheck, accent: "text-emerald-300" },
+  {
+    label: "Después",
+    subtitle: "Repón",
+    icon: ShieldCheck,
+    accent: "text-emerald-300",
+  },
 ] as const
 
 export function EmergencyKitHero() {
   return (
-    <header
-      className={cn(
-        GLASS_PANEL_CLASS,
-        GLASS_MICA_INTERACTIVE_CLASS,
-        "relative w-full overflow-hidden",
-      )}
-    >
+    <header className={PREPARATION_HERO_SHELL_CLASS}>
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-950/80 via-slate-900/80 to-emerald-950/60"
         aria-hidden
@@ -47,15 +46,17 @@ export function EmergencyKitHero() {
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Kit de emergencia
           </h1>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-white/80 sm:text-base">
-            Prepara recursos para mantener la autonomía de tu hogar durante las
-            primeras 72 horas tras una emergencia, cuando los servicios básicos
-            pueden estar interrumpidos.
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80 sm:text-base">
+            Recursos para las primeras 72 horas tras una emergencia, cuando los
+            servicios básicos pueden estar interrumpidos.
+          </p>
+          <p className={cn(PREPARATION_EYEBROW_CLASS, "mt-4 text-white/45")}>
+            Ajusta cantidades según integrantes, mascotas y condiciones médicas
           </p>
         </div>
 
-        <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[18rem]">
-          <StatBox label="Autonomía" value="72h" />
+        <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[16rem]">
+          <StatBox label="Autonomía" value="72h" accent />
           <StatBox label="Categorías" value={6} />
         </dl>
       </div>
@@ -69,11 +70,11 @@ export function EmergencyKitHero() {
         {phaseHighlights.map(({ label, subtitle, icon: Icon, accent }) => (
           <div
             key={label}
-            className="flex items-center justify-center gap-2.5 px-3 py-4 sm:gap-3 sm:px-5 sm:py-5 transition-colors hover:bg-white/[0.03]"
+            className="flex items-center justify-center gap-2.5 px-3 py-4 transition-colors hover:bg-white/[0.03] sm:gap-3 sm:px-5 sm:py-5"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10 transition-all hover:border-white/30 hover:bg-white/15">
+            <div className="flex size-9 shrink-0 items-center justify-center border border-white/20 bg-white/10 sm:size-10">
               <Icon
-                className={cn("size-4 sm:size-[1.125rem] transition-transform hover:scale-105", accent)}
+                className={cn("size-4 sm:size-[1.125rem]", accent)}
                 aria-hidden
               />
             </div>
@@ -86,25 +87,33 @@ export function EmergencyKitHero() {
           </div>
         ))}
       </div>
-
-      <div className="relative flex items-center gap-3 border-t border-white/10 px-5 py-4 sm:px-8">
-        <Users className="size-4 shrink-0 text-white/55" aria-hidden />
-        <p className="text-[12px] leading-snug text-white/65">
-          Calcula las cantidades según el número de integrantes y mascotas del
-          hogar. Considera condiciones médicas o de movilidad.
-        </p>
-      </div>
     </header>
   )
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: string | number
+  accent?: boolean
+}) {
   return (
-    <div className="border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm sm:px-4 sm:py-4 transition-colors hover:bg-black/50 hover:border-white/25">
-      <dt className="text-[9px] font-semibold uppercase tracking-[1.1px] text-white/55 sm:text-[10px]">
-        {label}
-      </dt>
-      <dd className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl transition-colors">
+    <div
+      className={cn(
+        "border border-white/20 bg-black/35 px-3 py-3 text-center backdrop-blur-sm transition-colors hover:border-white/25 hover:bg-black/50 sm:px-4 sm:py-4",
+        accent && "border-blue-500/30 bg-blue-950/30",
+      )}
+    >
+      <dt className={cn(PREPARATION_EYEBROW_CLASS, "text-white/55")}>{label}</dt>
+      <dd
+        className={cn(
+          "mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl",
+          accent && "text-blue-200",
+        )}
+      >
         {value}
       </dd>
     </div>

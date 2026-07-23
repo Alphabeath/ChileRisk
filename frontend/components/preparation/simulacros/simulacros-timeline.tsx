@@ -8,9 +8,19 @@ import { getDrillTypeVisual } from "@/lib/simulacros-visual"
 import { cn } from "@/lib/utils"
 import type { Simulacro } from "@/lib/types"
 
-const _SPANISH_MONTHS: readonly string[] = [
-  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+const SPANISH_MONTHS: readonly string[] = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ]
 
 interface SimulacrosTimelineProps {
@@ -30,7 +40,10 @@ interface MonthGroup {
   items: Simulacro[]
 }
 
-function buildGroups(items: Simulacro[]): MonthGroup[] {
+function buildGroups(
+  items: Simulacro[],
+  variant: "upcoming" | "past",
+): MonthGroup[] {
   const map = new Map<string, MonthGroup>()
 
   for (const sim of items) {
@@ -43,7 +56,7 @@ function buildGroups(items: Simulacro[]): MonthGroup[] {
         key,
         year: y,
         monthIndex: m - 1,
-        monthLabel: _SPANISH_MONTHS[m - 1] ?? "",
+        monthLabel: SPANISH_MONTHS[m - 1] ?? "",
         count: 0,
         dominantType: null,
         items: [],
@@ -68,11 +81,20 @@ function buildGroups(items: Simulacro[]): MonthGroup[] {
       }
     }
     group.dominantType = dominant
+
+    group.items.sort((a, b) => {
+      const cmp = a.drill_date.localeCompare(b.drill_date)
+      return variant === "past" ? -cmp : cmp
+    })
   }
 
   return Array.from(map.values()).sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year
-    return a.monthIndex - b.monthIndex
+    if (a.year !== b.year) {
+      return variant === "past" ? b.year - a.year : a.year - b.year
+    }
+    return variant === "past"
+      ? b.monthIndex - a.monthIndex
+      : a.monthIndex - b.monthIndex
   })
 }
 
@@ -82,7 +104,7 @@ export function SimulacrosTimeline({
   now,
   embedded = false,
 }: SimulacrosTimelineProps) {
-  const groups = buildGroups(items)
+  const groups = buildGroups(items, variant)
 
   if (groups.length === 0) return null
 
@@ -91,24 +113,20 @@ export function SimulacrosTimeline({
       className={cn(
         embedded
           ? "relative"
-          : cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "relative overflow-hidden"),
+          : cn(
+              GLASS_PANEL_CLASS,
+              GLASS_MICA_INTERACTIVE_CLASS,
+              "relative overflow-hidden px-4 py-6 sm:px-6 sm:py-7",
+            ),
       )}
     >
-      {!embedded ? (
+      <div className="relative">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"
-          aria-hidden
-        />
-      ) : null}
-
-      <div className={cn("relative", embedded ? "py-1" : "px-4 py-6 sm:px-6 sm:py-7")}>
-        {/* Vertical rail — thicker and more visible */}
-        <div
-          className="pointer-events-none absolute top-6 bottom-6 left-3 w-0.5 bg-gradient-to-b from-white/60 via-white/30 to-white/5 sm:left-5"
+          className="pointer-events-none absolute top-2 bottom-2 left-[0.4375rem] w-px bg-gradient-to-b from-white/50 via-white/20 to-white/5 sm:left-[0.5625rem]"
           aria-hidden
         />
 
-        <div className="relative flex flex-col gap-8 pl-7 sm:gap-10 sm:pl-8">
+        <div className="relative flex flex-col gap-7 pl-6 sm:gap-8 sm:pl-7">
           {groups.map((group) => {
             const visual = group.dominantType
               ? getDrillTypeVisual(group.dominantType)
@@ -116,7 +134,7 @@ export function SimulacrosTimeline({
             return (
               <section
                 key={group.key}
-                className="relative flex flex-col gap-3"
+                className="relative flex flex-col gap-2.5"
                 aria-label={`${group.monthLabel} ${group.year}`}
               >
                 <SimulacrosMonthHeader
@@ -125,19 +143,30 @@ export function SimulacrosTimeline({
                   count={group.count}
                   accent={visual?.monthAccent}
                   chipBorder={visual?.chipBorder}
-                  showRail
                 />
-                <div className="flex flex-col gap-3">
-                  {group.items.map((sim) => (
-                    <SimulacroListRow
-                      key={sim.slug}
-                      simulacro={sim}
-                      variant={variant}
-                      now={now}
-                      embedded={embedded}
-                    />
-                  ))}
-                </div>
+                <ul className="flex flex-col gap-2.5">
+                  {group.items.map((sim) => {
+                    const rowVisual = getDrillTypeVisual(sim.drill_type)
+                    return (
+                      <li key={sim.slug} className="relative">
+                        <span
+                          className={cn(
+                            "absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-[var(--background)] sm:size-3",
+                            "-left-6 sm:-left-7",
+                            rowVisual.chipBorder,
+                          )}
+                          aria-hidden
+                        />
+                        <SimulacroListRow
+                          simulacro={sim}
+                          variant={variant}
+                          now={now}
+                          embedded={embedded}
+                        />
+                      </li>
+                    )
+                  })}
+                </ul>
               </section>
             )
           })}

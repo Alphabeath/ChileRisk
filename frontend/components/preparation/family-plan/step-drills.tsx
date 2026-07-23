@@ -14,7 +14,19 @@ import {
   X,
 } from "lucide-react"
 
-import { newId } from "@/components/preparation/family-plan/family-plan-field"
+import { FamilyPlanField, newId } from "@/components/preparation/family-plan/family-plan-field"
+import {
+  FAMILY_PLAN_ADD_CTA_CLASS,
+  FAMILY_PLAN_FORM_FULL_CLASS,
+  FamilyPlanAddPanel,
+  FamilyPlanCategoryShell,
+  FamilyPlanEmptyState,
+  FamilyPlanFormGrid,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  type FamilyPlanStatusChipTone,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -100,7 +112,11 @@ function TriStateRow({
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[11.5px] text-white/75">{label}</span>
-      <div className="flex items-center gap-1.5" role="radiogroup" aria-label={label}>
+      <div
+        className="flex w-full gap-1.5"
+        role="radiogroup"
+        aria-label={label}
+      >
         {(["yes", "no", "partial"] as const).map((option) => {
           const visual = TRI_STATE_VISUAL[option]
           const isActive = current === option
@@ -113,7 +129,7 @@ function TriStateRow({
               aria-checked={isActive}
               onClick={() => onChange(triStateToValue(isActive ? null : option))}
               className={cn(
-                "inline-flex h-7 min-w-[58px] items-center justify-center gap-1 border px-2.5 text-[10.5px] font-semibold uppercase tracking-[1.2px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+                "inline-flex h-9 flex-1 items-center justify-center gap-1 border px-2.5 text-[10.5px] font-semibold uppercase tracking-[1.2px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
                 isActive ? visual.active : visual.idle,
               )}
             >
@@ -139,6 +155,7 @@ function DrillCompletionBadge({
   )
   const state: "empty" | "partial" | "complete" =
     answered === 0 ? "empty" : answered === total ? "complete" : "partial"
+  const tone: FamilyPlanStatusChipTone = state === "partial" ? "pending" : state
   const label =
     state === "empty"
       ? "Sin evaluar"
@@ -146,18 +163,9 @@ function DrillCompletionBadge({
         ? "Evaluado"
         : "En evaluación"
   return (
-    <span
-      className={cn(
-        "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-        state === "empty"
-          ? "border-white/10 bg-white/[0.03] text-white/45"
-          : state === "complete"
-            ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-            : "border-amber-500/40 bg-amber-500/10 text-amber-200",
-      )}
-    >
+    <FamilyPlanStatusChip tone={tone}>
       {label} · {answered}/{total}
-    </span>
+    </FamilyPlanStatusChip>
   )
 }
 
@@ -241,6 +249,12 @@ export function StepDrills() {
   if (!data) return null
 
   const fromSimulacros = searchParams.get("source") === "senapred"
+  const evaluatedTone: FamilyPlanStatusChipTone =
+    evaluatedCount === drills.length && drills.length > 0
+      ? "complete"
+      : evaluatedCount > 0
+        ? "pending"
+        : "empty"
 
   function updateDrill(id: string, patch: Partial<Drill>) {
     updateData((prev) => ({
@@ -290,26 +304,46 @@ export function StepDrills() {
     }))
   }
 
+  const evaluatedPct =
+    drills.length === 0 ? 0 : Math.round((evaluatedCount / drills.length) * 100)
+  const allEvaluated = drills.length > 0 && evaluatedCount === drills.length
+  const completedTone: FamilyPlanStatusChipTone =
+    drills.length === 0
+      ? "empty"
+      : completedCount === drills.length
+        ? "complete"
+        : completedCount > 0
+          ? "started"
+          : "empty"
+
   return (
-    <div className="flex flex-col gap-4">
-      <section
-        className="glass-mica interactive-mica flex flex-col gap-3 border border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-        aria-label="Resumen de simulacros"
-      >
+    <FamilyPlanStepRoot>
+      <FamilyPlanStatusBanner>
         <div className="flex items-center gap-3">
           <span
-            className="flex size-8 shrink-0 items-center justify-center border border-rose-500/30 bg-rose-500/10 text-rose-200"
+            className={cn(
+              "flex size-9 shrink-0 items-center justify-center border font-mono text-[13px] font-semibold tabular-nums",
+              allEvaluated
+                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+                : "border-rose-500/30 bg-rose-500/10 text-rose-200",
+            )}
             aria-hidden
           >
-            <Siren className="size-4" />
+            {allEvaluated ? (
+              <Check className="size-4" />
+            ) : drills.length === 0 ? (
+              <Siren className="size-4" />
+            ) : (
+              `${evaluatedPct}%`
+            )}
           </span>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/55">
+            <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
               Simulacros registrados
             </p>
-            <p className="mt-0.5 text-[14px] font-semibold text-white/90">
+            <p className="mt-0.5 text-[11.5px] text-white/55">
               {drills.length === 0
-                ? "Sin simulacros"
+                ? "Practica y documenta tus simulacros familiares"
                 : `${drills.length} ${
                     drills.length === 1 ? "simulacro" : "simulacros"
                   } · ${completedCount} ${
@@ -318,28 +352,35 @@ export function StepDrills() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:shrink-0">
-          <span
-            className={cn(
-              "inline-flex h-7 shrink-0 items-center border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-              evaluatedCount === drills.length && drills.length > 0
-                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                : evaluatedCount > 0
-                  ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
-                  : "border-white/10 bg-white/[0.03] text-white/45",
-            )}
-          >
-            {evaluatedCount}/{drills.length} evaluados
-          </span>
-          <Link
-            href="/simulacros"
-            className="inline-flex h-7 items-center gap-1.5 border border-rose-500/30 bg-rose-500/10 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-rose-100/95 transition-colors hover:border-rose-500/50 hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
-          >
-            <CalendarCheck2 className="size-3" aria-hidden />
-            Calendario SERNAPRED →
-          </Link>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[14rem] sm:items-end">
+          {drills.length > 0 ? (
+            <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+              <span
+                className={cn(
+                  "block h-full transition-all duration-300",
+                  allEvaluated ? "bg-emerald-400/80" : "bg-rose-400/70",
+                )}
+                style={{ width: `${evaluatedPct}%` }}
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <FamilyPlanStatusChip tone={completedTone}>
+              {completedCount}/{drills.length} completados
+            </FamilyPlanStatusChip>
+            <FamilyPlanStatusChip tone={evaluatedTone}>
+              {evaluatedCount}/{drills.length} evaluados
+            </FamilyPlanStatusChip>
+            <Link
+              href="/simulacros"
+              className="inline-flex h-7 items-center gap-1.5 border border-rose-500/30 bg-rose-500/10 px-2.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-rose-100/95 transition-colors hover:border-rose-500/50 hover:bg-rose-500/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+            >
+              <CalendarCheck2 className="size-3" aria-hidden />
+              SERNAPRED →
+            </Link>
+          </div>
         </div>
-      </section>
+      </FamilyPlanStatusBanner>
 
       {fromSimulacros ? (
         <aside
@@ -363,7 +404,7 @@ export function StepDrills() {
       ) : null}
 
       {drills.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 border border-dashed border-white/15 bg-white/[0.02] p-6 text-center">
+        <FamilyPlanEmptyState>
           <span
             className="flex size-9 items-center justify-center border border-rose-500/30 bg-rose-500/10 text-rose-200"
             aria-hidden
@@ -379,64 +420,72 @@ export function StepDrills() {
               mejorar tu plan familiar.
             </p>
           </div>
-        </div>
+          <button
+            type="button"
+            onClick={addDrill}
+            className={cn(FAMILY_PLAN_ADD_CTA_CLASS, "sm:self-center")}
+          >
+            <Plus className="size-3.5" aria-hidden />
+            Agregar simulacro
+          </button>
+        </FamilyPlanEmptyState>
       ) : (
         <div className="flex flex-col gap-3">
           {drills.map((drill, index) => {
             const dateLabel = formatDateLabel(drill.date)
             const hasDate = drill.date.trim().length > 0
+            const hasType = drill.emergency_type.trim().length > 0
             return (
-              <section
+              <FamilyPlanCategoryShell
                 key={drill.id}
-                className="glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] border-l-rose-500/60 transition-colors hover:border-white/25"
-                aria-label={`Simulacro ${index + 1}`}
-              >
-                <header className="flex flex-col gap-3 border-b border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      className="flex size-7 shrink-0 items-center justify-center border border-rose-500/30 bg-rose-500/10 text-rose-200"
-                      aria-hidden
-                    >
-                      <Siren className="size-3.5" />
-                    </span>
-                    <div>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
-                        Simulacro {index + 1}
-                      </h3>
-                      <p
+                accentClassName={cn(
+                  "border-l-rose-500/60",
+                  !hasDate && !hasType && "border-dashed",
+                )}
+                header={
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span
+                        className="flex size-7 shrink-0 items-center justify-center border border-rose-500/30 bg-rose-500/10 text-rose-200"
+                        aria-hidden
+                      >
+                        <Siren className="size-3.5" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                          Simulacro {index + 1}
+                        </h3>
+                        <p
+                          className={cn(
+                            "mt-0.5 truncate text-[11.5px]",
+                            hasDate ? "text-white/65" : "text-white/40",
+                          )}
+                        >
+                          {dateLabel}
+                          {hasType ? ` · ${drill.emergency_type}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:justify-end">
+                      <DrillCompletionBadge evaluation={drill.evaluation} />
+                      <button
+                        type="button"
+                        onClick={() => removeDrill(drill.id)}
+                        aria-label={`Eliminar simulacro ${index + 1}`}
                         className={cn(
-                          "mt-0.5 text-[11.5px]",
-                          hasDate ? "text-white/65" : "text-white/40",
+                          "inline-flex size-9 shrink-0 items-center justify-center border border-white/10 bg-transparent text-white/55 transition-colors",
+                          "hover:border-rose-400/30 hover:bg-rose-500/10 hover:text-rose-200",
+                          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
                         )}
                       >
-                        {dateLabel}
-                        {drill.emergency_type.trim().length > 0
-                          ? ` · ${drill.emergency_type}`
-                          : ""}
-                      </p>
+                        <Trash2 className="size-3.5" aria-hidden />
+                      </button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 sm:shrink-0">
-                    <DrillCompletionBadge evaluation={drill.evaluation} />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => removeDrill(drill.id)}
-                      aria-label={`Eliminar simulacro ${index + 1}`}
-                    >
-                      <Trash2 data-icon="inline-only" />
-                    </Button>
-                  </div>
-                </header>
-                <div className="grid gap-3 p-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor={`drill-date-${drill.id}`}
-                      className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65"
-                    >
-                      Fecha
-                    </label>
+                }
+              >
+                <FamilyPlanFormGrid>
+                  <FamilyPlanField label="Fecha" htmlFor={`drill-date-${drill.id}`}>
                     <Input
                       id={`drill-date-${drill.id}`}
                       type="date"
@@ -445,14 +494,11 @@ export function StepDrills() {
                         updateDrill(drill.id, { date: e.target.value })
                       }
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor={`drill-type-${drill.id}`}
-                      className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65"
-                    >
-                      Tipo de emergencia
-                    </label>
+                  </FamilyPlanField>
+                  <FamilyPlanField
+                    label="Tipo de emergencia"
+                    htmlFor={`drill-type-${drill.id}`}
+                  >
                     <Input
                       id={`drill-type-${drill.id}`}
                       value={drill.emergency_type}
@@ -463,14 +509,12 @@ export function StepDrills() {
                       }
                       placeholder="Ej. Sismo, incendio, tsunami…"
                     />
-                  </div>
-                  <div className="flex flex-col gap-1.5 sm:col-span-2">
-                    <label
-                      htmlFor={`drill-outcome-${drill.id}`}
-                      className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65"
-                    >
-                      Resultado
-                    </label>
+                  </FamilyPlanField>
+                  <FamilyPlanField
+                    label="Resultado"
+                    htmlFor={`drill-outcome-${drill.id}`}
+                    className={FAMILY_PLAN_FORM_FULL_CLASS}
+                  >
                     <Textarea
                       id={`drill-outcome-${drill.id}`}
                       value={drill.outcome}
@@ -479,14 +523,14 @@ export function StepDrills() {
                       }
                       placeholder="Describe cómo se desarrolló el simulacro y qué ocurrió."
                     />
-                  </div>
-                </div>
+                  </FamilyPlanField>
+                </FamilyPlanFormGrid>
 
-                <fieldset className="border-t border-white/10 px-4 py-3">
+                <fieldset className="flex flex-col gap-3">
                   <legend className="px-1 text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65">
                     Evaluación
                   </legend>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <FamilyPlanFormGrid>
                     {EVALUATION_QUESTIONS.map((q) => (
                       <TriStateRow
                         key={q.key}
@@ -497,14 +541,11 @@ export function StepDrills() {
                         }
                       />
                     ))}
-                  </div>
-                  <div className="mt-3 flex flex-col gap-1.5">
-                    <label
-                      htmlFor={`drill-improvements-${drill.id}`}
-                      className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65"
-                    >
-                      ¿Qué se debe mejorar?
-                    </label>
+                  </FamilyPlanFormGrid>
+                  <FamilyPlanField
+                    label="¿Qué se debe mejorar?"
+                    htmlFor={`drill-improvements-${drill.id}`}
+                  >
                     <Textarea
                       id={`drill-improvements-${drill.id}`}
                       value={drill.evaluation.improvements}
@@ -517,36 +558,38 @@ export function StepDrills() {
                       }
                       placeholder="Anota las oportunidades de mejora detectadas."
                     />
-                  </div>
+                  </FamilyPlanField>
                 </fieldset>
-              </section>
+              </FamilyPlanCategoryShell>
             )
           })}
         </div>
       )}
 
-      <div className="flex flex-col items-stretch gap-2 border border-dashed border-white/15 bg-white/[0.02] p-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5 text-[12px] text-white/65">
-          <span
-            className="flex size-7 shrink-0 items-center justify-center border border-white/15 bg-white/[0.04] text-white/75"
-            aria-hidden
+      {drills.length > 0 ? (
+        <FamilyPlanAddPanel className="items-stretch sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2.5 text-[12px] text-white/65">
+            <span
+              className="flex size-7 shrink-0 items-center justify-center border border-white/15 bg-white/[0.04] text-white/75"
+              aria-hidden
+            >
+              <Plus className="size-3.5" />
+            </span>
+            <span>
+              Registra cada simulacro familiar con su fecha, tipo de
+              emergencia y evaluación tri-estado.
+            </span>
+          </div>
+          <Button
+            type="button"
+            onClick={addDrill}
+            className="w-full shrink-0 sm:w-fit sm:self-end"
           >
-            <Plus className="size-3.5" />
-          </span>
-          <span>
-            Registra cada simulacro familiar con su fecha, tipo de
-            emergencia y evaluación tri-estado.
-          </span>
-        </div>
-        <Button
-          type="button"
-          onClick={addDrill}
-          className="shrink-0 sm:self-end"
-        >
-          <Plus data-icon="inline-start" />
-          Agregar simulacro
-        </Button>
-      </div>
+            <Plus data-icon="inline-start" />
+            Agregar simulacro
+          </Button>
+        </FamilyPlanAddPanel>
+      ) : null}
 
       {drills.length > 0 && drills.every((d) => !d.date && !d.emergency_type) ? (
         <p className="flex items-center gap-1.5 text-[11px] text-white/45">
@@ -554,6 +597,6 @@ export function StepDrills() {
           Completa fecha o tipo para considerar este paso listo.
         </p>
       ) : null}
-    </div>
+    </FamilyPlanStepRoot>
   )
 }

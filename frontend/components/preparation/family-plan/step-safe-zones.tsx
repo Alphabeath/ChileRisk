@@ -10,13 +10,19 @@ import {
   ExternalLink,
   Flame,
   Info,
+  Map,
   Waves,
   Wind,
 } from "lucide-react"
 
 import {
-  FamilyPlanSection,
-} from "@/components/preparation/family-plan/family-plan-field"
+  FamilyPlanCategoryShell,
+  FamilyPlanFormGrid,
+  FamilyPlanItemCard,
+  FamilyPlanStatusBanner,
+  FamilyPlanStatusChip,
+  FamilyPlanStepRoot,
+} from "@/components/preparation/family-plan/family-plan-layout"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
@@ -92,7 +98,7 @@ function SafeZoneFieldInput({
 }) {
   const entry = SAFE_ZONE_GLOSSARY[fieldKey]
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <span className="inline-flex items-center gap-1.5">
         <span className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/65">
           {entry.label}
@@ -123,13 +129,12 @@ function SafeZoneFieldInput({
   )
 }
 
+function filledFieldsCount(zone: SafeZone): number {
+  return SAFE_ZONE_FIELDS.filter((key) => zone[key].trim().length > 0).length
+}
+
 function isZoneComplete(zone: SafeZone): boolean {
-  return (
-    zone.safe_place.trim().length > 0 ||
-    zone.evacuation_route.trim().length > 0 ||
-    zone.safe_zone.trim().length > 0 ||
-    zone.meeting_point.trim().length > 0
-  )
+  return filledFieldsCount(zone) > 0
 }
 
 function SafeZoneCard({
@@ -141,17 +146,22 @@ function SafeZoneCard({
 }) {
   const meta = getEmergencyMeta(zone.emergency)
   const Icon = meta.icon
-  const complete = isZoneComplete(zone)
+  const filled = filledFieldsCount(zone)
+  const complete = filled > 0
+  const chipTone =
+    filled === SAFE_ZONE_FIELDS.length
+      ? "complete"
+      : filled > 0
+        ? "started"
+        : "empty"
 
   return (
-    <article
-      className={cn(
-        "glass-mica interactive-mica border-l-[3px] border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/25",
-        meta.accent,
-      )}
+    <FamilyPlanItemCard
+      accentClassName={meta.accent}
+      className={!complete ? "border-dashed" : undefined}
     >
-      <header className="mb-3 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-2.5">
           <span
             className={cn(
               "flex size-8 shrink-0 items-center justify-center border",
@@ -161,31 +171,16 @@ function SafeZoneCard({
           >
             <Icon className="size-4" />
           </span>
-          <h3 className="text-[12px] font-semibold uppercase tracking-[1.4px] text-white/85">
+          <h3 className="truncate text-[12px] font-semibold uppercase tracking-[1.4px] text-white/85">
             {zone.emergency}
           </h3>
         </div>
-        <span
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 border px-2 text-[9px] font-semibold uppercase tracking-[1.2px]",
-            complete
-              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-              : "border-white/10 bg-white/[0.03] text-white/45",
-          )}
-        >
-          {complete ? (
-            <Check className="size-3" aria-hidden />
-          ) : (
-            <span
-              className="inline-block size-1.5 rounded-full bg-white/40"
-              aria-hidden
-            />
-          )}
-          {complete ? "Iniciado" : "Pendiente"}
-        </span>
+        <FamilyPlanStatusChip tone={chipTone} className="self-start sm:self-auto">
+          {filled}/{SAFE_ZONE_FIELDS.length}
+        </FamilyPlanStatusChip>
       </header>
 
-      <div className="flex flex-col gap-3">
+      <FamilyPlanFormGrid>
         {SAFE_ZONE_FIELDS.map((fieldKey) => (
           <SafeZoneFieldInput
             key={fieldKey}
@@ -194,10 +189,10 @@ function SafeZoneCard({
             onChange={(value) => onUpdate({ [fieldKey]: value })}
           />
         ))}
-      </div>
+      </FamilyPlanFormGrid>
 
       {!complete ? (
-        <p className="mt-3 border-t border-white/10 pt-3 text-[11px] leading-snug text-white/45">
+        <p className="border-t border-white/10 pt-3 text-[11px] leading-snug text-white/45">
           No has completado este escenario.{" "}
           <Link
             href="/evacuation"
@@ -211,55 +206,74 @@ function SafeZoneCard({
           si no conoces la zona.
         </p>
       ) : null}
-    </article>
+    </FamilyPlanItemCard>
   )
 }
 
-function GuidanceBanner() {
+function SafeZonesSummaryBanner({ zones }: { zones: SafeZone[] }) {
+  const total = zones.length
+  const started = zones.filter(isZoneComplete).length
+  const pending = total - started
+  const pct = total === 0 ? 0 : Math.round((started / total) * 100)
+  const allDone = total > 0 && started === total
+
   return (
-    <aside
-      className={cn(
-        "glass-mica interactive-mica flex flex-col gap-3 border border-white/15 bg-white/[0.04] p-4 sm:flex-row sm:items-start sm:justify-between",
-      )}
-      role="region"
-      aria-label="Orientación del paso"
-    >
-      <div className="flex items-start gap-3">
+    <FamilyPlanStatusBanner>
+      <div className="flex items-center gap-3">
         <span
-          className="flex size-8 shrink-0 items-center justify-center border border-blue-400/30 bg-blue-500/10 text-blue-200"
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center border font-mono text-[13px] font-semibold tabular-nums",
+            allDone
+              ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+              : "border-white/20 bg-white/10 text-white",
+          )}
           aria-hidden
         >
-          <AlertTriangle className="size-4" />
+          {allDone ? <Check className="size-4" /> : `${pct}%`}
         </span>
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[1.4px] text-white/85">
-            ¿Cómo actúo en cada emergencia?
+            Protocolos de emergencia
           </p>
-          <p className="mt-1 text-[12px] leading-snug text-white/55">
-            Define un lugar seguro, una ruta de salida, una zona amplia y un
-            punto de encuentro para cada escenario. Pasa el cursor sobre el
-            icono{" "}
-            <Info className="inline size-3 align-[-2px] text-white/55" aria-hidden />{" "}
-            junto a cada etiqueta para ver su definición. Si no los conoces,
-            consulta el mapa oficial con los puntos de encuentro cercanos a tu
-            comuna.
+          <p className="mt-0.5 text-[11.5px] text-white/55">
+            {total === 0
+              ? "Define lugar seguro, ruta y punto de encuentro por escenario"
+              : `${started} de ${total} escenarios iniciados`}
+            {pending > 0 ? ` · ${pending} pendiente${pending === 1 ? "" : "s"}` : ""}
           </p>
         </div>
       </div>
-      <Link
-        href="/evacuation"
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cn(
-          "inline-flex shrink-0 items-center gap-2 self-center border border-white/20 bg-white/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[1.2px] text-white transition-colors sm:self-start",
-          "hover:border-white/30 hover:bg-white/15",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-        )}
-      >
-        Abrir mapa de evacuación
-        <ArrowUpRight className="size-3.5" aria-hidden />
-      </Link>
-    </aside>
+      {total > 0 ? (
+        <div className="relative h-1.5 w-full border border-white/10 bg-white/5 sm:max-w-xs">
+          <span
+            className={cn(
+              "block h-full transition-all duration-300",
+              allDone ? "bg-emerald-400/80" : "bg-blue-400/70",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      ) : null}
+    </FamilyPlanStatusBanner>
+  )
+}
+
+function EvacuationMapCta() {
+  return (
+    <Link
+      href="/evacuation"
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(
+        "inline-flex w-full shrink-0 items-center justify-center gap-2 border border-cyan-500/35 bg-cyan-500/10 px-3 py-2 text-[10px] font-semibold uppercase tracking-[1.2px] text-cyan-100 transition-colors sm:w-fit",
+        "hover:border-cyan-500/55 hover:bg-cyan-500/20",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+      )}
+    >
+      <Map className="size-3.5" aria-hidden />
+      Usar mapa de evacuación
+      <ArrowUpRight className="size-3.5" aria-hidden />
+    </Link>
   )
 }
 
@@ -277,14 +291,35 @@ export function StepSafeZones() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <GuidanceBanner />
+    <FamilyPlanStepRoot>
+      <SafeZonesSummaryBanner zones={data.safe_zones} />
 
-      <FamilyPlanSection
-        title="Protocolos por emergencia"
-        description="Completa al menos el lugar seguro de cada escenario. Los demás campos podrás afinarlos después."
+      <FamilyPlanCategoryShell
+        accentClassName="border-l-cyan-500/50"
+        header={
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span
+                className="flex size-7 shrink-0 items-center justify-center border border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                aria-hidden
+              >
+                <Map className="size-3.5" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-[11px] font-semibold uppercase tracking-[1.4px] text-white/85">
+                  Protocolos por emergencia
+                </h3>
+                <p className="mt-0.5 text-[11.5px] leading-snug text-white/45">
+                  Completa cada escenario. Si no conoces zonas o puntos de
+                  encuentro, abre el mapa oficial de la plataforma.
+                </p>
+              </div>
+            </div>
+            <EvacuationMapCta />
+          </div>
+        }
       >
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {data.safe_zones.map((zone) => (
             <SafeZoneCard
               key={zone.emergency}
@@ -293,7 +328,7 @@ export function StepSafeZones() {
             />
           ))}
         </div>
-      </FamilyPlanSection>
-    </div>
+      </FamilyPlanCategoryShell>
+    </FamilyPlanStepRoot>
   )
 }

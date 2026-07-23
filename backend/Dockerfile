@@ -20,11 +20,12 @@ RUN pip install --no-cache-dir .
 # Context is already filtered by backend/.dockerignore (prevents __pycache__, *.pyc, .env*, etc.)
 COPY . .
 
-RUN useradd --create-home --shell /bin/bash appuser \
+RUN chmod +x /app/scripts/entrypoint.sh \
+    && useradd --create-home --shell /bin/bash appuser \
     && chown -R appuser:appuser /app
 
 USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]

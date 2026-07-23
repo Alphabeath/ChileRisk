@@ -204,6 +204,23 @@ Avoid narrow headers (`max-w-2xl`) on full-width catalog pages — hero should s
 
 Detail phase tabs: `sticky top-20 z-10`, `scroll-mt-32` on phase sections.
 
+### 5.5 Preparation section
+
+Citizen preparation flows (`/preparation`, kit, Plan Familia, `/simulacros`) share tokens in `lib/preparation-ui.ts`:
+
+| Token | Use |
+|-------|-----|
+| `PREPARATION_PAGE_SHELL_CLASS` / `PREPARATION_PAGE_INNER_CLASS` | Page shell + `py-24` / `max-w-7xl` / `gap-4–5` |
+| `PREPARATION_STICKY_SUBNAV_CLASS` | Step nav / filters under navbar (`top-20`) |
+| `PREPARATION_HERO_SHELL_CLASS` | Glass + Mica hero shell |
+| `preparationSavePillClass` | Autosave status pill on wizard |
+
+Cross-flow banners (kit ↔ plan, simulacros ↔ plan): `PreparationContextBanner`. Breadcrumbs: `PreparationBreadcrumb`. Forms: `FamilyPlanField` (`gap-2`, optional `icon` / helper) + `FamilyPlanSection` (divider under title).
+
+**Step content layout** (`components/preparation/family-plan/family-plan-layout.tsx`): every wizard step body uses the same rhythm — `FamilyPlanStepRoot` (`gap-4`); optional `FamilyPlanStatusBanner`; category lists via `FamilyPlanCategoryShell` (accent `border-l-[3px]`); editable items via `FamilyPlanItemCard`; forms via `FamilyPlanFormGrid` (`grid gap-3 sm:grid-cols-2`, full-width with `FAMILY_PLAN_FORM_FULL_CLASS`); empty/add via `FamilyPlanEmptyState` / `FamilyPlanAddPanel` + CTA `w-full sm:w-fit`; status via `FamilyPlanStatusChip`. Canonical form breakpoint is **`sm:`** only (no `md`/`lg` in step forms). Floor-map keeps its canvas chrome; only outer root uses `StepRoot`.
+
+Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky footer with prev/next; hide footer on input focus when needed. From `lg` up: equal-width step tabs (all visible, titles truncate) + single global progress bar. Desktop step row is not sticky so it does not cover the step title.
+
 ---
 
 ## 6. Z-index stack
@@ -321,6 +338,7 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 | Disasters feature | `components/disasters/*`, `data/disasters.ts`, `lib/disasters-visual.ts` |
 | Map overlays | `components/map/*` |
 | Shared glass constant | `lib/glass-panel.ts`, `components/mica-light-provider.tsx` |
+| Preparation UI tokens | `lib/preparation-ui.ts`, `components/preparation/*` |
 | Alert presentation | `components/map/alert-ui.tsx`, `lib/alerts-display.ts` |
 
 ---
@@ -341,4 +359,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-06-06 — `CitizenNavbar` aligned to glass + Mica (`CITIZEN_NAVBAR_SHELL_CLASS` / `CITIZEN_NAVBAR_LINK_CLASS`). Mica globalized via `MicaLightProvider`.
+**Last updated:** 2026-07-23 — Family Plan step content layout primitives (`family-plan-layout.tsx`); unified `sm:` form grids across steps 1–8.
