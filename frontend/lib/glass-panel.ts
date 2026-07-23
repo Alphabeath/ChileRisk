@@ -30,7 +30,7 @@ export const CITIZEN_NAVBAR_LINK_CLASS = cn(
   "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
 )
 
-/** Back / catalog links on `bg-background` disaster pages (readable on light page bg). */
+/** Back / catalog links on globe-backed disaster pages. */
 export const DISASTERS_NAV_LINK_CLASS = cn(
   GLASS_PANEL_CLASS,
   GLASS_MICA_INTERACTIVE_CLASS,

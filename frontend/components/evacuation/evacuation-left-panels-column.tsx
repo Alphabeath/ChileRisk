@@ -2,6 +2,7 @@
 
 import {
   CITIZEN_NAVBAR_CLEARANCE_PX,
+  MAP_DESKTOP_ONLY_CLASS,
   MAP_PANEL_LEFT_INSET_PX,
   MAP_PANEL_WIDTH_CLASS,
 } from "@/lib/citizen-layout"
@@ -22,7 +23,7 @@ interface EvacuationLeftPanelsColumnProps {
   locationPromptActive?: boolean
 }
 
-/** Left column: Puntos de encuentro → Capas (top to bottom). */
+/** Left column: Puntos de encuentro → Capas. Desktop (`md+`) only. */
 export function EvacuationLeftPanelsColumn({
   layerVisibility,
   onToggleLayer,
@@ -37,7 +38,8 @@ export function EvacuationLeftPanelsColumn({
   return (
     <div
       className={cn(
-        "pointer-events-none fixed z-20 flex flex-col gap-2",
+        "pointer-events-none fixed z-20 flex-col gap-2",
+        MAP_DESKTOP_ONLY_CLASS,
         MAP_PANEL_WIDTH_CLASS,
       )}
       style={{

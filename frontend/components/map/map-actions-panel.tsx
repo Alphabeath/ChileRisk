@@ -13,19 +13,69 @@ import { useUIStore } from "@/stores/ui-store"
 
 export const MAP_ACTIONS_PANEL_ID = "map-actions-panel"
 
-export function MapActionsPanel({ flow = false }: { flow?: boolean }) {
+function MapActionsBody() {
+  const resetAllPanelPositions = useUIStore((s) => s.resetAllPanelPositions)
+  const hasCustomPositions = useUIStore(
+    (s) => Object.keys(s.panelPositions).length > 0,
+  )
+  const { refresh, isRefreshing } = useRefreshMapData()
+
+  return (
+    <div className="flex divide-x divide-white/10">
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => resetAllPanelPositions()}
+        disabled={!hasCustomPositions}
+        aria-label="Reiniciar posición de todos los paneles"
+        title="Reiniciar posición de todos los paneles"
+        className={MAP_PANEL_ACTION_BUTTON_CLASS}
+      >
+        <RotateCcw className="size-3.5 shrink-0" aria-hidden />
+        <span>Reiniciar</span>
+      </button>
+
+      <button
+        type="button"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={() => void refresh()}
+        disabled={isRefreshing}
+        aria-label="Actualizar datos del mapa"
+        title="Actualizar datos del mapa"
+        className={cn(
+          MAP_PANEL_ACTION_BUTTON_CLASS,
+          isRefreshing && "cursor-wait opacity-60",
+        )}
+      >
+        <RefreshCw
+          className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")}
+          aria-hidden
+        />
+        <span>Actualizar</span>
+      </button>
+    </div>
+  )
+}
+
+function MapActionsPanelEmbedded() {
+  return (
+    <div className="flex w-full flex-col" role="toolbar" aria-label="Controles del mapa">
+      <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2.5">
+        <SlidersHorizontal className="size-3.5 shrink-0 text-white/55" aria-hidden />
+        <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Controles</span>
+      </div>
+      <MapActionsBody />
+    </div>
+  )
+}
+
+function MapActionsPanelOverlay({ flow }: { flow: boolean }) {
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: MAP_ACTIONS_PANEL_ID,
     corner: flow ? undefined : "top-left",
     cornerInset: 16,
     flow,
   })
-
-  const resetAllPanelPositions = useUIStore((s) => s.resetAllPanelPositions)
-  const hasCustomPositions = useUIStore(
-    (s) => Object.keys(s.panelPositions).length > 0,
-  )
-  const { refresh, isRefreshing } = useRefreshMapData()
 
   return (
     <div
@@ -47,40 +97,18 @@ export function MapActionsPanel({ flow = false }: { flow?: boolean }) {
           <span className={MAP_PANEL_HEADER_LABEL_CLASS}>Controles</span>
         </div>
       </div>
-
-      <div className="flex divide-x divide-white/10">
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => resetAllPanelPositions()}
-          disabled={!hasCustomPositions}
-          aria-label="Reiniciar posición de todos los paneles"
-          title="Reiniciar posición de todos los paneles"
-          className={MAP_PANEL_ACTION_BUTTON_CLASS}
-        >
-          <RotateCcw className="size-3.5 shrink-0" aria-hidden />
-          <span>Reiniciar</span>
-        </button>
-
-        <button
-          type="button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => void refresh()}
-          disabled={isRefreshing}
-          aria-label="Actualizar datos del mapa"
-          title="Actualizar datos del mapa"
-          className={cn(
-            MAP_PANEL_ACTION_BUTTON_CLASS,
-            isRefreshing && "cursor-wait opacity-60",
-          )}
-        >
-          <RefreshCw
-            className={cn("size-3.5 shrink-0", isRefreshing && "animate-spin")}
-            aria-hidden
-          />
-          <span>Actualizar</span>
-        </button>
-      </div>
+      <MapActionsBody />
     </div>
   )
+}
+
+export function MapActionsPanel({
+  flow = false,
+  embedded = false,
+}: {
+  flow?: boolean
+  embedded?: boolean
+}) {
+  if (embedded) return <MapActionsPanelEmbedded />
+  return <MapActionsPanelOverlay flow={flow} />
 }

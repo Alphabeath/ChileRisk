@@ -1,12 +1,9 @@
 import { cn } from "@/lib/utils"
-import {
-  GLASS_MICA_INTERACTIVE_CLASS,
-  GLASS_PANEL_CLASS,
-} from "@/lib/glass-panel"
+import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
 
-/** Page shell for preparation routes — clears floating CitizenNavbar (`py-24`). */
+/** Page shell for preparation routes — clears floating CitizenNavbar (`py-24`). Transparent so GlobePageBackground shows through. */
 export const PREPARATION_PAGE_SHELL_CLASS =
-  "min-h-screen bg-background"
+  "min-h-screen"
 
 export const PREPARATION_PAGE_INNER_CLASS =
   "mx-auto flex max-w-7xl flex-col gap-4 px-4 py-24 sm:gap-5 sm:px-6 lg:px-8"
@@ -63,16 +60,14 @@ export const PREPARATION_EMPTY_STATE_CLASS = cn(
 )
 
 export const PREPARATION_LIST_ITEM_CLASS = cn(
-  "border border-white/10 bg-white/[0.03] p-4",
-  "transition-colors hover:border-white/15 hover:bg-white/[0.05]",
+  GLASS_PANEL_CLASS,
+  "p-4",
+  "transition-colors hover:bg-black/55",
 )
 
 export const PREPARATION_SECTION_DIVIDER_CLASS =
   "border-b border-white/10 pb-3"
 
-/** Hero shell used across preparation heroes. */
-export const PREPARATION_HERO_SHELL_CLASS = cn(
-  GLASS_PANEL_CLASS,
-  GLASS_MICA_INTERACTIVE_CLASS,
-  "relative w-full overflow-hidden",
-)
+/** Hero shell — brand gradient, no glass/blur (see DESIGN.md §5.1). */
+export const PREPARATION_HERO_SHELL_CLASS =
+  "relative w-full overflow-hidden border border-white/10"

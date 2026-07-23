@@ -171,10 +171,72 @@ function AlertGlossaryContent() {
   )
 }
 
-export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
-  const [expanded, setExpanded] = useState(true)
+function RiskLegendTabs({ alertsMaxHeightClass }: { alertsMaxHeightClass: string }) {
   const mapColorMode = useUIStore((s) => s.mapColorMode)
   const setMapColorMode = useUIStore((s) => s.setMapColorMode)
+
+  return (
+    <Tabs
+      value={mapColorMode === "risk" ? "riesgo" : "alertas"}
+      onValueChange={(v) => setMapColorMode(v === "riesgo" ? "risk" : "alerts")}
+      className="flex flex-col"
+    >
+      <TabsList
+        variant="line"
+        className="h-auto w-full justify-start gap-0 rounded-none border-b border-white/[0.06] bg-transparent px-2"
+      >
+        <TabsTrigger
+          value="riesgo"
+          className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
+        >
+          <Layers aria-hidden />
+          Riesgo
+        </TabsTrigger>
+        <TabsTrigger
+          value="alertas"
+          className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
+        >
+          <ShieldAlert aria-hidden />
+          Alertas
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent
+        value="riesgo"
+        className="mt-0 px-2 py-1.5 data-[state=inactive]:hidden"
+      >
+        <RiskLegendContent />
+      </TabsContent>
+      <TabsContent
+        value="alertas"
+        className={cn(
+          "mt-0 overflow-y-auto px-2 data-[state=inactive]:hidden",
+          alertsMaxHeightClass,
+        )}
+      >
+        <AlertGlossaryContent />
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+function RiskLegendPanelEmbedded() {
+  return (
+    <div
+      className="flex w-full max-h-[min(60dvh,480px)] flex-col overflow-hidden"
+      role="group"
+      aria-label="Vistas de mapa (Riesgo / Alertas)"
+    >
+      {/* Title omitted — tab already says "Vistas". */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <RiskLegendTabs alertsMaxHeightClass="max-h-[min(50dvh,400px)]" />
+      </div>
+    </div>
+  )
+}
+
+function RiskLegendPanelOverlay({ flow }: { flow: boolean }) {
+  const [expanded, setExpanded] = useState(true)
+  const mapColorMode = useUIStore((s) => s.mapColorMode)
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: "risk-legend-panel",
     corner: flow ? undefined : "bottom-right",
@@ -193,7 +255,7 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
       <div
         className={cn(
           "flex items-stretch",
-          expanded && "border-b border-white/10"
+          expanded && "border-b border-white/10",
         )}
       >
         <div
@@ -244,7 +306,7 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
           <ChevronDown
             className={cn(
               "size-3 transition-transform duration-200",
-              !expanded && "-rotate-90"
+              !expanded && "-rotate-90",
             )}
             aria-hidden
           />
@@ -256,44 +318,19 @@ export function RiskLegendPanel({ flow = false }: { flow?: boolean }) {
         className={cn(!expanded && "hidden")}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <Tabs
-          value={mapColorMode === "risk" ? "riesgo" : "alertas"}
-          onValueChange={(v) => setMapColorMode(v === "riesgo" ? "risk" : "alerts")}
-          className="flex flex-col"
-        >
-          <TabsList
-            variant="line"
-            className="h-auto w-full justify-start gap-0 rounded-none border-b border-white/[0.06] bg-transparent px-2"
-          >
-            <TabsTrigger
-              value="riesgo"
-              className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
-            >
-              <Layers aria-hidden />
-              Riesgo
-            </TabsTrigger>
-            <TabsTrigger
-              value="alertas"
-              className="px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-[1.2px] text-white/50 data-[state=active]:text-white/90 data-[state=active]:shadow-none"
-            >
-              <ShieldAlert aria-hidden />
-              Alertas
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="riesgo"
-            className="mt-0 px-2 py-1.5 data-[state=inactive]:hidden"
-          >
-            <RiskLegendContent />
-          </TabsContent>
-          <TabsContent
-            value="alertas"
-            className="mt-0 max-h-[min(300px,38dvh)] overflow-y-auto px-2 data-[state=inactive]:hidden"
-          >
-            <AlertGlossaryContent />
-          </TabsContent>
-        </Tabs>
+        <RiskLegendTabs alertsMaxHeightClass="max-h-[min(300px,38dvh)]" />
       </div>
     </div>
   )
+}
+
+export function RiskLegendPanel({
+  flow = false,
+  embedded = false,
+}: {
+  flow?: boolean
+  embedded?: boolean
+}) {
+  if (embedded) return <RiskLegendPanelEmbedded />
+  return <RiskLegendPanelOverlay flow={flow} />
 }

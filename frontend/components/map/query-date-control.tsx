@@ -23,15 +23,145 @@ import {
 } from "@/lib/query-date"
 import { cn } from "@/lib/utils"
 
-export function QueryDateControl({ flow = false }: { flow?: boolean }) {
+function QueryDateBody({
+  selectedDate,
+  setSelectedDate,
+  today,
+  minDate,
+  canAdvance,
+  canRetreat,
+  calendarOpen,
+  setCalendarOpen,
+}: {
+  selectedDate: string
+  setSelectedDate: (iso: string) => void
+  today: string
+  minDate: string
+  canAdvance: boolean
+  canRetreat: boolean
+  calendarOpen: boolean
+  setCalendarOpen: (open: boolean) => void
+}) {
+  const minDay = parseIsoDate(minDate)
+  const maxDay = parseIsoDate(today)
+  const selectedDay = parseIsoDate(selectedDate)
+
+  return (
+    <div
+      id="query-date-panel-body"
+      className="flex flex-col gap-2 px-3 py-2.5"
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 w-full justify-start gap-2 border-white/15 bg-white/5 font-mono text-[11px] font-normal tracking-normal text-white/90 hover:bg-white/10 hover:text-white"
+          >
+            <CalendarIcon data-icon="inline-start" className="text-white/55" />
+            {selectedDate.split("-").reverse().join("/")}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          align="start"
+          className="z-[60] w-auto border-white/10 bg-popover p-0"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <Calendar
+            mode="single"
+            locale={es}
+            selected={selectedDay}
+            onSelect={(day) => {
+              if (!day) return
+              setSelectedDate(formatIsoDate(day))
+              setCalendarOpen(false)
+            }}
+            disabled={{ before: minDay, after: maxDay }}
+            defaultMonth={selectedDay}
+          />
+        </PopoverContent>
+      </Popover>
+
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={!canAdvance}
+          onClick={() => setSelectedDate(addDaysIso(selectedDate, 1))}
+          className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
+          aria-label="Avanzar un día"
+        >
+          <ChevronLeft className="size-3.5" aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedDate(today)}
+          className={cn(
+            "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
+            selectedDate === today && "bg-white/10 text-white",
+          )}
+        >
+          Hoy
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedDate(addDaysIso(today, -1))}
+          className={cn(
+            "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
+            selectedDate === addDaysIso(today, -1) && "bg-white/10 text-white",
+          )}
+        >
+          Ayer
+        </button>
+        <button
+          type="button"
+          disabled={!canRetreat}
+          onClick={() => setSelectedDate(addDaysIso(selectedDate, -1))}
+          className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
+          aria-label="Retroceder un día"
+        >
+          <ChevronRight className="size-3.5" aria-hidden />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function QueryDateControlEmbedded() {
+  const { selectedDate, setSelectedDate } = useQueryDate()
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const today = todayIsoDate()
+  const minDate = minQueryDateIso(today)
+  const canAdvance = selectedDate < today
+  const canRetreat = selectedDate > minDate
+
+  return (
+    <div className="flex w-full flex-col" role="group" aria-label="Fecha de consulta">
+      {/* Title omitted — tab + status strip already show Fecha / date. */}
+      <QueryDateBody
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        today={today}
+        minDate={minDate}
+        canAdvance={canAdvance}
+        canRetreat={canRetreat}
+        calendarOpen={calendarOpen}
+        setCalendarOpen={setCalendarOpen}
+      />
+    </div>
+  )
+}
+
+function QueryDateControlOverlay({ flow }: { flow: boolean }) {
   const { selectedDate, setSelectedDate } = useQueryDate()
   const [expanded, setExpanded] = useState(true)
   const [calendarOpen, setCalendarOpen] = useState(false)
   const today = todayIsoDate()
   const minDate = minQueryDateIso(today)
-  const minDay = parseIsoDate(minDate)
-  const maxDay = parseIsoDate(today)
-  const selectedDay = parseIsoDate(selectedDate)
+  const canAdvance = selectedDate < today
+  const canRetreat = selectedDate > minDate
+  const dateLabel = formatQueryDateLabel(selectedDate, today)
 
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: "query-date-panel",
@@ -39,10 +169,6 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
     cornerInset: 16,
     flow,
   })
-
-  const canAdvance = selectedDate < today
-  const canRetreat = selectedDate > minDate
-  const dateLabel = formatQueryDateLabel(selectedDate, today)
 
   const handleToggleExpanded = () => {
     setExpanded((v) => {
@@ -62,7 +188,7 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
       <div
         className={cn(
           "flex items-stretch",
-          expanded && "border-b border-white/10"
+          expanded && "border-b border-white/10",
         )}
       >
         <div
@@ -93,94 +219,36 @@ export function QueryDateControl({ flow = false }: { flow?: boolean }) {
           <ChevronDown
             className={cn(
               "size-3.5 transition-transform duration-200",
-              !expanded && "-rotate-90"
+              !expanded && "-rotate-90",
             )}
             aria-hidden
           />
         </button>
       </div>
 
-      <div
-        id="query-date-panel-body"
-        className={cn(
-          "flex flex-col gap-2 px-3 py-2.5",
-          !expanded && "hidden"
-        )}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 w-full justify-start gap-2 border-white/15 bg-white/5 font-mono text-[11px] font-normal tracking-normal text-white/90 hover:bg-white/10 hover:text-white"
-            >
-              <CalendarIcon data-icon="inline-start" className="text-white/55" />
-              {selectedDate.split("-").reverse().join("/")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            align="start"
-            className="z-[60] w-auto border-white/10 bg-popover p-0"
-            onPointerDown={(e) => e.stopPropagation()}
-          >
-            <Calendar
-              mode="single"
-              locale={es}
-              selected={selectedDay}
-              onSelect={(day) => {
-                if (!day) return
-                setSelectedDate(formatIsoDate(day))
-                setCalendarOpen(false)
-              }}
-              disabled={{ before: minDay, after: maxDay }}
-              defaultMonth={selectedDay}
-            />
-          </PopoverContent>
-        </Popover>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            disabled={!canAdvance}
-            onClick={() => setSelectedDate(addDaysIso(selectedDate, 1))}
-            className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
-            aria-label="Avanzar un día"
-          >
-            <ChevronLeft className="size-3.5" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedDate(today)}
-            className={cn(
-              "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
-              selectedDate === today && "bg-white/10 text-white"
-            )}
-          >
-            Hoy
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedDate(addDaysIso(today, -1))}
-            className={cn(
-              "flex-1 rounded-none px-2 py-1 text-[10px] font-medium transition-colors hover:bg-white/10",
-              selectedDate === addDaysIso(today, -1) && "bg-white/10 text-white"
-            )}
-          >
-            Ayer
-          </button>
-          <button
-            type="button"
-            disabled={!canRetreat}
-            onClick={() => setSelectedDate(addDaysIso(selectedDate, -1))}
-            className="flex size-7 shrink-0 items-center justify-center rounded-none text-white/55 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-30"
-            aria-label="Retroceder un día"
-          >
-            <ChevronRight className="size-3.5" aria-hidden />
-          </button>
-        </div>
-      </div>
+      {expanded ? (
+        <QueryDateBody
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          today={today}
+          minDate={minDate}
+          canAdvance={canAdvance}
+          canRetreat={canRetreat}
+          calendarOpen={calendarOpen}
+          setCalendarOpen={setCalendarOpen}
+        />
+      ) : null}
     </div>
   )
+}
+
+export function QueryDateControl({
+  flow = false,
+  embedded = false,
+}: {
+  flow?: boolean
+  embedded?: boolean
+}) {
+  if (embedded) return <QueryDateControlEmbedded />
+  return <QueryDateControlOverlay flow={flow} />
 }

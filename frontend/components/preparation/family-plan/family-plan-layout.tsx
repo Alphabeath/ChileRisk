@@ -1,6 +1,10 @@
 import type { LucideIcon } from "lucide-react"
 import { Plus } from "lucide-react"
 
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 /** Canonical vertical rhythm for every wizard step body. */
@@ -26,7 +30,9 @@ export function FamilyPlanStatusBanner({
     <div
       {...props}
       className={cn(
-        "glass-mica interactive-mica flex flex-col gap-3 border border-white/15 bg-white/[0.04] px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
@@ -50,7 +56,9 @@ export function FamilyPlanCategoryShell({
   return (
     <section
       className={cn(
-        "glass-mica interactive-mica border border-white/15 border-l-[3px] bg-white/[0.04] transition-colors hover:border-white/25",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "border-l-[3px] transition-colors hover:bg-black/55",
         accentClassName,
         className,
       )}
@@ -76,7 +84,9 @@ export function FamilyPlanItemCard({
   return (
     <article
       className={cn(
-        "glass-mica interactive-mica flex flex-col gap-4 border border-white/15 bg-white/[0.04] p-4 transition-colors hover:border-white/25",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "flex flex-col gap-4 p-4 transition-colors hover:bg-black/55",
         accentClassName && "border-l-[3px]",
         accentClassName,
         className,
@@ -113,7 +123,9 @@ export function FamilyPlanEmptyState({
   return (
     <div
       className={cn(
-        "glass-mica interactive-mica flex flex-col items-center gap-2 border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "flex flex-col items-center gap-2 border-dashed px-4 py-8 text-center",
         className,
       )}
     >
@@ -133,7 +145,9 @@ export function FamilyPlanAddPanel({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border border-dashed border-white/25 bg-white/[0.025] p-4 transition-colors hover:border-white/35 hover:bg-white/[0.04]",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "flex flex-col gap-3 border-dashed p-4 transition-colors hover:bg-black/55",
         className,
       )}
     >

@@ -227,8 +227,7 @@ function SummaryHero({
   return (
     <header
       className={cn(
-        GLASS_PANEL_CLASS,
-        "summary-hero relative overflow-hidden print:bg-white",
+        "summary-hero relative overflow-hidden border border-white/10 print:bg-white",
       )}
     >
       <div

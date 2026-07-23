@@ -2,8 +2,10 @@
 
 import { DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { restrictToWindowEdges } from "@dnd-kit/modifiers"
+import { MAP_DESKTOP_ONLY_CONTENTS_CLASS } from "@/lib/citizen-layout"
 import { MapLeftPanelsColumn } from "./map-left-panels-column"
 import { MapRightPanelsColumn } from "./map-right-panels-column"
+import { MonitorMobileDrawer } from "./monitor-mobile-drawer"
 
 export const ALERTS_DND_CONTEXT_ID = "chilerisk-active-alerts"
 
@@ -17,13 +19,18 @@ export function MapOverlays() {
   )
 
   return (
-    <DndContext
-      id={ALERTS_DND_CONTEXT_ID}
-      sensors={sensors}
-      modifiers={[restrictToWindowEdges]}
-    >
-      <MapLeftPanelsColumn />
-      <MapRightPanelsColumn />
-    </DndContext>
+    <>
+      <div className={MAP_DESKTOP_ONLY_CONTENTS_CLASS}>
+        <DndContext
+          id={ALERTS_DND_CONTEXT_ID}
+          sensors={sensors}
+          modifiers={[restrictToWindowEdges]}
+        >
+          <MapLeftPanelsColumn />
+          <MapRightPanelsColumn />
+        </DndContext>
+      </div>
+      <MonitorMobileDrawer />
+    </>
   )
 }

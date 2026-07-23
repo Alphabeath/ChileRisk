@@ -18,7 +18,7 @@ ChileRisk is a **citizen risk monitor** for Chile: serious, clear, data-forward.
 | Institutional Chile accents (blue/red) | Random purple gradients |
 | Phase language: **Antes · Durante · Después** | Invent new step naming per page |
 
-**Default theme:** `<html class="dark">` in `app/layout.tsx`. Citizen pages assume dark background (`bg-background` ≈ near-black).
+**Default theme:** `<html class="dark">` in `app/layout.tsx`. Map pages sit on MapLibre; other citizen pages sit on the rotating globe (`GlobePageBackground`). Body `bg-background` remains as fallback while the globe loads.
 
 ---
 
@@ -88,6 +88,7 @@ Used for: `Button` (with `asChild`), `Tooltip`, `Calendar` + `Popover`, `Tabs`, 
   - Follow the critical rules in `frontend/.agents/skills/shadcn/rules/` (no `space-x/y-*` — use `flex` + `gap-*`; `cn()` for conditional/layout only; semantic tokens & built-in variants before raw colors/overrides; `data-icon="inline-start|inline-end"` + **no** `size-*` on icons inside `Button`/`TabsTrigger`/etc.; full `Card` composition; `TabsTrigger` always inside `TabsList`, etc.).
   - Prefer `npx shadcn@latest add <component>` (run from `frontend/`) over hand-rolled markup for new controls. Review added files.
 - Prefer glass for **new citizen-facing content pages**; shadcn for forms, verification UIs, or when the primitive (Calendar, Popover, Tabs, Dialog primitives) provides real value.
+- Map mobile: persistent `MapMobileBottomSheet` (custom portal, not vaul Drawer modal).
 
 ---
 
@@ -173,13 +174,17 @@ Severity dot: `size-1.5 rounded-full` + hex from meta + subtle glow `box-shadow:
 
 ### 5.1 Citizen pages (non-map)
 
+**Background:** `GlobePageBackground` in `app/(citizen)/layout.tsx` — fixed `RotatingEarth` (`skipIntro` + `autoRotate`), hidden on `/monitor` and `/evacuation`. Page shells are **transparent** (`min-h-screen`, no `bg-background`) so the globe shows through. Light veil `bg-black/30` over the globe for contrast.
+
 ```txt
-min-h-screen bg-background
-mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8   ← catalog
+min-h-screen                    ← shell (transparent; globe from layout)
+mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8   ← catalog / preparation
 mx-auto max-w-6xl …                             ← disaster detail (wider for 2-col steps)
 ```
 
 `py-24` clears the floating **`CitizenNavbar`** (`fixed top-4`, `z-50`).
+
+**Surfaces over the globe:** content panels use the **same glass** as map overlays (`GLASS_PANEL_CLASS` + `GLASS_MICA_INTERACTIVE_CLASS` from `lib/glass-panel.ts` — reference: `/monitor` / `/evacuation` panels). **Page heroes** are the exception: brand gradient + `border border-white/10`, **no** glass/blur (`PREPARATION_HERO_SHELL_CLASS`, disasters heroes).
 
 ### 5.2 Page width
 
@@ -210,9 +215,9 @@ Citizen preparation flows (`/preparation`, kit, Plan Familia, `/simulacros`) sha
 
 | Token | Use |
 |-------|-----|
-| `PREPARATION_PAGE_SHELL_CLASS` / `PREPARATION_PAGE_INNER_CLASS` | Page shell + `py-24` / `max-w-7xl` / `gap-4–5` |
+| `PREPARATION_PAGE_SHELL_CLASS` / `PREPARATION_PAGE_INNER_CLASS` | Transparent shell + `py-24` / `max-w-7xl` / `gap-4–5` (globe from layout) |
 | `PREPARATION_STICKY_SUBNAV_CLASS` | Step nav / filters under navbar (`top-20`) |
-| `PREPARATION_HERO_SHELL_CLASS` | Glass + Mica hero shell |
+| `PREPARATION_HERO_SHELL_CLASS` | Brand hero shell — **no** glass/blur |
 | `preparationSavePillClass` | Autosave status pill on wizard |
 
 Cross-flow banners (kit ↔ plan, simulacros ↔ plan): `PreparationContextBanner`. Breadcrumbs: `PreparationBreadcrumb`. Forms: `FamilyPlanField` (`gap-2`, optional `icon` / helper) + `FamilyPlanSection` (divider under title).
@@ -230,9 +235,12 @@ Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky foo
 | MapLibre base | default |
 | Map popups | ~20 |
 | Floating map panels / glass overlays | `z-20` |
+| Map mobile bottom sheet | `z-70` (portal) |
 | Citizen navbar | `z-50` |
 
-Floating map UI: `position: fixed`, initial position `top-20 left-4` (clear navbar). Draggable panels: `useDraggablePanel` only.
+Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable panels: `useDraggablePanel` only.
+
+**Mobile map chrome (`<md`):** hide floating columns; persistent `MapMobileBottomSheet` (handle + status strip + tabs) portaled to `document.body`. Collapsed = mapa usable; expanded = contenido de la tab + scrim ligero, con transición `grid-template-rows` (~320ms). Monitor tabs: Alertas \| Fecha \| Vistas (sin Controles). Evacuation: Puntos \| Capas; sheet oculto mientras el location prompt está activo. Panel prop `embedded` strips shell/drag handle **y el título del panel** (el tab ya lo nombra).
 
 ---
 
@@ -359,4 +367,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-23 — Family Plan step content layout primitives (`family-plan-layout.tsx`); unified `sm:` form grids across steps 1–8.
+**Last updated:** 2026-07-23 — Globe page background on non-map citizen routes; heroes without glass; content panels match map overlay glass.

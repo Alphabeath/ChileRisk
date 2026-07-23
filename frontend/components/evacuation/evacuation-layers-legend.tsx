@@ -260,15 +260,150 @@ interface EvacuationLayersLegendProps {
   visibility: EvacuationLayerVisibility
   onToggle: (key: LayerKey) => void
   flow?: boolean
+  embedded?: boolean
   disabled?: boolean
 }
 
-export function EvacuationLayersLegend({
+function EvacuationLayersTabs({
+  visibility,
+  onToggle,
+  contentMaxHeightClass,
+  activeTab,
+  onActiveTabChange,
+}: {
+  visibility: EvacuationLayerVisibility
+  onToggle: (key: LayerKey) => void
+  contentMaxHeightClass: string
+  activeTab: DisasterTab
+  onActiveTabChange: (tab: DisasterTab) => void
+}) {
+  return (
+    <Tabs
+      value={activeTab}
+      onValueChange={(value) => onActiveTabChange(value as DisasterTab)}
+      className="flex flex-col"
+    >
+      <TabsList
+        variant="line"
+        className="h-auto w-full justify-center gap-0.5 rounded-none border-b border-white/[0.06] bg-transparent px-2"
+      >
+        {(Object.keys(TAB_META) as DisasterTab[]).map((tab) => {
+          const meta = TAB_META[tab]
+          const Icon = meta.icon
+          const isActive = activeTab === tab
+          return (
+            <TabsTrigger
+              key={tab}
+              value={tab}
+              title={!isActive ? meta.label : undefined}
+              className={cn(
+                "relative items-center justify-center rounded-sm text-white/50 transition-all data-[state=active]:text-white/90 data-[state=active]:shadow-none",
+                isActive
+                  ? "flex gap-1.5 px-2.5 py-1.5"
+                  : "flex size-7 px-0 py-0",
+              )}
+            >
+              <Icon className="size-3.5 shrink-0" aria-hidden />
+              {isActive && (
+                <span className="text-[9px] font-semibold uppercase tracking-[1.1px]">
+                  {meta.label}
+                </span>
+              )}
+            </TabsTrigger>
+          )
+        })}
+      </TabsList>
+
+      <TabsContent
+        value="tsunami"
+        className={cn(
+          "mt-0 overflow-y-auto px-2 py-2 data-[state=inactive]:hidden",
+          contentMaxHeightClass,
+        )}
+      >
+        <p className="mb-2 text-[10px] leading-snug text-white/50">
+          Activa o desactiva capas de evacuación por tsunami. Haz zoom en tu comuna para ver
+          rutas y zonas.
+        </p>
+        <LayerList layers={TSUNAMI_LAYERS} visibility={visibility} onToggle={onToggle} />
+        <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
+          Fuente: SENAPRED · Datos oficiales de evacuación por tsunami.
+        </p>
+      </TabsContent>
+
+      <TabsContent
+        value="volcanic"
+        className={cn(
+          "mt-0 overflow-y-auto px-2 py-2 data-[state=inactive]:hidden",
+          contentMaxHeightClass,
+        )}
+      >
+        <p className="mb-2 text-[10px] leading-snug text-white/50">
+          Activa o desactiva capas de riesgo y evacuación volcánica. Haz zoom para ver rutas,
+          radios y zonas de peligro.
+        </p>
+        <LayerList layers={VOLCANIC_LAYERS} visibility={visibility} onToggle={onToggle} />
+        <HazardLevelScale />
+        <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
+          Fuente: SENAPRED / SERNAGEOMIN · Datos oficiales de evacuación y peligro volcánico.
+        </p>
+      </TabsContent>
+
+      <TabsContent
+        value="wildfire"
+        className={cn(
+          "mt-0 overflow-y-auto px-2 py-2 data-[state=inactive]:hidden",
+          contentMaxHeightClass,
+        )}
+      >
+        <p className="mb-2 text-[10px] leading-snug text-white/50">
+          Activa o desactiva la capa de ocurrencia de incendios forestales. Datos de densidad
+          kernel (enero 2025).
+        </p>
+        <LayerList layers={WILDFIRE_LAYERS} visibility={visibility} onToggle={onToggle} />
+        <WildfireOccurrenceScale />
+        <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
+          Fuente: Análisis de densidad kernel · Datos de ocurrencia enero 2025.
+        </p>
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+function EvacuationLayersLegendEmbedded({
+  visibility,
+  onToggle,
+  disabled,
+}: Omit<EvacuationLayersLegendProps, "flow" | "embedded">) {
+  const [activeTab, setActiveTab] = useState<DisasterTab>("tsunami")
+
+  return (
+    <div
+      className="flex w-full max-h-[min(60dvh,480px)] flex-col overflow-hidden"
+      role="group"
+      aria-label="Leyenda y capas de evacuación"
+      inert={disabled ? true : undefined}
+    >
+      {/* Title omitted — tab already says "Capas". */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <EvacuationLayersTabs
+          visibility={visibility}
+          onToggle={onToggle}
+          contentMaxHeightClass="max-h-[min(50dvh,400px)]"
+          activeTab={activeTab}
+          onActiveTabChange={setActiveTab}
+        />
+      </div>
+    </div>
+  )
+}
+
+function EvacuationLayersLegendOverlay({
   visibility,
   onToggle,
   flow = false,
   disabled,
-}: EvacuationLayersLegendProps) {
+}: Omit<EvacuationLayersLegendProps, "embedded">) {
   const [expanded, setExpanded] = useState(true)
   const [activeTab, setActiveTab] = useState<DisasterTab>("tsunami")
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
@@ -346,87 +481,22 @@ export function EvacuationLayersLegend({
         className={cn(!expanded && "hidden")}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as DisasterTab)}
-          className="flex flex-col"
-        >
-          <TabsList
-            variant="line"
-            className="h-auto w-full justify-center gap-0.5 rounded-none border-b border-white/[0.06] bg-transparent px-2"
-          >
-            {(Object.keys(TAB_META) as DisasterTab[]).map((tab) => {
-              const meta = TAB_META[tab]
-              const Icon = meta.icon
-              const isActive = activeTab === tab
-              return (
-                <TabsTrigger
-                  key={tab}
-                  value={tab}
-                  title={!isActive ? meta.label : undefined}
-                  className={cn(
-                    "relative items-center justify-center rounded-sm text-white/50 transition-all data-[state=active]:text-white/90 data-[state=active]:shadow-none",
-                    isActive
-                      ? "flex gap-1.5 px-2.5 py-1.5"
-                      : "flex size-7 px-0 py-0",
-                  )}
-                >
-                  <Icon className="size-3.5 shrink-0" aria-hidden />
-                  {isActive && (
-                    <span className="text-[9px] font-semibold uppercase tracking-[1.1px]">
-                      {meta.label}
-                    </span>
-                  )}
-                </TabsTrigger>
-              )
-            })}
-          </TabsList>
-
-          <TabsContent
-            value="tsunami"
-            className="mt-0 max-h-[min(280px,36dvh)] overflow-y-auto px-2 py-2 data-[state=inactive]:hidden"
-          >
-            <p className="mb-2 text-[10px] leading-snug text-white/50">
-              Activa o desactiva capas de evacuación por tsunami. Haz zoom en tu comuna para ver
-              rutas y zonas.
-            </p>
-            <LayerList layers={TSUNAMI_LAYERS} visibility={visibility} onToggle={onToggle} />
-            <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
-              Fuente: SENAPRED · Datos oficiales de evacuación por tsunami.
-            </p>
-          </TabsContent>
-
-          <TabsContent
-            value="volcanic"
-            className="mt-0 max-h-[min(280px,36dvh)] overflow-y-auto px-2 py-2 data-[state=inactive]:hidden"
-          >
-            <p className="mb-2 text-[10px] leading-snug text-white/50">
-              Activa o desactiva capas de riesgo y evacuación volcánica. Haz zoom para ver rutas,
-              radios y zonas de peligro.
-            </p>
-            <LayerList layers={VOLCANIC_LAYERS} visibility={visibility} onToggle={onToggle} />
-            <HazardLevelScale />
-            <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
-              Fuente: SENAPRED / SERNAGEOMIN · Datos oficiales de evacuación y peligro volcánico.
-            </p>
-          </TabsContent>
-
-          <TabsContent
-            value="wildfire"
-            className="mt-0 max-h-[min(280px,36dvh)] overflow-y-auto px-2 py-2 data-[state=inactive]:hidden"
-          >
-            <p className="mb-2 text-[10px] leading-snug text-white/50">
-              Activa o desactiva la capa de ocurrencia de incendios forestales. Datos de densidad
-              kernel (enero 2025).
-            </p>
-            <LayerList layers={WILDFIRE_LAYERS} visibility={visibility} onToggle={onToggle} />
-            <WildfireOccurrenceScale />
-            <p className="mt-2 border-t border-white/[0.06] pt-2 text-[9px] leading-snug text-white/40">
-              Fuente: Análisis de densidad kernel · Datos de ocurrencia enero 2025.
-            </p>
-          </TabsContent>
-        </Tabs>
+        <EvacuationLayersTabs
+          visibility={visibility}
+          onToggle={onToggle}
+          contentMaxHeightClass="max-h-[min(280px,36dvh)]"
+          activeTab={activeTab}
+          onActiveTabChange={setActiveTab}
+        />
       </div>
     </div>
   )
+}
+
+export function EvacuationLayersLegend({
+  embedded = false,
+  ...props
+}: EvacuationLayersLegendProps) {
+  if (embedded) return <EvacuationLayersLegendEmbedded {...props} />
+  return <EvacuationLayersLegendOverlay {...props} />
 }

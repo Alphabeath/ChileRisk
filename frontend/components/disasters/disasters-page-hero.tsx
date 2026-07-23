@@ -1,4 +1,4 @@
-import { GLASS_DIVIDER, GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import { GLASS_DIVIDER } from "@/lib/glass-panel"
 import { AlertTriangle, Clock, ShieldAlert, ShieldCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -15,7 +15,7 @@ const phaseHighlights = [
 
 export function DisastersPageHero({ disasterCount, totalSteps }: DisastersPageHeroProps) {
   return (
-    <header className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "relative w-full overflow-hidden")}>
+    <header className="relative w-full overflow-hidden border border-white/10">
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-red-950/70 to-[var(--secondary-chile)]/45"
         aria-hidden

@@ -10,6 +10,7 @@ import type { FeatureCollection, Feature, GeometryObject, GeoJsonProperties } fr
 // Componente RotatingEarth
 // Renderiza un globo interactivo usando D3 + TopoJSON.
 // - Soporta una animación de introducción que centra y acerca Chile.
+// - Modo fondo: skipIntro + autoRotate (pose lejana, rotación continua, sin estrella).
 // - Permite arrastrar para rotar y usar la rueda para hacer zoom.
 // - Responde a redimensionado mediante ResizeObserver.
 
@@ -18,9 +19,18 @@ interface RotatingEarthProps {
   className?: string;
   // Callback que se invoca cuando la animación de introducción alcanza ~85%
   onIntroComplete?: () => void;
+  /** Skip Chile zoom intro — stay at far start pose. */
+  skipIntro?: boolean;
+  /** Start continuous auto-rotation after load. */
+  autoRotate?: boolean;
 }
 
-export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps) {
+export function RotatingEarth({
+  className,
+  onIntroComplete,
+  skipIntro = false,
+  autoRotate = false,
+}: RotatingEarthProps) {
   // Referencia al contenedor que envuelve el SVG (útil para medir tamaño)
   const containerRef = useRef<HTMLDivElement>(null);
   // Referencia al elemento SVG donde D3 dibuja el globo
@@ -71,7 +81,13 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
 
     // Respeta la preferencia de usuarios por reducir movimiento
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const shouldSkipIntro = introCompleteRef.current || introStartedRef.current || prefersReducedMotion;
+    // Background mode: always far pose, never Chile zoom. Landing: skip after intro or reduced-motion.
+    const shouldSkipIntro =
+      skipIntro || introCompleteRef.current || introStartedRef.current || prefersReducedMotion;
+    // Far pose when skipIntro prop (page bg). Landing reduced-motion still lands on Chile.
+    const useFarPose = skipIntro;
+    const showChileStar = !skipIntro;
+    const shouldAutoRotate = autoRotate && !prefersReducedMotion;
 
     // Rotación inicial y final (se usa para la animación de introducción)
     const startRotation: [number, number] = [40, -20];
@@ -84,11 +100,18 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
     const startScale = Math.min(width, height) / 3.5;
     const endScale = Math.min(width, height) / 0.6; // zoom final para ver Chile completo
 
+    const initialScale = useFarPose ? startScale : shouldSkipIntro ? endScale : startScale;
+    const initialRotation = useFarPose
+      ? startRotation
+      : shouldSkipIntro
+        ? endRotation
+        : startRotation;
+
     // Proyección ortográfica (globo) configurada con escala/rotación según si saltamos la intro
     const projection = d3.geoOrthographic()
-      .scale(shouldSkipIntro ? endScale : startScale)
+      .scale(initialScale)
       .center([0, 0])
-      .rotate(shouldSkipIntro ? endRotation : startRotation)
+      .rotate(initialRotation)
       .translate([width / 2, height / 2]);
 
     const path = d3.geoPath().projection(projection);
@@ -158,7 +181,7 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
         .attr('cy', height / 2)
         .attr('r', projection.scale());
 
-      if (chileFeatureRef) {
+      if (chileFeatureRef && showChileStar) {
         const centroid = path.centroid(chileFeatureRef as GeoPermissibleObjects);
         const bounds = path.bounds(chileFeatureRef as GeoPermissibleObjects);
         const bw = Math.max(6, bounds[1][0] - bounds[0][0]);
@@ -175,16 +198,21 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
     // Timers para la rotación automática y la animación de introducción
     let rotationTimer: ReturnType<typeof d3.timer> | null = null;
     let introTimer: ReturnType<typeof d3.timer> | null = null;
-    const autoRotationTimeout: ReturnType<typeof setTimeout> | null = null; // placeholder si se quisiera usar timeout
 
     // Inicia rotación automática continua
     const startAutoRotation = () => {
+      if (prefersReducedMotion) return;
       rotationTimer?.stop();
       rotationTimer = d3.timer(() => {
         const rotate = projection.rotate();
         projection.rotate([rotate[0] + 0.15, rotate[1]]); // rotación lenta sobre el eje Y
         updatePaths();
       });
+    };
+
+    const stopAutoRotation = () => {
+      rotationTimer?.stop();
+      rotationTimer = null;
     };
 
     // Animación de introducción: interpola rotación y escala hacia Chile
@@ -211,10 +239,12 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
         if (t >= 1) {
           introTimer?.stop();
           introTimer = null;
-          svgSel.select('.chile-star')
-            .transition()
-            .duration(350)
-            .style('opacity', 1);
+          if (showChileStar) {
+            svgSel.select('.chile-star')
+              .transition()
+              .duration(350)
+              .style('opacity', 1);
+          }
         }
       });
     };
@@ -224,8 +254,7 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
       .on('start', () => {
         introTimer?.stop();
         introTimer = null;
-        rotationTimer?.stop();
-        rotationTimer = null;
+        stopAutoRotation();
       })
       .on('drag', (event) => {
         const rotate = projection.rotate();
@@ -235,10 +264,12 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
       })
       .on('end', () => {
         startAutoRotation();
-        svgSel.select('.chile-star')
-          .transition()
-          .duration(300)
-          .style('opacity', 1);
+        if (showChileStar) {
+          svgSel.select('.chile-star')
+            .transition()
+            .duration(300)
+            .style('opacity', 1);
+        }
       });
 
     svgSel.call(dragBehavior);
@@ -255,8 +286,18 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
       updatePaths();
     }, { passive: false });
 
+    // Pause rotation when tab is hidden (page-background perf)
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stopAutoRotation();
+      } else if (shouldAutoRotate) {
+        startAutoRotation();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     // Renderiza las entidades de tierra (países) y aplica estilo especial a Chile
-      const renderLand = (land: FeatureCollection<GeometryObject, GeoJsonProperties>) => {
+    const renderLand = (land: FeatureCollection<GeometryObject, GeoJsonProperties>) => {
       const group = svgSel.append('g');
 
       const isChile = (d: { id?: number | string; properties?: GeoJsonProperties }) => {
@@ -278,7 +319,7 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
         .style('stroke-width', '0.5');
 
       const chileFeature = land.features.find((f) => isChile(f));
-      if (chileFeature) {
+      if (chileFeature && showChileStar) {
         chileFeatureRef = chileFeature;
 
         const centroid = path.centroid(chileFeature as GeoPermissibleObjects);
@@ -297,6 +338,8 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
           .attr('fill', '#fff')
           .style('opacity', 0)
           .style('pointer-events', 'none');
+      } else if (chileFeature) {
+        chileFeatureRef = chileFeature;
       }
     };
 
@@ -309,7 +352,12 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
           introCompleteRef.current = true;
           onIntroComplete?.();
         }
-        svgSel.select('.chile-star').style('opacity', 1);
+        if (showChileStar) {
+          svgSel.select('.chile-star').style('opacity', 1);
+        }
+        if (shouldAutoRotate) {
+          startAutoRotation();
+        }
       } else {
         startIntroAnimation();
       }
@@ -347,9 +395,9 @@ export function RotatingEarth({ className, onIntroComplete }: RotatingEarthProps
     return () => {
       introTimer?.stop();
       rotationTimer?.stop();
-      if (autoRotationTimeout) clearTimeout(autoRotationTimeout);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [dimensions, onIntroComplete]);
+  }, [dimensions, onIntroComplete, skipIntro, autoRotate]);
 
   return (
     <div ref={containerRef} className={className} style={{ position: 'relative' }}>

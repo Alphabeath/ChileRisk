@@ -6,22 +6,36 @@ Referencia de lo **shipped** en el mapa y datos. Índice agente: [AGENTS.md](../
 
 ## Map page composition
 
-**Route:** `app/(citizen)/map/page.tsx`
+**Route:** `app/(citizen)/monitor/page.tsx`
 
 ```tsx
 <ChileMap />
-<MapOverlays />  // DndContext + paneles
+<MapOverlays />  // desktop columns + mobile Drawer
 ```
+
+**Evacuation:** `app/(citizen)/evacuation/page.tsx` → `EvacuationPageShell` (same breakpoint pattern).
+
+### Responsive map chrome (`md` = 768px)
+
+| Viewport | UI |
+|----------|-----|
+| `md+` | Floating glass columns + DnD (`MapLeftPanelsColumn` / `MapRightPanelsColumn` or `EvacuationLeftPanelsColumn`) |
+| `<md` | Columns hidden; persistent **bottom sheet** (collapsed bar always visible; expand for tab content) |
+
+- Breakpoint helpers: `MAP_MOBILE_BREAKPOINT`, `MAP_DESKTOP_ONLY_CLASS`, `MAP_DESKTOP_ONLY_CONTENTS_CLASS`, `MAP_MOBILE_ONLY_CLASS` in `lib/citizen-layout.ts`
+- Primitive: `components/map/map-mobile-bottom-sheet.tsx` — portal a `body`, handle + status + tabs, expanded/collapsed
+- Monitor: `components/map/monitor-mobile-drawer.tsx` — tabs **Alertas** \| **Fecha** \| **Vistas** (sin Controles/`MapActionsPanel` en móvil)
+- Evacuation: `components/evacuation/evacuation-mobile-drawer.tsx` — tabs **Puntos** \| **Capas**; sheet oculto mientras el prompt de ubicación está activo
 
 ### `<MapOverlays />`
 
 **Path:** `components/map/map-overlays.tsx`
 
-- `DndContext` con `PointerSensor` (`distance: 4`), `KeyboardSensor`, `restrictToWindowEdges`
-- Renderiza: `ActiveAlertsPanel`, `QueryDateControl`, `RiskLegendPanel`
+- Desktop (`md+`): `DndContext` with `PointerSensor` (`distance: 4`), `KeyboardSensor`, `restrictToWindowEdges` → left/right columns
+- Mobile: `MonitorMobileDrawer` (persistent bottom sheet)
 - ID contexto: `ALERTS_DND_CONTEXT_ID` (`"chilerisk-active-alerts"`)
 
-Cualquier overlay draggable debe vivir **dentro** de este contexto.
+Overlays draggables deben vivir **dentro** del `DndContext` desktop.
 
 ---
 
@@ -49,7 +63,8 @@ MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React, marcadores sí
 Lista alertas unificadas (SERNAPRED alertas/eventos + ChileRisk). Usa `useActiveAlerts()` + `sortActiveAlerts` (`lib/alerts-display.ts`).
 
 - Posición default: top-left bajo navbar (`MAP_PANEL_DEFAULT_TOP_PX` desde `lib/citizen-layout.ts`)
-- Draggable: `useDraggablePanel({ id: "active-alerts-panel" })`
+- Draggable: `useDraggablePanel({ id: "active-alerts-panel" })` (modo overlay)
+- **`embedded`:** sin shell, drag ni título de panel (el tab del bottom sheet ya lo identifica) — contenido dentro del sheet móvil
 - Glass: `bg-black/60 backdrop-blur-xl`, esquinas rectas
 - Badge en header: total global
 - **Filtro por fuente** (Popover shadcn, filtrado client-side, sin re-fetch):
@@ -109,6 +124,10 @@ Sin cambios de rol: constantes MapLibre; popups con `createPopupContent()` + gla
 |--------|-----|
 | `MAP_PANEL_DEFAULT_TOP_PX` | Top bajo `CitizenNavbar` |
 | `MAP_PANEL_WIDTH_CLASS` | `w-[260px] max-w-[calc(100vw-2rem)]` compartido por paneles |
+| `MAP_MOBILE_BREAKPOINT` | `"md"` — cutoff paneles flotantes vs Drawer |
+| `MAP_DESKTOP_ONLY_CLASS` | `hidden md:flex` — columnas de paneles |
+| `MAP_DESKTOP_ONLY_CONTENTS_CLASS` | `hidden md:contents` — wrapper DnD desktop |
+| `MAP_MOBILE_ONLY_CLASS` | `md:hidden` — FAB / drawer host |
 
 ### `hooks/use-draggable-panel.ts`
 
@@ -249,6 +268,18 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 | `SenapredAlert` (type) | `ActiveAlert` |
 | `senapred_url` | `external_url` |
 | `SENAPRED_DND_CONTEXT_ID` | `ALERTS_DND_CONTEXT_ID` |
+
+---
+
+## Globe page background (non-map citizen)
+
+**Layout:** `app/(citizen)/layout.tsx` mounts `GlobePageBackground` (`components/globe/globe-page-background.tsx`).
+
+- Fixed `RotatingEarth` with `skipIntro` + `autoRotate` (no Chile zoom; continuous rotation).
+- Hidden on `/monitor` and `/evacuation` (MapLibre routes).
+- Landing `/` keeps its own globe + intro via `app/page.tsx`.
+- Props: `skipIntro`, `autoRotate` on `components/globe/rotating-earth.tsx`.
+- Surfaces: content panels use `GLASS_PANEL_CLASS` (same as map overlays); page heroes use gradient shell without glass — see [DESIGN.md](./DESIGN.md) §5.1.
 
 ---
 

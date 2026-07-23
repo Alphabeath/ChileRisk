@@ -96,35 +96,16 @@ function hasViewportSpaceForAlertsExpanded(): boolean {
   return available >= ALERTS_EXPAND_MIN_VIEWPORT_PX
 }
 
-export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
-  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
-  const [, setResizeEpoch] = useState(0)
+function useAlertsPanelModel() {
   const [filter, setFilter] = useState<AlertFilter>("all")
-
-  useLayoutEffect(() => {
-    if (!flow) return
-    const onResize = () => setResizeEpoch((n) => n + 1)
-    window.addEventListener("resize", onResize)
-    return () => window.removeEventListener("resize", onResize)
-  }, [flow])
-
-  const spaceExpanded = flow ? hasViewportSpaceForAlertsExpanded() : false
-  const open = openOverride ?? (flow ? spaceExpanded : false)
-  const { ref, handleProps, style, isDragging } = useDraggablePanel({
-    id: "active-alerts-panel",
-    corner: flow ? undefined : "top-left",
-    cornerInset: 16,
-    flow,
-  })
-
   const { data: alerts = [], isLoading, error, refetch } = useActiveAlerts()
 
   const sorted = useMemo(() => sortActiveAlertsBySeverity(alerts), [alerts])
   const senapredAlerts = sorted.filter(
-    (a) => a.source === "senapred" && (a.record_kind ?? "alerta") === "alerta"
+    (a) => a.source === "senapred" && (a.record_kind ?? "alerta") === "alerta",
   ).length
   const senapredEventos = sorted.filter(
-    (a) => a.source === "senapred" && a.record_kind === "evento"
+    (a) => a.source === "senapred" && a.record_kind === "evento",
   ).length
   const senapredCount = senapredAlerts + senapredEventos
   const chileriskCount = sorted.filter((a) => a.source === "chilerisk").length
@@ -143,9 +124,231 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
 
   const activeFilterLabel = FILTER_OPTIONS.find((o) => o.value === filter)?.label ?? "Todas"
   const isFiltered = filter !== "all"
-
   const hasAlerts = sorted.length > 0
-  const Icon = hasAlerts ? Bell : BellOff
+
+  return {
+    filter,
+    setFilter,
+    sorted,
+    filtered,
+    counts,
+    activeFilterLabel,
+    isFiltered,
+    hasAlerts,
+    isLoading,
+    error,
+    refetch,
+  }
+}
+
+function AlertsFilterControl({
+  filter,
+  setFilter,
+  counts,
+  isFiltered,
+}: {
+  filter: AlertFilter
+  setFilter: (v: AlertFilter) => void
+  counts: Record<AlertFilter, number>
+  isFiltered: boolean
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger
+        aria-label="Filtrar alertas por fuente"
+        className={cn(
+          "relative flex shrink-0 items-center justify-center border-l border-white/10 px-2.5 transition-colors",
+          "hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+          isFiltered ? "text-white" : "text-white/60 hover:text-white/85",
+        )}
+      >
+        <Filter className="size-3.5" aria-hidden />
+        {isFiltered && (
+          <span
+            className="absolute right-1 top-1 size-1.5 rounded-full bg-[#DA291C]"
+            aria-hidden
+          />
+        )}
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={6}
+        className="w-56 gap-2 border-white/10 bg-black/85 p-2 text-white shadow-2xl shadow-black/60 backdrop-blur-xl"
+      >
+        <div className="px-2 pt-1 text-[9.5px] font-semibold uppercase tracking-[1.2px] text-white/55">
+          Filtrar por fuente
+        </div>
+        <div role="radiogroup" aria-label="Fuente de alertas" className="flex flex-col gap-0.5">
+          {FILTER_OPTIONS.map((opt) => {
+            const active = filter === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => setFilter(opt.value)}
+                className={cn(
+                  "group flex items-center gap-2 rounded-none px-2 py-1.5 text-left text-[11.5px] transition-colors",
+                  "hover:bg-white/[0.06] focus-visible:bg-white/[0.08] focus-visible:outline-none",
+                  active && "bg-white/[0.06]",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-3.5 shrink-0 items-center justify-center border",
+                    active
+                      ? "border-[#DA291C] bg-[#DA291C]/15 text-[#ff9a9a]"
+                      : "border-white/20 text-transparent",
+                  )}
+                  aria-hidden
+                >
+                  <Check className="size-2.5" strokeWidth={3} />
+                </span>
+                <span className="flex-1 truncate">{opt.label}</span>
+                <span
+                  className={cn(
+                    "rounded-sm border px-1 font-mono text-[9.5px] font-semibold leading-none tabular-nums",
+                    counts[opt.value] > 0
+                      ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
+                      : "border-white/10 bg-white/[0.04] text-white/40",
+                  )}
+                >
+                  {counts[opt.value]}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function AlertsListBody({
+  open,
+  maxHeightClass,
+  isLoading,
+  error,
+  refetch,
+  filtered,
+  filter,
+}: {
+  open: boolean
+  maxHeightClass: string
+  isLoading: boolean
+  error: unknown
+  refetch: () => void
+  filtered: ReturnType<typeof useAlertsPanelModel>["filtered"]
+  filter: AlertFilter
+}) {
+  return (
+    <div
+      id="active-alerts-list"
+      className={cn(
+        "divide-y divide-white/[0.06] overflow-y-auto",
+        maxHeightClass,
+        !open && "hidden",
+      )}
+      role="region"
+      aria-live="polite"
+    >
+      {isLoading ? (
+        <>
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </>
+      ) : error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : filtered.length === 0 ? (
+        <EmptyState filter={filter} />
+      ) : (
+        filtered.map((alert) => (
+          <ActiveAlertCard
+            key={`${alert.source}-${alert.id}`}
+            alert={alert}
+            showRegion
+          />
+        ))
+      )}
+    </div>
+  )
+}
+
+function ActiveAlertsPanelEmbedded() {
+  const model = useAlertsPanelModel()
+
+  return (
+    <aside
+      className="flex w-full flex-col"
+      aria-label="Alertas activas SERNAPRED y ChileRisk"
+    >
+      {/* No panel title — tab already says "Alertas". Keep filter + count. */}
+      <div className="flex w-full items-stretch border-b border-white/10">
+        <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2">
+          {model.isFiltered ? (
+            <span className="min-w-0 truncate text-[9px] uppercase tracking-wider text-white/45">
+              {model.activeFilterLabel}
+            </span>
+          ) : (
+            <span className="text-[9px] uppercase tracking-wider text-white/40">
+              Todas
+            </span>
+          )}
+          <span
+            className={cn(
+              "ml-auto rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
+              model.hasAlerts
+                ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
+                : "border-white/10 bg-white/[0.08] text-white/60",
+            )}
+          >
+            {model.sorted.length}
+          </span>
+        </div>
+        <AlertsFilterControl
+          filter={model.filter}
+          setFilter={model.setFilter}
+          counts={model.counts}
+          isFiltered={model.isFiltered}
+        />
+      </div>
+      <AlertsListBody
+        open
+        maxHeightClass="max-h-[min(60dvh,480px)]"
+        isLoading={model.isLoading}
+        error={model.error}
+        refetch={model.refetch}
+        filtered={model.filtered}
+        filter={model.filter}
+      />
+    </aside>
+  )
+}
+
+function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
+  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
+  const [, setResizeEpoch] = useState(0)
+  const model = useAlertsPanelModel()
+
+  useLayoutEffect(() => {
+    if (!flow) return
+    const onResize = () => setResizeEpoch((n) => n + 1)
+    window.addEventListener("resize", onResize)
+    return () => window.removeEventListener("resize", onResize)
+  }, [flow])
+
+  const spaceExpanded = flow ? hasViewportSpaceForAlertsExpanded() : false
+  const open = openOverride ?? (flow ? spaceExpanded : false)
+  const { ref, handleProps, style, isDragging } = useDraggablePanel({
+    id: "active-alerts-panel",
+    corner: flow ? undefined : "top-left",
+    cornerInset: 16,
+    flow,
+  })
+
+  const Icon = model.hasAlerts ? Bell : BellOff
 
   return (
     <aside
@@ -167,8 +370,8 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
           aria-label="Arrastrar panel"
         >
           <div className="relative shrink-0">
-            <Icon className={cn("size-4", hasAlerts ? "text-white" : "text-white/55")} />
-            {hasAlerts && (
+            <Icon className={cn("size-4", model.hasAlerts ? "text-white" : "text-white/55")} />
+            {model.hasAlerts && (
               <span
                 className="absolute -right-1 -top-1 size-1.5 animate-pulse rounded-full bg-[#DA291C]"
                 style={{ boxShadow: "0 0 4px rgba(218,41,28,0.8)" }}
@@ -180,83 +383,20 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
             <span className="block text-[10.5px] font-semibold uppercase tracking-[1.4px] text-white/85">
               Alertas
             </span>
-            {isFiltered && (
+            {model.isFiltered && (
               <span className="mt-0.5 block truncate text-[9px] uppercase tracking-wider text-white/45">
-                · {activeFilterLabel}
+                · {model.activeFilterLabel}
               </span>
             )}
           </div>
         </div>
 
-        <Popover>
-          <PopoverTrigger
-            aria-label="Filtrar alertas por fuente"
-            className={cn(
-              "relative flex shrink-0 items-center justify-center border-l border-white/10 px-2.5 transition-colors",
-              "hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-              isFiltered ? "text-white" : "text-white/60 hover:text-white/85",
-            )}
-          >
-            <Filter className="size-3.5" aria-hidden />
-            {isFiltered && (
-              <span
-                className="absolute right-1 top-1 size-1.5 rounded-full bg-[#DA291C]"
-                aria-hidden
-              />
-            )}
-          </PopoverTrigger>
-          <PopoverContent
-            align="end"
-            sideOffset={6}
-            className="w-56 gap-2 border-white/10 bg-black/85 p-2 text-white shadow-2xl shadow-black/60 backdrop-blur-xl"
-          >
-            <div className="px-2 pt-1 text-[9.5px] font-semibold uppercase tracking-[1.2px] text-white/55">
-              Filtrar por fuente
-            </div>
-            <div role="radiogroup" aria-label="Fuente de alertas" className="flex flex-col gap-0.5">
-              {FILTER_OPTIONS.map((opt) => {
-                const active = filter === opt.value
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setFilter(opt.value)}
-                    className={cn(
-                      "group flex items-center gap-2 rounded-none px-2 py-1.5 text-left text-[11.5px] transition-colors",
-                      "hover:bg-white/[0.06] focus-visible:bg-white/[0.08] focus-visible:outline-none",
-                      active && "bg-white/[0.06]",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "flex size-3.5 shrink-0 items-center justify-center border",
-                        active
-                          ? "border-[#DA291C] bg-[#DA291C]/15 text-[#ff9a9a]"
-                          : "border-white/20 text-transparent",
-                      )}
-                      aria-hidden
-                    >
-                      <Check className="size-2.5" strokeWidth={3} />
-                    </span>
-                    <span className="flex-1 truncate">{opt.label}</span>
-                    <span
-                      className={cn(
-                        "rounded-sm border px-1 font-mono text-[9.5px] font-semibold leading-none tabular-nums",
-                        counts[opt.value] > 0
-                          ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-                          : "border-white/10 bg-white/[0.04] text-white/40",
-                      )}
-                    >
-                      {counts[opt.value]}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <AlertsFilterControl
+          filter={model.filter}
+          setFilter={model.setFilter}
+          counts={model.counts}
+          isFiltered={model.isFiltered}
+        />
 
         <button
           type="button"
@@ -269,54 +409,46 @@ export function ActiveAlertsPanel({ flow = false }: { flow?: boolean }) {
           <span
             className={cn(
               "rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
-              hasAlerts
+              model.hasAlerts
                 ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-                : "border-white/10 bg-white/[0.08] text-white/60"
+                : "border-white/10 bg-white/[0.08] text-white/60",
             )}
           >
-            {sorted.length}
+            {model.sorted.length}
           </span>
           <ChevronDown
             className={cn(
               "size-3.5 text-white/60 transition-transform duration-200",
-              !open && "-rotate-90"
+              !open && "-rotate-90",
             )}
             aria-hidden
           />
         </button>
       </div>
 
-      <div
-        id="active-alerts-list"
-        className={cn(
-          "divide-y divide-white/[0.06] overflow-y-auto max-h-[min(320px,38dvh)]",
-          !open && "hidden"
-        )}
-        role="region"
-        aria-live="polite"
-      >
-        {isLoading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : error ? (
-          <ErrorState onRetry={() => refetch()} />
-        ) : filtered.length === 0 ? (
-          <EmptyState filter={filter} />
-        ) : (
-          filtered.map((alert) => (
-            <ActiveAlertCard
-              key={`${alert.source}-${alert.id}`}
-              alert={alert}
-              showRegion
-            />
-          ))
-        )}
-      </div>
+      <AlertsListBody
+        open={open}
+        maxHeightClass="max-h-[min(320px,38dvh)]"
+        isLoading={model.isLoading}
+        error={model.error}
+        refetch={model.refetch}
+        filtered={model.filtered}
+        filter={model.filter}
+      />
     </aside>
   )
+}
+
+export function ActiveAlertsPanel({
+  flow = false,
+  embedded = false,
+}: {
+  flow?: boolean
+  /** Inside mobile Drawer: no shell, no drag handle, list always open. */
+  embedded?: boolean
+}) {
+  if (embedded) return <ActiveAlertsPanelEmbedded />
+  return <ActiveAlertsPanelOverlay flow={flow} />
 }
 
 /** @deprecated Use ActiveAlertsPanel */

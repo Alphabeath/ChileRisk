@@ -2,18 +2,20 @@
 
 import {
   CITIZEN_NAVBAR_CLEARANCE_PX,
+  MAP_DESKTOP_ONLY_CLASS,
   MAP_PANEL_RIGHT_INSET_PX,
   MAP_PANEL_WIDTH_CLASS,
 } from "@/lib/citizen-layout"
 import { cn } from "@/lib/utils"
 import { RiskLegendPanel } from "./risk-legend-panel"
 
-/** Right column (bottom): leyenda de riesgo. MapLibre zoom/compass uses top-right on the map. */
+/** Right column (bottom): leyenda de riesgo. Desktop (`md+`) only. */
 export function MapRightPanelsColumn() {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed z-20 flex flex-col justify-end",
+        "pointer-events-none fixed z-20 flex-col justify-end",
+        MAP_DESKTOP_ONLY_CLASS,
         MAP_PANEL_WIDTH_CLASS,
       )}
       style={{

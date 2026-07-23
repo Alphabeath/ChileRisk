@@ -5,7 +5,7 @@ import { MapOverlays } from "@/components/map/map-overlays"
 
 export default function MonitorPage() {
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div className="relative h-dvh max-h-dvh w-full overflow-hidden overscroll-none">
       <ChileMap />
       <MapOverlays />
     </div>

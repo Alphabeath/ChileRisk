@@ -22,3 +22,19 @@ export const MAP_PANEL_WIDTH_CLASS =
 
 /** @deprecated Use MAP_PANEL_WIDTH_CLASS */
 export const MAP_RISK_LEGEND_WIDTH_CLASS = MAP_PANEL_WIDTH_CLASS
+
+/**
+ * Tailwind breakpoint for map mobile chrome.
+ * Below `md` (768px): hide floating columns, show persistent bottom sheet.
+ * `md+`: desktop floating panels + DnD.
+ */
+export const MAP_MOBILE_BREAKPOINT = "md" as const
+
+/** Floating map panel columns — visible from `md` up. Use on flex column hosts. */
+export const MAP_DESKTOP_ONLY_CLASS = "hidden md:flex" as const
+
+/** Parent that only mounts layout on `md+` without becoming a box (`display: contents`). */
+export const MAP_DESKTOP_ONLY_CONTENTS_CLASS = "hidden md:contents" as const
+
+/** Map mobile chrome — hidden from `md` up. */
+export const MAP_MOBILE_ONLY_CLASS = "md:hidden" as const

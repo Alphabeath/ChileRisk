@@ -3,7 +3,10 @@
 import { signOut, useSession } from "next-auth/react"
 
 import { Button } from "@/components/ui/button"
-import { GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 export default function AccountPage() {
@@ -21,7 +24,7 @@ export default function AccountPage() {
 
   return (
     <div className="flex items-center justify-center p-8 pt-16">
-      <div className={cn(GLASS_PANEL_CLASS, "w-full max-w-md p-8")}>
+      <div className={cn(GLASS_PANEL_CLASS, GLASS_MICA_INTERACTIVE_CLASS, "w-full max-w-md p-8")}>
         <h1 className="text-xl font-semibold tracking-wide text-white/90 uppercase">
           Cuenta
         </h1>

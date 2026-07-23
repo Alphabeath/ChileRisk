@@ -1,4 +1,8 @@
 import { FamilyPlanStatusChip } from "@/components/preparation/family-plan/family-plan-layout"
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { PREPARATION_EYEBROW_CLASS } from "@/lib/preparation-ui"
 import { cn } from "@/lib/utils"
 
@@ -20,7 +24,9 @@ export function SimulacrosMonthHeader({
   return (
     <header
       className={cn(
-        "flex items-center justify-between gap-3 border border-white/15 border-l-[3px] bg-white/[0.04] px-3 py-2.5 sm:px-4",
+        GLASS_PANEL_CLASS,
+        GLASS_MICA_INTERACTIVE_CLASS,
+        "flex items-center justify-between gap-3 border-l-[3px] px-3 py-2.5 sm:px-4",
         chipBorder,
       )}
     >

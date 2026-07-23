@@ -2,6 +2,7 @@
 
 import {
   CITIZEN_NAVBAR_CLEARANCE_PX,
+  MAP_DESKTOP_ONLY_CLASS,
   MAP_PANEL_LEFT_INSET_PX,
   MAP_PANEL_WIDTH_CLASS,
 } from "@/lib/citizen-layout"
@@ -10,12 +11,13 @@ import { ActiveAlertsPanel } from "./active-alerts-panel"
 import { MapActionsPanel } from "./map-actions-panel"
 import { QueryDateControl } from "./query-date-control"
 
-/** Left column: Alertas → Fecha → Controles (top to bottom). */
+/** Left column: Alertas → Fecha → Controles (top to bottom). Desktop (`md+`) only. */
 export function MapLeftPanelsColumn() {
   return (
     <div
       className={cn(
-        "pointer-events-none fixed z-20 flex flex-col gap-2",
+        "pointer-events-none fixed z-20 flex-col gap-2",
+        MAP_DESKTOP_ONLY_CLASS,
         MAP_PANEL_WIDTH_CLASS,
       )}
       style={{

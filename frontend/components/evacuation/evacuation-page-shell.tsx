@@ -11,6 +11,8 @@ import {
 import { restrictToWindowEdges } from "@dnd-kit/modifiers"
 import { EvacuationMap } from "@/components/map/evacuation-map"
 import { EvacuationLeftPanelsColumn } from "@/components/evacuation/evacuation-left-panels-column"
+import { EvacuationMobileDrawer } from "@/components/evacuation/evacuation-mobile-drawer"
+import { MAP_DESKTOP_ONLY_CONTENTS_CLASS } from "@/lib/citizen-layout"
 import type { EvacuationLayerHandles, EvacuationLayerVisibility } from "@/lib/evacuation-layers"
 import {
   INITIAL_EVACUATION_USER_LOCATION_STATE,
@@ -72,7 +74,7 @@ export function EvacuationPageShell() {
   }, [])
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div className="relative h-dvh max-h-dvh w-full overflow-hidden overscroll-none">
       <EvacuationMap
         layerVisibility={layerVisibility}
         onLayersReady={handleLayersReady}
@@ -81,23 +83,35 @@ export function EvacuationPageShell() {
         onLocationPromptVisibleChange={setLocationPromptActive}
       />
 
-      <DndContext
-        id={EVACUATION_DND_CONTEXT_ID}
-        sensors={sensors}
-        modifiers={[restrictToWindowEdges]}
-      >
-        <EvacuationLeftPanelsColumn
-          layerVisibility={layerVisibility}
-          onToggleLayer={toggleLayer}
-          meetingPoints={meetingPoints}
-          userLocationState={userLocationState}
-          layersReady={layersReady}
-          onFocusPoint={handleFocusPoint}
-          locationPromptActive={locationPromptActive}
-        />
-      </DndContext>
+      <div className={MAP_DESKTOP_ONLY_CONTENTS_CLASS}>
+        <DndContext
+          id={EVACUATION_DND_CONTEXT_ID}
+          sensors={sensors}
+          modifiers={[restrictToWindowEdges]}
+        >
+          <EvacuationLeftPanelsColumn
+            layerVisibility={layerVisibility}
+            onToggleLayer={toggleLayer}
+            meetingPoints={meetingPoints}
+            userLocationState={userLocationState}
+            layersReady={layersReady}
+            onFocusPoint={handleFocusPoint}
+            locationPromptActive={locationPromptActive}
+          />
+        </DndContext>
+      </div>
 
-      <p className="pointer-events-none absolute inset-x-0 bottom-2 z-10 text-center text-[10px] text-white/35">
+      <EvacuationMobileDrawer
+        layerVisibility={layerVisibility}
+        onToggleLayer={toggleLayer}
+        meetingPoints={meetingPoints}
+        userLocationState={userLocationState}
+        layersReady={layersReady}
+        onFocusPoint={handleFocusPoint}
+        locationPromptActive={locationPromptActive}
+      />
+
+      <p className="pointer-events-none absolute inset-x-0 bottom-2 z-10 hidden text-center text-[10px] text-white/35 md:block">
         SENAPRED · Evacuación por tsunami y actividad volcánica
       </p>
     </div>

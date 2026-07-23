@@ -70,7 +70,7 @@ export default async function DisasterDetailPage({
   }))
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-screen">
       <div
         className={cn(
           "pointer-events-none fixed inset-0 bg-gradient-to-b opacity-[0.22]",

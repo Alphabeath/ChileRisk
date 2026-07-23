@@ -18,7 +18,6 @@ import {
 } from "@/lib/evacuation-meeting-points"
 import {
   MAP_PANEL_DRAG_HANDLE_CLASS,
-  MAP_PANEL_HEADER_LABEL_CLASS,
   MAP_PANEL_SHELL_CLASS,
 } from "@/lib/map-panel-styles"
 import { cn } from "@/lib/utils"
@@ -29,6 +28,7 @@ interface EvacuationNearestPointsPanelProps {
   layersReady: boolean
   onFocusPoint: (point: { lng: number; lat: number }) => void
   flow?: boolean
+  embedded?: boolean
   disabled?: boolean
 }
 
@@ -83,14 +83,135 @@ function LoadingState() {
   )
 }
 
-export function EvacuationNearestPointsPanel({
+function NearestPointsList({
+  layersReady,
+  userLocationState,
+  ranked,
+  onFocusPoint,
+}: {
+  layersReady: boolean
+  userLocationState: EvacuationUserLocationState
+  ranked: ReturnType<typeof nearestMeetingPoints>
+  onFocusPoint: (point: { lng: number; lat: number }) => void
+}) {
+  if (!layersReady) return <LoadingState />
+  if (userLocationState.status === "pending") return <LocationPendingState />
+  if (userLocationState.status === "unavailable") {
+    return <LocationHint reason={userLocationState.reason} />
+  }
+  if (ranked.length === 0) {
+    return (
+      <div className="px-4 py-6 text-center text-[11px] text-white/50">
+        No hay puntos de encuentro en esta zona.
+      </div>
+    )
+  }
+
+  return (
+    <ul className="divide-y divide-white/10" role="list">
+      {ranked.map((point, index) => (
+        <li key={point.id}>
+          <div className="px-3 py-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold text-white/90">
+                  {point.comuna !== "—" ? point.comuna : `Punto ${index + 1}`}
+                </p>
+                <p className="mt-0.5 text-[10px] leading-snug text-white/50">
+                  {[
+                    point.sector !== "—" ? point.sector : null,
+                    point.provincia !== "—" ? point.provincia : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "Punto de encuentro SENAPRED"}
+                </p>
+              </div>
+              {point.distanceKm != null ? (
+                <span className="shrink-0 font-mono text-[10px] font-semibold tabular-nums text-amber-200/90">
+                  {formatDistanceKm(point.distanceKm)}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => onFocusPoint({ lng: point.lng, lat: point.lat })}
+                className="inline-flex items-center gap-1 border border-white/15 bg-white/[0.06] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/85 transition-colors hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+              >
+                <Navigation className="size-3" aria-hidden />
+                Ver en mapa
+              </button>
+              <a
+                href={buildGoogleMapsPlaceUrl(point.lat, point.lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 border border-white/10 bg-white/[0.03] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
+              >
+                Google Maps
+                <ExternalLink className="size-3" aria-hidden />
+              </a>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function EvacuationNearestPointsPanelEmbedded({
+  points,
+  userLocationState,
+  layersReady,
+  onFocusPoint,
+  disabled,
+}: Omit<EvacuationNearestPointsPanelProps, "flow" | "embedded">) {
+  const userLocation = useMemo(
+    () =>
+      userLocationState.status === "ready"
+        ? { lng: userLocationState.lng, lat: userLocationState.lat }
+        : null,
+    [userLocationState],
+  )
+
+  const ranked = useMemo(
+    () => nearestMeetingPoints(points, userLocation, 5),
+    [points, userLocation],
+  )
+
+  return (
+    <aside
+      className="flex w-full max-h-[min(60dvh,480px)] flex-col"
+      aria-label="Puntos de encuentro"
+      inert={disabled ? true : undefined}
+    >
+      {/* Title omitted — tab already says "Puntos". Keep proximity hint only. */}
+      {userLocation && ranked.length > 0 ? (
+        <div className="border-b border-white/10 px-3 py-1.5">
+          <span className="font-mono text-[9px] text-white/45">
+            {ranked.length} más próximos
+          </span>
+        </div>
+      ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <NearestPointsList
+          layersReady={layersReady}
+          userLocationState={userLocationState}
+          ranked={ranked}
+          onFocusPoint={onFocusPoint}
+        />
+      </div>
+    </aside>
+  )
+}
+
+function EvacuationNearestPointsPanelOverlay({
   points,
   userLocationState,
   layersReady,
   onFocusPoint,
   flow = false,
   disabled,
-}: EvacuationNearestPointsPanelProps) {
+}: Omit<EvacuationNearestPointsPanelProps, "embedded">) {
   const [expanded, setExpanded] = useState(true)
   const { ref, handleProps, style, isDragging } = useDraggablePanel({
     id: "evacuation-meeting-points",
@@ -99,10 +220,13 @@ export function EvacuationNearestPointsPanel({
     flow,
   })
 
-  const userLocation =
-    userLocationState.status === "ready"
-      ? { lng: userLocationState.lng, lat: userLocationState.lat }
-      : null
+  const userLocation = useMemo(
+    () =>
+      userLocationState.status === "ready"
+        ? { lng: userLocationState.lng, lat: userLocationState.lat }
+        : null,
+    [userLocationState],
+  )
 
   const ranked = useMemo(
     () => nearestMeetingPoints(points, userLocation, 5),
@@ -161,66 +285,21 @@ export function EvacuationNearestPointsPanel({
         className={cn("min-h-0 flex-1 overflow-y-auto", !expanded && "hidden")}
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {!layersReady ? (
-          <LoadingState />
-        ) : userLocationState.status === "pending" ? (
-          <LocationPendingState />
-        ) : userLocationState.status === "unavailable" ? (
-          <LocationHint reason={userLocationState.reason} />
-        ) : ranked.length === 0 ? (
-          <div className="px-4 py-6 text-center text-[11px] text-white/50">
-            No hay puntos de encuentro en esta zona.
-          </div>
-        ) : (
-          <ul className="divide-y divide-white/10" role="list">
-            {ranked.map((point, index) => (
-              <li key={point.id}>
-                <div className="px-3 py-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-white/90">
-                        {point.comuna !== "—" ? point.comuna : `Punto ${index + 1}`}
-                      </p>
-                      <p className="mt-0.5 text-[10px] leading-snug text-white/50">
-                        {[
-                          point.sector !== "—" ? point.sector : null,
-                          point.provincia !== "—" ? point.provincia : null,
-                        ]
-                          .filter(Boolean)
-                          .join(" · ") || "Punto de encuentro SENAPRED"}
-                      </p>
-                    </div>
-                    {point.distanceKm != null ? (
-                      <span className="shrink-0 font-mono text-[10px] font-semibold tabular-nums text-amber-200/90">
-                        {formatDistanceKm(point.distanceKm)}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => onFocusPoint({ lng: point.lng, lat: point.lat })}
-                      className="inline-flex items-center gap-1 border border-white/15 bg-white/[0.06] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/85 transition-colors hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
-                    >
-                      <Navigation className="size-3" aria-hidden />
-                      Ver en mapa
-                    </button>
-                    <a
-                      href={buildGoogleMapsPlaceUrl(point.lat, point.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 border border-white/10 bg-white/[0.03] px-2 py-1 text-[9px] font-semibold uppercase tracking-wider text-white/70 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
-                    >
-                      Google Maps
-                      <ExternalLink className="size-3" aria-hidden />
-                    </a>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <NearestPointsList
+          layersReady={layersReady}
+          userLocationState={userLocationState}
+          ranked={ranked}
+          onFocusPoint={onFocusPoint}
+        />
       </div>
     </aside>
   )
+}
+
+export function EvacuationNearestPointsPanel({
+  embedded = false,
+  ...props
+}: EvacuationNearestPointsPanelProps) {
+  if (embedded) return <EvacuationNearestPointsPanelEmbedded {...props} />
+  return <EvacuationNearestPointsPanelOverlay {...props} />
 }
