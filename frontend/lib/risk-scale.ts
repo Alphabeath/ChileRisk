@@ -1,5 +1,9 @@
 import type { ExpressionSpecification } from "maplibre-gl"
 import { ALERT_LEVEL_META } from "@/lib/alerts-display"
+import {
+  AIR_QUALITY_LEVEL_META,
+  AIR_QUALITY_UNCOVERED_HEX,
+} from "@/lib/air-quality-display"
 
 /** Map choropleth colors — must stay in sync with MapLibre `fill-color` step expressions. */
 
@@ -85,5 +89,22 @@ export function mapAlertFillColorExpression(): ExpressionSpecification {
     "preventiva", ALERT_LEVEL_META.preventiva.hex,
     "informativa", ALERT_LEVEL_META.informativa.hex,
     /* default (sin alerta activa) */ bajo.color,
+  ] as ExpressionSpecification
+}
+
+/**
+ * MapLibre `match` for GEC air-quality level (`air_level` property).
+ * Uncovered comunas/regions use a neutral gray.
+ */
+export function mapAirFillColorExpression(): ExpressionSpecification {
+  return [
+    "match",
+    ["get", "air_level"],
+    "bueno", AIR_QUALITY_LEVEL_META.bueno.hex,
+    "regular", AIR_QUALITY_LEVEL_META.regular.hex,
+    "alerta", AIR_QUALITY_LEVEL_META.alerta.hex,
+    "preemergencia", AIR_QUALITY_LEVEL_META.preemergencia.hex,
+    "emergencia", AIR_QUALITY_LEVEL_META.emergencia.hex,
+    AIR_QUALITY_UNCOVERED_HEX,
   ] as ExpressionSpecification
 }

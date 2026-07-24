@@ -80,6 +80,24 @@ const DEFAULT_LAYER_VISIBILITY: EvacuationLayerVisibility = {
 
 const USER_LOCATION_ZOOM = 13
 
+function createUserLocationMarkerElement(): HTMLDivElement {
+  const el = document.createElement("div")
+  el.className = "evacuation-user-location-marker"
+  el.setAttribute("role", "img")
+  el.setAttribute("aria-label", "Tu ubicación")
+
+  const pulse = document.createElement("span")
+  pulse.className = "evacuation-user-location-marker__pulse"
+  pulse.setAttribute("aria-hidden", "true")
+
+  const dot = document.createElement("span")
+  dot.className = "evacuation-user-location-marker__dot"
+  dot.setAttribute("aria-hidden", "true")
+
+  el.append(pulse, dot)
+  return el
+}
+
 export function EvacuationMap({
   layerVisibility = DEFAULT_LAYER_VISIBILITY,
   onLayersReady,
@@ -98,6 +116,7 @@ export function EvacuationMap({
   const layersLoadIdRef = useRef(0)
   const layersReadyRef = useRef(false)
   const locationOfferedMapRef = useRef<maplibregl.Map | null>(null)
+  const userLocationMarkerRef = useRef<maplibregl.Marker | null>(null)
 
   const [basemap, setBasemap] = useState<BasemapMode>("satellite")
   const [layersError, setLayersError] = useState<string | null>(null)
@@ -141,6 +160,29 @@ export function EvacuationMap({
     [dismissPopup],
   )
 
+  const clearUserLocationMarker = useCallback(() => {
+    userLocationMarkerRef.current?.remove()
+    userLocationMarkerRef.current = null
+  }, [])
+
+  const upsertUserLocationMarker = useCallback(
+    (map: maplibregl.Map, lng: number, lat: number) => {
+      const existing = userLocationMarkerRef.current
+      if (existing) {
+        existing.setLngLat([lng, lat])
+        return
+      }
+
+      userLocationMarkerRef.current = new maplibregl.Marker({
+        element: createUserLocationMarkerElement(),
+        anchor: "center",
+      })
+        .setLngLat([lng, lat])
+        .addTo(map)
+    },
+    [],
+  )
+
   const flyToUserLocation = useCallback(
     (
       map: maplibregl.Map,
@@ -152,6 +194,7 @@ export function EvacuationMap({
       },
     ) => {
       if (!navigator.geolocation) {
+        clearUserLocationMarker()
         onUserLocationState?.({ status: "unavailable", reason: "unsupported" })
         handlers?.onError?.(0)
         return
@@ -164,20 +207,29 @@ export function EvacuationMap({
         (position) => {
           const { longitude, latitude } = position.coords
           if (!isWithinChileMapBounds(longitude, latitude)) {
+            clearUserLocationMarker()
             onUserLocationState?.({ status: "unavailable", reason: "out-of-bounds" })
             handlers?.onOutOfBounds?.()
             return
           }
 
+          onUserLocationState?.({ status: "ready", lng: longitude, lat: latitude })
+          handlers?.onSuccess?.()
+
+          const revealMarker = () => {
+            if (mapRef.current !== map) return
+            upsertUserLocationMarker(map, longitude, latitude)
+          }
+
+          map.once("moveend", revealMarker)
           map.flyTo({
             center: [longitude, latitude],
             zoom: USER_LOCATION_ZOOM,
             duration: 1400,
           })
-          onUserLocationState?.({ status: "ready", lng: longitude, lat: latitude })
-          handlers?.onSuccess?.()
         },
         (error) => {
+          clearUserLocationMarker()
           onUserLocationState?.({
             status: "unavailable",
             reason: error.code === GeolocationPositionError.PERMISSION_DENIED ? "denied" : "error",
@@ -187,7 +239,7 @@ export function EvacuationMap({
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 300_000 },
       )
     },
-    [onUserLocationState],
+    [clearUserLocationMarker, onUserLocationState, upsertUserLocationMarker],
   )
 
   const offerUserLocation = useCallback(
@@ -532,6 +584,7 @@ export function EvacuationMap({
       }
       detachInteractions?.()
       dismissPopup()
+      clearUserLocationMarker()
       ro.disconnect()
       if (layerHandlesRef.current) {
         removeEvacuationLayers(map, layerHandlesRef.current)
@@ -541,7 +594,14 @@ export function EvacuationMap({
       mapRef.current = null
       layersReadyRef.current = false
     }
-  }, [attachMapInteractions, dismissPopup, getStyle, loadLayers, offerUserLocation])
+  }, [
+    attachMapInteractions,
+    clearUserLocationMarker,
+    dismissPopup,
+    getStyle,
+    loadLayers,
+    offerUserLocation,
+  ])
 
   useEffect(() => {
     const map = mapRef.current

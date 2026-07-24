@@ -25,7 +25,7 @@ import {
   SeismicEventPopupContent,
 } from "./map-popup"
 import { useMapData } from "@/hooks/use-map-data"
-import { useActiveAlerts, useQueryDate, useRecentEvents } from "@/hooks"
+import { useActiveAlerts, useAirQuality, useQueryDate, useRecentEvents } from "@/hooks"
 import {
   buildComunasByRegionIndex,
   computeComunaAlertLevels,
@@ -35,10 +35,27 @@ import {
   sortActiveAlerts,
 } from "@/lib/alerts-display"
 import {
+  computeComunaAirLevels,
+  computeRegionAirLevels,
+  filterZonesForComuna,
+  filterZonesForRegion,
+  sortZonesBySeverity,
+} from "@/lib/air-quality-display"
+import {
   buildPopupSeismicItems,
   filterRecentEventsInGeometry,
 } from "@/lib/seismic-events"
-import { mapAlertFillColorExpression, mapRiskFillColorExpression } from "@/lib/risk-scale"
+import {
+  mapAirFillColorExpression,
+  mapAlertFillColorExpression,
+  mapRiskFillColorExpression,
+} from "@/lib/risk-scale"
+
+function fillColorForMode(mode: "risk" | "alerts" | "air") {
+  if (mode === "alerts") return mapAlertFillColorExpression()
+  if (mode === "air") return mapAirFillColorExpression()
+  return mapRiskFillColorExpression()
+}
 import { getSeismicDetailUrl } from "@/lib/seismic"
 import { useLoadingStore } from "@/stores/loading-store"
 import { useUIStore } from "@/stores/ui-store"
@@ -219,6 +236,8 @@ export function ChileMap() {
   const { data: recentEventsData, isFetching: eventsFetching } = useRecentEvents()
   const recentEvents = recentEventsData ?? EMPTY_SEISMIC_EVENTS
   const { data: allAlerts = [], isLoading: alertsLoading } = useActiveAlerts()
+  const { data: airQuality } = useAirQuality()
+  const airZones = useMemo(() => airQuality?.items ?? [], [airQuality?.items])
   const regionAlertLevels = useMemo(() => computeRegionAlertLevels(allAlerts), [allAlerts])
   const regionAlertLevelsRef = useRef(new Map<number, string>())
   useEffect(() => {
@@ -226,6 +245,12 @@ export function ChileMap() {
     // eslint-disable-next-line react-hooks/immutability -- intentional ref mirror for map callbacks
     regionAlertLevelsRef.current = regionAlertLevels
   }, [regionAlertLevels])
+
+  const regionAirLevels = useMemo(() => computeRegionAirLevels(airZones), [airZones])
+  const regionAirLevelsRef = useRef(new Map<number, string>())
+  useEffect(() => {
+    regionAirLevelsRef.current = regionAirLevels
+  }, [regionAirLevels])
 
   const mapColorMode = useUIStore((s) => s.mapColorMode)
   const mapColorModeRef = useRef(mapColorMode)
@@ -247,6 +272,12 @@ export function ChileMap() {
     comunaAlertLevelsRef.current = comunaAlertLevels
   }, [comunaAlertLevels])
 
+  const comunaAirLevels = useMemo(() => computeComunaAirLevels(airZones), [airZones])
+  const comunaAirLevelsRef = useRef(new Map<number, string>())
+  useEffect(() => {
+    comunaAirLevelsRef.current = comunaAirLevels
+  }, [comunaAirLevels])
+
   const mapDataRefreshNonce = useUIStore((s) => s.mapDataRefreshNonce)
   const selectedDateRef = useRef(selectedDate)
   const refreshMapRiskRef = useRef(refreshMapRisk)
@@ -267,10 +298,13 @@ export function ChileMap() {
       const regionsSource = map.getSource("regions") as maplibregl.GeoJSONSource | undefined
       if (regionsSource && result.regions) {
         const alertMap = regionAlertLevelsRef.current
+        const airMap = regionAirLevelsRef.current
         for (const f of result.regions.features) {
           const cod = f.properties?.codregion as number | undefined
           const level = cod != null ? alertMap.get(cod) : undefined
+          const air = cod != null ? airMap.get(cod) : undefined
           f.properties.alert_level = level ?? ""
+          f.properties.air_level = air ?? ""
         }
         regionsSource.setData(
           result.regions as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
@@ -279,10 +313,13 @@ export function ChileMap() {
       const comunasSource = map.getSource("comunas") as maplibregl.GeoJSONSource | undefined
       if (comunasSource && result.comunas) {
         const comunaMap = comunaAlertLevelsRef.current
+        const airMap = comunaAirLevelsRef.current
         for (const f of result.comunas.features) {
           const cod = f.properties?.cod_comuna as number | undefined
           const level = cod != null ? comunaMap.get(cod) : undefined
+          const air = cod != null ? airMap.get(cod) : undefined
           f.properties.alert_level = level ?? ""
+          f.properties.air_level = air ?? ""
         }
         comunasSource.setData(
           result.comunas as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
@@ -305,11 +342,13 @@ export function ChileMap() {
   }, [mapDataRefreshNonce, selectedDate, applyMapRiskToSources])
 
   const allAlertsRef = useRef(allAlerts)
+  const airZonesRef = useRef(airZones)
   const recentEventsRef = useRef(recentEvents)
   const alertsLoadingRef = useRef(alertsLoading)
   const sismoAlertUrlsRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     allAlertsRef.current = allAlerts
+    airZonesRef.current = airZones
     recentEventsRef.current = recentEvents
     alertsLoadingRef.current = alertsLoading
     sismoAlertUrlsRef.current = new Set(
@@ -317,9 +356,9 @@ export function ChileMap() {
         .filter((a) => a.hazard_type === "sismo" && a.external_url)
         .map((a) => a.external_url!)
     )
-  }, [allAlerts, recentEvents, alertsLoading])
+  }, [allAlerts, airZones, recentEvents, alertsLoading])
 
-  // Re-inject alert_level into region features when alerts or date change
+  // Re-inject alert_level / air_level into region features when data or date change
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapReadyRef.current) return
@@ -333,12 +372,14 @@ export function ChileMap() {
     for (const f of geojson.features) {
       const cod = f.properties?.codregion as number | undefined
       const level = cod != null ? regionAlertLevels.get(cod) : undefined
+      const air = cod != null ? regionAirLevels.get(cod) : undefined
       f.properties.alert_level = level ?? ""
+      f.properties.air_level = air ?? ""
     }
     source.setData(geojson as Parameters<maplibregl.GeoJSONSource["setData"]>[0])
-  }, [regionAlertLevels, regionsGeojson, selectedDate])
+  }, [regionAlertLevels, regionAirLevels, regionsGeojson, selectedDate])
 
-  // Re-inject alert_level into comuna features when alerts or date change
+  // Re-inject alert_level / air_level into comuna features when data or date change
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapReadyRef.current) return
@@ -352,14 +393,30 @@ export function ChileMap() {
     for (const f of geojson.features) {
       const cod = f.properties?.cod_comuna as number | undefined
       const level = cod != null ? comunaAlertLevels.get(cod) : undefined
+      const air = cod != null ? comunaAirLevels.get(cod) : undefined
       f.properties.alert_level = level ?? ""
+      f.properties.air_level = air ?? ""
     }
     source.setData(geojson as Parameters<maplibregl.GeoJSONSource["setData"]>[0])
-  }, [comunaAlertLevels, comunasGeojson, selectedDate])
+  }, [comunaAlertLevels, comunaAirLevels, comunasGeojson, selectedDate])
 
   // Restart pulse when alerts change (region or comuna) or map color mode changes
   useEffect(() => {
     if (!mapReadyRef.current) return
+    if (mapColorMode !== "alerts") {
+      if (alertAnimFrameRef.current) {
+        cancelAnimationFrame(alertAnimFrameRef.current)
+        alertAnimFrameRef.current = 0
+      }
+      const map = mapRef.current
+      if (map?.getLayer("region-fill")) {
+        map.setPaintProperty("region-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65])
+      }
+      if (map?.getLayer("comuna-fill")) {
+        map.setPaintProperty("comuna-fill", "fill-opacity", ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55])
+      }
+      return
+    }
     startAlertPulse()
   }, [regionAlertLevels, comunaAlertLevels, mapColorMode, mapLoaded, startAlertPulse])
 
@@ -368,24 +425,15 @@ export function ChileMap() {
     const map = mapRef.current
     if (!map || !mapReadyRef.current) return
 
-    if (mapColorMode === "alerts") {
-      if (map.getLayer("region-fill")) {
-        map.setPaintProperty("region-fill", "fill-color", mapAlertFillColorExpression())
-      }
-      if (map.getLayer("comuna-fill")) {
-        map.setPaintProperty("comuna-fill", "fill-color", mapAlertFillColorExpression())
-      }
-      // region-alert-line removed (no more alert-colored border)
-      if (map.getLayer("region-alert-line")) {
-        map.removeLayer("region-alert-line")
-      }
-    } else {
-      if (map.getLayer("region-fill")) {
-        map.setPaintProperty("region-fill", "fill-color", mapRiskFillColorExpression())
-      }
-      if (map.getLayer("comuna-fill")) {
-        map.setPaintProperty("comuna-fill", "fill-color", mapRiskFillColorExpression())
-      }
+    const fill = fillColorForMode(mapColorMode)
+    if (map.getLayer("region-fill")) {
+      map.setPaintProperty("region-fill", "fill-color", fill)
+    }
+    if (map.getLayer("comuna-fill")) {
+      map.setPaintProperty("comuna-fill", "fill-color", fill)
+    }
+    if (map.getLayer("region-alert-line")) {
+      map.removeLayer("region-alert-line")
     }
   }, [mapColorMode, mapLoaded])
 
@@ -450,6 +498,9 @@ export function ChileMap() {
           comunaWithRisk.cod_comuna
         )
       )
+      const comunaAirZones = sortZonesBySeverity(
+        filterZonesForComuna(airZonesRef.current, comunaWithRisk.cod_comuna)
+      )
       const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry, undefined, sismoAlertUrlsRef.current)
       const seismicItems = buildPopupSeismicItems(eventsInZone, comunaWithRisk.seismic_impact)
 
@@ -458,6 +509,7 @@ export function ChileMap() {
         <ComunaPopupContent
           properties={comunaWithRisk}
           alerts={comunaAlerts}
+          airZones={comunaAirZones}
           seismicItems={seismicItems}
           alertsLoading={alertsLoadingRef.current}
           queryDate={selectedDateRef.current}
@@ -494,6 +546,9 @@ export function ChileMap() {
       const regionAlerts = sortActiveAlerts(
         filterAlertsForRegion(allAlertsRef.current, props.codregion)
       )
+      const regionAirZones = sortZonesBySeverity(
+        filterZonesForRegion(airZonesRef.current, props.codregion)
+      )
       const eventsInZone = filterRecentEventsInGeometry(recentEventsRef.current, geometry, undefined, sismoAlertUrlsRef.current)
       const seismicItems = buildPopupSeismicItems(eventsInZone)
 
@@ -502,6 +557,7 @@ export function ChileMap() {
         <RegionPopupContent
           properties={props}
           alerts={regionAlerts}
+          airZones={regionAirZones}
           seismicItems={seismicItems}
           alertsLoading={alertsLoadingRef.current}
           queryDate={selectedDateRef.current}
@@ -714,9 +770,7 @@ export function ChileMap() {
         source: "regions",
         maxzoom: COMUNAS_MIN_ZOOM,
         paint: {
-          "fill-color": mapColorModeRef.current === "alerts"
-            ? mapAlertFillColorExpression()
-            : mapRiskFillColorExpression(),
+          "fill-color": fillColorForMode(mapColorModeRef.current),
           "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.98, 0.65],
         },
         filter: ["!=", ["get", "codregion"], 0],
@@ -841,7 +895,7 @@ export function ChileMap() {
       )
       if (comunasData && !map.getSource("comunas")) {
         map.addSource("comunas", { type: "geojson", data: comunasData as Parameters<typeof map.addSource>[1] extends { data: infer D } ? D : never, generateId: true })
-        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": mapColorModeRef.current === "alerts" ? mapAlertFillColorExpression() : mapRiskFillColorExpression(), "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
+        map.addLayer({ id: "comuna-fill", type: "fill", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "fill-color": fillColorForMode(mapColorModeRef.current), "fill-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.95, 0.55] } })
         map.addLayer({ id: "comuna-line", type: "line", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, paint: { "line-color": ["case", ["boolean", ["feature-state", "hover"], false], COMUNA_LINE_HOVER, COMUNA_LINE_COLOR], "line-width": ["case", ["boolean", ["feature-state", "hover"], false], 2, 0.7], "line-opacity": ["case", ["boolean", ["feature-state", "hover"], false], 0.9, 0.6] } })
         map.addLayer({ id: "comuna-label", type: "symbol", source: "comunas", minzoom: COMUNAS_MIN_ZOOM, layout: { "text-field": ["get", "Comuna"], "text-size": 11, "text-anchor": "center", "text-allow-overlap": false, "text-font": ["Open Sans Regular"] }, paint: { "text-color": "#e2e8f0", "text-halo-color": "#1e293b", "text-halo-width": 1.5 } })
         if (map.getLayer("region-label-custom")) {

@@ -14,6 +14,9 @@ import type {
   Simulacro,
   SimulacroListResponse,
   SimulacrosParams,
+  AirQualityListResponse,
+  AirQualityParams,
+  AirQualityZone,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -120,4 +123,43 @@ export async function getNextSimulacro(): Promise<Simulacro | null> {
 
 export async function getSimulacro(slug: string): Promise<Simulacro> {
   return fetchJson<Simulacro>(`/api/v1/simulacros/${encodeURIComponent(slug)}`)
+}
+
+export async function getAirQuality(
+  params: AirQualityParams = {},
+): Promise<AirQualityListResponse> {
+  const search = new URLSearchParams()
+  if (params.date !== undefined) {
+    search.set("date", clampQueryDate(params.date))
+  }
+  if (params.region !== undefined) search.set("region", String(params.region))
+  if (params.episode_only) search.set("episode_only", "true")
+  const qs = search.toString()
+  return fetchJson<AirQualityListResponse>(
+    `/api/v1/air-quality${qs ? `?${qs}` : ""}`,
+  )
+}
+
+export async function getAirQualityZone(
+  slug: string,
+  date?: string,
+): Promise<AirQualityZone> {
+  const search = new URLSearchParams()
+  if (date !== undefined) search.set("date", clampQueryDate(date))
+  const qs = search.toString()
+  return fetchJson<AirQualityZone>(
+    `/api/v1/air-quality/${encodeURIComponent(slug)}${qs ? `?${qs}` : ""}`,
+  )
+}
+
+export async function getAirQualityByComuna(
+  codComuna: number,
+  date?: string,
+): Promise<AirQualityZone> {
+  const search = new URLSearchParams()
+  if (date !== undefined) search.set("date", clampQueryDate(date))
+  const qs = search.toString()
+  return fetchJson<AirQualityZone>(
+    `/api/v1/air-quality/by-comuna/${codComuna}${qs ? `?${qs}` : ""}`,
+  )
 }

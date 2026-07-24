@@ -329,6 +329,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/air-quality": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Air Quality
+         * @description List Aire Chile GEC zone conditions for a Chile calendar day.
+         */
+        get: operations["list_air_quality_api_v1_air_quality_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/air-quality/by-comuna/{cod_comuna}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Air Quality By Comuna
+         * @description Lookup GEC condition for a CUT comuna (404 if not in a GEC zone).
+         */
+        get: operations["air_quality_by_comuna_api_v1_air_quality_by_comuna__cod_comuna__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/air-quality/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Air Quality Zone
+         * @description Detail for one Aire Chile zone slug.
+         */
+        get: operations["air_quality_zone_api_v1_air_quality__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/sync-status": {
         parameters: {
             query?: never;
@@ -441,6 +501,56 @@ export interface components {
             severity?: string | null;
             /** Risk Detail */
             risk_detail?: string | null;
+        };
+        /** AirQualityListResponse */
+        AirQualityListResponse: {
+            /** Items */
+            items: components["schemas"]["AirQualityZoneOut"][];
+            /** Total */
+            total: number;
+            /**
+             * Condition Date
+             * Format: date
+             */
+            condition_date: string;
+        };
+        /** AirQualityZoneOut */
+        AirQualityZoneOut: {
+            /** Zone Slug */
+            zone_slug: string;
+            /**
+             * Condition Date
+             * Format: date
+             */
+            condition_date: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "bueno" | "regular" | "alerta" | "preemergencia" | "emergencia";
+            /** Forecast Date */
+            forecast_date?: string | null;
+            /** Forecast Level */
+            forecast_level?: ("bueno" | "regular" | "alerta" | "preemergencia" | "emergencia") | null;
+            /** Pm25 Range Label */
+            pm25_range_label?: string | null;
+            /** Zone Name */
+            zone_name: string;
+            /** Region Code */
+            region_code?: number | null;
+            /** Comuna Codes */
+            comuna_codes?: number[];
+            /** Measures Current */
+            measures_current?: string[];
+            /** Restrictions Permanent */
+            restrictions_permanent?: string[];
+            /** External Url */
+            external_url: string;
+            /**
+             * Synced At
+             * Format: date-time
+             */
+            synced_at: string;
         };
         /** AuthUserOut */
         AuthUserOut: {
@@ -1597,6 +1707,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimulacroListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_air_quality_api_v1_air_quality_get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+                region?: number | null;
+                /** @description If true, only zones with level ≥ alerta */
+                episode_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirQualityListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    air_quality_by_comuna_api_v1_air_quality_by_comuna__cod_comuna__get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+            };
+            header?: never;
+            path: {
+                cod_comuna: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirQualityZoneOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    air_quality_zone_api_v1_air_quality__slug__get: {
+        parameters: {
+            query?: {
+                date?: string | null;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AirQualityZoneOut"];
                 };
             };
             /** @description Validation Error */

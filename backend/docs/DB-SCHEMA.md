@@ -120,6 +120,21 @@ erDiagram
         datetime synced_at
     }
 
+    airechile_daily {
+        int id PK
+        string zone_slug
+        date condition_date
+        string level
+        date forecast_date
+        string forecast_level
+        string zone_name
+        int region_code
+        json comuna_codes
+        json measures_current
+        string external_url
+        datetime synced_at
+    }
+
     users {
         string id PK
         string email UK
@@ -171,6 +186,7 @@ flowchart LR
         OM[Open-Meteo API]
         SEN[SERNAPRED GraphQL]
         SIM[senapred.cl/simulacros]
+        AIR[airechile.mma.gob.cl]
     end
 
     subgraph Servicios["Backend Services"]
@@ -178,6 +194,7 @@ flowchart LR
         MET_SVC[openmeteo_service]
         SEN_SVC[senapred_service]
         SIM_SVC[simulacro_sync]
+        AIR_SVC[airechile_service]
         EVAL[alert_evaluator]
         RISK[risk_service]
         DAILY[daily_risk_service]
@@ -191,6 +208,7 @@ flowchart LR
         CR[climate_readings]
         SA[senapred_alerts]
         SM[simulacros]
+        AD[airechile_daily]
         RS[risk_scores]
         DRS[daily_risk_scores]
         COM[comunas]
@@ -203,6 +221,7 @@ flowchart LR
         EV[/events/]
         AL[/alerts/]
         SIM_API[/simulacros/]
+        AIR_API[/air-quality/]
         RISK_API[/risk/]
         REG_API[/regiones/]
         COM_API[/comunas/]
@@ -219,11 +238,13 @@ flowchart LR
     OM -->|HTTP| MET_SVC
     SEN -->|GraphQL| SEN_SVC
     SIM -->|scrap HTML| SIM_SVC
+    AIR -->|scrap HTML| AIR_SVC
 
     CSN_SVC -->|upsert| SE
     MET_SVC -->|upsert| CR
     SEN_SVC -->|upsert| SA
     SIM_SVC -->|upsert| SM
+    AIR_SVC -->|upsert| AD
 
     SE --> IMPACT --> SI
     CR --> RISK
@@ -236,6 +257,7 @@ flowchart LR
     EV --> SE
     AL --> SA
     SIM_API --> SM
+    AIR_API --> AD
     RISK_API --> RS
     REG_API --> REG
     COM_API --> COM
@@ -246,6 +268,7 @@ flowchart LR
     EV --> FE
     AL --> FE
     SIM_API --> FE
+    AIR_API --> FE
     RISK_API --> FE
     REG_API --> FE
     COM_API --> FE
@@ -259,6 +282,7 @@ flowchart LR
         J3[cron: 10min senapred_sync]
         J4[cron: 24h simulacros_sync]
         J5[cron: 15min risk_refresh]
+        J6[cron: 180min airechile_sync]
     end
 
     J1 --> CSN_SVC
@@ -266,4 +290,5 @@ flowchart LR
     J3 --> SEN_SVC
     J4 --> SIM_SVC
     J5 --> RISK
+    J6 --> AIR_SVC
 ```

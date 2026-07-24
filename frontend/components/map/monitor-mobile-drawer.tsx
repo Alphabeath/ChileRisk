@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Calendar, Eye, Layers, ShieldAlert } from "lucide-react"
+import { Bell, Calendar, Eye, Layers, ShieldAlert, Wind } from "lucide-react"
 import { useActiveAlerts, useQueryDate } from "@/hooks"
 import { formatQueryDateLabel, todayIsoDate } from "@/lib/query-date"
 import { cn } from "@/lib/utils"
@@ -19,6 +19,12 @@ const MONITOR_TABS: MapMobileBottomSheetTab[] = [
   { id: "fecha", label: "Fecha", icon: Calendar },
   { id: "vistas", label: "Vistas", icon: Eye },
 ]
+
+function modeLabel(mode: "risk" | "alerts" | "air"): string {
+  if (mode === "alerts") return "Alertas"
+  if (mode === "air") return "Aire"
+  return "Riesgo"
+}
 
 function MonitorStatusStrip() {
   const { data: alerts = [] } = useActiveAlerts()
@@ -59,11 +65,13 @@ function MonitorStatusStrip() {
       <div className="flex min-w-0 items-center gap-1 border-l border-white/10 pl-3">
         {mapColorMode === "alerts" ? (
           <ShieldAlert className="size-3 shrink-0 text-white/55" aria-hidden />
+        ) : mapColorMode === "air" ? (
+          <Wind className="size-3 shrink-0 text-white/55" aria-hidden />
         ) : (
           <Layers className="size-3 shrink-0 text-white/55" aria-hidden />
         )}
         <span className="truncate text-[10px] font-semibold uppercase tracking-[1.1px] text-white/70">
-          {mapColorMode === "alerts" ? "Alertas" : "Riesgo"}
+          {modeLabel(mapColorMode)}
         </span>
       </div>
 
@@ -77,7 +85,7 @@ function MonitorStatusStrip() {
   )
 }
 
-/** Mobile chrome for `/monitor`: persistent bottom sheet — Alertas | Fecha | Vistas. */
+/** Mobile chrome for `/monitor`: Alertas | Fecha | Vistas. */
 export function MonitorMobileDrawer() {
   const [expanded, setExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState("alertas")

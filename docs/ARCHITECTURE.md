@@ -14,7 +14,7 @@ Vista de sistema. Detalle: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md)
                                     │
                     ┌───────────────┼───────────────┐
                     ▼               ▼               ▼
-              sismologia.cl   Open-Meteo      SERNAPRED AppSync
+              sismologia.cl   Open-Meteo      SERNAPRED AppSync   Aire Chile (HTML)
               (CSN scrape)    (batch REST)    (Cognito Identity + SigV4)
 ```
 
@@ -27,7 +27,7 @@ Vista de sistema. Detalle: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md)
 | Frontend | Next.js 16, React 19, MapLibre, @dnd-kit | Mapa, overlays, consulta por día |
 | Backend | FastAPI, SQLAlchemy 2.0 async | API, riesgo, integraciones, alertas unificadas |
 | Database | PostgreSQL 16 | Geo, scores live, snapshots diarios, eventos, SERNAPRED |
-| Scheduler | APScheduler | Risk refresh, CSN, meteo, SERNAPRED |
+| Scheduler | APScheduler | Risk refresh, CSN, meteo, SERNAPRED, Aire Chile GEC |
 
 ---
 
@@ -39,6 +39,7 @@ Vista de sistema. Detalle: [backend/docs/BACKEND.md](../backend/docs/BACKEND.md)
 4. **Riesgo live** — `risk_service.recompute_all_scores` cada N min (scheduler).
 5. **Riesgo histórico** — `daily_risk_service` materializa `daily_risk_scores` por `score_date` bajo demanda.
 6. **Alertas** — SERNAPRED sync → `senapred_alerts`; evaluador → alertas ChileRisk; API unifica `/alerts/active`.
+7. **Aire Chile GEC** — scrape HTML → `airechile_daily`; API `/air-quality` (cobertura parcial PPDA).
 7. **Frontend** — `lib/api.ts` + React Query; fecha global en `ui-store` para mapa y listados.
 
 Consulta por día: [QUERY-DATE.md](./QUERY-DATE.md).
@@ -47,7 +48,7 @@ Consulta por día: [QUERY-DATE.md](./QUERY-DATE.md).
 
 ## Data sources
 
-All data comes from real providers (CSN, Open-Meteo, SERNAPRED) when the corresponding `USE_REAL_*` flags are enabled. When disabled, the source contributes no data (no synthetic/mock fallbacks).
+All data comes from real providers (CSN, Open-Meteo, SERNAPRED, Aire Chile) when the corresponding `USE_REAL_*` flags are enabled. When disabled, the source contributes no data (no synthetic/mock fallbacks).
 
 Variables documented in [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 

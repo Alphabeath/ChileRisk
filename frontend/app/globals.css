@@ -333,6 +333,50 @@
   }
 }
 
+/* Evacuation map — user geolocation (“you are here”) */
+.evacuation-user-location-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  pointer-events: none;
+}
+
+.evacuation-user-location-marker__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(59, 130, 246, 0.35);
+  animation: evacuation-user-location-pulse 2s ease-out infinite;
+}
+
+.evacuation-user-location-marker__dot {
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  background: #3b82f6;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35), 0 1px 4px rgba(15, 23, 42, 0.45);
+}
+
+@keyframes evacuation-user-location-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .evacuation-user-location-marker__pulse {
+    animation: none;
+    opacity: 0.35;
+    transform: scale(1.6);
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;

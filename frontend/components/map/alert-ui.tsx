@@ -20,7 +20,8 @@ import {
   shortenRegionName,
   timeAgo,
 } from "@/lib/alerts-display"
-import type { ActiveAlert, AlertLevel } from "@/lib/types"
+import { AIR_QUALITY_LEVEL_META } from "@/lib/air-quality-display"
+import type { ActiveAlert, AirQualityZone, AlertLevel } from "@/lib/types"
 
 const ALERT_BADGE_CLASS =
   "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
@@ -191,23 +192,147 @@ export function ActiveAlertCard({
   )
 }
 
+/** Condición GEC Aire Chile (misma cadencia visual que ActiveAlertCard). */
+export function AirQualityAlertCard({
+  zone,
+  compact = false,
+}: {
+  zone: AirQualityZone
+  compact?: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const meta = AIR_QUALITY_LEVEL_META[zone.level]
+  const forecastLabel = zone.forecast_level
+    ? AIR_QUALITY_LEVEL_META[zone.forecast_level].label
+    : null
+
+  return (
+    <div
+      className={cn(
+        "relative block border-l-[3px]",
+        compact ? "py-2 pl-2.5 pr-2" : "py-2.5 pl-3 pr-2.5",
+      )}
+      style={{ borderLeftColor: meta.hex }}
+    >
+      <div className={cn("flex flex-wrap items-center gap-1.5", compact ? "mb-1" : "mb-1.5")}>
+        <span className={cn(ALERT_BADGE_CLASS, meta.badge)}>
+          <span
+            className="size-1.5 rounded-full"
+            style={{ backgroundColor: meta.hex, boxShadow: `0 0 6px ${meta.hex}99` }}
+            aria-hidden
+          />
+          {meta.label}
+        </span>
+        <span
+          className={cn(
+            ALERT_BADGE_CLASS,
+            "font-mono tracking-[1px]",
+            "border-emerald-400/30 bg-emerald-500/10 text-emerald-200/90",
+          )}
+        >
+          Aire Chile
+        </span>
+      </div>
+
+      <p
+        className={cn(
+          "font-medium leading-snug text-white/90",
+          compact ? "text-[11px]" : "text-[12.5px]",
+        )}
+      >
+        {zone.zone_name}
+      </p>
+      {(forecastLabel || zone.pm25_range_label) && (
+        <p className={cn("mt-0.5 text-white/45", compact ? "text-[9px]" : "text-[10px]")}>
+          {forecastLabel ? `Pronóstico: ${forecastLabel}` : null}
+          {forecastLabel && zone.pm25_range_label ? " · " : null}
+          {zone.pm25_range_label}
+        </p>
+      )}
+
+      {zone.measures_current.length > 0 || zone.external_url ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1.5 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-white/50 hover:text-white/80"
+          aria-expanded={expanded}
+        >
+          {expanded ? "Ocultar detalle" : "Ver detalle"}
+          <ChevronDown
+            className={cn("size-3 transition-transform", expanded && "rotate-180")}
+            aria-hidden
+          />
+        </button>
+      ) : null}
+
+      {expanded ? (
+        <div className="mt-1.5 space-y-1.5 border-t border-white/[0.06] pt-1.5">
+          {zone.measures_current.length > 0 ? (
+            <ul className="flex max-h-28 flex-col gap-1 overflow-y-auto">
+              {zone.measures_current.slice(0, 6).map((m, i) => (
+                <li key={i} className="text-[9px] leading-snug text-white/65">
+                  · {m}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <a
+            href={zone.external_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-sky-300/90 underline-offset-2 hover:underline"
+          >
+            Ver en Aire Chile
+            <ExternalLink className="size-3" aria-hidden />
+          </a>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          "mt-1.5 flex items-center justify-end gap-1.5 font-mono tabular-nums text-white/45",
+          compact ? "text-[9px]" : "text-[10px]",
+        )}
+      >
+        <span className="flex items-center gap-0.5">
+          <MapPin className="size-2.5 shrink-0" aria-hidden />
+          {zone.comuna_codes.length} comuna
+          {zone.comuna_codes.length === 1 ? "" : "s"}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 export function ActiveAlertsSection({
   alerts,
+  airZones = [],
   isLoading = false,
   compact = false,
   showRegion = false,
   collapsedLimit,
 }: {
   alerts: ActiveAlert[]
+  /** Condiciones GEC Aire Chile aplicables a la zona del popup. */
+  airZones?: AirQualityZone[]
   isLoading?: boolean
   compact?: boolean
   /** @deprecated El pie unificado siempre muestra ubicación cuando la trae la alerta. */
   showRegion?: boolean
-  /** Si se define, muestra solo N alertas hasta expandir. */
+  /** Si se define, muestra solo N ítems hasta expandir. */
   collapsedLimit?: number
 }) {
-  const hasAlerts = alerts.length > 0
-  const collapseResetKey = `${alerts.length}:${collapsedLimit ?? ""}`
+  type PopupAlertItem =
+    | { kind: "alert"; alert: ActiveAlert }
+    | { kind: "air"; zone: AirQualityZone }
+
+  const items: PopupAlertItem[] = [
+    ...alerts.map((alert): PopupAlertItem => ({ kind: "alert", alert })),
+    ...airZones.map((zone): PopupAlertItem => ({ kind: "air", zone })),
+  ]
+  const totalCount = items.length
+  const hasItems = totalCount > 0
+  const collapseResetKey = `${totalCount}:${collapsedLimit ?? ""}`
   const [collapseState, setCollapseState] = useState({
     resetKey: collapseResetKey,
     expanded: false,
@@ -218,9 +343,9 @@ export function ActiveAlertsSection({
     setCollapseState({ resetKey: collapseResetKey, expanded: value })
 
   const canCollapse =
-    collapsedLimit != null && alerts.length > collapsedLimit && !expanded
-  const displayedAlerts = canCollapse ? alerts.slice(0, collapsedLimit) : alerts
-  const hiddenCount = canCollapse ? alerts.length - collapsedLimit! : 0
+    collapsedLimit != null && totalCount > collapsedLimit && !expanded
+  const displayedItems = canCollapse ? items.slice(0, collapsedLimit) : items
+  const hiddenCount = canCollapse ? totalCount - collapsedLimit! : 0
 
   return (
     <section className="border-t border-white/[0.07]" aria-labelledby="popup-active-alerts-heading">
@@ -236,12 +361,12 @@ export function ActiveAlertsSection({
           <span
             className={cn(
               "rounded-sm border px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums",
-              hasAlerts
+              hasItems
                 ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
                 : "border-white/10 bg-white/[0.06] text-white/50"
             )}
           >
-            {alerts.length}
+            {totalCount}
           </span>
         )}
       </div>
@@ -251,21 +376,29 @@ export function ActiveAlertsSection({
           <div className="h-10 animate-pulse rounded-sm bg-white/[0.06]" />
           <div className="h-10 animate-pulse rounded-sm bg-white/[0.04]" />
         </div>
-      ) : !hasAlerts ? (
+      ) : !hasItems ? (
         <div className="flex items-center gap-2 px-3.5 pb-2.5 text-[10px] text-white/45">
           Sin alertas activas en esta zona
         </div>
       ) : (
         <>
           <div className="divide-y divide-white/[0.06]">
-            {displayedAlerts.map((alert) => (
-              <ActiveAlertCard
-                key={`${alert.source}-${alert.id}`}
-                alert={alert}
-                compact={compact}
-                showRegion={showRegion}
-              />
-            ))}
+            {displayedItems.map((item) =>
+              item.kind === "air" ? (
+                <AirQualityAlertCard
+                  key={`air-${item.zone.zone_slug}`}
+                  zone={item.zone}
+                  compact={compact}
+                />
+              ) : (
+                <ActiveAlertCard
+                  key={`${item.alert.source}-${item.alert.id}`}
+                  alert={item.alert}
+                  compact={compact}
+                  showRegion={showRegion}
+                />
+              ),
+            )}
           </div>
           {hiddenCount > 0 && (
             <button
@@ -273,11 +406,11 @@ export function ActiveAlertsSection({
               onClick={() => setExpanded(true)}
               className="flex w-full items-center justify-center gap-1 border-t border-white/[0.06] px-3 py-2 font-mono text-[9px] font-semibold uppercase tracking-wider text-white/55 transition-colors hover:bg-white/[0.04] hover:text-white/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
             >
-              Ver todas ({alerts.length})
+              Ver todas ({totalCount})
               <ChevronDown className="size-3" aria-hidden />
             </button>
           )}
-          {expanded && collapsedLimit != null && alerts.length > collapsedLimit && (
+          {expanded && collapsedLimit != null && totalCount > collapsedLimit && (
             <button
               type="button"
               onClick={() => setExpanded(false)}

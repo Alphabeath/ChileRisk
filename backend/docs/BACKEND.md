@@ -69,6 +69,9 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/simulacros?from=&to=&region=&type=&source=&upcoming_only=&past_only=&limit=&offset=` | Calendario SERNAPRED (próximos + pasados) — **JWT** |
 | GET | `/api/v1/simulacros/next` | Próximo simulacro (`drill_date >= hoy`) o `null` — **JWT** |
 | GET | `/api/v1/simulacros/{slug}` | Detalle (incluye `summary`, `participating_comunas`, `mensaje_sae`) — **JWT** |
+| GET | `/api/v1/air-quality?date=&region=&episode_only=` | Condiciones GEC Aire Chile del día (zonas PPDA) — **JWT** |
+| GET | `/api/v1/air-quality/by-comuna/{cod}?date=` | Lookup por CUT (404 si no cubierta) — **JWT** |
+| GET | `/api/v1/air-quality/{slug}?date=` | Detalle zona (medidas, pronóstico, restricciones) — **JWT** |
 
 Parámetro `date`: `YYYY-MM-DD`, día civil Chile; default hoy; ventana 30 días — ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
@@ -114,6 +117,10 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `SIMULACROS_REFRESH_MINUTES` | 360 | Sync cada 6 h |
 | `SIMULACROS_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
 | `SIMULACROS_MAX_RECENT_PAGES` | 5 | Páginas `/simulacros/N/` a recorrer |
+| `USE_REAL_AIRECHILE` | true | Scraping Aire Chile GEC (cuando false: sin condiciones de aire) |
+| `AIRECHILE_BASE_URL` | https://airechile.mma.gob.cl/ | Portal MMA |
+| `AIRECHILE_REFRESH_MINUTES` | 180 | Intervalo sync GEC |
+| `AIRECHILE_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
 | `CSN_BASE_URL` / `CSN_RECENT_PATH` | sismologia.cl | Scraper |
 | `OPENMETEO_API_BASE` | api.open-meteo.com | Clima |
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
@@ -136,6 +143,7 @@ Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authori
 | `meteo_update` | 60 min | `USE_REAL_METEO=true` |
 | `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | `USE_REAL_SENAPRED=true` |
 | `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | siempre |
+| `airechile_sync` | `AIRECHILE_REFRESH_MINUTES` | `USE_REAL_AIRECHILE=true` |
 
 Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicial, migraciones ligeras `senapred_alerts`).
 
@@ -146,7 +154,7 @@ Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicia
 | CSN | Meteo | SERNAPRED | Comportamiento |
 |-----|-------|-----------|----------------|
 | true | true | true | Datos 100% reales (recomendado) |
-| * | * | * | Fuentes deshabilitadas no aportan datos (sin mocks). Scores empiezan en 0 y se actualizan vía drift/recompute o la fuente activa. |
+| * | * | * | Fuentes deshabilitadas no aportan datos (sin mocks). `sismo_score` solo desde `seismic_impacts` (0 si no hay impacto reciente); clima vía Open-Meteo / recompute. |
 
 `DailyRiskScore` siempre se calcula bajo demanda para el `?date=` pedido (sin generación sintética).
 
@@ -164,6 +172,7 @@ Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicia
 | ClimateReading | `climate_reading.py` | Lecturas Open-Meteo |
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
 | Simulacro | `simulacro.py` | Calendario público de simulacros (próximos + pasados) |
+| AireChileDaily | `airechile_daily.py` | Condición GEC diaria por zona (Aire Chile scrape) |
 | User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
 | FamilyPlan | `family_plan.py` | Plan Familia Preparada (1 por `user_id`, JSON) |
 | SyncRun | `sync_run.py` | Últimas corridas de jobs del scheduler |
@@ -185,6 +194,7 @@ Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` an
 | `simulacro_parsers` | HTML → dict solo bloque **CALENDARIO SIMULACROS \<year\>** (ignora "Simulacros recientes") |
 | `simulacro_sync` | httpx fetch índice + enrich páginas detalle con link + upsert |
 | `simulacro_service` | Lectura DB (`list`, `next`, `by_slug`, `prune`) |
+| `airechile_service` | Scrape Aire Chile GEC + lectura (`list`, `zone`, `by_comuna`, `prune`) |
 | `alert_service` | Lista unificada `/alerts/active` |
 | `alert_evaluator` | Umbrales → alertas ChileRisk |
 | `region_service` | Agregación regional + cache |

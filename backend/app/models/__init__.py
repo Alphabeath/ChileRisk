@@ -7,6 +7,7 @@ from app.models.seismic_impact import SeismicImpact
 from app.models.senapred_alert import SenapredAlert
 from app.models.daily_risk_score import DailyRiskScore
 from app.models.simulacro import Simulacro
+from app.models.airechile_daily import AireChileDaily
 from app.models.user import User
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
@@ -23,6 +24,7 @@ __all__ = [
     "SeismicImpact",
     "SenapredAlert",
     "Simulacro",
+    "AireChileDaily",
     "User",
     "OAuthAccount",
     "PasswordResetToken",

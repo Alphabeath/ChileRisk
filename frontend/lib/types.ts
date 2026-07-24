@@ -364,3 +364,38 @@ export interface SimulacrosParams {
   limit?: number
   offset?: number
 }
+
+export type AirQualityLevel =
+  | "bueno"
+  | "regular"
+  | "alerta"
+  | "preemergencia"
+  | "emergencia"
+
+export interface AirQualityZone {
+  zone_slug: string
+  condition_date: string
+  level: AirQualityLevel
+  forecast_date: string | null
+  forecast_level: AirQualityLevel | null
+  pm25_range_label: string | null
+  zone_name: string
+  region_code: number | null
+  comuna_codes: number[]
+  measures_current: string[]
+  restrictions_permanent: string[]
+  external_url: string
+  synced_at: string
+}
+
+export interface AirQualityListResponse {
+  items: AirQualityZone[]
+  total: number
+  condition_date: string
+}
+
+export interface AirQualityParams {
+  date?: string
+  region?: number
+  episode_only?: boolean
+}

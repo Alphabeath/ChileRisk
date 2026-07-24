@@ -27,6 +27,9 @@ El mapa y varios endpoints permiten ver **riesgo, sismos y alertas de un día ca
 | GET | `/api/v1/comunas/{cod}/risk?date=` | Vector de hazards del día |
 | GET | `/api/v1/events?date=` | Sismos en ventana del día (sustituye `hours=` en rutas con date) |
 | GET | `/api/v1/alerts/active?date=` | Alertas/eventos visibles ese día (SERNAPRED: `isPrincipal` + dedupe `url_access`; sin solo-cancelación; histórico puede incluir otras filas `is_active=False`) |
+| GET | `/api/v1/air-quality?date=` | Condición GEC Aire Chile por zona (cobertura parcial PPDA) |
+| GET | `/api/v1/air-quality/{slug}?date=` | Detalle zona GEC |
+| GET | `/api/v1/air-quality/by-comuna/{cod}?date=` | Lookup por comuna CUT |
 
 Sin `date` → hoy Chile.
 

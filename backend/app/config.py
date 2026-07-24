@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     simulacros_request_timeout_seconds: int = 30
     simulacros_max_recent_pages: int = 5
 
+    use_real_airechile: bool = True
+    airechile_base_url: str = "https://airechile.mma.gob.cl/"
+    airechile_refresh_minutes: int = 180
+    airechile_request_timeout_seconds: int = 30
+
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600
 

@@ -14,7 +14,6 @@ from app.services.risk_utils import (
     severity_from_score,
 )
 
-
 async def get_latest_risk_for_comuna(
     session: AsyncSession, cod_comuna: int
 ) -> RiskScore | None:
@@ -112,10 +111,12 @@ async def recompute_all_scores(session: AsyncSession) -> int:
 
         sismo_from_impact = impact_map.get(rs.cod_comuna, 0.0)
 
+        # Sismo is real-data only: score comes from recent seismic impacts.
+        # Never random-walk — that left Magallanes (e.g. Natales) at 80+ with zero quakes.
         if sismo_from_impact > 0:
-            new_sismo = max(rs.sismo_score * 0.7, sismo_from_impact * 1.2)
+            new_sismo = min(97.0, sismo_from_impact * 1.2)
         else:
-            new_sismo = max(3.0, min(97.0, rs.sismo_score + random.uniform(-drift, drift)))
+            new_sismo = 0.0
 
         scores_dict = {
             "sismo": round(new_sismo, 1),

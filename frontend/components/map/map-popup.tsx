@@ -25,7 +25,7 @@ import {
   getSeismicMagnitudeType,
   isSeismicPerceived,
 } from "@/lib/seismic"
-import type { ActiveAlert, SeismicEvent } from "@/lib/types"
+import type { ActiveAlert, AirQualityZone, SeismicEvent } from "@/lib/types"
 import type { PopupSeismicItem } from "@/lib/seismic-events"
 import type { RegionProperties, ComunaProperties } from "./map-config"
 import { POPUP_MAX_ALERTS } from "@/lib/alerts-display"
@@ -487,6 +487,7 @@ function HeaderExtras({ properties }: { properties: RegionProperties | ComunaPro
 export function RegionPopupContent({
   properties,
   alerts = [],
+  airZones = [],
   seismicItems = [],
   alertsLoading = false,
   queryDate = todayIsoDate(),
@@ -505,6 +506,7 @@ export function RegionPopupContent({
     >
       <ActiveAlertsSection
         alerts={alerts}
+        airZones={airZones}
         isLoading={alertsLoading}
         compact
         showRegion={false}
@@ -527,6 +529,7 @@ export function RegionPopupContent({
 export function ComunaPopupContent({
   properties,
   alerts = [],
+  airZones = [],
   seismicItems = [],
   alertsLoading = false,
   queryDate = todayIsoDate(),
@@ -545,6 +548,7 @@ export function ComunaPopupContent({
     >
       <ActiveAlertsSection
         alerts={alerts}
+        airZones={airZones}
         isLoading={alertsLoading}
         compact
         showRegion={false}
@@ -564,6 +568,7 @@ export function ComunaPopupContent({
 interface RegionPopupContentProps {
   properties: RegionProperties
   alerts?: ActiveAlert[]
+  airZones?: AirQualityZone[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
   queryDate?: string
@@ -574,6 +579,7 @@ interface RegionPopupContentProps {
 interface ComunaPopupContentProps {
   properties: ComunaProperties
   alerts?: ActiveAlert[]
+  airZones?: AirQualityZone[]
   seismicItems?: PopupSeismicItem[]
   alertsLoading?: boolean
   queryDate?: string

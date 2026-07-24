@@ -26,6 +26,7 @@ Referencia de lo **shipped** en el mapa y datos. Índice agente: [AGENTS.md](../
 - Primitive: `components/map/map-mobile-bottom-sheet.tsx` — portal a `body`, handle + status + tabs, expanded/collapsed
 - Monitor: `components/map/monitor-mobile-drawer.tsx` — tabs **Alertas** \| **Fecha** \| **Vistas** (sin Controles/`MapActionsPanel` en móvil)
 - Evacuation: `components/evacuation/evacuation-mobile-drawer.tsx` — tabs **Puntos** \| **Capas**; sheet oculto mientras el prompt de ubicación está activo
+- Evacuation map (`EvacuationMap`): al aceptar geolocalización (o si el permiso ya está `granted`), dibuja un marcador DOM “Tu ubicación” (punto azul + pulso; respeta `prefers-reduced-motion`) y hace `flyTo` a esas coords
 
 ### `<MapOverlays />`
 
@@ -45,7 +46,7 @@ Overlays draggables deben vivir **dentro** del `DndContext` desktop.
 
 **Path:** `components/map/chile-map.tsx`
 
-MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React, marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`).
+MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`).
 
 **Props:** ninguna (autocontenido).
 
@@ -71,21 +72,18 @@ MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React, marcadores sí
 **Path:** `components/map/active-alerts-panel.tsx`  
 **Alias deprecado:** `SenapredAlertsPanel` desde `senapred-alerts-panel.tsx`
 
-Lista alertas unificadas (SERNAPRED alertas/eventos + ChileRisk). Usa `useActiveAlerts()` + `sortActiveAlerts` (`lib/alerts-display.ts`).
+Lista unificada: SERNAPRED + ChileRisk (`useActiveAlerts`) + condiciones GEC Aire Chile (`useAirQuality`). Orden por severidad (GEC y alertas en la misma lista).
 
-- Posición default: top-left bajo navbar (`MAP_PANEL_DEFAULT_TOP_PX` desde `lib/citizen-layout.ts`)
+- Posición default: top-left bajo navbar
 - Draggable: `useDraggablePanel({ id: "active-alerts-panel" })` (modo overlay)
-- **`embedded`:** sin shell, drag ni título de panel (el tab del bottom sheet ya lo identifica) — contenido dentro del sheet móvil
-- Glass: `bg-black/60 backdrop-blur-xl`, esquinas rectas
-- Badge en header: total global
-- **Filtro por fuente** (Popover shadcn, filtrado client-side, sin re-fetch):
-  - Botón `Filter` entre el handle drag y el botón colapsar
-  - Dot rojo en el icono cuando hay filtro activo
-  - Sub-label en el título muestra filtro activo (`· Chile Risk`, etc.)
-  - Opciones: `Todas` (default) · `Chile Risk` · `Sernapred`
-  - Cada opción muestra conteo (rojo si >0, neutro si 0) + check cuando activa
-  - `EmptyState({ filter })` adapta el copy según filtro activo
-- Cards: `ActiveAlertCard` en `alert-ui.tsx` / `senapred-alert-ui.tsx`
+- **`embedded`:** sin shell/drag (tab móvil **Alertas**)
+- Badge en header: conteo del filtro activo (todas = alertas + zonas)
+- **Filtro por fuente (chips visibles** bajo el header, grilla 2×2):
+  - `Todas` · `Chile Risk` · `Sernapred` · `Aire`
+  - Cada chip muestra conteo; filtrado client-side
+  - `EmptyState` adapta el copy por filtro
+- Cards: `ActiveAlertCard` + `AirQualityAlertCard` en `alert-ui.tsx` (GEC: badge nivel + expandible medidas / CTA Aire Chile)
+- Modo mapa `air` sigue en **Vistas** (no en este panel)
 
 ---
 
@@ -108,16 +106,19 @@ Ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
 **Path:** `components/map/risk-legend-panel.tsx`
 
-Leyenda de buckets de riesgo (`MAP_RISK_BUCKETS` en `lib/risk-scale.ts`) y glosario de niveles de alerta (`ALERT_LEVEL_META`). Ancla `bottom-right`, collapsible, draggable (`id: "risk-legend-panel"`).
+Leyenda de buckets de riesgo (`MAP_RISK_BUCKETS`), glosario SERNAPRED (`ALERT_LEVEL_META`) y glosario GEC (`AIR_QUALITY_LEVEL_META`). Ancla `bottom-right`, collapsible, draggable (`id: "risk-legend-panel"`).
 
-**Selector de modo Riesgo / Alertas:** las tabs internas (`shadcn Tabs`) están **controladas por el store global** (`useUIStore.mapColorMode` + `setMapColorMode`). Cambiar la tab actualiza el color del mapa en `ChileMap`:
+Filas de color usan `LegendRow` (grid `0.75rem` + texto) para alinear el swatch con la primera línea del label.
 
-- **`risk`** (default) → `region-fill` y `comuna-fill` usan `mapRiskFillColorExpression()` (color por `composite_score`).
-- **`alerts`** → `region-fill` y `comuna-fill` usan `mapAlertFillColorExpression()` (match por `alert_level` por feature). El **relleno oscila** (`fill-opacity` interpola con `requestAnimationFrame`, período 1500–3000 ms según severidad). Sin alerta activa → fill verde `#085e08` (bucket "bajo") con entrada propia en el glosario.
+**Selector de modo Riesgo / Alertas / Aire:** tabs controladas por `useUIStore.mapColorMode` + `setMapColorMode`. Cambiar la tab actualiza el color del mapa en `ChileMap`:
 
-Bordes siempre blancos (`#ffffff`) — no codifican severidad. La capa legacy `region-alert-line` (borde con color de alerta) fue eliminada.
+- **`risk`** → `mapRiskFillColorExpression()` (color por `composite_score`).
+- **`alerts`** → `mapAlertFillColorExpression()` (match por `alert_level`). Relleno oscilante según severidad. Sin alerta → verde `#085e08`.
+- **`air`** → `mapAirFillColorExpression()` (match por `air_level`). Sin cobertura GEC → gris neutro `#3a3f4a`.
 
-**Estado:** `useUIStore.mapColorMode: "risk" | "alerts"` (default `"risk"`, session-only, no `persist`).
+Bordes siempre blancos (`#ffffff`) — no codifican severidad.
+
+**Estado:** `useUIStore.mapColorMode: "risk" | "alerts" | "air"` (session-only, no `persist`).
 
 ---
 
@@ -178,6 +179,21 @@ useActiveAlerts(params?: {
 **API:** `getActiveAlerts()` → `GET /api/v1/alerts/active?date=…`
 
 **staleTime:** 2 min.
+
+### `useAirQuality()` / `useAirQualityZone(slug)`
+
+**Path:** `hooks/use-air-quality.ts`
+
+```ts
+useAirQuality(opts?: { date?: string; region?: number; episodeOnly?: boolean })
+useAirQualityZone(slug: string | null, date?: string)
+```
+
+**Tipo:** `AirQualityZone` (`lib/types.ts`) — niveles GEC `bueno|regular|alerta|preemergencia|emergencia`.
+
+**API:** `getAirQuality()` → `GET /api/v1/air-quality?date=…`
+
+**staleTime:** 5 min.
 
 ### `useSimulacros(params?)` / `useNextSimulacro()` / `useSimulacro(slug)`
 

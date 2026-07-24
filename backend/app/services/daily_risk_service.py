@@ -201,15 +201,10 @@ async def compute_and_store_daily_scores(
                 ola_frio = 0.0
                 viento = 0.0
 
+        # Day window impacts only — do not inherit drifted live RiskScore.sismo.
         sismo = float(sismo_map.get(cod, 0.0))
         if sismo > 0:
             sismo = sismo * 1.2
-        else:
-            latest = latest_map.get(cod)
-            if latest and latest.sismo_score > 0:
-                sismo = latest.sismo_score * 0.3
-            else:
-                sismo = 0.0
 
         scores_dict = {
             "sismo": round(sismo, 1),

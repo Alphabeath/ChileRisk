@@ -9,29 +9,69 @@ import {
   AlertTriangle,
   Bell,
   BellOff,
-  Check,
   CheckCircle2,
   ChevronDown,
-  Filter,
 } from "lucide-react"
-import { useActiveAlerts, useDraggablePanel } from "@/hooks"
+import { useActiveAlerts, useAirQuality, useDraggablePanel } from "@/hooks"
 import { sortActiveAlertsBySeverity } from "@/lib/alerts-display"
 import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import type { ActiveAlert, AirQualityZone } from "@/lib/types"
 import { cn } from "@/lib/utils"
-import { ActiveAlertCard } from "./alert-ui"
+import { ActiveAlertCard, AirQualityAlertCard } from "./alert-ui"
 
-type AlertFilter = "all" | "chilerisk" | "senapred"
+type AlertFilter = "all" | "chilerisk" | "senapred" | "airechile"
+
+type PanelItem =
+  | { kind: "alert"; alert: ActiveAlert }
+  | { kind: "air"; zone: AirQualityZone }
 
 const FILTER_OPTIONS: { value: AlertFilter; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "chilerisk", label: "Chile Risk" },
   { value: "senapred", label: "Sernapred" },
+  { value: "airechile", label: "Aire" },
 ]
+
+/** Align with ALERT_LEVEL_PRIORITY (0 = most severe). */
+const AIR_SORT_PRIORITY: Record<string, number> = {
+  emergencia: 0,
+  preemergencia: 1,
+  alerta: 2,
+  regular: 3,
+  bueno: 4,
+}
+
+const ALERT_LEVEL_PRIORITY: Record<string, number> = {
+  roja: 0,
+  naranja: 1,
+  amarilla: 2,
+  preventiva: 3,
+  informativa: 4,
+}
+
+function itemSortKey(item: PanelItem): number {
+  if (item.kind === "air") {
+    return AIR_SORT_PRIORITY[item.zone.level] ?? 9
+  }
+  return ALERT_LEVEL_PRIORITY[item.alert.level] ?? 9
+}
+
+function sortPanelItems(items: PanelItem[]): PanelItem[] {
+  return [...items].sort((a, b) => {
+    const d = itemSortKey(a) - itemSortKey(b)
+    if (d !== 0) return d
+    if (a.kind === "air" && b.kind === "air") {
+      return a.zone.zone_name.localeCompare(b.zone.zone_name, "es")
+    }
+    if (a.kind === "alert" && b.kind === "alert") {
+      return (
+        new Date(b.alert.issued_at).getTime() -
+        new Date(a.alert.issued_at).getTime()
+      )
+    }
+    return a.kind === "air" ? 1 : -1
+  })
+}
 
 function SkeletonCard() {
   return (
@@ -53,10 +93,15 @@ function EmptyState({ filter }: { filter: AlertFilter }) {
       ? { title: "Sin alertas ChileRisk", hint: "El motor de riesgo no reporta emergencias" }
       : filter === "senapred"
         ? { title: "Sin alertas SERNAPRED", hint: "No hay alertas ni eventos publicados" }
-        : {
-            title: "Sin alertas activas",
-            hint: "SERNAPRED y ChileRisk sin emergencias reportadas",
-          }
+        : filter === "airechile"
+          ? {
+              title: "Sin datos Aire Chile",
+              hint: "Cobertura parcial (zonas PPDA). Sin snapshot para este día",
+            }
+          : {
+              title: "Sin alertas activas",
+              hint: "SERNAPRED, ChileRisk y Aire Chile sin novedades",
+            }
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
       <CheckCircle2 className="size-6 text-emerald-400/70" />
@@ -98,130 +143,136 @@ function hasViewportSpaceForAlertsExpanded(): boolean {
 
 function useAlertsPanelModel() {
   const [filter, setFilter] = useState<AlertFilter>("all")
-  const { data: alerts = [], isLoading, error, refetch } = useActiveAlerts()
+  const {
+    data: alerts = [],
+    isLoading: alertsLoading,
+    error: alertsError,
+    refetch: refetchAlerts,
+  } = useActiveAlerts()
+  const {
+    data: airData,
+    isLoading: airLoading,
+    error: airError,
+    refetch: refetchAir,
+  } = useAirQuality()
 
-  const sorted = useMemo(() => sortActiveAlertsBySeverity(alerts), [alerts])
-  const senapredAlerts = sorted.filter(
-    (a) => a.source === "senapred" && (a.record_kind ?? "alerta") === "alerta",
-  ).length
-  const senapredEventos = sorted.filter(
-    (a) => a.source === "senapred" && a.record_kind === "evento",
-  ).length
-  const senapredCount = senapredAlerts + senapredEventos
-  const chileriskCount = sorted.filter((a) => a.source === "chilerisk").length
+  const zones = useMemo(() => airData?.items ?? [], [airData?.items])
+  const sortedAlerts = useMemo(() => sortActiveAlertsBySeverity(alerts), [alerts])
+
+  const allItems = useMemo(() => {
+    const items: PanelItem[] = [
+      ...sortedAlerts.map((alert): PanelItem => ({ kind: "alert", alert })),
+      ...zones.map((zone): PanelItem => ({ kind: "air", zone })),
+    ]
+    return sortPanelItems(items)
+  }, [sortedAlerts, zones])
+
+  const senapredCount = sortedAlerts.filter((a) => a.source === "senapred").length
+  const chileriskCount = sortedAlerts.filter((a) => a.source === "chilerisk").length
+  const airechileCount = zones.length
 
   const counts: Record<AlertFilter, number> = {
-    all: sorted.length,
+    all: allItems.length,
     chilerisk: chileriskCount,
     senapred: senapredCount,
+    airechile: airechileCount,
   }
 
   const filtered = useMemo(() => {
-    if (filter === "chilerisk") return sorted.filter((a) => a.source === "chilerisk")
-    if (filter === "senapred") return sorted.filter((a) => a.source === "senapred")
-    return sorted
-  }, [sorted, filter])
+    if (filter === "chilerisk") {
+      return allItems.filter((i) => i.kind === "alert" && i.alert.source === "chilerisk")
+    }
+    if (filter === "senapred") {
+      return allItems.filter((i) => i.kind === "alert" && i.alert.source === "senapred")
+    }
+    if (filter === "airechile") {
+      return allItems.filter((i) => i.kind === "air")
+    }
+    return allItems
+  }, [allItems, filter])
 
-  const activeFilterLabel = FILTER_OPTIONS.find((o) => o.value === filter)?.label ?? "Todas"
-  const isFiltered = filter !== "all"
-  const hasAlerts = sorted.length > 0
+  const displayCount =
+    filter === "all"
+      ? allItems.length
+      : filter === "airechile"
+        ? airechileCount
+        : filter === "chilerisk"
+          ? chileriskCount
+          : senapredCount
+
+  const hasItems = allItems.length > 0
+  const isLoading = alertsLoading || airLoading
+  const error = alertsError || airError
+  const refetch = () => {
+    void refetchAlerts()
+    void refetchAir()
+  }
 
   return {
     filter,
     setFilter,
-    sorted,
     filtered,
     counts,
-    activeFilterLabel,
-    isFiltered,
-    hasAlerts,
+    displayCount,
+    hasItems,
     isLoading,
     error,
     refetch,
   }
 }
 
-function AlertsFilterControl({
+function AlertsFilterChips({
   filter,
   setFilter,
   counts,
-  isFiltered,
 }: {
   filter: AlertFilter
   setFilter: (v: AlertFilter) => void
   counts: Record<AlertFilter, number>
-  isFiltered: boolean
 }) {
   return (
-    <Popover>
-      <PopoverTrigger
-        aria-label="Filtrar alertas por fuente"
-        className={cn(
-          "relative flex shrink-0 items-center justify-center border-l border-white/10 px-2.5 transition-colors",
-          "hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
-          isFiltered ? "text-white" : "text-white/60 hover:text-white/85",
-        )}
-      >
-        <Filter className="size-3.5" aria-hidden />
-        {isFiltered && (
-          <span
-            className="absolute right-1 top-1 size-1.5 rounded-full bg-[#DA291C]"
-            aria-hidden
-          />
-        )}
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={6}
-        className="w-56 gap-2 border-white/10 bg-black/85 p-2 text-white shadow-2xl shadow-black/60 backdrop-blur-xl"
-      >
-        <div className="px-2 pt-1 text-[9.5px] font-semibold uppercase tracking-[1.2px] text-white/55">
-          Filtrar por fuente
-        </div>
-        <div role="radiogroup" aria-label="Fuente de alertas" className="flex flex-col gap-0.5">
-          {FILTER_OPTIONS.map((opt) => {
-            const active = filter === opt.value
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => setFilter(opt.value)}
-                className={cn(
-                  "group flex items-center gap-2 rounded-none px-2 py-1.5 text-left text-[11.5px] transition-colors",
-                  "hover:bg-white/[0.06] focus-visible:bg-white/[0.08] focus-visible:outline-none",
-                  active && "bg-white/[0.06]",
-                )}
-              >
-                <span
-                  className={cn(
-                    "flex size-3.5 shrink-0 items-center justify-center border",
-                    active
-                      ? "border-[#DA291C] bg-[#DA291C]/15 text-[#ff9a9a]"
-                      : "border-white/20 text-transparent",
-                  )}
-                  aria-hidden
-                >
-                  <Check className="size-2.5" strokeWidth={3} />
-                </span>
-                <span className="flex-1 truncate">{opt.label}</span>
-                <span
-                  className={cn(
-                    "rounded-sm border px-1 font-mono text-[9.5px] font-semibold leading-none tabular-nums",
-                    counts[opt.value] > 0
-                      ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-                      : "border-white/10 bg-white/[0.04] text-white/40",
-                  )}
-                >
-                  {counts[opt.value]}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      </PopoverContent>
-    </Popover>
+    <div
+      role="radiogroup"
+      aria-label="Filtrar alertas por fuente"
+      className="grid grid-cols-2 gap-1 px-2 py-1.5"
+    >
+      {FILTER_OPTIONS.map((opt) => {
+        const active = filter === opt.value
+        const count = counts[opt.value]
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => setFilter(opt.value)}
+            className={cn(
+              "inline-flex min-w-0 items-center justify-between gap-1 rounded-none border px-1.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider transition-colors",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              active
+                ? "border-white/25 bg-white/[0.12] text-white"
+                : "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white/80",
+            )}
+          >
+            <span className="truncate">{opt.label}</span>
+            <span
+              className={cn(
+                "shrink-0 font-mono text-[9px] tabular-nums",
+                active
+                  ? count > 0
+                    ? "text-[#ff9a9a]"
+                    : "text-white/50"
+                  : count > 0
+                    ? "text-white/70"
+                    : "text-white/35",
+              )}
+            >
+              {count}
+            </span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -239,7 +290,7 @@ function AlertsListBody({
   isLoading: boolean
   error: unknown
   refetch: () => void
-  filtered: ReturnType<typeof useAlertsPanelModel>["filtered"]
+  filtered: PanelItem[]
   filter: AlertFilter
 }) {
   return (
@@ -260,17 +311,21 @@ function AlertsListBody({
           <SkeletonCard />
         </>
       ) : error ? (
-        <ErrorState onRetry={() => refetch()} />
+        <ErrorState onRetry={refetch} />
       ) : filtered.length === 0 ? (
         <EmptyState filter={filter} />
       ) : (
-        filtered.map((alert) => (
-          <ActiveAlertCard
-            key={`${alert.source}-${alert.id}`}
-            alert={alert}
-            showRegion
-          />
-        ))
+        filtered.map((item) =>
+          item.kind === "air" ? (
+            <AirQualityAlertCard key={`air-${item.zone.zone_slug}`} zone={item.zone} />
+          ) : (
+            <ActiveAlertCard
+              key={`${item.alert.source}-${item.alert.id}`}
+              alert={item.alert}
+              showRegion
+            />
+          ),
+        )
       )}
     </div>
   )
@@ -282,36 +337,25 @@ function ActiveAlertsPanelEmbedded() {
   return (
     <aside
       className="flex w-full flex-col"
-      aria-label="Alertas activas SERNAPRED y ChileRisk"
+      aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
     >
-      {/* No panel title — tab already says "Alertas". Keep filter + count. */}
-      <div className="flex w-full items-stretch border-b border-white/10">
-        <div className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2">
-          {model.isFiltered ? (
-            <span className="min-w-0 truncate text-[9px] uppercase tracking-wider text-white/45">
-              {model.activeFilterLabel}
-            </span>
-          ) : (
-            <span className="text-[9px] uppercase tracking-wider text-white/40">
-              Todas
-            </span>
+      <div className="flex w-full items-center justify-end gap-2 border-b border-white/10 px-3 py-2">
+        <span
+          className={cn(
+            "rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
+            model.hasItems
+              ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
+              : "border-white/10 bg-white/[0.08] text-white/60",
           )}
-          <span
-            className={cn(
-              "ml-auto rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
-              model.hasAlerts
-                ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-                : "border-white/10 bg-white/[0.08] text-white/60",
-            )}
-          >
-            {model.sorted.length}
-          </span>
-        </div>
-        <AlertsFilterControl
+        >
+          {model.displayCount}
+        </span>
+      </div>
+      <div className="border-b border-white/[0.06]">
+        <AlertsFilterChips
           filter={model.filter}
           setFilter={model.setFilter}
           counts={model.counts}
-          isFiltered={model.isFiltered}
         />
       </div>
       <AlertsListBody
@@ -348,7 +392,7 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
     flow,
   })
 
-  const Icon = model.hasAlerts ? Bell : BellOff
+  const Icon = model.hasItems ? Bell : BellOff
 
   return (
     <aside
@@ -356,10 +400,10 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
       className={cn(
         MAP_PANEL_SHELL_CLASS,
         "flex flex-col",
-        "max-h-[min(380px,44dvh)]",
+        "max-h-[min(420px,50dvh)]",
       )}
       style={style}
-      aria-label="Alertas activas SERNAPRED y ChileRisk"
+      aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
     >
       <div className="flex w-full items-stretch border-b border-white/10">
         <div
@@ -370,8 +414,8 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
           aria-label="Arrastrar panel"
         >
           <div className="relative shrink-0">
-            <Icon className={cn("size-4", model.hasAlerts ? "text-white" : "text-white/55")} />
-            {model.hasAlerts && (
+            <Icon className={cn("size-4", model.hasItems ? "text-white" : "text-white/55")} />
+            {model.hasItems && (
               <span
                 className="absolute -right-1 -top-1 size-1.5 animate-pulse rounded-full bg-[#DA291C]"
                 style={{ boxShadow: "0 0 4px rgba(218,41,28,0.8)" }}
@@ -383,20 +427,8 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
             <span className="block text-[10.5px] font-semibold uppercase tracking-[1.4px] text-white/85">
               Alertas
             </span>
-            {model.isFiltered && (
-              <span className="mt-0.5 block truncate text-[9px] uppercase tracking-wider text-white/45">
-                · {model.activeFilterLabel}
-              </span>
-            )}
           </div>
         </div>
-
-        <AlertsFilterControl
-          filter={model.filter}
-          setFilter={model.setFilter}
-          counts={model.counts}
-          isFiltered={model.isFiltered}
-        />
 
         <button
           type="button"
@@ -409,12 +441,12 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
           <span
             className={cn(
               "rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
-              model.hasAlerts
+              model.hasItems
                 ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
                 : "border-white/10 bg-white/[0.08] text-white/60",
             )}
           >
-            {model.sorted.length}
+            {model.displayCount}
           </span>
           <ChevronDown
             className={cn(
@@ -426,9 +458,17 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
         </button>
       </div>
 
+      <div className={cn("border-b border-white/[0.06]", !open && "hidden")}>
+        <AlertsFilterChips
+          filter={model.filter}
+          setFilter={model.setFilter}
+          counts={model.counts}
+        />
+      </div>
+
       <AlertsListBody
         open={open}
-        maxHeightClass="max-h-[min(320px,38dvh)]"
+        maxHeightClass="max-h-[min(300px,36dvh)]"
         isLoading={model.isLoading}
         error={model.error}
         refetch={model.refetch}

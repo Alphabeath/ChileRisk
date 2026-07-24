@@ -11,6 +11,7 @@ from app.services.csn_service import sync_recent_csn_events
 from app.services.openmeteo_service import update_climate_scores_from_real_data
 from app.services.senapred_service import sync_senapred_alerts
 from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
+from app.services.airechile_service import sync_airechile, prune_old_airechile
 from app.services.sync_status_service import record_sync_run
 
 logger = logging.getLogger("chilerisk.scheduler")
@@ -195,6 +196,41 @@ async def _sync_simulacros():
             logger.exception("Failed to persist simulacros_sync sync run")
 
 
+async def _sync_airechile():
+    if not settings.use_real_airechile:
+        return
+    started = _utcnow()
+    try:
+        async with async_session() as session:
+            n = await sync_airechile(session)
+            pruned = await prune_old_airechile(session)
+            status = "ok" if (n or pruned) else "empty"
+            await record_sync_run(
+                session,
+                job_id="airechile_sync",
+                started_at=started,
+                status=status,
+                items_written=n,
+            )
+        if n or pruned:
+            logger.info("Synced %d Aire Chile zones (pruned %d)", n, pruned)
+        else:
+            logger.warning("Aire Chile sync finished with 0 upserts")
+    except Exception as e:
+        logger.exception("Aire Chile sync failed: %s", e)
+        try:
+            async with async_session() as session:
+                await record_sync_run(
+                    session,
+                    job_id="airechile_sync",
+                    started_at=started,
+                    status="error",
+                    error_text=str(e),
+                )
+        except Exception:
+            logger.exception("Failed to persist airechile_sync sync run")
+
+
 def setup_scheduler():
     if not settings.enable_scheduler:
         logger.info("Scheduler disabled via settings")
@@ -243,6 +279,15 @@ def setup_scheduler():
         replace_existing=True,
     )
 
+    if settings.use_real_airechile:
+        scheduler.add_job(
+            _sync_airechile,
+            trigger=IntervalTrigger(minutes=settings.airechile_refresh_minutes),
+            id="airechile_sync",
+            name="Sync Aire Chile GEC conditions",
+            replace_existing=True,
+        )
+
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
     if settings.use_real_csn:
@@ -258,6 +303,11 @@ def setup_scheduler():
         "SERNAPRED simulacros sync enabled (every %d min)",
         settings.simulacros_refresh_minutes,
     )
+    if settings.use_real_airechile:
+        logger.info(
+            "Aire Chile GEC sync enabled (every %d min)",
+            settings.airechile_refresh_minutes,
+        )
 
 
 def shutdown_scheduler():

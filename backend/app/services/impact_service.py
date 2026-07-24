@@ -4,7 +4,6 @@ Computes and stores the impact of seismic events on comunas
 so that risk_service can read precomputed values instead of recalculating.
 """
 
-import math
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
@@ -20,7 +19,6 @@ from app.services.seismic_service import (
     estimate_intensity,
     intensity_to_risk_score,
 )
-
 
 def _max_radius_km(magnitude: float) -> float:
     """Theoretical max affected radius for a given magnitude."""

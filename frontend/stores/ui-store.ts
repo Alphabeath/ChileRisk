@@ -21,8 +21,8 @@ interface UIState {
   mapDataRefreshNonce: number
   /** Disaster detail phase nav is sticky (hides main citizen navbar). */
   disasterPhaseNavPinned: boolean
-  /** Map color mode — controls fill of regions/comunas (risk vs alerts). Session-only. */
-  mapColorMode: "risk" | "alerts"
+  /** Map color mode — controls fill of regions/comunas. Session-only. */
+  mapColorMode: "risk" | "alerts" | "air"
   setSelectedRegion: (region: number | null) => void
   setSelectedComuna: (comuna: number | null) => void
   setSelectedEventId: (eventId: number | null) => void
@@ -34,7 +34,7 @@ interface UIState {
   resetAllPanelPositions: () => void
   requestMapDataRefresh: () => void
   setDisasterPhaseNavPinned: (pinned: boolean) => void
-  setMapColorMode: (mode: "risk" | "alerts") => void
+  setMapColorMode: (mode: "risk" | "alerts" | "air") => void
 }
 
 export const useUIStore = create<UIState>((set) => ({

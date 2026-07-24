@@ -6,6 +6,7 @@ from app.schemas.risk import (
 )
 from app.schemas.event import SeismicEventResponse, SeismicImpactResponse, ComunaImpact
 from app.schemas.alert import ActiveAlertOut, AlertLevel, AlertSource, SenapredAlertOut
+from app.schemas.air_quality import AirQualityLevel, AirQualityListResponse, AirQualityZoneOut
 
 __all__ = [
     "ComunaRiskResponse",
@@ -19,5 +20,8 @@ __all__ = [
     "AlertSource",
     "ActiveAlertOut",
     "SenapredAlertOut",
+    "AirQualityLevel",
+    "AirQualityZoneOut",
+    "AirQualityListResponse",
 ]
 

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, comunas, events, family_plan, regiones, risk, simulacros, stats, system
+from app.api import alerts, auth, air_quality, comunas, events, family_plan, regiones, risk, simulacros, stats, system
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
@@ -87,6 +87,18 @@ async def lifespan(app: FastAPI):
             await session.rollback()
             logger.exception("Initial simulacros sync failed: %s", e)
 
+        if settings.use_real_airechile:
+            from app.services.airechile_service import sync_airechile, prune_old_airechile
+
+            try:
+                n_air = await sync_airechile(session)
+                if n_air:
+                    logger.info("Synced %d Aire Chile zones at startup", n_air)
+                await prune_old_airechile(session)
+            except Exception as e:
+                await session.rollback()
+                logger.exception("Initial Aire Chile sync failed: %s", e)
+
         n_recomputed = await recompute_all_scores(session)
         if n_recomputed:
             logger.info("Initial risk recompute applied seismic impacts to %d comunas", n_recomputed)
@@ -160,6 +172,12 @@ app.include_router(
     simulacros.router,
     prefix="/api/v1/simulacros",
     tags=["simulacros"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    air_quality.router,
+    prefix="/api/v1/air-quality",
+    tags=["air-quality"],
     dependencies=_auth_guard,
 )
 app.include_router(

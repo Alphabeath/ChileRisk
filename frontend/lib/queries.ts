@@ -12,4 +12,10 @@ export const queryKeys = {
     ["simulacros", params] as const,
   nextSimulacro: () => ["nextSimulacro"] as const,
   simulacro: (slug: string) => ["simulacro", slug] as const,
+  airQuality: (
+    date: string,
+    params: { region?: number; episodeOnly?: boolean } = {},
+  ) => ["airQuality", date, params] as const,
+  airQualityZone: (slug: string, date: string) =>
+    ["airQualityZone", slug, date] as const,
 }
