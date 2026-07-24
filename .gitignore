@@ -56,3 +56,12 @@ yarn.lock
 # Misc
 *.bak
 *.tmp
+
+# Local scratch / IDE (AGENTS.md: misc/ off-limits)
+misc/
+
+# caveman-compress backups
+*.original.md
+
+# Local OpenCode agent config
+opencode.json

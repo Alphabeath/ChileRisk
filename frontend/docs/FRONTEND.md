@@ -51,6 +51,17 @@ MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React, marcadores sí
 
 **Data:** `/data/regional.geojson`, `/data/comunas.geojson` — ver `map-config.ts`.
 
+### Capas GIS: fuente vs runtime
+
+| Carpeta | Rol |
+|---------|-----|
+| `frontend/public/data/` | Runtime MapLibre (`/data/...` en `map-config.ts`). **Commitear.** |
+| `frontend/data/*.ts` | Contenido TS (`disasters.ts`, `simulacros.ts`) importado por la app. **Commitear.** |
+| `frontend/data/{tsunami,volcanos,wildfire}/` | Fuentes GIS (shapefile, KMZ, TIF) para regenerar GeoJSON/KMZ en `public/data/`. **Commitear** (pipeline). |
+| No poner GeoJSON duplicados en `frontend/data/` | `comunas.geojson` / `regional.geojson` viven solo en `public/data/` (y seed backend). |
+
+**Regenerar wildfire:** `python3 scripts/convert-wildfire.py` (input `frontend/data/wildfire/ocurr_1km_2025.shp` → `public/data/wildfire/wildfire-occurrence.geojson`). Tsunami/volcanos: fuentes en `frontend/data/`; conversión a `public/data/` aún no tiene script en repo.
+
 **A11y:** `role="application"`, `aria-label` mapa Chile.
 
 ---
@@ -300,4 +311,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-07-23*
+*Last updated: 2026-07-24*
