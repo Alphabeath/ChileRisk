@@ -235,10 +235,11 @@ Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky foo
 | MapLibre base | default |
 | Map popups | ~20 |
 | Floating map panels / glass overlays | `z-20` |
+| Map navigation control (zoom/compass) | `z-20` (same glass stack) |
 | Map mobile bottom sheet | `z-70` (portal) |
 | Citizen navbar | `z-50` |
 
-Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable panels: `useDraggablePanel` only.
+Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable panels: `useDraggablePanel` only. Map zoom/compass: `MapNavigationControl` (React glass — not native MapLibre `NavigationControl`).
 
 **Mobile map chrome (`<md`):** hide floating columns; persistent `MapMobileBottomSheet` (handle + status strip + tabs) portaled to `document.body`. Collapsed = mapa usable; expanded = contenido de la tab + scrim ligero, con transición `grid-template-rows` (~320ms). Monitor tabs: Alertas \| Fecha \| Vistas (sin Controles). Evacuation: Puntos \| Capas; sheet oculto mientras el location prompt está activo. Panel prop `embedded` strips shell/drag handle **y el título del panel** (el tab ya lo nombra).
 
@@ -314,6 +315,7 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 - Inactive: `text-white/55 hover:bg-white/[0.06] hover:text-white/90`
 - Section routes (e.g. `/disasters`): `pathname.startsWith(href)`
 - Focus: `focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30`
+- Overflow: horizontal drag/scroll (pointer: mouse click-drag + touch) when items exceed `max-w-[calc(100vw-2rem)]`; scrollbar hidden; edge fades (`from-black/75`) when more content exists left/right; drag past threshold suppresses link navigation; active link scrolls into view on route change.
 
 ### 7.8 shadcn components & CLI (cuando aplique)
 
@@ -382,4 +384,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-24 — Unified `CitizenPageHero` across content navbar routes; `/drills` route (redirect from `/simulacros`).
+**Last updated:** 2026-07-25 — MapNavigationControl glass (zoom/compass) replaces native MapLibre NavigationControl.

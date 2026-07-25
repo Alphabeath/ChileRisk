@@ -1,5 +1,8 @@
 import { MAP_PANEL_WIDTH_CLASS } from "@/lib/citizen-layout"
-import { GLASS_MICA_INTERACTIVE_CLASS } from "@/lib/glass-panel"
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
 /** Shared glass shell for draggable map overlays. */
@@ -20,5 +23,21 @@ export const MAP_PANEL_DRAG_HANDLE_CLASS = cn(
 export const MAP_PANEL_ACTION_BUTTON_CLASS = cn(
   "flex flex-1 items-center justify-center gap-1.5 px-2 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-white/85 transition-colors",
   "hover:bg-white/[0.08] hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
+  "disabled:cursor-not-allowed disabled:opacity-45",
+)
+
+/** Compact glass shell for MapLibre zoom/compass (replaces native NavigationControl). */
+export const MAP_NAV_CONTROL_CLASS = cn(
+  GLASS_PANEL_CLASS,
+  GLASS_MICA_INTERACTIVE_CLASS,
+  "pointer-events-auto flex flex-col",
+)
+
+/** Icon button inside `MAP_NAV_CONTROL_CLASS`. */
+export const MAP_NAV_BUTTON_CLASS = cn(
+  "flex size-8 items-center justify-center text-white/85 transition-colors duration-150",
+  "border-b border-white/10 last:border-b-0",
+  "hover:bg-white/[0.08] hover:text-white",
+  "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30",
   "disabled:cursor-not-allowed disabled:opacity-45",
 )

@@ -21,7 +21,7 @@ export const CITIZEN_NAVBAR_SHELL_CLASS = cn(
   GLASS_PANEL_CLASS,
   GLASS_MICA_INTERACTIVE_CLASS,
   "flex items-center gap-0.5 overflow-x-auto px-1.5 py-1",
-  "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+  "[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden",
 )
 
 /** Base classes for navbar route links (add active/inactive state in component). */

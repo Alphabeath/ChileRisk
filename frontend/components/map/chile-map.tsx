@@ -18,6 +18,7 @@ import {
   type ComunaProperties,
 } from "./map-config"
 import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
+import { MapNavigationControl } from "./map-navigation-control"
 import {
   createPopupContent,
   ComunaPopupContent,
@@ -149,6 +150,7 @@ export function ChileMap() {
   const mapReadyRef = useRef(false)
   const alertAnimFrameRef = useRef<number>(0)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
 
   const dismissAllPopups = useCallback(() => {
     if (popupRef.current) {
@@ -664,8 +666,8 @@ export function ChileMap() {
       attributionControl: false,
     })
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right")
     mapRef.current = map
+    setMapInstance(map)
 
     const ro = new ResizeObserver(() => {
       if (mapRef.current) mapRef.current.resize()
@@ -995,6 +997,7 @@ export function ChileMap() {
         mapRef.current.remove()
         mapRef.current = null
       }
+      setMapInstance(null)
     }
   }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas])
 
@@ -1006,6 +1009,7 @@ export function ChileMap() {
         role="application"
         aria-label="Mapa interactivo de regiones y comunas de Chile"
       />
+      <MapNavigationControl map={mapInstance} />
     </div>
   )
 }

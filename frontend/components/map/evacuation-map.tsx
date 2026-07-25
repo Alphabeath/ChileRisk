@@ -20,6 +20,7 @@ import {
   WILDFIRE_COLOR_5,
 } from "./map-config"
 import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
+import { MapNavigationControl } from "./map-navigation-control"
 import {
   addPopupToOverlay,
   createPopupContent,
@@ -120,6 +121,7 @@ export function EvacuationMap({
 
   const [basemap, setBasemap] = useState<BasemapMode>("satellite")
   const [layersError, setLayersError] = useState<string | null>(null)
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
   const [showLocationPrompt, setShowLocationPrompt] = useState(false)
   const [locationPromptStatus, setLocationPromptStatus] =
     useState<EvacuationLocationPromptStatus>("idle")
@@ -551,8 +553,8 @@ export function EvacuationMap({
       attributionControl: false,
     })
 
-    map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right")
     mapRef.current = map
+    setMapInstance(map)
 
     const ro = new ResizeObserver(() => map.resize())
     ro.observe(container)
@@ -592,6 +594,7 @@ export function EvacuationMap({
       }
       map.remove()
       mapRef.current = null
+      setMapInstance(null)
       layersReadyRef.current = false
     }
   }, [
@@ -658,8 +661,9 @@ export function EvacuationMap({
   }, [])
 
   return (
-    <div className="relative h-full w-full">
+    <div className="cr-map relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
+      <MapNavigationControl map={mapInstance} />
 
       {layersError ? (
         <div className="pointer-events-none absolute inset-x-3 bottom-14 border border-red-500/30 bg-black/70 px-3 py-2 text-[11px] text-red-200/90 backdrop-blur-sm">

@@ -46,7 +46,7 @@ Overlays draggables deben vivir **dentro** del `DndContext` desktop.
 
 **Path:** `components/map/chile-map.tsx`
 
-MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk/SERNAGEOMIN + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`).
+MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk/SERNAGEOMIN + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`). Zoom/brújula: `MapNavigationControl` (glass, no `NavigationControl` nativo).
 
 **Props:** ninguna (autocontenido).
 
@@ -64,6 +64,14 @@ MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAP
 **Regenerar wildfire:** `python3 scripts/convert-wildfire.py` (input `frontend/data/wildfire/ocurr_1km_2025.shp` → `public/data/wildfire/wildfire-occurrence.geojson`). Tsunami/volcanos: fuentes en `frontend/data/`; conversión a `public/data/` aún no tiene script en repo.
 
 **A11y:** `role="application"`, `aria-label` mapa Chile.
+
+---
+
+### `<MapNavigationControl />`
+
+**Path:** `components/map/map-navigation-control.tsx`
+
+Zoom + / − y brújula (restablecer norte). Glass + Mica (`MAP_NAV_CONTROL_CLASS` / `MAP_NAV_BUTTON_CLASS` en `lib/map-panel-styles.ts`), posición top-right bajo navbar (`CITIZEN_NAVBAR_CLEARANCE_PX` + `MAP_PANEL_RIGHT_INSET_PX`). Sustituye `maplibregl.NavigationControl` en `ChileMap` y `EvacuationMap`.
 
 ---
 
@@ -350,4 +358,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-07-24*
+*Last updated: 2026-07-25*
