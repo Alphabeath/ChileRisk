@@ -144,7 +144,8 @@ export function ActiveAlertCard({
   const accentHex = isChileRisk ? severityMeta!.hex : levelMeta.hex
 
   const href = alert.external_url
-  const isClickable = alert.source === "senapred" && !!href
+  const isClickable =
+    (alert.source === "senapred" || alert.source === "sernageomin") && !!href
   const Wrapper = isClickable ? "a" : "div"
 
   return (

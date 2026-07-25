@@ -2,6 +2,7 @@ export { SimulacrosCalendarSection } from "./simulacros-calendar-section"
 export { SimulacrosCountdown } from "./simulacros-countdown"
 export { SimulacrosImportanceAccordion } from "./simulacros-importance-accordion"
 export { SimulacrosPageHero } from "./simulacros-page-hero"
+export { SimulacrosNextDrillPanel } from "./simulacros-next-drill-panel"
 export {
   SimulacrosFilterBar,
   type SimulacrosRange,
@@ -14,3 +15,4 @@ export { SimulacrosMonthHeader } from "./simulacros-month-header"
 export { SimulacrosEmptyState } from "./simulacros-empty-state"
 export { SimulacrosSkeleton } from "./simulacros-skeleton"
 export { SimulacrosFooter } from "./simulacros-footer"
+export { SimulacrosTypesSection } from "./simulacros-types-section"

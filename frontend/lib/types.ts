@@ -95,7 +95,7 @@ export interface EventImpact {
   risk_score: number
 }
 
-export type AlertSource = "senapred" | "chilerisk"
+export type AlertSource = "senapred" | "chilerisk" | "sernageomin"
 export type AffectedScope = "region" | "comuna" | "unknown"
 export type RecordKind = "alerta" | "evento"
 export type HazardType =
@@ -398,4 +398,94 @@ export interface AirQualityParams {
   date?: string
   region?: number
   episode_only?: boolean
+}
+
+export interface ChatMessageIn {
+  role: "user" | "assistant"
+  content: string
+}
+
+export interface ToolCallTrace {
+  name: string
+  arguments: Record<string, unknown>
+  ok: boolean
+  summary: string
+}
+
+export interface ChatRequest {
+  messages: ChatMessageIn[]
+  thread_id?: string | null
+  comuna_code?: number | null
+  region_code?: number | null
+  lat?: number | null
+  lon?: number | null
+  stream?: boolean
+}
+
+export interface ChatResponse {
+  reply: string
+  thread_id: string | null
+  tool_calls_used: ToolCallTrace[]
+  sources: string[]
+}
+
+export interface ChatThreadSummary {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+  message_count: number
+}
+
+export interface ChatMessageOut {
+  id: string
+  role: string
+  content: string
+  tool_trace: ToolCallTrace[] | null
+  created_at: string
+}
+
+export interface ChatThreadDetail {
+  id: string
+  title: string
+  created_at: string
+  updated_at: string
+  messages: ChatMessageOut[]
+}
+
+export interface UserProfile {
+  id: string
+  email: string
+  name: string | null
+  home_comuna_code: number | null
+  home_comuna_name: string | null
+}
+
+export interface NearestComuna {
+  cod_comuna: number
+  name: string
+  codregion: number
+  distance_km: number
+  origin_lat: number
+  origin_lon: number
+}
+
+export interface MeetingPointNearest {
+  id: string
+  hazard: string
+  comuna: string
+  provincia: string
+  region: string
+  sector: string
+  lng: number
+  lat: number
+  distance_km: number | null
+}
+
+export interface MeetingPointNearestResponse {
+  items: MeetingPointNearest[]
+  origin_lat: number
+  origin_lon: number
+  hazard: string | null
+  total_candidates: number
 }

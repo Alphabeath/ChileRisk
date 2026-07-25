@@ -50,9 +50,11 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 | `/preparation` | Preparación + dashboard Plan Familia |
 | `/preparation/emergency-kit` | Guía educativa del Kit (conectada bidireccionalmente al step 7) |
 | `/preparation/family-plan/step/[n]` | Wizard Plan Familia (8 pasos) |
+| `/drills` | Calendario SERNAPRED (redirect `/simulacros` → `/drills`) |
 | `/evacuation` | Mapa evacuación tsunami |
 | `/disasters`, `/disasters/[tipo]` | Guías |
-| `/account` | Placeholder |
+| `/assistant` | Asistente ciudadano (chat DeepSeek) |
+| `/account` | Cuenta + comuna de hogar |
 | `/api/health` | Docker health |
 
 ---
@@ -136,4 +138,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-07-13*
+*Last updated: 2026-07-24*

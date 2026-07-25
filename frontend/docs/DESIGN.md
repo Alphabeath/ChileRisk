@@ -184,7 +184,7 @@ mx-auto max-w-6xl …                             ← disaster detail (wider for
 
 `py-24` clears the floating **`CitizenNavbar`** (`fixed top-4`, `z-50`).
 
-**Surfaces over the globe:** content panels use the **same glass** as map overlays (`GLASS_PANEL_CLASS` + `GLASS_MICA_INTERACTIVE_CLASS` from `lib/glass-panel.ts` — reference: `/monitor` / `/evacuation` panels). **Page heroes** are the exception: brand gradient + `border border-white/10`, **no** glass/blur (`PREPARATION_HERO_SHELL_CLASS`, disasters heroes).
+**Surfaces over the globe:** content panels use the **same glass** as map overlays (`GLASS_PANEL_CLASS` + `GLASS_MICA_INTERACTIVE_CLASS` from `lib/glass-panel.ts` — reference: `/monitor` / `/evacuation` panels). **Page heroes** are the exception: brand gradient + `border border-white/10`, **no** glass/blur (`CitizenPageHero` / `PREPARATION_HERO_SHELL_CLASS`).
 
 ### 5.2 Page width
 
@@ -211,7 +211,7 @@ Detail phase tabs: `sticky top-20 z-10`, `scroll-mt-32` on phase sections.
 
 ### 5.5 Preparation section
 
-Citizen preparation flows (`/preparation`, kit, Plan Familia, `/simulacros`) share tokens in `lib/preparation-ui.ts`:
+Citizen preparation flows (`/preparation`, kit, Plan Familia, `/drills`) share tokens in `lib/preparation-ui.ts`:
 
 | Token | Use |
 |-------|-----|
@@ -246,18 +246,33 @@ Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable pane
 
 ## 7. Components cookbook
 
-### 7.1 Hero (glass + brand or disaster color)
+### 7.1 Hero (`CitizenPageHero`)
+
+Shared shell for citizen content pages (navbar routes except full-bleed maps):
 
 ```tsx
-<header className={cn(GLASS_PANEL_CLASS, "relative overflow-hidden")}>
-  <div className={cn("absolute inset-0 bg-gradient-to-br", gradient)} />
-  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/25" />
-  <WatermarkIcon className="absolute … text-white/[0.07]" />
-  <div className="relative p-5 sm:p-8">…</div>
-</header>
+import {
+  CitizenPageHero,
+  HeroEyebrow,
+  HeroStatBox,
+} from "@/components/layout/citizen-page-hero"
+
+<CitizenPageHero
+  gradientClass="bg-gradient-to-br from-[var(--primary-chile)]/55 …"
+  watermark={<Icon className="absolute …" />}
+  eyebrow={<HeroEyebrow>…</HeroEyebrow>}
+  title="…"
+  description="…"
+  stats={<dl className="grid …"><HeroStatBox … /></dl>}
+  footer={/* optional phase / type strip */}
+/>
 ```
 
-Reference: `components/disasters/disasters-page-hero.tsx`, disaster detail header in `app/(citizen)/disasters/[tipo]/page.tsx`.
+- Shell: `PREPARATION_HERO_SHELL_CLASS` (no glass/blur).
+- Title row uses a shared `min-h` so catalog heroes align across routes.
+- Variable content (e.g. next-drill countdown) lives **under** the hero, not inside it.
+
+Reference: `components/layout/citizen-page-hero.tsx`; composers in `preparation-page-hero`, `disasters-page-hero`, `simulacros-page-hero`, `emergency-kit-hero`, `disaster-detail-hero`.
 
 ### 7.2 Stat box (glass)
 
@@ -367,4 +382,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-23 — Globe page background on non-map citizen routes; heroes without glass; content panels match map overlay glass.
+**Last updated:** 2026-07-24 — Unified `CitizenPageHero` across content navbar routes; `/drills` route (redirect from `/simulacros`).

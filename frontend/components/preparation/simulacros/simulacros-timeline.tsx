@@ -23,6 +23,12 @@ const SPANISH_MONTHS: readonly string[] = [
   "Diciembre",
 ]
 
+/** Left rail width (= content padding). Line + dots share the horizontal center. */
+const RAIL_CLASS = "w-5 sm:w-6"
+const CONTENT_PAD_CLASS = "pl-5 sm:pl-6"
+/** Half-rail offset so marker centers on the vertical line. */
+const MARKER_OFFSET_CLASS = "-left-2.5 sm:-left-3"
+
 interface SimulacrosTimelineProps {
   items: Simulacro[]
   variant: "upcoming" | "past"
@@ -98,6 +104,26 @@ function buildGroups(
   })
 }
 
+function TimelineMarker({
+  className,
+  tone,
+}: {
+  className?: string
+  tone?: string
+}) {
+  return (
+    <span
+      className={cn(
+        "absolute z-10 size-2.5 -translate-x-1/2 rounded-full border-2 bg-[var(--background)] sm:size-3",
+        MARKER_OFFSET_CLASS,
+        tone ?? "border-white/45",
+        className,
+      )}
+      aria-hidden
+    />
+  )
+}
+
 export function SimulacrosTimeline({
   items,
   variant,
@@ -120,13 +146,18 @@ export function SimulacrosTimeline({
             ),
       )}
     >
-      <div className="relative">
+      <div className={cn("relative", CONTENT_PAD_CLASS)}>
         <div
-          className="pointer-events-none absolute top-2 bottom-2 left-[0.4375rem] w-px bg-gradient-to-b from-white/50 via-white/20 to-white/5 sm:left-[0.5625rem]"
+          className={cn(
+            "pointer-events-none absolute inset-y-2 left-0",
+            RAIL_CLASS,
+          )}
           aria-hidden
-        />
+        >
+          <div className="mx-auto h-full w-px bg-gradient-to-b from-white/50 via-white/20 to-white/5" />
+        </div>
 
-        <div className="relative flex flex-col gap-7 pl-6 sm:gap-8 sm:pl-7">
+        <div className="relative flex flex-col gap-7 sm:gap-8">
           {groups.map((group) => {
             const visual = group.dominantType
               ? getDrillTypeVisual(group.dominantType)
@@ -137,25 +168,27 @@ export function SimulacrosTimeline({
                 className="relative flex flex-col gap-2.5"
                 aria-label={`${group.monthLabel} ${group.year}`}
               >
-                <SimulacrosMonthHeader
-                  monthLabel={group.monthLabel}
-                  year={group.year}
-                  count={group.count}
-                  accent={visual?.monthAccent}
-                  chipBorder={visual?.chipBorder}
-                />
+                <div className="relative">
+                  <TimelineMarker
+                    className="top-1/2 -translate-y-1/2"
+                    tone={visual?.chipBorder}
+                  />
+                  <SimulacrosMonthHeader
+                    monthLabel={group.monthLabel}
+                    year={group.year}
+                    count={group.count}
+                    accent={visual?.monthAccent}
+                    chipBorder={visual?.chipBorder}
+                  />
+                </div>
                 <ul className="flex flex-col gap-2.5">
                   {group.items.map((sim) => {
                     const rowVisual = getDrillTypeVisual(sim.drill_type)
                     return (
                       <li key={sim.slug} className="relative">
-                        <span
-                          className={cn(
-                            "absolute top-1/2 z-10 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-[var(--background)] sm:size-3",
-                            "-left-6 sm:-left-7",
-                            rowVisual.chipBorder,
-                          )}
-                          aria-hidden
+                        <TimelineMarker
+                          className="top-1/2 -translate-y-1/2"
+                          tone={rowVisual.chipBorder}
                         />
                         <SimulacroListRow
                           simulacro={sim}

@@ -18,4 +18,9 @@ export const queryKeys = {
   ) => ["airQuality", date, params] as const,
   airQualityZone: (slug: string, date: string) =>
     ["airQualityZone", slug, date] as const,
+  userProfile: () => ["userProfile"] as const,
+  nearestComuna: (lat: number, lon: number) =>
+    ["nearestComuna", lat, lon] as const,
+  chatThreads: () => ["chatThreads"] as const,
+  chatThread: (id: string) => ["chatThread", id] as const,
 }

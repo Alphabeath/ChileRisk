@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         destination: "/preparation",
         permanent: true,
       },
+      {
+        source: "/simulacros",
+        destination: "/drills",
+        permanent: true,
+      },
     ];
   },
 };

@@ -35,6 +35,13 @@ class Settings(BaseSettings):
     airechile_refresh_minutes: int = 180
     airechile_request_timeout_seconds: int = 30
 
+    use_real_sernageomin: bool = True
+    sernageomin_alerts_url: str = "https://www.sernageomin.cl/alertas-volcanicas/"
+    sernageomin_refresh_minutes: int = 60
+    sernageomin_request_timeout_seconds: int = 30
+    # Public site often presents an incomplete TLS chain; default off so sync works.
+    sernageomin_ssl_verify: bool = False
+
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600
 
@@ -42,6 +49,12 @@ class Settings(BaseSettings):
     auth_url: str = "http://localhost:3000"
     resend_api_key: str = ""
     auth_email_from: str = "noreply@chilerisk.local"
+
+    deepseek_api_key: str = ""
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_max_tool_rounds: int = 5
+    chat_history_enabled: bool = True
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

@@ -9,6 +9,8 @@ const protectedPrefixes = [
   "/evacuation",
   "/disasters",
   "/account",
+  "/assistant",
+  "/drills",
 ]
 
 export default auth((req) => {
@@ -34,5 +36,7 @@ export const config = {
     "/evacuation/:path*",
     "/disasters/:path*",
     "/account/:path*",
+    "/assistant/:path*",
+    "/drills/:path*",
   ],
 }

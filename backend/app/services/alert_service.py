@@ -1,4 +1,4 @@
-"""Active alerts: SERNAPRED (DB) + ChileRisk (per-hazard evaluation, computed on read)."""
+"""Active alerts: SERNAPRED (DB) + ChileRisk (on read) + SERNAGEOMIN (DB)."""
 
 from datetime import date, datetime, timezone
 
@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.comuna import Comuna
 from app.models.senapred_alert import SenapredAlert
+from app.models.sernageomin_volcanic_alert import SernageominVolcanicAlert
 from app.schemas.alert import ActiveAlertOut, AlertLevel, HazardType, RecordKind
 from app.services.alert_evaluator import (
     HazardAlertEvaluation,
@@ -22,6 +23,7 @@ from app.services.senapred_service import (
     pick_latest_senapred_per_thread,
     senapred_thread_root,
 )
+from app.services.sernageomin_service import list_active_sernageomin_rows
 
 HAZARD_LABELS: dict[str, str] = {
     "sismo": "Sismo",
@@ -267,6 +269,55 @@ async def _chilerisk_alerts_from_risk(
     return alerts
 
 
+def _sernageomin_row_to_out(row: SernageominVolcanicAlert) -> ActiveAlertOut:
+    level: AlertLevel = (
+        row.level
+        if row.level in ("preventiva", "amarilla", "naranja", "roja", "informativa")
+        else "informativa"
+    )
+    issued = row.issued_at or row.synced_at
+    if issued.tzinfo is None:
+        issued = issued.replace(tzinfo=timezone.utc)
+    synced = row.synced_at
+    if synced.tzinfo is None:
+        synced = synced.replace(tzinfo=timezone.utc)
+    return ActiveAlertOut(
+        id=f"sernageomin:{row.volcano_key}",
+        source="sernageomin",
+        level=level,
+        category="Actividad Volcánica",
+        title=row.title,
+        content=row.content,
+        url_access=None,
+        external_url=row.external_url,
+        issued_at=issued,
+        synced_at=synced,
+        region_code=row.region_code,
+        region_name=row.region_name,
+        affected_scope=(
+            row.affected_scope
+            if row.affected_scope in ("region", "comuna", "unknown")
+            else "unknown"
+        ),
+        comuna_codes=list(row.comuna_codes or []),
+        is_monitor=False,
+        parent_id=None,
+        thread_root_id=None,
+        record_kind="alerta",
+        hazard_type="volcan",
+        composite_score=None,
+        dominant_hazard="volcan",
+        severity=None,
+        risk_detail=None,
+    )
+
+
+async def _sernageomin_alerts_to_out(session: AsyncSession) -> list[ActiveAlertOut]:
+    """v1: only current vigentes (no historical ?date= snapshots)."""
+    rows = await list_active_sernageomin_rows(session)
+    return [_sernageomin_row_to_out(r) for r in rows]
+
+
 def _sort_alerts(alerts: list[ActiveAlertOut]) -> list[ActiveAlertOut]:
     level_rank = {
         "roja": 0,
@@ -326,7 +377,10 @@ async def list_active_alerts(
         session, query_date=qd, include_inactive=not is_today
     )
     chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
-    merged = senapred + chilerisk
+    sernageomin: list[ActiveAlertOut] = []
+    if is_today:
+        sernageomin = await _sernageomin_alerts_to_out(session)
+    merged = senapred + chilerisk + sernageomin
 
     if comuna is not None:
         row = await session.get(Comuna, comuna)

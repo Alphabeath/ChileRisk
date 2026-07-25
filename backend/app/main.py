@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, air_quality, comunas, events, family_plan, regiones, risk, simulacros, stats, system
+from app.api import alerts, auth, air_quality, chat, comunas, disaster_guides, events, family_plan, meeting_points, regiones, risk, simulacros, stats, system, users
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
@@ -18,6 +18,7 @@ import app.models  # noqa: F401 — register ORM metadata
 from app.scheduler import setup_scheduler, shutdown_scheduler
 from app.schemas.system import HealthSyncSummary
 from app.services.csn_service import sync_recent_csn_events
+from app.services.meeting_point_service import seed_meeting_points
 from app.services.risk_service import ensure_risk_scores_exist, recompute_all_scores
 from app.services.sync_status_service import latest_sync_runs
 
@@ -42,6 +43,10 @@ async def lifespan(app: FastAPI):
         n_comunas = await seed_comunas(session)
         if n_regions or n_comunas:
             logger.info("Seeded %d regions and %d comunas", n_regions, n_comunas)
+
+        n_meeting = await seed_meeting_points(session)
+        if n_meeting:
+            logger.info("Seeded %d meeting points", n_meeting)
 
         n_scores = await ensure_risk_scores_exist(session)
         if n_scores:
@@ -99,6 +104,19 @@ async def lifespan(app: FastAPI):
                 await session.rollback()
                 logger.exception("Initial Aire Chile sync failed: %s", e)
 
+        if settings.use_real_sernageomin:
+            from app.services.sernageomin_service import sync_sernageomin_alerts
+
+            try:
+                n_volc = await sync_sernageomin_alerts(session)
+                if n_volc:
+                    logger.info(
+                        "Synced %d SERNAGEOMIN volcanic alerts at startup", n_volc
+                    )
+            except Exception as e:
+                await session.rollback()
+                logger.exception("Initial SERNAGEOMIN sync failed: %s", e)
+
         n_recomputed = await recompute_all_scores(session)
         if n_recomputed:
             logger.info("Initial risk recompute applied seismic impacts to %d comunas", n_recomputed)
@@ -128,7 +146,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.backend_cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
 
@@ -184,6 +202,30 @@ app.include_router(
     system.router,
     prefix="/api/v1/system",
     tags=["system"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    chat.router,
+    prefix="/api/v1/chat",
+    tags=["chat"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    meeting_points.router,
+    prefix="/api/v1/meeting-points",
+    tags=["meeting-points"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    users.router,
+    prefix="/api/v1/users",
+    tags=["users"],
+    dependencies=_auth_guard,
+)
+app.include_router(
+    disaster_guides.router,
+    prefix="/api/v1/disaster-guides",
+    tags=["disaster-guides"],
     dependencies=_auth_guard,
 )
 

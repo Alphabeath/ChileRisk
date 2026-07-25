@@ -1,6 +1,6 @@
 import type { ActiveAlert, AffectedScope, AlertLevel, AlertSource } from "@/lib/types"
 
-const ALERT_SOURCES: AlertSource[] = ["senapred", "chilerisk"]
+const ALERT_SOURCES: AlertSource[] = ["senapred", "chilerisk", "sernageomin"]
 const AFFECTED_SCOPES: AffectedScope[] = ["region", "comuna", "unknown"]
 
 const ALERT_LEVELS: AlertLevel[] = [
@@ -21,6 +21,8 @@ export function normalizeActiveAlert(raw: unknown): ActiveAlert {
     source = r.source as AlertSource
   } else if (id.startsWith("cr-region-")) {
     source = "chilerisk"
+  } else if (id.startsWith("sernageomin:")) {
+    source = "sernageomin"
   }
 
   const level = ALERT_LEVELS.includes(r.level as AlertLevel)
@@ -114,6 +116,10 @@ export const ALERT_SOURCE_META: Record<
   chilerisk: {
     label: "ChileRisk",
     badge: "bg-[#0032A0]/25 text-blue-200/90 border-[#0032A0]/40",
+  },
+  sernageomin: {
+    label: "SERNAGEOMIN",
+    badge: "bg-amber-500/15 text-amber-200/90 border-amber-400/35",
   },
 }
 

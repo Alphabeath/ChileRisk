@@ -59,3 +59,24 @@ async def list_simulacros_endpoint(
         total=total,
         next_synced_at=synced,
     )
+
+
+@router.get("/next", response_model=SimulacroOut | None)
+async def next_simulacro_endpoint(
+    session: AsyncSession = Depends(get_db),
+) -> SimulacroOut | None:
+    row = await get_next_simulacro(session)
+    if row is None:
+        return None
+    return _to_out(row)
+
+
+@router.get("/{slug}", response_model=SimulacroOut)
+async def simulacro_detail_endpoint(
+    slug: str,
+    session: AsyncSession = Depends(get_db),
+) -> SimulacroOut:
+    row = await get_simulacro_by_slug(session, slug)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Simulacro not found")
+    return _to_out(row)

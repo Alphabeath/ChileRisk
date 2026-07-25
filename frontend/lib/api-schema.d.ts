@@ -146,6 +146,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/comunas/nearest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Nearest Comuna
+         * @description Resolve the closest comuna centroid to a GPS position.
+         */
+        get: operations["get_nearest_comuna_api_v1_comunas_nearest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/comunas/{cod_comuna}/risk": {
         parameters: {
             query?: never;
@@ -329,6 +349,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/simulacros/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Next Simulacro Endpoint */
+        get: operations["next_simulacro_endpoint_api_v1_simulacros_next_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulacros/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Simulacro Detail Endpoint */
+        get: operations["simulacro_detail_endpoint_api_v1_simulacros__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/air-quality": {
         parameters: {
             query?: never;
@@ -406,6 +460,143 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Chat */
+        post: operations["chat_api_v1_chat_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Chat Stream */
+        post: operations["chat_stream_api_v1_chat_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Chat Threads */
+        get: operations["list_chat_threads_api_v1_chat_threads_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/chat/threads/{thread_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Chat Thread */
+        get: operations["get_chat_thread_api_v1_chat_threads__thread_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/meeting-points/nearest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Nearest Meeting Points */
+        get: operations["nearest_meeting_points_api_v1_meeting_points_nearest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Me */
+        get: operations["read_me_api_v1_users_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Me */
+        patch: operations["patch_me_api_v1_users_me_patch"];
+        trace?: never;
+    };
+    "/api/v1/disaster-guides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Guides */
+        get: operations["list_guides_api_v1_disaster_guides_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/disaster-guides/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Guide Detail */
+        get: operations["guide_detail_api_v1_disaster_guides__slug__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -435,7 +626,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "senapred" | "chilerisk";
+            source: "senapred" | "chilerisk" | "sernageomin";
             /**
              * Level
              * @enum {string}
@@ -560,6 +751,108 @@ export interface components {
             email: string;
             /** Name */
             name?: string | null;
+            /** Home Comuna Code */
+            home_comuna_code?: number | null;
+        };
+        /** ChatMessageIn */
+        ChatMessageIn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
+        };
+        /** ChatMessageOut */
+        ChatMessageOut: {
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+            /** Content */
+            content: string;
+            /** Tool Trace */
+            tool_trace?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ChatRequest */
+        ChatRequest: {
+            /** Messages */
+            messages: components["schemas"]["ChatMessageIn"][];
+            /** Thread Id */
+            thread_id?: string | null;
+            /** Comuna Code */
+            comuna_code?: number | null;
+            /** Region Code */
+            region_code?: number | null;
+            /** Lat */
+            lat?: number | null;
+            /** Lon */
+            lon?: number | null;
+            /**
+             * Stream
+             * @default false
+             */
+            stream: boolean;
+        };
+        /** ChatResponse */
+        ChatResponse: {
+            /** Reply */
+            reply: string;
+            /** Thread Id */
+            thread_id?: string | null;
+            /** Tool Calls Used */
+            tool_calls_used?: components["schemas"]["ToolCallTrace"][];
+            /** Sources */
+            sources?: string[];
+        };
+        /** ChatThreadDetailOut */
+        ChatThreadDetailOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Messages */
+            messages: components["schemas"]["ChatMessageOut"][];
+        };
+        /** ChatThreadSummaryOut */
+        ChatThreadSummaryOut: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Message Count
+             * @default 0
+             */
+            message_count: number;
         };
         /** ComunaMapScore */
         ComunaMapScore: {
@@ -592,6 +885,28 @@ export interface components {
              * @default family
              */
             type: string;
+        };
+        /** DisasterGuideListOut */
+        DisasterGuideListOut: {
+            /** Items */
+            items: components["schemas"]["DisasterGuideOut"][];
+        };
+        /** DisasterGuideOut */
+        DisasterGuideOut: {
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Antes */
+            antes?: string[];
+            /** Durante */
+            durante?: string[];
+            /** Despues */
+            despues?: string[];
+            /** App Path */
+            app_path: string;
         };
         /** DrillEvaluationIn */
         DrillEvaluationIn: {
@@ -884,6 +1199,58 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** MeetingPointNearestResponse */
+        MeetingPointNearestResponse: {
+            /** Items */
+            items: components["schemas"]["MeetingPointOut"][];
+            /** Origin Lat */
+            origin_lat: number;
+            /** Origin Lon */
+            origin_lon: number;
+            /** Hazard */
+            hazard?: string | null;
+            /**
+             * Total Candidates
+             * @default 0
+             */
+            total_candidates: number;
+        };
+        /** MeetingPointOut */
+        MeetingPointOut: {
+            /** Id */
+            id: string;
+            /** Hazard */
+            hazard: string;
+            /** Comuna */
+            comuna: string;
+            /** Provincia */
+            provincia: string;
+            /** Region */
+            region: string;
+            /** Sector */
+            sector: string;
+            /** Lng */
+            lng: number;
+            /** Lat */
+            lat: number;
+            /** Distance Km */
+            distance_km?: number | null;
+        };
+        /** NearestComunaOut */
+        NearestComunaOut: {
+            /** Cod Comuna */
+            cod_comuna: number;
+            /** Name */
+            name: string;
+            /** Codregion */
+            codregion: number;
+            /** Distance Km */
+            distance_km: number;
+            /** Origin Lat */
+            origin_lat: number;
+            /** Origin Lon */
+            origin_lon: number;
+        };
         /** PetIn */
         PetIn: {
             /** Id */
@@ -1082,6 +1449,43 @@ export interface components {
              * @default false
              */
             selected: boolean;
+        };
+        /** ToolCallTrace */
+        ToolCallTrace: {
+            /** Name */
+            name: string;
+            /** Arguments */
+            arguments?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Ok
+             * @default true
+             */
+            ok: boolean;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+        };
+        /** UserProfileOut */
+        UserProfileOut: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** Name */
+            name?: string | null;
+            /** Home Comuna Code */
+            home_comuna_code?: number | null;
+            /** Home Comuna Name */
+            home_comuna_name?: string | null;
+        };
+        /** UserProfileUpdate */
+        UserProfileUpdate: {
+            /** Home Comuna Code */
+            home_comuna_code?: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1360,6 +1764,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_nearest_comuna_api_v1_comunas_nearest_get: {
+        parameters: {
+            query: {
+                lat: number;
+                lon: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NearestComunaOut"];
                 };
             };
             /** @description Validation Error */
@@ -1720,6 +2156,57 @@ export interface operations {
             };
         };
     };
+    next_simulacro_endpoint_api_v1_simulacros_next_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulacroOut"] | null;
+                };
+            };
+        };
+    };
+    simulacro_detail_endpoint_api_v1_simulacros__slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulacroOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_air_quality_api_v1_air_quality_get: {
         parameters: {
             query?: {
@@ -1836,6 +2323,261 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SyncStatusResponse"];
+                };
+            };
+        };
+    };
+    chat_api_v1_chat_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    chat_stream_api_v1_chat_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_chat_threads_api_v1_chat_threads_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatThreadSummaryOut"][];
+                };
+            };
+        };
+    };
+    get_chat_thread_api_v1_chat_threads__thread_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatThreadDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    nearest_meeting_points_api_v1_meeting_points_nearest_get: {
+        parameters: {
+            query: {
+                lat: number;
+                lon: number;
+                hazard?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeetingPointNearestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_me_api_v1_users_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileOut"];
+                };
+            };
+        };
+    };
+    patch_me_api_v1_users_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_guides_api_v1_disaster_guides_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisasterGuideListOut"];
+                };
+            };
+        };
+    };
+    guide_detail_api_v1_disaster_guides__slug__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DisasterGuideOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

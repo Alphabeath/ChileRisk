@@ -2,6 +2,10 @@ import { DisastersCatalog } from "@/components/disasters/disasters-catalog"
 import { DisastersPageHero } from "@/components/disasters/disasters-page-hero"
 import { desastres } from "@/data/disasters"
 import { GLASS_MICA_INTERACTIVE_CLASS, GLASS_PANEL_CLASS } from "@/lib/glass-panel"
+import {
+  PREPARATION_PAGE_INNER_CLASS,
+  PREPARATION_PAGE_SHELL_CLASS,
+} from "@/lib/preparation-ui"
 import { ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -14,8 +18,8 @@ export default function DisastersPage() {
   )
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl flex flex-col gap-4 px-4 py-16 sm:px-6 sm:gap-5 lg:px-8">
+    <div className={PREPARATION_PAGE_SHELL_CLASS}>
+      <div className={PREPARATION_PAGE_INNER_CLASS}>
         <DisastersPageHero disasterCount={disasterCount} totalSteps={totalSteps} />
 
         <DisastersCatalog />

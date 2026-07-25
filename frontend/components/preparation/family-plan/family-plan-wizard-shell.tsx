@@ -178,7 +178,7 @@ export function FamilyPlanWizardShell({
         <PreparationContextBanner
           eyebrow="Vienes del calendario SERNAPRED"
           body="Revisa o completa el registro del simulacro en este paso."
-          href="/simulacros"
+          href="/drills"
           cta="Volver al calendario"
           icon={Siren}
           accent="rose"

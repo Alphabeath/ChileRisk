@@ -2,19 +2,45 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
+from app.core.limiter import limiter
 from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
 from app.models.seismic_event import SeismicEvent
 from app.models.seismic_impact import SeismicImpact
+from app.schemas.comuna_geo import NearestComunaOut
 from app.services.query_date_window import clamp_query_date, day_bounds_utc, today_chile
 from app.services.risk_service import get_latest_risk_for_comuna
+from app.services.seismic_alert_match import nearest_comuna
 
 router = APIRouter()
+
+
+@router.get("/nearest", response_model=NearestComunaOut)
+@limiter.limit("60/minute")
+async def get_nearest_comuna(
+    request: Request,
+    lat: float = Query(..., ge=-56.0, le=-17.0),
+    lon: float = Query(..., ge=-76.0, le=-66.0),
+    db: AsyncSession = Depends(get_db),
+) -> NearestComunaOut:
+    """Resolve the closest comuna centroid to a GPS position."""
+    found = await nearest_comuna(db, lat, lon)
+    if found is None:
+        raise HTTPException(status_code=404, detail="No comuna centroids available")
+    comuna, distance_km = found
+    return NearestComunaOut(
+        cod_comuna=comuna.cod_comuna,
+        name=comuna.name,
+        codregion=comuna.codregion,
+        distance_km=round(distance_km, 2),
+        origin_lat=lat,
+        origin_lon=lon,
+    )
 
 
 @router.get("/{cod_comuna}/risk")

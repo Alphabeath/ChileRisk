@@ -46,7 +46,7 @@ Overlays draggables deben vivir **dentro** del `DndContext` desktop.
 
 **Path:** `components/map/chile-map.tsx`
 
-MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`).
+MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk/SERNAGEOMIN + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`).
 
 **Props:** ninguna (autocontenido).
 
@@ -72,17 +72,17 @@ MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAP
 **Path:** `components/map/active-alerts-panel.tsx`  
 **Alias deprecado:** `SenapredAlertsPanel` desde `senapred-alerts-panel.tsx`
 
-Lista unificada: SERNAPRED + ChileRisk (`useActiveAlerts`) + condiciones GEC Aire Chile (`useAirQuality`). Orden por severidad (GEC y alertas en la misma lista).
+Lista unificada: SERNAPRED + ChileRisk + SERNAGEOMIN (`useActiveAlerts`) + condiciones GEC Aire Chile (`useAirQuality`). Orden por severidad (GEC y alertas en la misma lista).
 
 - Posición default: top-left bajo navbar
 - Draggable: `useDraggablePanel({ id: "active-alerts-panel" })` (modo overlay)
 - **`embedded`:** sin shell/drag (tab móvil **Alertas**)
 - Badge en header: conteo del filtro activo (todas = alertas + zonas)
-- **Filtro por fuente (chips visibles** bajo el header, grilla 2×2):
-  - `Todas` · `Chile Risk` · `Sernapred` · `Aire`
+- **Filtro por fuente (chips visibles** bajo el header, grilla 3 cols):
+  - `Todas` · `Chile Risk` · `Sernapred` · `Volcán` · `Aire`
   - Cada chip muestra conteo; filtrado client-side
   - `EmptyState` adapta el copy por filtro
-- Cards: `ActiveAlertCard` + `AirQualityAlertCard` en `alert-ui.tsx` (GEC: badge nivel + expandible medidas / CTA Aire Chile)
+- Cards: `ActiveAlertCard` + `AirQualityAlertCard` en `alert-ui.tsx` (GEC: badge nivel + expandible medidas / CTA Aire Chile; SERNAGEOMIN: badge + link `external_url`)
 - Modo mapa `air` sigue en **Vistas** (no en este panel)
 
 ---
@@ -172,7 +172,7 @@ useActiveAlerts(params?: {
 
 **Tipo:** `ActiveAlert` (`lib/types.ts`):
 
-- `source`: `"senapred" | "chilerisk"`
+- `source`: `"senapred" | "chilerisk" | "sernageomin"`
 - `record_kind`: `"alerta" | "evento"`
 - `external_url`, `hazard_type`, `affected_scope`, `comuna_codes`, `thread_root_id`, …
 
@@ -238,9 +238,9 @@ useSimulacro(slug)              // GET /api/v1/simulacros/{slug}
 
 Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
-### `/simulacros` — Calendario SERNAPRED
+### `/drills` — Calendario SERNAPRED
 
-**Path:** `app/(citizen)/simulacros/page.tsx`
+**Path:** `app/(citizen)/drills/page.tsx` (redirect permanente `/simulacros` → `/drills`)
 
 Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
 
@@ -248,13 +248,15 @@ Shell: `PREPARATION_PAGE_*` (`lib/preparation-ui.ts`) + `PreparationBreadcrumb` 
 
 **Composición (top → bottom):**
 
-1. `<SimulacrosPageHero next={…} upcomingTotal={…} />` — hero glass (`PREPARATION_HERO_SHELL_CLASS`), stats (próximos / tipos), **countdown dominante** del próximo simulacro (`SimulacrosCountdown`) y barra de 4 tipos SENAPRED.
-2. `<PreparationContextBanner>` — “Registra en tu plan” → `/preparation/family-plan/step/8?from=simulacros`.
-3. `<SimulacrosImportanceAccordion>` — colapsable: importancia de los simulacros SERNAPRED.
-4. `<SimulacrosCalendarSection>` — header + filtros **sticky** (`PREPARATION_STICKY_SUBNAV_CLASS`: chips de tipo + `<SimulacrosFilterBar>` tabs Próximos/Pasados + región + rango) + `<SimulacrosTimeline>` agrupado por mes (rail por evento, headers tipo CategoryShell, filas compactas sin “Hoy” duplicado). Sin React Chrono / rejilla.
-5. `<SimulacrosFooter>` — referencia oficial + `next_synced_at` + “Actualizar”.
+1. `<SimulacrosPageHero upcomingTotal={…} />` — `CitizenPageHero` (stats próximos/tipos + barra de 4 tipos SENAPRED).
+2. `<SimulacrosNextDrillPanel next={…} />` — countdown del próximo simulacro (panel glass bajo el hero).
+3. `<PreparationContextBanner>` — “Registra en tu plan” → `/preparation/family-plan/step/8?from=drills`.
+4. `<SimulacrosImportanceAccordion>` — colapsable: importancia de los simulacros SERNAPRED.
+5. `<SimulacrosTypesSection>` — panel glass con los 4 tipos SENAPRED (legible sobre el globo).
+6. `<SimulacrosCalendarSection>` — header + filtros **sticky** (`PREPARATION_STICKY_SUBNAV_CLASS`: chips de tipo + `<SimulacrosFilterBar>` tabs Próximos/Pasados + región + rango) + `<SimulacrosTimeline>` agrupado por mes (rail alineado: línea + markers comparten centro; headers + filas). Sin React Chrono / rejilla.
+7. `<SimulacrosFooter>` — referencia oficial + `next_synced_at` + “Actualizar”.
 
-**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacros-empty-state, simulacros-skeleton, simulacros-footer, simulacros-countdown}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`. Tokens compartidos: `lib/preparation-ui.ts`.
+**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-next-drill-panel, simulacros-types-section, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacros-empty-state, simulacros-skeleton, simulacros-footer, simulacros-countdown}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`. Tokens compartidos: `lib/preparation-ui.ts` + `components/layout/citizen-page-hero.tsx`.
 
 **Estados:** skeleton mientras `isLoading`, error state con botón "Reintentar", empty state (`PREPARATION_EMPTY_STATE_CLASS`) separado para upcoming vs past.
 
@@ -272,11 +274,11 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 
 **Conexión bidireccional Kit ↔ Plan:** `/preparation/emergency-kit` usa `PreparationContextBanner` (desktop) + CTA sticky móvil → `/preparation/family-plan/step/7?from=emergency-kit`. Categorías y necesidades especiales usan `FamilyPlanCategoryShell`. Kits especiales siempre visibles; chip “En tu hogar” si el plan los marca. El wizard muestra el mismo patrón de banner de contexto cuando viene del kit.
 
-**Conexión Calendario SERNAPRED ↔ Plan:** `/simulacros` → banner + CTA “Agregar a mi plan” por card hacia step 8 (`?source=senapred&…`). `StepDrills` pre-rellena y muestra banner de retorno. Hub apunta topic “Comunicación y simulacros” a `/simulacros`.
+**Conexión Calendario SERNAPRED ↔ Plan:** `/drills` → banner + CTA “Agregar a mi plan” por card hacia step 8 (`?source=senapred&…`). `StepDrills` pre-rellena y muestra banner de retorno. Hub apunta topic “Comunicación y simulacros” a `/drills`.
 
 **Hub `/preparation` — bloques (orden top → bottom):**
 
-1. `PreparationPageHero` — identidad de sección (título + copy + meta estática pasos/guías). **Sin progreso del plan** (evita duplicar el dashboard).
+1. `PreparationPageHero` — `CitizenPageHero`: identidad + stats (pasos/guías) + franja Plan/Kit/Simulacros. **Sin progreso del plan** (evita duplicar el dashboard).
 2. `FamilyPlanDashboard` — dueño único del progreso: `FamilyPlanStatusBanner` (anillo + chip + CTA Continuar/Resumen) + grilla de 8 steps (todos links, también completados).
 3. `PreparationTopicGrid` — 4 recursos complementarios (`FamilyPlanCategoryShell`): kit / evacuación / hogar / simulacros. No incluye “Plan familiar” (ya cubierto arriba).
 4. Aside desastres → `/disasters`.
@@ -307,6 +309,27 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 - Landing `/` keeps its own globe + intro via `app/page.tsx`.
 - Props: `skipIntro`, `autoRotate` on `components/globe/rotating-earth.tsx`.
 - Surfaces: content panels use `GLASS_PANEL_CLASS` (same as map overlays); page heroes use gradient shell without glass — see [DESIGN.md](./DESIGN.md) §5.1.
+
+---
+
+## Asistente ciudadano (`/assistant`)
+
+Chat agentico (DeepSeek en backend) con tools de lectura: plan familia, alertas, simulacros, riesgo, aire, puntos de encuentro, guías de desastre.
+
+- Página: `app/(citizen)/assistant/page.tsx` — `h-dvh`; banner compacto + chat `max-w-7xl`
+- Flujo UI: encabezado compacto → conversación → composer → disclaimer mínimo
+- UI:
+  - `components/assistant/assistant-chat.tsx` — shell glass, SSE, GPS auto → comuna, composer
+  - `components/assistant/assistant-message.tsx` — burbujas con avatar integrado (usuario / asistente)
+  - `components/assistant/assistant-history.tsx` — sidebar desktop; drawer absoluto dentro del shell del chat en móvil
+  - `components/assistant/assistant-markdown.tsx` — GFM; links internos con `next/link` (acento sky/primary)
+- Ubicación: GPS al cargar → `GET /api/v1/comunas/nearest`; chip «Ubicación» solo en `lg+` (texto, no botón). El system prompt del agente recibe comuna/lat/lon resueltos y no debe pedir Cuenta. Fallback: comuna de hogar.
+- Shell del chat: glass translúcido (`bg-black/20–30`) para ver el globo de fondo
+- Transcript: shadcn `MessageScroller` (auto-scroll); scroll solo en el panel de conversación
+- Cliente: `postChat` / `streamChat` / threads / `getNearestComuna` / `getUserProfile` en `lib/api.ts`
+- Hooks: `hooks/use-assistant.ts` (`useNearestComuna`, threads, profile)
+- Navbar: entrada «Asistente»; middleware protege `/assistant`
+- Preferencia de comuna de hogar (opcional): `PATCH /api/v1/users/me` desde `/account`
 
 ---
 

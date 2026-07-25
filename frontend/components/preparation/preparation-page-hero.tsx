@@ -1,7 +1,11 @@
 import {
-  PREPARATION_EYEBROW_CLASS,
-  PREPARATION_HERO_SHELL_CLASS,
-} from "@/lib/preparation-ui"
+  CitizenPageHero,
+  HeroEyebrow,
+  HeroFooterCell,
+  HeroFooterIcon,
+  HeroStatBox,
+} from "@/components/layout/citizen-page-hero"
+import { Backpack, CalendarCheck2, ClipboardList } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PreparationPageHeroProps {
@@ -9,43 +13,70 @@ interface PreparationPageHeroProps {
   guides: number
 }
 
-/** Section identity only — plan progress lives in FamilyPlanDashboard. */
+const topicHighlights = [
+  {
+    label: "Plan",
+    subtitle: "Familia Preparada",
+    icon: ClipboardList,
+    accent: "text-emerald-300",
+  },
+  {
+    label: "Kit",
+    subtitle: "72 horas",
+    icon: Backpack,
+    accent: "text-blue-300",
+  },
+  {
+    label: "Simulacros",
+    subtitle: "Calendario",
+    icon: CalendarCheck2,
+    accent: "text-rose-300",
+  },
+] as const
+
+/** Section identity — plan progress lives in FamilyPlanDashboard. */
 export function PreparationPageHero({
   planSteps,
   guides,
 }: PreparationPageHeroProps) {
   return (
-    <header className={PREPARATION_HERO_SHELL_CLASS}>
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-emerald-950/70 to-[var(--secondary-chile)]/45"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.14),transparent_55%)]"
-        aria-hidden
-      />
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
-        aria-hidden
-      />
-      <ChileWatermark />
-
-      <div className="relative p-5 sm:p-8">
-        <span className="inline-flex w-fit items-center gap-2 border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[1.2px] text-emerald-200/90">
+    <CitizenPageHero
+      gradientClass="bg-gradient-to-br from-[var(--primary-chile)]/55 via-emerald-950/70 to-[var(--secondary-chile)]/45"
+      watermark={<ChileWatermark />}
+      eyebrow={
+        <HeroEyebrow className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200/90">
           Metodología SENAPRED
-        </span>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
-          Preparación
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/80 sm:text-base">
-          Construye tu Plan Familia Preparada, completa tu kit y sigue los
-          simulacros oficiales para anticiparte ante desastres en Chile.
-        </p>
-        <p className={cn(PREPARATION_EYEBROW_CLASS, "mt-5 text-white/45")}>
-          {planSteps} pasos del plan · {guides} guías por desastre
-        </p>
-      </div>
-    </header>
+        </HeroEyebrow>
+      }
+      title="Preparación"
+      description="Construye tu Plan Familia Preparada, completa tu kit y sigue los simulacros oficiales para anticiparte ante desastres en Chile."
+      stats={
+        <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[16rem]">
+          <HeroStatBox label="Pasos del plan" value={planSteps} />
+          <HeroStatBox label="Guías" value={guides} />
+        </dl>
+      }
+      footer={
+        <div className="grid grid-cols-3 divide-x divide-white/10">
+          {topicHighlights.map(({ label, subtitle, icon: Icon, accent }) => (
+            <HeroFooterCell key={label}>
+              <HeroFooterIcon>
+                <Icon
+                  className={cn("size-4 sm:size-[1.125rem]", accent)}
+                  aria-hidden
+                />
+              </HeroFooterIcon>
+              <div className="min-w-0 text-left">
+                <p className="text-[11px] font-semibold uppercase tracking-[1.2px] text-white">
+                  {label}
+                </p>
+                <p className="text-[10px] text-white/55">{subtitle}</p>
+              </div>
+            </HeroFooterCell>
+          ))}
+        </div>
+      }
+    />
   )
 }
 

@@ -56,10 +56,11 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/risk/national?date=` | Riesgo agregado por región (mapa) — **JWT** |
 | GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (coropleta) |
 | GET | `/api/v1/regiones/{codregion}/risk` | Detalle región + comunas (live, sin `date`) |
+| GET | `/api/v1/comunas/nearest?lat=&lon=` | Comuna más cercana al GPS (centroide) — **JWT** |
 | GET | `/api/v1/comunas/{cod_comuna}/risk?date=` | Vector de hazards de la comuna |
 | GET | `/api/v1/events?date=` | Sismos del día calendario Chile |
 | GET | `/api/v1/events/{id}/impact` | Impacto precomputado (hasta 50 comunas) |
-| GET | `/api/v1/alerts/active?date=&region=&comuna=&level=&kind=&hazard=` | SERNAPRED + ChileRisk |
+| GET | `/api/v1/alerts/active?date=&region=&comuna=&level=&kind=&hazard=` | SERNAPRED + ChileRisk + SERNAGEOMIN |
 | GET | `/api/v1/stats/national` | Promedios y distribución severidad |
 | GET | `/api/v1/stats/regiones/{codregion}` | Stats de región |
 | GET | `/api/v1/stats/trends?days=7` | Placeholder |
@@ -72,6 +73,15 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/air-quality?date=&region=&episode_only=` | Condiciones GEC Aire Chile del día (zonas PPDA) — **JWT** |
 | GET | `/api/v1/air-quality/by-comuna/{cod}?date=` | Lookup por CUT (404 si no cubierta) — **JWT** |
 | GET | `/api/v1/air-quality/{slug}?date=` | Detalle zona (medidas, pronóstico, restricciones) — **JWT** |
+| POST | `/api/v1/chat` | Asistente ciudadano (DeepSeek + tools) — **JWT** |
+| POST | `/api/v1/chat/stream` | Mismo agente vía SSE (`token` / `done`) — **JWT** |
+| GET | `/api/v1/chat/threads` | Historial de hilos del usuario — **JWT** |
+| GET | `/api/v1/chat/threads/{id}` | Detalle de hilo + mensajes — **JWT** |
+| GET | `/api/v1/users/me` | Perfil (`home_comuna_code`) — **JWT** |
+| PATCH | `/api/v1/users/me` | Actualizar comuna de hogar — **JWT** |
+| GET | `/api/v1/meeting-points/nearest?lat=&lon=&hazard=&limit=` | Puntos de encuentro oficiales más cercanos — **JWT** |
+| GET | `/api/v1/disaster-guides` | Guías estáticas de preparación — **JWT** |
+| GET | `/api/v1/disaster-guides/{slug}` | Guía por slug — **JWT** |
 
 Parámetro `date`: `YYYY-MM-DD`, día civil Chile; default hoy; ventana 30 días — ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
@@ -81,12 +91,15 @@ Fuentes unificadas en `ActiveAlertOut` (`app/schemas/alert.py`):
 
 - **senapred** — alertas ATP (`record_kind=alerta`) y eventos “Sismos y otros” (`evento`)
 - **chilerisk** — alertas generadas por umbrales de riesgo (`alert_evaluator`)
+- **sernageomin** — alertas volcánicas elevadas vigentes (scrape OVDAS; solo “hoy”, no histórico `?date=`)
 
 Filtros opcionales: `region` (1–16), `comuna`, `level`, `kind`, `hazard` (`sismo`, `volcan`, `incendio`, …).
 
 Campos notables: `external_url`, `affected_scope`, `comuna_codes`, `thread_root_id`, `hazard_type`, scores ChileRisk cuando `source=chilerisk`.
 
 SERNAPRED (parity con [senapred.cl/alertas](https://senapred.cl/alertas) / `/eventos`): vigente = `isActive` + `isPrincipal` (ATP y eventos). Dedupe por hilo (`url_access` canónico, fallback cadena `parentId`) + `region_code` para expansiones multi-región. Geografía: `metaData.comunas` / `provincias` + NLP. Boletines de **solo cancelación** (`Se cancela…` sin `declara`) no se listan ni hoy ni en `?date=` histórico. En días pasados sí pueden incluirse otras filas `is_active=False` (p. ej. no principales / ya cerradas por la fuente).
+
+SERNAGEOMIN: scrape de [alertas-volcanicas](https://www.sernageomin.cl/alertas-volcanicas/); solo niveles elevados (≥ amarilla); `hazard_type=volcan`. Coexiste con alertas ATP SERNAPRED de tipo volcán (sin dedupe cruzado). El HTML del sitio es frágil (Fusion Builder / imágenes); el parser usa alt/title + regex.
 
 Rate limits: lectura 100/min; events 60; impact 30; stats 50; alerts 60.
 
@@ -121,6 +134,11 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `AIRECHILE_BASE_URL` | https://airechile.mma.gob.cl/ | Portal MMA |
 | `AIRECHILE_REFRESH_MINUTES` | 180 | Intervalo sync GEC |
 | `AIRECHILE_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
+| `USE_REAL_SERNAGEOMIN` | true | Scraping alertas volcánicas OVDAS (cuando false: sin fuente SERNAGEOMIN) |
+| `SERNAGEOMIN_ALERTS_URL` | https://www.sernageomin.cl/alertas-volcanicas/ | Página de vigentes |
+| `SERNAGEOMIN_REFRESH_MINUTES` | 60 | Intervalo sync |
+| `SERNAGEOMIN_REQUEST_TIMEOUT_SECONDS` | 30 | Timeout httpx |
+| `SERNAGEOMIN_SSL_VERIFY` | false | TLS: el sitio suele servir cadena incompleta |
 | `CSN_BASE_URL` / `CSN_RECENT_PATH` | sismologia.cl | Scraper |
 | `OPENMETEO_API_BASE` | api.open-meteo.com | Clima |
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
@@ -129,8 +147,13 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `AUTH_URL` | http://localhost:3000 | Base para enlaces de reset |
 | `RESEND_API_KEY` | — | Email recuperación contraseña |
 | `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |
+| `DEEPSEEK_API_KEY` | — | API key DeepSeek (asistente; nunca en FE) |
+| `DEEPSEEK_BASE_URL` | https://api.deepseek.com | OpenAI-compatible base |
+| `DEEPSEEK_MODEL` | deepseek-v4-flash | Modelo default del agente |
+| `DEEPSEEK_MAX_TOOL_ROUNDS` | 5 | Tope de rondas tool-calling |
+| `CHAT_HISTORY_ENABLED` | true | Persistencia de hilos/mensajes |
 
-Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authorization: Bearer <JWT HS256>` emitido por el proxy Next (`lib/api-token.ts`). `/api/v1/auth/*` y `/health` son públicos.
+Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats|chat|users|meeting-points|disaster-guides` exigen header `Authorization: Bearer <JWT HS256>` emitido por el proxy Next (`lib/api-token.ts`). `/api/v1/auth/*` y `/health` son públicos.
 
 ---
 
@@ -144,6 +167,7 @@ Rutas `/api/v1/risk|regiones|comunas|events|alerts|stats` exigen header `Authori
 | `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | `USE_REAL_SENAPRED=true` |
 | `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | siempre |
 | `airechile_sync` | `AIRECHILE_REFRESH_MINUTES` | `USE_REAL_AIRECHILE=true` |
+| `sernageomin_sync` | `SERNAGEOMIN_REFRESH_MINUTES` | `USE_REAL_SERNAGEOMIN=true` |
 
 Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicial, migraciones ligeras `senapred_alerts`).
 
@@ -173,9 +197,12 @@ Definición: `app/scheduler/jobs.py`. Lifespan: `app/main.py` (seed, sync inicia
 | SenapredAlert | `senapred_alert.py` | Cache alertas/eventos SERNAPRED |
 | Simulacro | `simulacro.py` | Calendario público de simulacros (próximos + pasados) |
 | AireChileDaily | `airechile_daily.py` | Condición GEC diaria por zona (Aire Chile scrape) |
+| SernageominVolcanicAlert | `sernageomin_volcanic_alert.py` | Alertas volcánicas elevadas vigentes (SERNAGEOMIN scrape) |
 | User, OAuthAccount, PasswordResetToken | `user.py`, … | Auth (SQLAlchemy único ORM) |
 | FamilyPlan | `family_plan.py` | Plan Familia Preparada (1 por `user_id`, JSON) |
 | SyncRun | `sync_run.py` | Últimas corridas de jobs del scheduler |
+| MeetingPoint | `meeting_point.py` | Puntos de encuentro tsunami/volcán (seed JSON) |
+| ChatThread / ChatMessage | `chat_thread.py` | Historial del asistente |
 
 Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` antes de uvicorn. Volúmenes legacy ya alineados: `make db-stamp`. Schema roto en dev: `make down-v` + `make up`. Nueva revisión: `make db-revision MSG="…"`.
 
@@ -195,6 +222,8 @@ Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` an
 | `simulacro_sync` | httpx fetch índice + enrich páginas detalle con link + upsert |
 | `simulacro_service` | Lectura DB (`list`, `next`, `by_slug`, `prune`) |
 | `airechile_service` | Scrape Aire Chile GEC + lectura (`list`, `zone`, `by_comuna`, `prune`) |
+| `sernageomin_service` | Scrape alertas volcánicas SERNAGEOMIN + upsert/prune |
+| `sernageomin_parsers` | HTML → alertas elevadas (alt/title + regex) |
 | `alert_service` | Lista unificada `/alerts/active` |
 | `alert_evaluator` | Umbrales → alertas ChileRisk |
 | `region_service` | Agregación regional + cache |
@@ -202,6 +231,12 @@ Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` an
 | `query_date_window` | TZ Chile, clamp 30 días |
 | `aws_sigv4` | Cognito Identity + firma AppSync |
 | `risk_utils` | Funciones puras de composite/severidad (sin generación de datos) |
+| `chat_agent_service` | Loop DeepSeek + tools; scope solo ChileRisk; ubicación inyectada en system prompt |
+| `chat_tools` | Registry/ejecución de tools de lectura (meeting points con URLs Google Maps) |
+| `chat_history_service` | Persistencia de hilos |
+| `meeting_point_service` | Seed + nearest meeting points + helpers Google Maps |
+| `disaster_guide_service` | Guías estáticas de desastre |
+| `user_profile_service` | Preferencia `home_comuna_code`; resolve chat: explicit → GPS → hogar |
 | `usgs_service` | **Deprecated** — no usar |
 
 Detalle de attenuation, radios de impacto, paginación SERNAPRED: sección “Pitfalls” en [AGENTS.md](../AGENTS.md).
@@ -240,4 +275,4 @@ backend/app/
 
 ---
 
-*Last updated: 2026-07-23*
+*Last updated: 2026-07-24*

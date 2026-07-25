@@ -32,3 +32,4 @@ class AuthUserOut(BaseModel):
     id: str
     email: str
     name: str | None = None
+    home_comuna_code: int | None = None

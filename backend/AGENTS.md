@@ -39,10 +39,10 @@ Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 async · asyncpg · Post
 
 ```
 backend/app/
-├── api/           # risk (+date), events, alerts, comunas, regiones, stats
-├── models/        # daily_risk_score, senapred_alert, …
+├── api/           # risk, events, alerts, chat, users, meeting-points, …
+├── models/        # daily_risk_score, chat_thread, meeting_point, …
 ├── schemas/       # contrato → make sync-contract → frontend/lib/api-schema.d.ts (+ types.ts)
-├── services/      # daily_risk, alert_service, senapred, csn, …
+├── services/      # daily_risk, chat_agent, meeting_point, …
 └── scheduler/jobs.py
 backend/docs/      # BACKEND.md, ML-INTEGRATION.md
 ```
@@ -86,6 +86,8 @@ Detalle: [docs/BACKEND.md](docs/BACKEND.md).
 - `_CANCEL_RE` / `is_cancel_title` solo matchea cancelaciones puras (`^se cancel(?!.*\bdeclara\b)`); alertas "se cancela X y declara Y" permanecen activas.
 - `/alerts/active`: dedupe por hilo (`url_access` canónico, fallback `parentId`) **antes** de filtrar `is_active`; clave incluye `region_code` (multi-región). Boletines solo-cancelación **nunca** se reexponen (hoy ni histórico).
 - Geografía: título región → `metaData.comunas` → NLP título/contenido → `metaData.provincias` (scope región).
+- Aire Chile máx. zonas PPDA catalogadas; HTML frágil.
+- SERNAGEOMIN: HTML Fusion Builder frágil; solo ≥ amarilla; `SERNAGEOMIN_SSL_VERIFY` default false (cadena TLS incompleta).
 - Schema: Alembic (`alembic upgrade head` en entrypoint). No `create_all` en lifespan.
 - `settings` singleton al import.
 
@@ -105,4 +107,4 @@ make psql
 
 ---
 
-*Last updated: 2026-07-23*
+*Last updated: 2026-07-24*

@@ -135,6 +135,21 @@ erDiagram
         datetime synced_at
     }
 
+    sernageomin_volcanic_alerts {
+        int id PK
+        string volcano_key UK
+        string volcano_name
+        string level
+        string title
+        int region_code
+        string affected_scope
+        json comuna_codes
+        string external_url
+        bool is_active
+        datetime issued_at
+        datetime synced_at
+    }
+
     users {
         string id PK
         string email UK
@@ -187,6 +202,7 @@ flowchart LR
         SEN[SERNAPRED GraphQL]
         SIM[senapred.cl/simulacros]
         AIR[airechile.mma.gob.cl]
+        SNG[sernageomin.cl/alertas-volcanicas]
     end
 
     subgraph Servicios["Backend Services"]
@@ -195,6 +211,7 @@ flowchart LR
         SEN_SVC[senapred_service]
         SIM_SVC[simulacro_sync]
         AIR_SVC[airechile_service]
+        SNG_SVC[sernageomin_service]
         EVAL[alert_evaluator]
         RISK[risk_service]
         DAILY[daily_risk_service]
@@ -209,6 +226,7 @@ flowchart LR
         SA[senapred_alerts]
         SM[simulacros]
         AD[airechile_daily]
+        SVA[sernageomin_volcanic_alerts]
         RS[risk_scores]
         DRS[daily_risk_scores]
         COM[comunas]
@@ -239,12 +257,14 @@ flowchart LR
     SEN -->|GraphQL| SEN_SVC
     SIM -->|scrap HTML| SIM_SVC
     AIR -->|scrap HTML| AIR_SVC
+    SNG -->|scrap HTML| SNG_SVC
 
     CSN_SVC -->|upsert| SE
     MET_SVC -->|upsert| CR
     SEN_SVC -->|upsert| SA
     SIM_SVC -->|upsert| SM
     AIR_SVC -->|upsert| AD
+    SNG_SVC -->|upsert| SVA
 
     SE --> IMPACT --> SI
     CR --> RISK
@@ -253,9 +273,11 @@ flowchart LR
     RISK --> DAILY --> DRS
     SA --> EVAL
     SA --> AL
+    SVA --> AL
 
     EV --> SE
     AL --> SA
+    AL --> SVA
     SIM_API --> SM
     AIR_API --> AD
     RISK_API --> RS
@@ -283,6 +305,7 @@ flowchart LR
         J4[cron: 24h simulacros_sync]
         J5[cron: 15min risk_refresh]
         J6[cron: 180min airechile_sync]
+        J7[cron: 60min sernageomin_sync]
     end
 
     J1 --> CSN_SVC
@@ -291,4 +314,5 @@ flowchart LR
     J4 --> SIM_SVC
     J5 --> RISK
     J6 --> AIR_SVC
+    J7 --> SNG_SVC
 ```

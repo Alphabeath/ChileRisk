@@ -10,7 +10,9 @@ import {
   SimulacrosCalendarSection,
   SimulacrosFooter,
   SimulacrosImportanceAccordion,
+  SimulacrosNextDrillPanel,
   SimulacrosPageHero,
+  SimulacrosTypesSection,
 } from "@/components/preparation/simulacros"
 import { PreparationBreadcrumb } from "@/components/preparation/preparation-breadcrumb"
 import { PreparationContextBanner } from "@/components/preparation/preparation-context-banner"
@@ -34,7 +36,7 @@ interface FilterState {
 
 const PAGE_SIZE = 50
 
-export default function SimulacrosPage() {
+export default function DrillsPage() {
   const queryClient = useQueryClient()
   const [state, setState] = useState<FilterState>({
     view: "upcoming",
@@ -99,18 +101,22 @@ export default function SimulacrosPage() {
           ]}
         />
 
-        <SimulacrosPageHero next={nextDrill} upcomingTotal={upcomingTotal} />
+        <SimulacrosPageHero upcomingTotal={upcomingTotal} />
+
+        <SimulacrosNextDrillPanel next={nextDrill} />
 
         <PreparationContextBanner
           eyebrow="Registra en tu plan"
           body="Anota la fecha del próximo simulacro en el paso 8 del Plan Familia Preparada."
-          href="/preparation/family-plan/step/8?from=simulacros"
+          href="/preparation/family-plan/step/8?from=drills"
           cta="Ir a mi plan"
           icon={ClipboardList}
           accent="rose"
         />
 
         <SimulacrosImportanceAccordion />
+
+        <SimulacrosTypesSection />
 
         <SimulacrosCalendarSection
           view={state.view}

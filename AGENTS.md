@@ -24,7 +24,7 @@ Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS-QU
 
 ## Qué es (1 línea)
 
-Monitoreo multi-amenaza Chile (16 regiones, 346 comunas): CSN + Open-Meteo + SERNAPRED → FastAPI → Next.js/MapLibre. Datos reales solamente.
+Monitoreo multi-amenaza Chile (16 regiones, 346 comunas): CSN + Open-Meteo + SERNAPRED + SERNAGEOMIN + Aire Chile → FastAPI → Next.js/MapLibre. Datos reales solamente.
 
 ---
 

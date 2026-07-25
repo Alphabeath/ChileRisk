@@ -12,3 +12,12 @@ export { useSyncGlobalLoading } from "./use-sync-global-loading"
 export { useSimulacros, useNextSimulacro, useSimulacro } from "./use-simulacros"
 export { useAirQuality, useAirQualityZone } from "./use-air-quality"
 export { FamilyPlanProvider, useFamilyPlan } from "./use-family-plan"
+export {
+  useChatThread,
+  useChatThreads,
+  useNearestComuna,
+  useSendChat,
+  useUpdateUserProfile,
+  useUserProfile,
+  sendChatStreaming,
+} from "./use-assistant"

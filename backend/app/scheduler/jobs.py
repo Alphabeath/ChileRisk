@@ -12,6 +12,7 @@ from app.services.openmeteo_service import update_climate_scores_from_real_data
 from app.services.senapred_service import sync_senapred_alerts
 from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
 from app.services.airechile_service import sync_airechile, prune_old_airechile
+from app.services.sernageomin_service import sync_sernageomin_alerts
 from app.services.sync_status_service import record_sync_run
 
 logger = logging.getLogger("chilerisk.scheduler")
@@ -231,6 +232,40 @@ async def _sync_airechile():
             logger.exception("Failed to persist airechile_sync sync run")
 
 
+async def _sync_sernageomin():
+    if not settings.use_real_sernageomin:
+        return
+    started = _utcnow()
+    try:
+        async with async_session() as session:
+            n = await sync_sernageomin_alerts(session)
+            status = "ok" if n else "empty"
+            await record_sync_run(
+                session,
+                job_id="sernageomin_sync",
+                started_at=started,
+                status=status,
+                items_written=n,
+            )
+        if n:
+            logger.info("Synced %d SERNAGEOMIN volcanic alerts", n)
+        else:
+            logger.warning("SERNAGEOMIN sync finished with 0 alerts")
+    except Exception as e:
+        logger.exception("SERNAGEOMIN sync failed: %s", e)
+        try:
+            async with async_session() as session:
+                await record_sync_run(
+                    session,
+                    job_id="sernageomin_sync",
+                    started_at=started,
+                    status="error",
+                    error_text=str(e),
+                )
+        except Exception:
+            logger.exception("Failed to persist sernageomin_sync sync run")
+
+
 def setup_scheduler():
     if not settings.enable_scheduler:
         logger.info("Scheduler disabled via settings")
@@ -288,6 +323,15 @@ def setup_scheduler():
             replace_existing=True,
         )
 
+    if settings.use_real_sernageomin:
+        scheduler.add_job(
+            _sync_sernageomin,
+            trigger=IntervalTrigger(minutes=settings.sernageomin_refresh_minutes),
+            id="sernageomin_sync",
+            name="Sync SERNAGEOMIN volcanic alerts",
+            replace_existing=True,
+        )
+
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
     if settings.use_real_csn:
@@ -307,6 +351,11 @@ def setup_scheduler():
         logger.info(
             "Aire Chile GEC sync enabled (every %d min)",
             settings.airechile_refresh_minutes,
+        )
+    if settings.use_real_sernageomin:
+        logger.info(
+            "SERNAGEOMIN volcanic alerts sync enabled (every %d min)",
+            settings.sernageomin_refresh_minutes,
         )
 
 

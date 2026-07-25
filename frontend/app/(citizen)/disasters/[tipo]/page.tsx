@@ -79,7 +79,7 @@ export default async function DisasterDetailPage({
         aria-hidden
       />
 
-      <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6 lg:px-8">
         <Link href="/disasters" className={cn(DISASTERS_NAV_LINK_CLASS, "mb-6")}>
           <ArrowLeft className="size-4 shrink-0" aria-hidden />
           Volver a desastres

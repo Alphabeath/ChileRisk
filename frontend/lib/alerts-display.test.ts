@@ -28,6 +28,24 @@ describe("alerts-display", () => {
     expect(alert.source).toBe("chilerisk")
   })
 
+  test("normalizeActiveAlert accepts sernageomin source and id prefix", () => {
+    const bySource = normalizeActiveAlert({
+      id: "sernageomin:nevados-de-chillan",
+      source: "sernageomin",
+      level: "amarilla",
+      title: "Alerta Amarilla",
+      external_url: "https://www.sernageomin.cl/alertas-volcanicas/",
+    })
+    expect(bySource.source).toBe("sernageomin")
+    expect(bySource.external_url).toContain("sernageomin")
+
+    const byId = normalizeActiveAlert({
+      id: "sernageomin:villarrica",
+      title: "Alerta",
+    })
+    expect(byId.source).toBe("sernageomin")
+  })
+
   test("normalizeActiveAlerts ignores non-arrays", () => {
     expect(normalizeActiveAlerts(null)).toEqual([])
     expect(normalizeActiveAlerts({ id: "x" })).toEqual([])

@@ -19,7 +19,7 @@ import type { ActiveAlert, AirQualityZone } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { ActiveAlertCard, AirQualityAlertCard } from "./alert-ui"
 
-type AlertFilter = "all" | "chilerisk" | "senapred" | "airechile"
+type AlertFilter = "all" | "chilerisk" | "senapred" | "sernageomin" | "airechile"
 
 type PanelItem =
   | { kind: "alert"; alert: ActiveAlert }
@@ -29,6 +29,7 @@ const FILTER_OPTIONS: { value: AlertFilter; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "chilerisk", label: "Chile Risk" },
   { value: "senapred", label: "Sernapred" },
+  { value: "sernageomin", label: "Volcán" },
   { value: "airechile", label: "Aire" },
 ]
 
@@ -93,15 +94,20 @@ function EmptyState({ filter }: { filter: AlertFilter }) {
       ? { title: "Sin alertas ChileRisk", hint: "El motor de riesgo no reporta emergencias" }
       : filter === "senapred"
         ? { title: "Sin alertas SERNAPRED", hint: "No hay alertas ni eventos publicados" }
-        : filter === "airechile"
+        : filter === "sernageomin"
           ? {
-              title: "Sin datos Aire Chile",
-              hint: "Cobertura parcial (zonas PPDA). Sin snapshot para este día",
+              title: "Sin alertas SERNAGEOMIN",
+              hint: "No hay volcanes con alerta elevada vigente",
             }
-          : {
-              title: "Sin alertas activas",
-              hint: "SERNAPRED, ChileRisk y Aire Chile sin novedades",
-            }
+          : filter === "airechile"
+            ? {
+                title: "Sin datos Aire Chile",
+                hint: "Cobertura parcial (zonas PPDA). Sin snapshot para este día",
+              }
+            : {
+                title: "Sin alertas activas",
+                hint: "SERNAPRED, ChileRisk, SERNAGEOMIN y Aire Chile sin novedades",
+              }
   return (
     <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
       <CheckCircle2 className="size-6 text-emerald-400/70" />
@@ -169,12 +175,14 @@ function useAlertsPanelModel() {
 
   const senapredCount = sortedAlerts.filter((a) => a.source === "senapred").length
   const chileriskCount = sortedAlerts.filter((a) => a.source === "chilerisk").length
+  const sernageominCount = sortedAlerts.filter((a) => a.source === "sernageomin").length
   const airechileCount = zones.length
 
   const counts: Record<AlertFilter, number> = {
     all: allItems.length,
     chilerisk: chileriskCount,
     senapred: senapredCount,
+    sernageomin: sernageominCount,
     airechile: airechileCount,
   }
 
@@ -184,6 +192,11 @@ function useAlertsPanelModel() {
     }
     if (filter === "senapred") {
       return allItems.filter((i) => i.kind === "alert" && i.alert.source === "senapred")
+    }
+    if (filter === "sernageomin") {
+      return allItems.filter(
+        (i) => i.kind === "alert" && i.alert.source === "sernageomin",
+      )
     }
     if (filter === "airechile") {
       return allItems.filter((i) => i.kind === "air")
@@ -198,7 +211,9 @@ function useAlertsPanelModel() {
         ? airechileCount
         : filter === "chilerisk"
           ? chileriskCount
-          : senapredCount
+          : filter === "sernageomin"
+            ? sernageominCount
+            : senapredCount
 
   const hasItems = allItems.length > 0
   const isLoading = alertsLoading || airLoading
@@ -234,7 +249,7 @@ function AlertsFilterChips({
     <div
       role="radiogroup"
       aria-label="Filtrar alertas por fuente"
-      className="grid grid-cols-2 gap-1 px-2 py-1.5"
+      className="grid grid-cols-3 gap-1 px-2 py-1.5"
     >
       {FILTER_OPTIONS.map((opt) => {
         const active = filter === opt.value

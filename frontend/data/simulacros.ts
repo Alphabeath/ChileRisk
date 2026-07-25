@@ -24,15 +24,6 @@ export interface SimulacroTipo {
   monthAccent: string
 }
 
-export const simulacrosIntro = {
-  title: "Simulacros de evacuación masiva",
-  subtitle: "Actuar hoy para cuidarnos siempre",
-  lead:
-    "SENAPRED desarrolla simulacros de evacuación masiva: ejercicios prácticos en terreno que movilizan a la comunidad y a las instituciones del Sistema Nacional de Prevención y Respuesta ante Desastres (SINAPRED).",
-  body:
-    "Estos simulacros recrean escenarios ficticios —como sismos, tsunamis, erupciones volcánicas, aluviones o incendios forestales— para entrenar a la población en el proceso de evacuación y poner a prueba la capacidad de respuesta de las organizaciones que participan en la gestión del riesgo de desastres.",
-} as const
-
 export const simulacrosImportance = [
   {
     n: 1,

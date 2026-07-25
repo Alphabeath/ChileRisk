@@ -86,7 +86,7 @@ const topics: Topic[] = [
     accentBorder: "border-l-rose-400/70",
     accent: "text-rose-200",
     iconChip: "bg-rose-500/20 border-rose-400/40",
-    href: "/simulacros",
+    href: "/drills",
     cta: "Ver simulacros",
   },
 ]

@@ -36,12 +36,30 @@ async function proxyRequest(req: NextRequest, pathSegments: string[]) {
   }
 
   const backendRes = await fetch(url, init)
+  const responseContentType =
+    backendRes.headers.get("Content-Type") ?? "application/json"
+
+  // Pass through SSE / streaming bodies without buffering the whole payload.
+  if (
+    responseContentType.includes("text/event-stream") &&
+    backendRes.body
+  ) {
+    return new NextResponse(backendRes.body, {
+      status: backendRes.status,
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    })
+  }
+
   const body = await backendRes.arrayBuffer()
 
   return new NextResponse(body, {
     status: backendRes.status,
     headers: {
-      "Content-Type": backendRes.headers.get("Content-Type") ?? "application/json",
+      "Content-Type": responseContentType,
     },
   })
 }
@@ -59,6 +77,11 @@ export async function POST(req: NextRequest, context: RouteContext) {
 }
 
 export async function PUT(req: NextRequest, context: RouteContext) {
+  const { path } = await context.params
+  return proxyRequest(req, path)
+}
+
+export async function PATCH(req: NextRequest, context: RouteContext) {
   const { path } = await context.params
   return proxyRequest(req, path)
 }

@@ -32,18 +32,28 @@ def slug_from_senapred_url(url: str | None) -> str | None:
     return None
 
 
-async def nearest_region_code(
+async def nearest_comuna(
     session: AsyncSession, latitude: float, longitude: float
-) -> int | None:
+) -> tuple[Comuna, float] | None:
+    """Return (comuna, distance_km) for the centroid nearest to lat/lon."""
     comunas = (await session.execute(select(Comuna))).scalars().all()
-    best: tuple[float, int] | None = None
+    best: tuple[float, Comuna] | None = None
     for c in comunas:
         if c.latitude is None or c.longitude is None:
             continue
         dist = haversine_km(c.latitude, c.longitude, latitude, longitude)
         if best is None or dist < best[0]:
-            best = (dist, c.codregion)
-    return best[1] if best else None
+            best = (dist, c)
+    if best is None:
+        return None
+    return best[1], best[0]
+
+
+async def nearest_region_code(
+    session: AsyncSession, latitude: float, longitude: float
+) -> int | None:
+    found = await nearest_comuna(session, latitude, longitude)
+    return found[0].codregion if found else None
 
 
 async def find_related_senapred(

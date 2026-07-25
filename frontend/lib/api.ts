@@ -17,6 +17,13 @@ import type {
   AirQualityListResponse,
   AirQualityParams,
   AirQualityZone,
+  ChatRequest,
+  ChatResponse,
+  ChatThreadDetail,
+  ChatThreadSummary,
+  MeetingPointNearestResponse,
+  NearestComuna,
+  UserProfile,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -162,4 +169,131 @@ export async function getAirQualityByComuna(
   return fetchJson<AirQualityZone>(
     `/api/v1/air-quality/by-comuna/${codComuna}${qs ? `?${qs}` : ""}`,
   )
+}
+
+export async function postChat(body: ChatRequest): Promise<ChatResponse> {
+  return fetchJson<ChatResponse>("/api/v1/chat", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export async function listChatThreads(): Promise<ChatThreadSummary[]> {
+  return fetchJson<ChatThreadSummary[]>("/api/v1/chat/threads")
+}
+
+export async function getChatThread(threadId: string): Promise<ChatThreadDetail> {
+  return fetchJson<ChatThreadDetail>(
+    `/api/v1/chat/threads/${encodeURIComponent(threadId)}`,
+  )
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+  return fetchJson<UserProfile>("/api/v1/users/me")
+}
+
+export async function getNearestComuna(params: {
+  lat: number
+  lon: number
+}): Promise<NearestComuna> {
+  const search = new URLSearchParams()
+  search.set("lat", String(params.lat))
+  search.set("lon", String(params.lon))
+  return fetchJson<NearestComuna>(`/api/v1/comunas/nearest?${search.toString()}`)
+}
+
+export async function updateUserProfile(body: {
+  home_comuna_code: number | null
+}): Promise<UserProfile> {
+  return fetchJson<UserProfile>("/api/v1/users/me", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  })
+}
+
+export async function getNearestMeetingPoints(params: {
+  lat: number
+  lon: number
+  hazard?: "tsunami" | "volcanic"
+  limit?: number
+}): Promise<MeetingPointNearestResponse> {
+  const search = new URLSearchParams()
+  search.set("lat", String(params.lat))
+  search.set("lon", String(params.lon))
+  if (params.hazard) search.set("hazard", params.hazard)
+  if (params.limit !== undefined) search.set("limit", String(params.limit))
+  return fetchJson<MeetingPointNearestResponse>(
+    `/api/v1/meeting-points/nearest?${search.toString()}`,
+  )
+}
+
+export type ChatStreamHandlers = {
+  onStatus?: (phase: string) => void
+  onToken?: (text: string) => void
+  onDone?: (response: ChatResponse) => void
+  onError?: (error: Error) => void
+}
+
+/** SSE chat stream via the authenticated backend proxy. */
+export async function streamChat(
+  body: ChatRequest,
+  handlers: ChatStreamHandlers,
+  signal?: AbortSignal,
+): Promise<ChatResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, stream: true }),
+    signal,
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => "")
+    throw new Error(`API error ${res.status}: ${text || res.statusText}`)
+  }
+  if (!res.body) {
+    throw new Error("Streaming no soportado en este navegador")
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ""
+  let finalResponse: ChatResponse | null = null
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const parts = buffer.split("\n\n")
+    buffer = parts.pop() ?? ""
+    for (const part of parts) {
+      const lines = part.split("\n")
+      let event = "message"
+      let data = ""
+      for (const line of lines) {
+        if (line.startsWith("event:")) event = line.slice(6).trim()
+        if (line.startsWith("data:")) data += line.slice(5).trim()
+      }
+      if (!data) continue
+      try {
+        const parsed = JSON.parse(data) as Record<string, unknown>
+        if (event === "status" && typeof parsed.phase === "string") {
+          handlers.onStatus?.(parsed.phase)
+        } else if (event === "token" && typeof parsed.text === "string") {
+          handlers.onToken?.(parsed.text)
+        } else if (event === "done") {
+          finalResponse = parsed as unknown as ChatResponse
+          handlers.onDone?.(finalResponse)
+        }
+      } catch (err) {
+        handlers.onError?.(
+          err instanceof Error ? err : new Error("Invalid SSE payload"),
+        )
+      }
+    }
+  }
+
+  if (!finalResponse) {
+    throw new Error("Stream terminó sin respuesta final")
+  }
+  return finalResponse
 }

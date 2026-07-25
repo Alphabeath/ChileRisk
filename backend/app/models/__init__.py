@@ -8,11 +8,14 @@ from app.models.senapred_alert import SenapredAlert
 from app.models.daily_risk_score import DailyRiskScore
 from app.models.simulacro import Simulacro
 from app.models.airechile_daily import AireChileDaily
+from app.models.sernageomin_volcanic_alert import SernageominVolcanicAlert
 from app.models.user import User
 from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
 from app.models.family_plan import FamilyPlan
 from app.models.sync_run import SyncRun
+from app.models.meeting_point import MeetingPoint
+from app.models.chat_thread import ChatMessage, ChatThread
 
 __all__ = [
     "Region",
@@ -25,9 +28,13 @@ __all__ = [
     "SenapredAlert",
     "Simulacro",
     "AireChileDaily",
+    "SernageominVolcanicAlert",
     "User",
     "OAuthAccount",
     "PasswordResetToken",
     "FamilyPlan",
     "SyncRun",
+    "MeetingPoint",
+    "ChatThread",
+    "ChatMessage",
 ]
