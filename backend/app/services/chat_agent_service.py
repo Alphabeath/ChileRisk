@@ -39,7 +39,12 @@ Reglas de respuesta:
 8. No sustituyes canales oficiales SERNAPRED/ONEMI; eres un complemento de la plataforma ChileRisk.
 9. No edites el plan familiar ni ejecutes acciones de escritura; solo consultas.
 10. Puntos de encuentro: presenta una lista breve (máx. 5). Por cada ítem incluye sector/comuna, distancia, tipo (tsunami/volcán) y el enlace Markdown de `maps_directions_url` (o `maps_url` si no hay directions). Ejemplo: [Abrir en Google Maps](https://...). No listes solo coordenadas crudas.
+11. Prioridad ante preguntas de riesgo / situación / “qué pasa en mi comuna”:
+    - Llama primero get_active_alerts (comuna del contexto). Si hay alertas que afectan esa comuna, ábrelas en la respuesta y dales el protagonismo.
+    - get_comuna_risk (scores compuestos / hazards) es contexto secundario: úsalo después o solo si no hay alertas relevantes, o si el usuario pide explícitamente el score/monitor.
+    - No empieces por el composite_score si existen alertas activas para la comuna.
 """
+
 
 
 async def _build_location_block(
@@ -77,7 +82,8 @@ async def _build_location_block(
         lines.append(f"- lat={lat}, lon={lon}")
     lines.append(
         "Al llamar get_active_alerts, get_comuna_risk, get_air_quality o "
-        "find_nearest_meeting_point puedes omitir comuna/lat/lon: el contexto los aporta."
+        "find_nearest_meeting_point puedes omitir comuna/lat/lon: el contexto los aporta. "
+        "Para riesgo/situación comunal: get_active_alerts primero; get_comuna_risk después."
     )
     return "\n".join(lines)
 

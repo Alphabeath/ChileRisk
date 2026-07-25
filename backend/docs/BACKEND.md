@@ -231,8 +231,8 @@ Schema: Alembic (`backend/alembic/`). Entrypoint corre `alembic upgrade head` an
 | `query_date_window` | TZ Chile, clamp 30 días |
 | `aws_sigv4` | Cognito Identity + firma AppSync |
 | `risk_utils` | Funciones puras de composite/severidad (sin generación de datos) |
-| `chat_agent_service` | Loop DeepSeek + tools; scope solo ChileRisk; ubicación inyectada en system prompt |
-| `chat_tools` | Registry/ejecución de tools de lectura (meeting points con URLs Google Maps) |
+| `chat_agent_service` | Loop DeepSeek + tools; scope solo ChileRisk; ubicación en system prompt; ante riesgo comunal prioriza `get_active_alerts` sobre scores compuestos |
+| `chat_tools` | Registry/ejecución de tools de lectura (alertas > riesgo compuesto para situación comunal; meeting points con URLs Google Maps) |
 | `chat_history_service` | Persistencia de hilos |
 | `meeting_point_service` | Seed + nearest meeting points + helpers Google Maps |
 | `disaster_guide_service` | Guías estáticas de desastre |
@@ -275,4 +275,4 @@ backend/app/
 
 ---
 
-*Last updated: 2026-07-24*
+*Last updated: 2026-07-25*

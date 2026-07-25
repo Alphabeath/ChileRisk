@@ -49,10 +49,13 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "function": {
             "name": "get_active_alerts",
             "description": (
-                "Lista alertas SERNAPRED/ChileRisk activas. Filtra por comuna CUT o región "
-                "(1-16). Si omites comuna_code, usa la comuna del contexto GPS del usuario. "
+                "PRIORITARIA para riesgo/situación en una comuna: lista alertas "
+                "SERNAPRED/ChileRisk activas que afectan la zona. Filtra por comuna CUT o "
+                "región (1-16). Si omites comuna_code, usa la comuna del contexto GPS. "
+                "Llámalo antes que get_comuna_risk cuando el usuario pregunte por su comuna. "
                 "No uses get_user_profile para ubicar."
             ),
+
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -93,9 +96,12 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "function": {
             "name": "get_comuna_risk",
             "description": (
-                "Obtiene el vector de riesgo multi-amenaza de una comuna. "
-                "Si omites comuna_code, usa la comuna del contexto GPS."
+                "Scores de riesgo multi-amenaza (composite y por hazard) de una comuna. "
+                "Contexto SECUNDARIO: ante preguntas de riesgo/situación en la comuna, "
+                "usa primero get_active_alerts; esta tool solo después o si no hay alertas "
+                "o el usuario pide el score/monitor. Si omites comuna_code, usa GPS."
             ),
+
             "parameters": {
                 "type": "object",
                 "properties": {
