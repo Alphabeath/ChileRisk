@@ -34,14 +34,22 @@ _LEVEL_FROM_CODE: dict[str, str] = {
 }
 
 _CANCEL_RE = re.compile(r"^se cancel(?!.*\bdeclara\b)", re.IGNORECASE)
+# Evento closures keep isActive/isPrincipal true in AppSync; title marks the close.
+_EVENT_CLOSURE_RE = re.compile(r"cierre\s+del?\s+evento", re.IGNORECASE)
 _MONITOR_RE = re.compile(r"monitoreo", re.IGNORECASE)
 
 _cognito_client: CognitoIdentityClient | None = None
 
 
 def is_cancel_title(title: str) -> bool:
-    """True for pure cancel bulletins; False for \"cancela X y declara Y\"."""
-    return bool(_CANCEL_RE.search(title or ""))
+    """True for bulletins that close a thread (not \"cancela X y declara Y\").
+
+    - ATP: pure ``Se cancela…`` (without ``declara``).
+    - Eventos: ``(Cierre de evento)`` / ``(Cierre del evento)`` — GraphQL often
+      still sends ``isActive``+``isPrincipal`` true on these.
+    """
+    t = title or ""
+    return bool(_CANCEL_RE.search(t) or _EVENT_CLOSURE_RE.search(t))
 
 
 def _get_cognito_client() -> CognitoIdentityClient:

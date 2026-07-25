@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     senapred_alert_base_url: str = "https://senapred.cl/alerta/"
     senapred_event_base_url: str = "https://senapred.cl/evento/"
     senapred_lookback_days: int = 30
+    # Eventos keep isActive in AppSync for weeks (esp. sismos). Cap "hoy" list age.
+    senapred_evento_active_hours: int = 48
 
     simulacros_base_url: str = "https://senapred.cl/simulacros/"
     simulacros_lookback_days: int = 365

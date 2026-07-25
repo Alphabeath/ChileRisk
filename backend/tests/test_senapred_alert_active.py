@@ -84,3 +84,29 @@ def test_evento_principal_activo():
         "isPrincipal": True,
     }
     assert _is_active(raw["titulo"], raw, kind="evento") is True
+
+
+def test_evento_cierre_de_evento_es_inactivo():
+    titulo = "Viento, comuna de Coyhaique (Cierre de evento)"
+    raw = {
+        "id": "coyhaique-cierre",
+        "titulo": titulo,
+        "isActive": True,
+        "isDeleted": False,
+        "isPrincipal": True,
+    }
+    assert is_cancel_title(titulo) is True
+    assert _is_active(titulo, raw, kind="evento") is False
+
+
+def test_evento_cierre_del_evento_es_inactivo():
+    titulo = "Incendio estructural, comuna de Santiago (cierre del evento)"
+    raw = {
+        "id": "stgo-cierre",
+        "titulo": titulo,
+        "isActive": True,
+        "isDeleted": False,
+        "isPrincipal": True,
+    }
+    assert is_cancel_title(titulo) is True
+    assert _is_active(titulo, raw, kind="evento") is False

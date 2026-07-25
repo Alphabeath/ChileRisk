@@ -354,18 +354,6 @@ function ActiveAlertsPanelEmbedded() {
       className="flex w-full flex-col"
       aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
     >
-      <div className="flex w-full items-center justify-end gap-2 border-b border-white/10 px-3 py-2">
-        <span
-          className={cn(
-            "rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
-            model.hasItems
-              ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-              : "border-white/10 bg-white/[0.08] text-white/60",
-          )}
-        >
-          {model.displayCount}
-        </span>
-      </div>
       <div className="border-b border-white/[0.06]">
         <AlertsFilterChips
           filter={model.filter}

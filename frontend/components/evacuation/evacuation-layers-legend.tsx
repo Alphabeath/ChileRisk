@@ -285,7 +285,7 @@ function EvacuationLayersTabs({
     >
       <TabsList
         variant="line"
-        className="h-auto w-full justify-center gap-0.5 rounded-none border-b border-white/[0.06] bg-transparent px-2"
+        className="h-auto w-full justify-center gap-0.5 overflow-hidden rounded-none border-b border-white/[0.06] bg-transparent px-2"
       >
         {(Object.keys(TAB_META) as DisasterTab[]).map((tab) => {
           const meta = TAB_META[tab]
@@ -296,19 +296,20 @@ function EvacuationLayersTabs({
               key={tab}
               value={tab}
               title={!isActive ? meta.label : undefined}
+              aria-label={meta.label}
               className={cn(
-                "relative items-center justify-center rounded-sm text-white/50 transition-all data-[state=active]:text-white/90 data-[state=active]:shadow-none",
+                "relative flex shrink-0 items-center justify-center rounded-sm text-white/50 transition-colors data-[state=active]:text-white/90 data-[state=active]:shadow-none",
                 isActive
-                  ? "flex gap-1.5 px-2.5 py-1.5"
-                  : "flex size-7 px-0 py-0",
+                  ? "min-w-0 max-w-[calc(100%-3.75rem)] gap-1.5 px-2.5 py-1.5"
+                  : "size-7 px-0 py-0",
               )}
             >
               <Icon className="size-3.5 shrink-0" aria-hidden />
-              {isActive && (
-                <span className="text-[9px] font-semibold uppercase tracking-[1.1px]">
+              {isActive ? (
+                <span className="truncate text-[9px] font-semibold uppercase tracking-[1.1px]">
                   {meta.label}
                 </span>
-              )}
+              ) : null}
             </TabsTrigger>
           )
         })}

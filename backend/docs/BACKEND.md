@@ -97,7 +97,7 @@ Filtros opcionales: `region` (1–16), `comuna`, `level`, `kind`, `hazard` (`sis
 
 Campos notables: `external_url`, `affected_scope`, `comuna_codes`, `thread_root_id`, `hazard_type`, scores ChileRisk cuando `source=chilerisk`.
 
-SERNAPRED (parity con [senapred.cl/alertas](https://senapred.cl/alertas) / `/eventos`): vigente = `isActive` + `isPrincipal` (ATP y eventos). Dedupe por hilo (`url_access` canónico, fallback cadena `parentId`) + `region_code` para expansiones multi-región. Geografía: `metaData.comunas` / `provincias` + NLP. Boletines de **solo cancelación** (`Se cancela…` sin `declara`) no se listan ni hoy ni en `?date=` histórico. En días pasados sí pueden incluirse otras filas `is_active=False` (p. ej. no principales / ya cerradas por la fuente).
+SERNAPRED (parity con [senapred.cl/alertas](https://senapred.cl/alertas) / `/eventos`): vigente = `isActive` + `isPrincipal` (ATP y eventos). **Hoy** (sin `date` o `date=hoy`): ATP vigentes dentro de `SENAPRED_LOOKBACK_DAYS` hasta desactivación/cierre. **Eventos** (`record_kind=evento`): además se limitan a `SENAPRED_EVENTO_ACTIVE_HOURS` (default 48) — AppSync casi nunca baja `isActive` en sismos, así que sin tope quedarían semanas en el panel. **Histórico** (`?date=` pasado): ventana de un día civil Chile por `senapred_issued_at`; pueden incluirse filas `is_active=False` (p. ej. no principales / ya cerradas). Dedupe por hilo (`url_access` canónico, fallback cadena `parentId`) + `region_code` para expansiones multi-región. Geografía: `metaData.comunas` / `provincias` + NLP. Boletines de **cierre** no se listan (hoy ni histórico): ATP `Se cancela…` sin `declara`; eventos `(Cierre de/del evento)` — AppSync a menudo deja `isActive`+`isPrincipal` true en esos títulos.
 
 SERNAGEOMIN: scrape de [alertas-volcanicas](https://www.sernageomin.cl/alertas-volcanicas/); solo niveles elevados (≥ amarilla); `hazard_type=volcan`. Coexiste con alertas ATP SERNAPRED de tipo volcán (sin dedupe cruzado). El HTML del sitio es frágil (Fusion Builder / imágenes); el parser usa alt/title + regex.
 
@@ -124,6 +124,7 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `SENAPRED_COGNITO_IDENTITY_POOL_ID` | (público) | Pool anónimo AppSync |
 | `SENAPRED_APPSYNC_ENDPOINT` | (URL GraphQL) | Endpoint AWS |
 | `SENAPRED_LOOKBACK_DAYS` | 30 | Retención en tabla local (alineado con `?date=` de 30 días) |
+| `SENAPRED_EVENTO_ACTIVE_HOURS` | 48 | Max edad de eventos en listado “hoy” (sismos no se desactivan en AppSync) |
 | `SIMULACROS_BASE_URL` | https://senapred.cl/simulacros/ | Calendario público (scraping) |
 | `SIMULACROS_LOOKBACK_DAYS` | 365 | Retención de simulacros pasados |
 | `SIMULACROS_LOOKFORWARD_DAYS` | 180 | (informativo) Calendario público solo expone año en curso |

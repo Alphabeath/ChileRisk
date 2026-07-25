@@ -1,6 +1,6 @@
 """Active alerts: SERNAPRED (DB) + ChileRisk (on read) + SERNAGEOMIN (DB)."""
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,37 +142,86 @@ def _hazard_risk_detail(
 
 
 def filter_senapred_rows_for_active_list(
-    rows: list[SenapredAlert], *, include_inactive: bool
+    rows: list[SenapredAlert],
+    *,
+    include_inactive: bool,
+    now: datetime | None = None,
 ) -> list[SenapredAlert]:
-    """Dedupe by thread, drop pure cancels, then optionally drop inactive.
+    """Dedupe by thread, drop closures, then optionally drop inactive / stale eventos.
 
-    Cancels are loaded even for \"today\" so a later cancel can close the thread
-    (latest wins in dedupe, then the cancel row is discarded).
+    Cancels/cierres are loaded even for \"today\" so a later close can end the thread
+    (latest wins in dedupe, then the close row is discarded).
+
+    For today (``include_inactive=False``), ``kind=evento`` older than
+    ``settings.senapred_evento_active_hours`` are dropped — AppSync rarely clears
+    ``isActive`` on sismos, so lookback-until-deactivate applies to ATP only.
     """
     latest = pick_latest_senapred_per_thread(list(rows))
+    ref = now if now is not None else datetime.now(timezone.utc)
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=timezone.utc)
+    evento_cutoff = ref - timedelta(hours=settings.senapred_evento_active_hours)
     out: list[SenapredAlert] = []
     for row in latest:
         if is_cancel_title(row.title):
             continue
         if not include_inactive and not row.is_active:
             continue
+        if (
+            not include_inactive
+            and row.kind == "evento"
+            and _issued_at_utc(row) < evento_cutoff
+        ):
+            continue
         out.append(row)
     return out
+
+
+def _issued_at_utc(row: SenapredAlert) -> datetime:
+    issued = row.senapred_issued_at
+    if issued.tzinfo is None:
+        return issued.replace(tzinfo=timezone.utc)
+    return issued
+
+
+def senapred_list_time_bounds(
+    query_date: date, *, now: datetime | None = None
+) -> tuple[datetime, datetime | None]:
+    """Issued-at window for SERNAPRED list queries.
+
+    Today: open lookback so vigentes stay until deactivated (``end`` is None).
+    Historical ``?date=``: single Chile calendar day ``[start, end)``.
+    """
+    if query_date == today_chile():
+        ref = now if now is not None else datetime.now(timezone.utc)
+        if ref.tzinfo is None:
+            ref = ref.replace(tzinfo=timezone.utc)
+        start = ref - timedelta(days=settings.senapred_lookback_days)
+        return start, None
+    start, end = day_bounds_utc(query_date)
+    return start, end
 
 
 async def _senapred_rows_to_out(
     session: AsyncSession, *, query_date: date, include_inactive: bool = False
 ) -> list[ActiveAlertOut]:
-    start, end = day_bounds_utc(query_date)
     # Always load inactive (incl. cancels) so thread dedupe can close a chain.
-    stmt = (
-        select(SenapredAlert)
-        .where(
-            SenapredAlert.senapred_issued_at >= start,
-            SenapredAlert.senapred_issued_at < end,
+    start, end = senapred_list_time_bounds(query_date)
+    if end is None:
+        stmt = (
+            select(SenapredAlert)
+            .where(SenapredAlert.senapred_issued_at >= start)
+            .order_by(SenapredAlert.senapred_issued_at.desc())
         )
-        .order_by(SenapredAlert.senapred_issued_at.desc())
-    )
+    else:
+        stmt = (
+            select(SenapredAlert)
+            .where(
+                SenapredAlert.senapred_issued_at >= start,
+                SenapredAlert.senapred_issued_at < end,
+            )
+            .order_by(SenapredAlert.senapred_issued_at.desc())
+        )
     rows = (await session.execute(stmt)).scalars().all()
     by_id = {r.senapred_id: r for r in rows}
     filtered = filter_senapred_rows_for_active_list(

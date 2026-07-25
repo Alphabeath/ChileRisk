@@ -83,8 +83,8 @@ Detalle: [docs/BACKEND.md](docs/BACKEND.md).
 - Meteo lotes de 40.
 - SERNAPRED máx. 20×100 ítems; Cognito cache ~50 min.
 - `_is_active`: `isActive` + `isPrincipal` (alertas **y** eventos, parity con senapred.cl) + cancel puro.
-- `_CANCEL_RE` / `is_cancel_title` solo matchea cancelaciones puras (`^se cancel(?!.*\bdeclara\b)`); alertas "se cancela X y declara Y" permanecen activas.
-- `/alerts/active`: dedupe por hilo (`url_access` canónico, fallback `parentId`) **antes** de filtrar `is_active`; clave incluye `region_code` (multi-región). Boletines solo-cancelación **nunca** se reexponen (hoy ni histórico).
+- `_CANCEL_RE` / `is_cancel_title`: ATP cancel puro (`^se cancel(?!.*\bdeclara\b)`) **o** cierre de evento (`cierre de/del evento`); "se cancela X y declara Y" permanece activa.
+- `/alerts/active`: **hoy** = lookback ATP hasta desactivación; **eventos** solo últimas `SENAPRED_EVENTO_ACTIVE_HOURS` (default 48). **histórico** = día civil. Dedupe por hilo (`url_access` canónico, fallback `parentId`) **antes** de filtrar `is_active`; clave incluye `region_code` (multi-región). Boletines de cierre (ATP cancel / evento `Cierre de…`) **nunca** se reexponen (hoy ni histórico).
 - Geografía: título región → `metaData.comunas` → NLP título/contenido → `metaData.provincias` (scope región).
 - Aire Chile máx. zonas PPDA catalogadas; HTML frágil.
 - SERNAGEOMIN: HTML Fusion Builder frágil; solo ≥ amarilla; `SERNAGEOMIN_SSL_VERIFY` default false (cadena TLS incompleta).
@@ -107,4 +107,4 @@ make psql
 
 ---
 
-*Last updated: 2026-07-24*
+*Last updated: 2026-07-25*

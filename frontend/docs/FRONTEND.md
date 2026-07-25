@@ -176,7 +176,7 @@ useActiveAlerts(params?: {
 - `record_kind`: `"alerta" | "evento"`
 - `external_url`, `hazard_type`, `affected_scope`, `comuna_codes`, `thread_root_id`, …
 
-**API:** `getActiveAlerts()` → `GET /api/v1/alerts/active?date=…`
+**API:** `getActiveAlerts()` → `GET /api/v1/alerts/active?date=…` — hoy: SERNAPRED vigentes hasta desactivación (lookback); histórico: emitidas ese día. Ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
 
 **staleTime:** 2 min.
 

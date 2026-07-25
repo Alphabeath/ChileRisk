@@ -26,7 +26,7 @@ El mapa y varios endpoints permiten ver **riesgo, sismos y alertas de un día ca
 | GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (coropleta) |
 | GET | `/api/v1/comunas/{cod}/risk?date=` | Vector de hazards del día |
 | GET | `/api/v1/events?date=` | Sismos en ventana del día (sustituye `hours=` en rutas con date) |
-| GET | `/api/v1/alerts/active?date=` | Alertas/eventos visibles ese día (SERNAPRED: `isPrincipal` + dedupe `url_access`; sin solo-cancelación; histórico puede incluir otras filas `is_active=False`) |
+| GET | `/api/v1/alerts/active?date=` | **Hoy:** ATP vigentes en lookback hasta desactivación/cierre; eventos solo últimas `SENAPRED_EVENTO_ACTIVE_HOURS` (48h). **Histórico:** emitidas ese día civil (`isPrincipal` + dedupe `url_access`; sin cierres ATP/`Cierre de evento`; puede incluir `is_active=False`) |
 | GET | `/api/v1/air-quality?date=` | Condición GEC Aire Chile por zona (cobertura parcial PPDA) |
 | GET | `/api/v1/air-quality/{slug}?date=` | Detalle zona GEC |
 | GET | `/api/v1/air-quality/by-comuna/{cod}?date=` | Lookup por comuna CUT |
@@ -65,4 +65,4 @@ Cambios en ventana, TZ, o campos devueltos → actualizar **este archivo**, `bac
 
 ---
 
-*Last updated: 2026-07-23*
+*Last updated: 2026-07-25*

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Bell, Calendar, Eye, Layers, ShieldAlert, Wind } from "lucide-react"
-import { useActiveAlerts, useQueryDate } from "@/hooks"
+import { useActiveAlerts, useAirQuality, useQueryDate } from "@/hooks"
 import { formatQueryDateLabel, todayIsoDate } from "@/lib/query-date"
 import { cn } from "@/lib/utils"
 import { useUIStore } from "@/stores/ui-store"
@@ -28,10 +28,11 @@ function modeLabel(mode: "risk" | "alerts" | "air"): string {
 
 function MonitorStatusStrip() {
   const { data: alerts = [] } = useActiveAlerts()
+  const { data: airData } = useAirQuality()
   const { selectedDate } = useQueryDate()
   const mapColorMode = useUIStore((s) => s.mapColorMode)
   const dateLabel = formatQueryDateLabel(selectedDate, todayIsoDate())
-  const count = alerts.length
+  const count = alerts.length + (airData?.items?.length ?? 0)
   const hasAlerts = count > 0
 
   return (
