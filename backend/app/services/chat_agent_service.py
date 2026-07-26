@@ -7,7 +7,6 @@ import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
-from openai import AsyncOpenAI
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -18,6 +17,7 @@ from app.services.chat_tools import (
     execute_tool,
     sources_from_traces,
 )
+from app.services.deepseek_client import get_deepseek_client as _client
 
 logger = logging.getLogger("chilerisk.chat_agent")
 
@@ -86,13 +86,6 @@ async def _build_location_block(
         "Para riesgo/situación comunal: get_active_alerts primero; get_comuna_risk después."
     )
     return "\n".join(lines)
-
-
-def _client() -> AsyncOpenAI:
-    return AsyncOpenAI(
-        api_key=settings.deepseek_api_key,
-        base_url=settings.deepseek_base_url,
-    )
 
 
 def _message_dict(msg: Any) -> dict[str, Any]:

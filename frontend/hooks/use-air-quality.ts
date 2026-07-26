@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAirQuality, getAirQualityZone } from "@/lib/api"
+import { getAirQuality, getAirQualityByComuna, getAirQualityZone } from "@/lib/api"
 import { queryKeys } from "@/lib/queries"
 import { useQueryDate } from "./use-query-date"
 
@@ -21,8 +21,19 @@ export function useAirQuality(opts?: {
   })
 }
 
-export function useAirQualityZone(slug: string | null, date?: string) {
+export function useAirQualityByComuna(codComuna: number, date?: string) {
   const { selectedDate } = useQueryDate()
+  const d = date ?? selectedDate
+
+  return useQuery({
+    queryKey: queryKeys.airQualityByComuna(codComuna, d),
+    queryFn: () => getAirQualityByComuna(codComuna, d),
+    enabled: codComuna > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+export function useAirQualityZone(slug: string | null, date?: string) {  const { selectedDate } = useQueryDate()
   const d = date ?? selectedDate
 
   return useQuery({

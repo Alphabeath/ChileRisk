@@ -10,7 +10,8 @@ export { useDraggablePanel } from "./use-draggable-panel"
 export { useRefreshMapData } from "./use-refresh-map-data"
 export { useSyncGlobalLoading } from "./use-sync-global-loading"
 export { useSimulacros, useNextSimulacro, useSimulacro } from "./use-simulacros"
-export { useAirQuality, useAirQualityZone } from "./use-air-quality"
+export { useAirQuality, useAirQualityZone, useAirQualityByComuna } from "./use-air-quality"
+export { useDashboardSummary } from "./use-dashboard-summary"
 export { FamilyPlanProvider, useFamilyPlan } from "./use-family-plan"
 export {
   useChatThread,

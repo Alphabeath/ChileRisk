@@ -79,11 +79,16 @@ Desarrollo nativo: `make dev-backend` (requiere DB; ver `backend/.env.example`).
 | GET | `/api/v1/chat/threads/{id}` | Detalle de hilo + mensajes — **JWT** |
 | GET | `/api/v1/users/me` | Perfil (`home_comuna_code`) — **JWT** |
 | PATCH | `/api/v1/users/me` | Actualizar comuna de hogar — **JWT** |
+| GET | `/api/v1/dashboard/summary` | Resumen IA del día (DeepSeek; nacional + comuna de hogar) — **JWT** |
 | GET | `/api/v1/meeting-points/nearest?lat=&lon=&hazard=&limit=` | Puntos de encuentro oficiales más cercanos — **JWT** |
 | GET | `/api/v1/disaster-guides` | Guías estáticas de preparación — **JWT** |
 | GET | `/api/v1/disaster-guides/{slug}` | Guía por slug — **JWT** |
 
 Parámetro `date`: `YYYY-MM-DD`, día civil Chile; default hoy; ventana 30 días — ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
+
+### `GET /api/v1/dashboard/summary`
+
+Resumen ciudadano generado por DeepSeek (`app/services/dashboard_service.py`): top 3 regiones por `composite_score`, ≤5 alertas más severas (`list_active_alerts`), sismos 24h (conteo + magnitud máxima) y, si el usuario tiene `home_comuna_code`, riesgo comunal + nivel GEC de aire. Caché en memoria `TTLCache(maxsize=400, ttl=900)` con clave `home_comuna_code` (o `national`); respuesta `DashboardSummaryOut` (`summary`, `generated_at`, `cached`, `comuna_name`). Sin fallback determinista: si el LLM falla o `DEEPSEEK_API_KEY` está vacía → **503** `Resumen IA no disponible` (el frontend degrada el hero sin romper las cards). Cliente compartido: `app/services/deepseek_client.py` (`get_deepseek_client`, también usado por el chat).
 
 ### `GET /api/v1/alerts/active`
 

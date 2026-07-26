@@ -192,7 +192,7 @@ mx-auto max-w-6xl …                             ← disaster detail (wider for
 |-----------|-----------|
 | Catalog / list | `max-w-7xl` |
 | Detail with grids | `max-w-6xl` |
-| Dashboard debug | `max-w-7xl` |
+| Home `/dashboard` | `max-w-7xl` |
 
 Avoid narrow headers (`max-w-2xl`) on full-width catalog pages — hero should span content width.
 
@@ -273,7 +273,7 @@ import {
 - Title row uses a shared `min-h` so catalog heroes align across routes.
 - Variable content (e.g. next-drill countdown) lives **under** the hero, not inside it.
 
-Reference: `components/layout/citizen-page-hero.tsx`; composers in `preparation-page-hero`, `disasters-page-hero`, `simulacros-page-hero`, `emergency-kit-hero`, `disaster-detail-hero`.
+Reference: `components/layout/citizen-page-hero.tsx`; composers in `preparation-page-hero`, `disasters-page-hero`, `simulacros-page-hero`, `emergency-kit-hero`, `disaster-detail-hero`, `dashboard-page-hero` (home `/dashboard`).
 
 ### 7.2 Stat box (glass)
 
@@ -384,4 +384,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-25 — MapNavigationControl glass (zoom/compass) replaces native MapLibre NavigationControl.
+**Last updated:** 2026-07-26 — `/dashboard` briefing (strip hero + rail sticky plan/IA); MapNavigationControl glass.

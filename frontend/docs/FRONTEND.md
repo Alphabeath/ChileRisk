@@ -295,6 +295,24 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 
 ---
 
+## Inicio / home ciudadano (`/dashboard`)
+
+**Route:** `app/(citizen)/dashboard/page.tsx` — briefing del día (sin mapa). Navbar label: **Inicio**. Shell: `PREPARATION_PAGE_*` + `FamilyPlanProvider`.
+
+**Layout (desktop):** strip hero compacto + grilla `lg:grid-cols-12` — columna principal `col-span-8` (comuna → alertas → sismos); rail derecho sticky `col-span-4 row-span-3` (plan → resumen IA). **Móvil (order):** strip → comuna → plan → alertas → sismos → IA (`max-lg:contents` en el aside).
+
+- **Hero** — `dashboard-page-hero.tsx`: strip identidad (eyebrow Inicio, título “ChileRisk hoy”, línea corta) + footer atajos (Monitor · Preparación · Asistente). **Sin** resumen IA ni `CitizenPageHero` min-height de catálogo.
+- **Resumen IA** — `dashboard-summary-panel.tsx` (glass): `useDashboardSummary()` → `GET /api/v1/dashboard/summary`. Link “Asistente →”. Loading / error+Reintentar / texto + meta.
+- **Chrome** — `DashboardSection`: glass + mica, eyebrow meta, título + ícono, link “Ver más”.
+- `DashboardComunaCard` — hogar **o** GPS → `useNearestComuna`. Body denso: score mono grande + severity + grid 2×2 (amenaza, aire, temp, viento). → `/monitor`.
+- `DashboardAlertsCard` — top 5 alertas. → `/monitor`.
+- `DashboardEventsCard` — top 8 sismos. → `/monitor`.
+- `DashboardFamilyPlanCard` — anillo + CTA en rail (above the fold en desktop; 2º bloque en móvil).
+
+Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComuna`. Tipo `DashboardSummary` en `lib/types.ts`.
+
+---
+
 ## Deprecations (compat)
 
 | Antiguo | Actual |
@@ -358,4 +376,4 @@ Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERN
 
 ---
 
-*Last updated: 2026-07-25*
+*Last updated: 2026-07-26*

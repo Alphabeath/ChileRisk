@@ -18,6 +18,7 @@ export type ApiSyncRun = Schemas["SyncRunOut"]
 export type ApiSyncStatusResponse = Schemas["SyncStatusResponse"]
 
 export type ComunaMapScore = Schemas["ComunaMapScore"]
+export type DashboardSummary = Schemas["DashboardSummaryOut"]
 export type SyncRun = Schemas["SyncRunOut"]
 export type SyncStatusResponse = Schemas["SyncStatusResponse"]
 

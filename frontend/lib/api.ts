@@ -24,6 +24,7 @@ import type {
   MeetingPointNearestResponse,
   NearestComuna,
   UserProfile,
+  DashboardSummary,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -190,6 +191,10 @@ export async function getChatThread(threadId: string): Promise<ChatThreadDetail>
 
 export async function getUserProfile(): Promise<UserProfile> {
   return fetchJson<UserProfile>("/api/v1/users/me")
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  return fetchJson<DashboardSummary>("/api/v1/dashboard/summary")
 }
 
 export async function getNearestComuna(params: {

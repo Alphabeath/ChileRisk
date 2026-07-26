@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import alerts, auth, air_quality, chat, comunas, disaster_guides, events, family_plan, meeting_points, regiones, risk, simulacros, stats, system, users
+from app.api import alerts, auth, air_quality, chat, comunas, dashboard, disaster_guides, events, family_plan, meeting_points, regiones, risk, simulacros, stats, system, users
 from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
@@ -187,6 +187,12 @@ app.include_router(
 )
 app.include_router(
     alerts.router, prefix="/api/v1/alerts", tags=["alerts"], dependencies=_auth_guard
+)
+app.include_router(
+    dashboard.router,
+    prefix="/api/v1/dashboard",
+    tags=["dashboard"],
+    dependencies=_auth_guard,
 )
 app.include_router(
     stats.router, prefix="/api/v1/stats", tags=["stats"], dependencies=_auth_guard

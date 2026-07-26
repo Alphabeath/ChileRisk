@@ -18,6 +18,9 @@ export const queryKeys = {
   ) => ["airQuality", date, params] as const,
   airQualityZone: (slug: string, date: string) =>
     ["airQualityZone", slug, date] as const,
+  airQualityByComuna: (codComuna: number, date: string) =>
+    ["airQualityByComuna", codComuna, date] as const,
+  dashboardSummary: () => ["dashboardSummary"] as const,
   userProfile: () => ["userProfile"] as const,
   nearestComuna: (lat: number, lon: number) =>
     ["nearestComuna", lat, lon] as const,
