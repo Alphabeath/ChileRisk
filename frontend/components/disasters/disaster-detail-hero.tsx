@@ -5,7 +5,6 @@ import {
 } from "@/components/layout/citizen-page-hero"
 import {
   categoryHeroBoost,
-  categoryLabels,
   getDesastreCategory,
 } from "@/lib/disasters-visual"
 import { GLASS_DIVIDER } from "@/lib/glass-panel"
@@ -57,11 +56,6 @@ export function DisasterDetailHero({ desastre, totalSteps }: DisasterDetailHeroP
             <Icon className="size-7 text-white sm:size-8" aria-hidden />
           </div>
           <div className="min-w-0 flex-1 pr-8 sm:pr-16">
-            <div className="mb-2 inline-flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-1 backdrop-blur-sm">
-              <span className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white">
-                {categoryLabels[category]}
-              </span>
-            </div>
             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {desastre.title}
             </h1>

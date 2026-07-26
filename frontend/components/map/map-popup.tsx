@@ -111,19 +111,20 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 function HazardRow({ label, score, Icon }: { label: string; score: number; Icon: typeof Activity }) {
   const meta = SEVERITY_META[severityFromScore(score)]
+  const pct = Math.min(100, Math.max(0, score))
   return (
-    <div className="flex items-center gap-2">
-      <Icon className="size-3 shrink-0 text-white/55" />
-      <span className="w-12 font-mono text-[9px] uppercase tracking-[1.1px] text-white/55">
+    <div className="flex min-w-0 items-center gap-2">
+      <Icon className="size-3 shrink-0 text-white/55" aria-hidden />
+      <span className="w-[4.5rem] shrink-0 truncate font-mono text-[9px] uppercase tracking-[1.1px] text-white/55">
         {label}
       </span>
-      <div className="h-1 flex-1 bg-white/[0.08]">
+      <div className="h-1 min-w-0 flex-1 overflow-hidden bg-white/[0.08]">
         <div
-          className="h-full transition-all"
-          style={{ width: `${Math.min(100, Math.max(0, score))}%`, backgroundColor: meta.hex }}
+          className="h-full max-w-full transition-all"
+          style={{ width: `${pct}%`, backgroundColor: meta.hex }}
         />
       </div>
-      <span className="w-6 text-right font-mono text-[10px] font-semibold tabular-nums text-white/90">
+      <span className="w-6 shrink-0 text-right font-mono text-[10px] font-semibold tabular-nums text-white/90">
         {score.toFixed(0)}
       </span>
     </div>
@@ -469,7 +470,7 @@ function HazardScores({ properties }: { properties: RegionProperties | ComunaPro
   if (hazards.length === 0) return null
 
   return (
-    <div className="px-3.5 py-2 flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-1 px-3.5 py-2">
       {hazards.map(({ key, meta }) => (
         <HazardRow
           key={key}

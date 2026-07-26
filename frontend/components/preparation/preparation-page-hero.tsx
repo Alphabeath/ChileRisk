@@ -1,6 +1,5 @@
 import {
   CitizenPageHero,
-  HeroEyebrow,
   HeroFooterCell,
   HeroFooterIcon,
   HeroStatBox,
@@ -43,11 +42,6 @@ export function PreparationPageHero({
     <CitizenPageHero
       gradientClass="bg-gradient-to-br from-[var(--primary-chile)]/55 via-emerald-950/70 to-[var(--secondary-chile)]/45"
       watermark={<ChileWatermark />}
-      eyebrow={
-        <HeroEyebrow className="border-emerald-500/30 bg-emerald-500/10 text-emerald-200/90">
-          Metodología SENAPRED
-        </HeroEyebrow>
-      }
       title="Preparación"
       description="Construye tu Plan Familia Preparada, completa tu kit y sigue los simulacros oficiales para anticiparte ante desastres en Chile."
       stats={

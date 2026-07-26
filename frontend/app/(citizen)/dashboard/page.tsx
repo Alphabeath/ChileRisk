@@ -25,17 +25,17 @@ export default function DashboardPage() {
 
             <aside
               className={cn(
-                "order-2 flex flex-col gap-4",
+                "order-3 flex flex-col gap-4",
                 "max-lg:contents",
-                "lg:col-span-4 lg:row-span-3 lg:sticky lg:top-24",
+                "lg:order-2 lg:col-span-4 lg:row-span-4 lg:sticky lg:top-24",
               )}
             >
-              <DashboardFamilyPlanCard className="max-lg:order-2" />
-              <DashboardSummaryPanel className="max-lg:order-5" />
+              <DashboardFamilyPlanCard className="max-lg:order-3" />
+              <DashboardEventsCard className="max-lg:order-4" />
             </aside>
 
-            <DashboardAlertsCard className="order-3 lg:col-span-8" />
-            <DashboardEventsCard className="order-4 lg:col-span-8" />
+            <DashboardSummaryPanel className="order-2 lg:col-span-8" />
+            <DashboardAlertsCard className="order-5 lg:col-span-8" />
           </div>
         </div>
       </FamilyPlanProvider>

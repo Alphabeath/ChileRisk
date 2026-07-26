@@ -22,3 +22,5 @@ export {
   useUserProfile,
   sendChatStreaming,
 } from "./use-assistant"
+export { useEmergencyMode } from "./use-emergency-mode"
+export { useComunaToday } from "./use-comuna-today"

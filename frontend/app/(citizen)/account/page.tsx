@@ -5,10 +5,7 @@ import { signOut, useSession } from "next-auth/react"
 import { UserCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  CitizenPageHero,
-  HeroEyebrow,
-} from "@/components/layout/citizen-page-hero"
+import { CitizenPageHero } from "@/components/layout/citizen-page-hero"
 import { useUpdateUserProfile, useUserProfile } from "@/hooks"
 import {
   GLASS_MICA_INTERACTIVE_CLASS,
@@ -104,11 +101,6 @@ export default function AccountPage() {
               strokeWidth={1}
               aria-hidden
             />
-          }
-          eyebrow={
-            <HeroEyebrow className="border-white/20 bg-white/10 text-white/80">
-              Perfil
-            </HeroEyebrow>
           }
           title="Cuenta"
           description="Sesión activa en ChileRisk. Gestiona tu comuna de hogar y cierra sesión."

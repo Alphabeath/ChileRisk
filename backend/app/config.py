@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     auth_email_from: str = "noreply@chilerisk.local"
 
+    # Hackathon / local demo login (seeded on startup when enabled).
+    seed_demo_user: bool = True
+    demo_user_email: str = "demo@chilerisk.cl"
+    demo_user_password: str = "ChileRisk2026!"
+    demo_user_name: str = "Demo Hackathon"
+    demo_user_home_comuna: int | None = 4102  # Coquimbo
+
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-v4-flash"

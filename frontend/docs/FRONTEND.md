@@ -27,6 +27,7 @@ Referencia de lo **shipped** en el mapa y datos. Índice agente: [AGENTS.md](../
 - Monitor: `components/map/monitor-mobile-drawer.tsx` — tabs **Alertas** \| **Fecha** \| **Vistas** (sin Controles/`MapActionsPanel` en móvil)
 - Evacuation: `components/evacuation/evacuation-mobile-drawer.tsx` — tabs **Puntos** \| **Capas**; sheet oculto mientras el prompt de ubicación está activo
 - Evacuation map (`EvacuationMap`): al aceptar geolocalización (o si el permiso ya está `granted`), dibuja un marcador DOM “Tu ubicación” (punto azul + pulso; respeta `prefers-reduced-motion`) y hace `flyTo` a esas coords
+- Deep-link emergencia: `/evacuation?hazard=tsunami|volcanic&lat=&lon=` — `EvacuationPageShell` llama `getNearestMeetingPoints` y hace `flyTo` al punto más cercano (fallback KMZ client-side)
 
 ### `<MapOverlays />`
 
@@ -252,7 +253,7 @@ Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
 
 Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
 
-Shell: `PREPARATION_PAGE_*` (`lib/preparation-ui.ts`) + `PreparationBreadcrumb` + `PreparationContextBanner` (CTA al paso 8 del plan).
+Shell: `PREPARATION_PAGE_*` (`lib/preparation-ui.ts`) + `PreparationContextBanner` (CTA al paso 8 del plan). Sin breadcrumb encima del hero.
 
 **Composición (top → bottom):**
 
@@ -299,17 +300,41 @@ Componentes: `components/preparation/family-plan/*`, `components/preparation/eme
 
 **Route:** `app/(citizen)/dashboard/page.tsx` — briefing del día (sin mapa). Navbar label: **Inicio**. Shell: `PREPARATION_PAGE_*` + `FamilyPlanProvider`.
 
-**Layout (desktop):** strip hero compacto + grilla `lg:grid-cols-12` — columna principal `col-span-8` (comuna → alertas → sismos); rail derecho sticky `col-span-4 row-span-3` (plan → resumen IA). **Móvil (order):** strip → comuna → plan → alertas → sismos → IA (`max-lg:contents` en el aside).
+**Layout (desktop):** strip hero + grilla `lg:grid-cols-12` — columna principal `col-span-8` (comuna → resumen del día → alertas nacionales); rail derecho sticky `col-span-4` (plan familiar → sismos recientes). **Móvil:** comuna → resumen → plan → sismos → alertas.
 
-- **Hero** — `dashboard-page-hero.tsx`: strip identidad (eyebrow Inicio, título “ChileRisk hoy”, línea corta) + footer atajos (Monitor · Preparación · Asistente). **Sin** resumen IA ni `CitizenPageHero` min-height de catálogo.
-- **Resumen IA** — `dashboard-summary-panel.tsx` (glass): `useDashboardSummary()` → `GET /api/v1/dashboard/summary`. Link “Asistente →”. Loading / error+Reintentar / texto + meta.
+- **Hero** — `dashboard-page-hero.tsx`: strip identidad (título “ChileRisk hoy”, línea corta) + footer atajos (Monitor · Preparación · Asistente). **Sin** eyebrow/chip ni resumen IA ni `CitizenPageHero` min-height de catálogo.
+- **Resumen IA** — `dashboard-summary-panel.tsx` (glass): `useDashboardSummary()` → `GET /api/v1/dashboard/summary`. Debajo de la card de comuna. Link “Asistente →”.
 - **Chrome** — `DashboardSection`: glass + mica, eyebrow meta, título + ícono, link “Ver más”.
-- `DashboardComunaCard` — hogar **o** GPS → `useNearestComuna`. Body denso: score mono grande + severity + grid 2×2 (amenaza, aire, temp, viento). → `/monitor`.
-- `DashboardAlertsCard` — top 5 alertas. → `/monitor`.
-- `DashboardEventsCard` — top 8 sismos. → `/monitor`.
-- `DashboardFamilyPlanCard` — anillo + CTA en rail (above the fold en desktop; 2º bloque en móvil).
+- `DashboardComunaCard` — `useComunaToday` + `ComunaTodayCard` + acciones en **grid 2×2 a ancho completo** (Compartir / PNG / Ver mapa / Mi plan).
+- `DashboardFamilyPlanCard` — anillo de progreso + barra + CTA en rail.
+- `DashboardEventsCard` — sismos recientes en el rail (debajo del plan): ubicación CSN, magnitud (+ tipo), profundidad etiquetada, tiempo relativo, chip Percibido/Instrumental, Mercalli si hay, link al informe; orden por relevancia (percibido → magnitud → hora).
+- `DashboardAlertsCard` — top 5 alertas nacionales bajo el resumen. → `/monitor`.
 
-Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComuna`. Tipo `DashboardSummary` en `lib/types.ts`.
+Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComuna`, alertas/simulacro vía `useComunaToday`. Tipo `DashboardSummary` en `lib/types.ts`.
+
+---
+
+## Modo Emergencia
+
+Banner reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`.
+
+- Hook: `hooks/use-emergency-mode.ts` — GPS/`useNearestComuna` → fallback `home_comuna_code`; filtra `useActiveAlerts` con `level` naranja/roja + `alertAppliesToComuna`; dismiss por `sessionStorage` keyed por `alert.id`
+- UI: `components/emergency/`
+  - `emergency-page-frame.tsx` — marco fijo `inset-0` `z-30` (gradientes en bordes + pulse; rojo/naranja); CSS en `globals.css`
+  - `emergency-banner.tsx` — fixed bajo navbar; título severidad + **`getActiveAlertMainText`** (de qué trata) + detail opcional; CTAs ¿Qué hago? / Evacuar / Compartir / ✕
+  - `emergency-guide-panel.tsx` — drawer + `sendChatStreaming` (mensaje usuario forzado; sin `system_prompt` en contrato)
+  - `emergency-share-card.tsx` — “Estoy seguro/a en {comuna}” + Web Share / clipboard
+  - `emergency-action-sheet.tsx` — drawer con las 3 acciones (disponible; el host usa CTAs del banner)
+
+---
+
+## Mi comuna hoy (en dashboard)
+
+Sin ruta propia. La tarjeta vive en `/dashboard` vía `DashboardComunaCard`.
+
+- Hook: `hooks/use-comuna-today.ts` — hogar → GPS; agrega risk + aire + alertas de comuna + simulacro **solo si región/comuna aplica** + sismo
+- UI: `components/comuna-today/comuna-today-card.tsx` (glass), `comuna-today-share-bar.tsx` (Web Share + PNG vía `html-to-image`)
+- Alertas en la card: lista desglosada (máx. 5) con badge nivel + fuente + texto principal
 
 ---
 
@@ -332,7 +357,7 @@ Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComun
 
 - Fixed `RotatingEarth` with `skipIntro` + `autoRotate` (no Chile zoom; continuous rotation).
 - Hidden on `/monitor` and `/evacuation` (MapLibre routes).
-- Landing `/` keeps its own globe + intro via `app/page.tsx`.
+- Landing `/` keeps its own globe + intro via `app/page.tsx`. Footer: alojado en [CubePath](https://cubepath.com/) (`/cubepath.png` con fondo transparente) + crédito a [TrueRisk](https://truerisk.cloud/).
 - Props: `skipIntro`, `autoRotate` on `components/globe/rotating-earth.tsx`.
 - Surfaces: content panels use `GLASS_PANEL_CLASS` (same as map overlays); page heroes use gradient shell without glass — see [DESIGN.md](./DESIGN.md) §5.1.
 
@@ -364,13 +389,18 @@ Chat agentico (DeepSeek en backend) con tools de lectura: plan familia, alertas,
 | Ruta | Acceso |
 |------|--------|
 | `/` | Pública (landing) |
-| `/login`, `/register`, `/forgot-password`, `/reset-password` | Públicas |
-| `(citizen)/*` | Requiere sesión (`middleware.ts`) |- Config: `auth.ts`, `auth.config.ts`
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Públicas (`/login` y `/register` redirigen a `/dashboard` si ya hay sesión) |
+| Prefijos en `middleware.ts` (`/monitor`, `/dashboard`, …) | Requieren sesión |
+
+Post-login / post-registro por defecto: `/dashboard` (Inicio). `callbackUrl` de middleware se respeta si venía de una ruta protegida.
+
+- Config: `auth.ts`, `auth.config.ts`
 - Handlers: `app/api/auth/[...nextauth]/route.ts`
 - Registro / reset: `app/api/auth/register|forgot-password|reset-password`
 - Proxy API autenticado: `app/api/backend/[...path]` → FastAPI con JWT HS256
 - Cliente HTTP: `lib/api.ts` usa base `/api/backend` (same-origin)
 - UI: `components/auth/*`, cuenta en `app/(citizen)/account/page.tsx`
+- **Demo hackathon:** `/login` → `DemoLoginCard` (credenciales + copiar + “Entrar con cuenta demo”). Credenciales en `lib/demo-login.ts`; seed backend `SEED_DEMO_USER`.
 
 Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERNAL_URL`).
 

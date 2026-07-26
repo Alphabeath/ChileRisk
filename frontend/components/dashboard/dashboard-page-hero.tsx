@@ -4,7 +4,6 @@ import Link from "next/link"
 import { Backpack, MessageCircle, Monitor } from "lucide-react"
 
 import {
-  HeroEyebrow,
   HeroFooterCell,
   HeroFooterIcon,
 } from "@/components/layout/citizen-page-hero"
@@ -55,10 +54,7 @@ export function DashboardPageHero() {
 
       <div className="relative flex flex-col gap-3 p-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6 sm:p-5">
         <div className="min-w-0">
-          <HeroEyebrow className="border-white/20 bg-white/10 text-white/80">
-            Inicio
-          </HeroEyebrow>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             ChileRisk hoy
           </h1>
         </div>

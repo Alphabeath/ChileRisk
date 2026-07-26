@@ -5,48 +5,65 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 
+import { DemoLoginCard } from "@/components/auth/demo-login-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { DEMO_LOGIN } from "@/lib/demo-login"
 
 export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") || "/monitor"
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
 
-  async function handleCredentialsSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function signInWith(creds: { email: string; password: string }) {
     setError(null)
-    setLoading(true)
-
     const result = await signIn("credentials", {
-      email,
-      password,
+      email: creds.email,
+      password: creds.password,
       redirect: false,
     })
 
-    setLoading(false)
-
     if (result?.error) {
       setError("Email o contraseña incorrectos.")
-      return
+      return false
     }
 
     router.push(callbackUrl)
     router.refresh()
+    return true
   }
 
-  function handleGoogleSignIn() {
-    void signIn("google", { callbackUrl })
+  async function handleCredentialsSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    await signInWith({ email, password })
+    setLoading(false)
   }
+
+  async function handleDemoSignIn() {
+    setEmail(DEMO_LOGIN.email)
+    setPassword(DEMO_LOGIN.password)
+    setDemoLoading(true)
+    await signInWith({
+      email: DEMO_LOGIN.email,
+      password: DEMO_LOGIN.password,
+    })
+    setDemoLoading(false)
+  }
+
+  const busy = loading || demoLoading
 
   return (
     <div className="space-y-6">
+      <DemoLoginCard onUseAccount={handleDemoSignIn} busy={busy} />
+
       <form onSubmit={handleCredentialsSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -56,6 +73,7 @@ export function LoginForm() {
             autoComplete="email"
             required
             value={email}
+            disabled={busy}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
@@ -76,34 +94,17 @@ export function LoginForm() {
             autoComplete="current-password"
             required
             value={password}
+            disabled={busy}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={busy}>
           {loading ? "Ingresando..." : "Ingresar"}
         </Button>
       </form>
-
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-white/10" />
-        </div>
-        <div className="relative flex justify-center text-[10px] uppercase tracking-[1.2px]">
-          <span className="bg-black/60 px-3 text-white/45">o continúa con</span>
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full border-white/15 bg-transparent text-white/80 hover:bg-white/[0.06] hover:text-white"
-        onClick={handleGoogleSignIn}
-      >
-        Google
-      </Button>
     </div>
   )
 }

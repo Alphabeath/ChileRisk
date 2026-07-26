@@ -81,7 +81,7 @@ App tipo **Docker Compose** → este repo / `docker-compose.yml`:
    - `POSTGRES_PASSWORD` fuerte (y `POSTGRES_USER` / `POSTGRES_DB` si los cambias)
    - Opcional: `GOOGLE_*`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM=noreply@chilerisk.cl`, `DEEPSEEK_API_KEY`
 5. **OAuth Google:** redirect `https://chilerisk.cl/api/auth/callback/google`.
-6. **Health:** IPv4 `127.0.0.1`; backend `start_period: 180s` (cold start con syncs).
+6. **Health:** IPv4 `127.0.0.1`; backend `start_period: 180s` (cold start con syncs; flood Open-Meteo va en background para no marcar unhealthy por 429).
 7. **Volumen** `pgdata` persistente; no publiques Postgres fuera del host.
 
 ---

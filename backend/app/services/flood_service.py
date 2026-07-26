@@ -43,6 +43,10 @@ _HIST_DAYS = 365
 _FC_DAYS = 10
 
 
+class FloodRateLimited(Exception):
+    """Raised when Flood API returns persistent 429 — abort remaining batches."""
+
+
 def discharge_to_flood_score(effective_m3s: float, p90_m3s: float) -> float:
     """Convert effective river discharge to 0-100 flood risk score.
 
@@ -87,7 +91,13 @@ async def _fetch_flood_batch(
     lats: list[float],
     lons: list[float],
 ) -> list[dict] | None:
-    """Fetch river discharge for a batch of coordinates. Returns None on failure."""
+    """Fetch river discharge for a batch of coordinates.
+
+    Returns:
+      - list[dict] on success
+      - None on soft failure (timeout / 5xx after retries)
+      - raises FloodRateLimited if Open-Meteo keeps returning 429
+    """
     params = {
         "latitude": ",".join(str(l) for l in lats),
         "longitude": ",".join(str(l) for l in lons),
@@ -96,21 +106,25 @@ async def _fetch_flood_batch(
         "forecast_days": str(_FC_DAYS),
     }
 
-    for attempt in range(5):
+    # Cap retries: cold-start must not block Uvicorn for minutes on 429.
+    for attempt in range(3):
         try:
             resp = await client.get(FLOOD_API_BASE, params=params, timeout=45.0)
             if resp.status_code == 429:
-                retry_after = resp.headers.get("Retry-After")
-                delay = int(retry_after) if retry_after and retry_after.isdigit() else (2 ** attempt + 1)
-                await asyncio.sleep(min(delay, 90))
+                if attempt == 2:
+                    raise FloodRateLimited("Open-Meteo Flood API rate limited (429)")
+                delay = 2 ** attempt + 1
+                await asyncio.sleep(min(delay, 8))
                 continue
             resp.raise_for_status()
             data = resp.json()
             if isinstance(data, list):
                 return data
             return [data]
+        except FloodRateLimited:
+            raise
         except (httpx.HTTPError, httpx.TimeoutException, asyncio.TimeoutError):
-            if attempt == 4:
+            if attempt == 2:
                 logger.warning("Flood API batch failed after retries for %d coordinates", len(lats))
                 return None
             await asyncio.sleep(2 ** attempt + 0.5)
@@ -191,7 +205,16 @@ async def update_flood_scores(session: AsyncSession) -> int:
             lats = [c.latitude for c in batch]
             lons = [c.longitude for c in batch]
 
-            raw_items = await _fetch_flood_batch(client, lats, lons)
+            try:
+                raw_items = await _fetch_flood_batch(client, lats, lons)
+            except FloodRateLimited:
+                logger.warning(
+                    "Flood sync aborted early after rate limit (%d/%d comunas scored)",
+                    len(scores_by_comuna),
+                    len(comunas),
+                )
+                break
+
             if not raw_items:
                 continue
 

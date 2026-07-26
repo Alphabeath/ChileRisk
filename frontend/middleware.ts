@@ -13,13 +13,21 @@ const protectedPrefixes = [
   "/drills",
 ]
 
+const authPages = ["/login", "/register"]
+
 export default auth((req) => {
   const { pathname } = req.nextUrl
+  const isLoggedIn = Boolean(req.auth)
+
+  if (authPages.some((p) => pathname === p) && isLoggedIn) {
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin))
+  }
+
   const isProtected = protectedPrefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   )
 
-  if (isProtected && !req.auth) {
+  if (isProtected && !isLoggedIn) {
     const loginUrl = new URL("/login", req.nextUrl.origin)
     loginUrl.searchParams.set("callbackUrl", pathname)
     return NextResponse.redirect(loginUrl)
@@ -30,6 +38,8 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
+    "/login",
+    "/register",
     "/monitor/:path*",
     "/dashboard/:path*",
     "/preparation/:path*",

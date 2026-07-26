@@ -4,7 +4,6 @@ import { Siren } from "lucide-react"
 
 import {
   CitizenPageHero,
-  HeroEyebrow,
   HeroFooterCell,
   HeroFooterIcon,
   HeroStatBox,
@@ -27,11 +26,6 @@ export function SimulacrosPageHero({ upcomingTotal }: SimulacrosPageHeroProps) {
           strokeWidth={1}
           aria-hidden
         />
-      }
-      eyebrow={
-        <HeroEyebrow className="border-rose-300/30 bg-rose-500/10 text-rose-100/90">
-          Calendario SERNAPRED
-        </HeroEyebrow>
       }
       title="Simulacros de evacuación"
       description="Ejercicios oficiales coordinados por SENAPRED en todo Chile. Consulta fechas, tipos de amenaza y participa en la preparación de tu comunidad."

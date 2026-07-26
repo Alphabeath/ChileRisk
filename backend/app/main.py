@@ -1,5 +1,6 @@
 import logging
 import time
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
@@ -12,6 +13,7 @@ from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
 from app.data.seed_comunas import seed_comunas
+from app.data.seed_demo_user import ensure_demo_user
 from app.data.seed_regions import seed_regions
 from app.database import async_session
 import app.models  # noqa: F401 — register ORM metadata
@@ -44,6 +46,8 @@ async def lifespan(app: FastAPI):
         if n_regions or n_comunas:
             logger.info("Seeded %d regions and %d comunas", n_regions, n_comunas)
 
+        await ensure_demo_user(session)
+
         n_meeting = await seed_meeting_points(session)
         if n_meeting:
             logger.info("Seeded %d meeting points", n_meeting)
@@ -64,16 +68,8 @@ async def lifespan(app: FastAPI):
             if n_climate:
                 logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
 
-        if settings.use_real_flood:
-            from app.services.flood_service import update_flood_scores
-
-            try:
-                n_flood = await update_flood_scores(session)
-                if n_flood:
-                    logger.info("Updated flood scores for %d comunas at startup", n_flood)
-            except Exception as e:
-                await session.rollback()
-                logger.exception("Initial flood sync failed: %s", e)
+        # Flood sync is deferred: ~18 Open-Meteo batches + 429 retries can block
+        # Uvicorn past Docker healthcheck start_period and mark the API unhealthy.
 
         if settings.use_real_senapred:
             from app.services.senapred_service import sync_senapred_alerts
@@ -138,7 +134,35 @@ async def lifespan(app: FastAPI):
 
     setup_scheduler()
 
+    flood_task: asyncio.Task | None = None
+    if settings.use_real_flood:
+        async def _startup_flood_sync() -> None:
+            from app.services.flood_service import update_flood_scores
+
+            try:
+                async with async_session() as session:
+                    n_flood = await update_flood_scores(session)
+                    if n_flood:
+                        logger.info(
+                            "Updated flood scores for %d comunas (background startup)",
+                            n_flood,
+                        )
+                    else:
+                        logger.warning("Background flood startup sync finished with 0 comunas")
+            except Exception:
+                logger.exception("Background flood startup sync failed")
+
+        flood_task = asyncio.create_task(_startup_flood_sync())
+        logger.info("Flood sync scheduled in background (non-blocking startup)")
+
     yield
+
+    if flood_task and not flood_task.done():
+        flood_task.cancel()
+        try:
+            await flood_task
+        except asyncio.CancelledError:
+            pass
 
     shutdown_scheduler()
 

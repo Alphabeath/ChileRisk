@@ -344,6 +344,60 @@
   }
 }
 
+/* Modo Emergencia — marco de bordes con fade + pulse */
+.emergency-page-frame {
+  --emergency-frame-color: rgba(218, 41, 28, 0.55);
+  animation: emergency-frame-pulse 2.2s ease-in-out infinite;
+}
+
+.emergency-page-frame--naranja {
+  --emergency-frame-color: rgba(251, 146, 60, 0.5);
+}
+
+.emergency-page-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--emergency-frame-color),
+      transparent 72px
+    ),
+    linear-gradient(to top, var(--emergency-frame-color), transparent 72px),
+    linear-gradient(to right, var(--emergency-frame-color), transparent 64px),
+    linear-gradient(to left, var(--emergency-frame-color), transparent 64px);
+  background-repeat: no-repeat;
+  background-size:
+    100% 72px,
+    100% 72px,
+    64px 100%,
+    64px 100%;
+  background-position:
+    top,
+    bottom,
+    left,
+    right;
+}
+
+@keyframes emergency-frame-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emergency-page-frame {
+    animation: none;
+    opacity: 0.75;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;

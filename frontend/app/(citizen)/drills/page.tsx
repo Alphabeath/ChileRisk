@@ -14,7 +14,6 @@ import {
   SimulacrosPageHero,
   SimulacrosTypesSection,
 } from "@/components/preparation/simulacros"
-import { PreparationBreadcrumb } from "@/components/preparation/preparation-breadcrumb"
 import { PreparationContextBanner } from "@/components/preparation/preparation-context-banner"
 import { queryKeys } from "@/lib/queries"
 import {
@@ -94,13 +93,6 @@ export default function DrillsPage() {
   return (
     <div className={PREPARATION_PAGE_SHELL_CLASS}>
       <div className={cn(PREPARATION_PAGE_INNER_CLASS, "pb-8")}>
-        <PreparationBreadcrumb
-          items={[
-            { label: "Preparación", href: "/preparation" },
-            { label: "Simulacros" },
-          ]}
-        />
-
         <SimulacrosPageHero upcomingTotal={upcomingTotal} />
 
         <SimulacrosNextDrillPanel next={nextDrill} />

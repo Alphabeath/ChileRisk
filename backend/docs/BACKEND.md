@@ -122,6 +122,8 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `RISK_REFRESH_MINUTES` | 15 | Recompute `risk_scores` |
 | `USE_REAL_CSN` | true | Scraper sismologia.cl (cuando false: sin eventos sísmicos) |
 | `USE_REAL_METEO` | true | Open-Meteo por comuna (cuando false: sin actualizaciones de clima) |
+| `USE_REAL_FLOOD` | true | Open-Meteo Flood → `inundacion_score`. En **startup** corre en background (no bloquea `/health`); ante 429 aborta el lote y reintenta el job periódico |
+| `FLOOD_REFRESH_MINUTES` | 360 | Intervalo sync inundación (GloFAS) |
 | `USE_REAL_SENAPRED` | true | Sync GraphQL SERNAPRED (cuando false: sin alertas/eventos oficiales) |
 | `SENAPRED_REFRESH_MINUTES` | 10 | Intervalo sync alertas |
 | `SENAPRED_ALERT_BASE_URL` | https://senapred.cl/alerta/ | Link alertas |
@@ -154,6 +156,11 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `RESEND_API_KEY` | — | Email recuperación contraseña |
 | `POSTGRES_PASSWORD` | chilerisk (solo compose) | Password DB en Docker/Dokploy; no uses el default en VPS |
 | `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |
+| `SEED_DEMO_USER` | true | Crea/actualiza cuenta demo al startup (hackathon) |
+| `DEMO_USER_EMAIL` | demo@chilerisk.cl | Email de la cuenta demo |
+| `DEMO_USER_PASSWORD` | ChileRisk2026! | Contraseña demo (se re-hashea en cada boot) |
+| `DEMO_USER_NAME` | Demo Hackathon | Nombre mostrado |
+| `DEMO_USER_HOME_COMUNA` | 4102 | Comuna de hogar (Coquimbo) |
 | `DEEPSEEK_API_KEY` | — | API key DeepSeek (asistente; nunca en FE) |
 | `DEEPSEEK_BASE_URL` | https://api.deepseek.com | OpenAI-compatible base |
 | `DEEPSEEK_MODEL` | deepseek-v4-flash | Modelo default del agente |

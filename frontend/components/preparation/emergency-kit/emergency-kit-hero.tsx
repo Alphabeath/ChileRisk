@@ -1,6 +1,5 @@
 import {
   CitizenPageHero,
-  HeroEyebrow,
   HeroFooterCell,
   HeroFooterIcon,
   HeroStatBox,
@@ -31,11 +30,6 @@ export function EmergencyKitHero() {
           strokeWidth={1}
           aria-hidden
         />
-      }
-      eyebrow={
-        <HeroEyebrow className="border-blue-500/30 bg-blue-500/10 text-blue-200/90">
-          Guía educativa
-        </HeroEyebrow>
       }
       title="Kit de emergencia"
       description="Recursos para las primeras 72 horas tras una emergencia, cuando los servicios básicos pueden estar interrumpidos."

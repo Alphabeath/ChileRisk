@@ -226,6 +226,21 @@ Cross-flow banners (kit ↔ plan, simulacros ↔ plan): `PreparationContextBanne
 
 Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky footer with prev/next; hide footer on input focus when needed. From `lg` up: equal-width step tabs (all visible, titles truncate) + single global progress bar. Desktop step row is not sticky so it does not cover the step title.
 
+### 5.6 Modo Emergencia
+
+When `useEmergencyMode` detects alerta naranja/roja for the user’s comuna, `EmergencyModeHost` mounts:
+
+1. **`EmergencyPageFrame`** (`z-30`, `pointer-events-none`): viewport edge tint via CSS gradients (fade inward ~64–72px) + opacity pulse (`.emergency-page-frame` in `globals.css`). Roja = red; naranja = orange. Static (no pulse) under `prefers-reduced-motion`.
+2. **`EmergencyBanner`** (`z-40`, under navbar):
+   - Title: `Alerta {nivel} — {hazard} en {comuna}`
+   - Body: `getActiveAlertMainText(alert)` (what the alert is about); optional truncated `content`/`risk_detail`
+   - CTAs: ¿Qué hago? / Evacuar / Compartir / dismiss
+   - Colors: `bg-red-950/90` or `bg-orange-950/90` + pulse; align with `ALERT_LEVEL_META`
+
+Do **not** change global `CITIZEN_NAVBAR_CLEARANCE_PX` when the banner is absent.
+
+Guide / share use existing `Drawer` (vaul) + glass panel tokens.
+
 ---
 
 ## 6. Z-index stack
@@ -238,6 +253,9 @@ Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky foo
 | Map navigation control (zoom/compass) | `z-20` (same glass stack) |
 | Map mobile bottom sheet | `z-70` (portal) |
 | Citizen navbar | `z-50` |
+| Emergency banner (Modo Emergencia) | `z-40` (bajo navbar, sobre contenido) |
+| Emergency page frame (bordes) | `z-30` (`pointer-events-none`) |
+| Drawers (vaul emergency / sheets) | `z-50`–`z-60` |
 
 Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable panels: `useDraggablePanel` only. Map zoom/compass: `MapNavigationControl` (React glass — not native MapLibre `NavigationControl`).
 
@@ -254,14 +272,12 @@ Shared shell for citizen content pages (navbar routes except full-bleed maps):
 ```tsx
 import {
   CitizenPageHero,
-  HeroEyebrow,
   HeroStatBox,
 } from "@/components/layout/citizen-page-hero"
 
 <CitizenPageHero
   gradientClass="bg-gradient-to-br from-[var(--primary-chile)]/55 …"
   watermark={<Icon className="absolute …" />}
-  eyebrow={<HeroEyebrow>…</HeroEyebrow>}
   title="…"
   description="…"
   stats={<dl className="grid …"><HeroStatBox … /></dl>}
@@ -271,6 +287,7 @@ import {
 
 - Shell: `PREPARATION_HERO_SHELL_CLASS` (no glass/blur).
 - Title row uses a shared `min-h` so catalog heroes align across routes.
+- No category/eyebrow chip above the title — title starts the leading column.
 - Variable content (e.g. next-drill countdown) lives **under** the hero, not inside it.
 
 Reference: `components/layout/citizen-page-hero.tsx`; composers in `preparation-page-hero`, `disasters-page-hero`, `simulacros-page-hero`, `emergency-kit-hero`, `disaster-detail-hero`, `dashboard-page-hero` (home `/dashboard`).
@@ -384,4 +401,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-26 — `/dashboard` briefing (strip hero + rail sticky plan/IA); MapNavigationControl glass.
+**Last updated:** 2026-07-26 — Emergency page frame + banner copy; Mi comuna embebida en `/dashboard`.

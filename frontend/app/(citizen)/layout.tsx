@@ -1,4 +1,5 @@
 import { CitizenNavbar } from "@/components/layout/citizen-navbar"
+import { EmergencyModeHost } from "@/components/emergency/emergency-mode-host"
 import { GlobePageBackground } from "@/components/globe/globe-page-background"
 import { MicaLightProvider } from "@/components/mica-light-provider"
 
@@ -12,6 +13,7 @@ export default function CitizenLayout({
       <MicaLightProvider />
       <GlobePageBackground />
       <CitizenNavbar />
+      <EmergencyModeHost />
       <main className="relative z-10 flex-1">{children}</main>
     </div>
   )

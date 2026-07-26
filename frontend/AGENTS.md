@@ -46,7 +46,7 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 | `/` | Landing + globo (pública) |
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Auth (públicas) |
 | `/monitor` | Monitor + `MapOverlays` (protegida) |
-| `/dashboard` | Inicio / home ciudadano (resumen del día) |
+| `/dashboard` | Inicio / home ciudadano (incluye tarjeta Mi comuna hoy) |
 | `/preparation` | Preparación + dashboard Plan Familia |
 | `/preparation/emergency-kit` | Guía educativa del Kit (conectada bidireccionalmente al step 7) |
 | `/preparation/family-plan/step/[n]` | Wizard Plan Familia (8 pasos) |
@@ -138,4 +138,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-07-26*
+*Last updated: 2026-07-26 — Mi comuna en dashboard + Modo Emergencia*
