@@ -112,7 +112,7 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | Variable | Default (típico) | Descripción |
 |----------|------------------|-------------|
 | `DATABASE_URL` | sqlite dev / postgres en compose | SQLAlchemy async |
-| `BACKEND_CORS_ORIGINS` | localhost:3000,3001 | JSON array |
+| `BACKEND_CORS_ORIGINS` | localhost:3000,3001 | JSON array. Prod/Dokploy: `["https://chilerisk.cl","https://www.chilerisk.cl"]` (vía env en compose) |
 | `ENABLE_SCHEDULER` | true | Jobs en background |
 | `RISK_REFRESH_MINUTES` | 15 | Recompute `risk_scores` |
 | `USE_REAL_CSN` | true | Scraper sismologia.cl (cuando false: sin eventos sísmicos) |
@@ -145,8 +145,9 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
 | `CACHE_METEO_TTL_SECONDS` | 21600 | Cache meteo |
 | `AUTH_SECRET` | (requerido prod, ≥32 bytes) | Mismo valor que Auth.js; valida `Authorization: Bearer`. Dokploy: `openssl rand -base64 48` |
-| `AUTH_URL` | http://localhost:3000 | Base para enlaces de reset |
+| `AUTH_URL` | http://localhost:3000 | Base para enlaces de reset. Prod: `https://chilerisk.cl` |
 | `RESEND_API_KEY` | — | Email recuperación contraseña |
+| `POSTGRES_PASSWORD` | chilerisk (solo compose) | Password DB en Docker/Dokploy; no uses el default en VPS |
 | `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |
 | `DEEPSEEK_API_KEY` | — | API key DeepSeek (asistente; nunca en FE) |
 | `DEEPSEEK_BASE_URL` | https://api.deepseek.com | OpenAI-compatible base |

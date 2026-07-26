@@ -61,25 +61,28 @@ Variables documented in [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 | Service | Port | Notas |
 |---------|------|-------|
 | frontend | 3000 | Healthcheck `127.0.0.1` (Alpine/IPv4) |
-| backend | 8000 | Healthcheck `127.0.0.1` |
-| db | 5434 (host `127.0.0.1` only) | No exponer a Internet |
-| adminer | 8080 | Solo profile `tools` (local); **no** en Dokploy/prod |
+| backend | 8000 (host `127.0.0.1`) | Healthcheck `127.0.0.1`; no público |
+| db | 5434 (host `127.0.0.1`) | `POSTGRES_*` vía env; no Internet |
+| adminer | 8080 (host `127.0.0.1`) | Solo profile `tools`; **no** en Dokploy |
 
-`make up` = `docker compose --profile tools up --build` (incluye Adminer). Frontend imagen: Next **standalone** + **bun**. Dockerfiles incluyen `HEALTHCHECK` (deploy Dockerfile-only en Dokploy).
+`make up` = `docker compose --profile tools up --build` (incluye Adminer). Frontend imagen: Next **standalone** + **bun**. Dockerfiles incluyen `HEALTHCHECK`. Plantilla env: [`.env.example`](../.env.example).
 
-### Dokploy (VPS)
+### Dokploy (VPS) — `chilerisk.cl`
 
-App tipo **Docker Compose** apuntando a este repo/`docker-compose.yml`:
+App tipo **Docker Compose** → este repo / `docker-compose.yml`:
 
-1. **No** actives profile `tools` → Adminer no arranca ni abre el puerto 8080.
-2. Env obligatorias (mismo valor FE+BE donde aplique):
+1. **DNS:** `A`/`AAAA` de `chilerisk.cl` (+ `www` si aplica) → IP del VPS.
+2. **Domains (Dokploy):** servicio **`frontend`**, puerto **3000**, HTTPS/Let’s Encrypt. El FE proxya la API (`/api/backend` → `backend:8000` en red Docker); no hace falta dominio público al backend.
+3. **No** actives profile `tools` (sin Adminer).
+4. **Environment** (pegar desde `.env.example` sección prod; mismo `AUTH_SECRET` FE+BE):
    - `AUTH_SECRET` ≥32 bytes (`openssl rand -base64 48`)
-   - `AUTH_URL` = URL pública del frontend (https://…)
-   - `BACKEND_CORS_ORIGINS` = JSON con el origen del frontend (ej. `["https://tudominio.cl"]`)
-   - OAuth/email si aplica: `GOOGLE_*`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM`
-3. Dominios Traefik/Dokploy: frontend → servicio `frontend:3000`; API pública solo si la necesitas en `backend:8000` (el FE ya habla con `backend` por red interna via `BACKEND_INTERNAL_URL`).
-4. Health: probes usan IPv4 (`127.0.0.1`). Backend `start_period: 180s` — el cold start sincroniza fuentes antes de escuchar. Si el FE queda `unhealthy` con app OK, revisa `localhost`→`::1`.
-5. Postgres: volumen `pgdata`; no publiques `5432`/`5434` fuera del host.
+   - `AUTH_URL=https://chilerisk.cl`
+   - `BACKEND_CORS_ORIGINS=["https://chilerisk.cl","https://www.chilerisk.cl"]`
+   - `POSTGRES_PASSWORD` fuerte (y `POSTGRES_USER` / `POSTGRES_DB` si los cambias)
+   - Opcional: `GOOGLE_*`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM=noreply@chilerisk.cl`, `DEEPSEEK_API_KEY`
+5. **OAuth Google:** redirect `https://chilerisk.cl/api/auth/callback/google`.
+6. **Health:** IPv4 `127.0.0.1`; backend `start_period: 180s` (cold start con syncs).
+7. **Volumen** `pgdata` persistente; no publiques Postgres fuera del host.
 
 ---
 
