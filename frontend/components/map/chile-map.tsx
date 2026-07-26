@@ -17,7 +17,10 @@ import {
   type RegionProperties,
   type ComunaProperties,
 } from "./map-config"
-import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
+import {
+  getMapFitBoundsPadding,
+  getMapPopupOptions,
+} from "./map-popup-options"
 import { MapNavigationControl } from "./map-navigation-control"
 import {
   createPopupContent,
@@ -522,7 +525,7 @@ export function ChileMap() {
       popupDestroyRef.current = destroy
       popupRef.current = addPopupToOverlay(
         map,
-        new maplibregl.Popup(MAP_POPUP_OPTIONS)
+        new maplibregl.Popup(getMapPopupOptions())
           .setLngLat(e.lngLat)
           .setDOMContent(element)
       )
@@ -589,7 +592,7 @@ export function ChileMap() {
       const map = mapRef.current
       popupRef.current = addPopupToOverlay(
         map,
-        new maplibregl.Popup(MAP_POPUP_OPTIONS)
+        new maplibregl.Popup(getMapPopupOptions())
           .setLngLat(e.lngLat)
           .setDOMContent(element)
       )
@@ -660,7 +663,10 @@ export function ChileMap() {
       container,
       style: MAP_STYLE,
       bounds: CHILE_BOUNDS,
-      fitBoundsOptions: { padding: MAP_FIT_BOUNDS_PADDING, maxZoom: 5 },
+      fitBoundsOptions: {
+        padding: getMapFitBoundsPadding(),
+        maxZoom: 5,
+      },
       maxBounds: [-120, -60, -30, -10],
       minZoom: 3,
       maxZoom: 12,
@@ -683,6 +689,12 @@ export function ChileMap() {
     map.on("load", async () => {
       try {
         if (mapRef.current) mapRef.current.resize()
+        // Re-fit after real container size — desktop L/R padding breaks mobile centering.
+        map.fitBounds(CHILE_BOUNDS, {
+          padding: getMapFitBoundsPadding(),
+          maxZoom: 5,
+          duration: 0,
+        })
         hideForeignLabels(map)
         mapReadyRef.current = true
         setMapLoaded(true)
@@ -941,7 +953,7 @@ export function ChileMap() {
 
           dismissAllPopups()
 
-          const popup = new maplibregl.Popup(MAP_POPUP_OPTIONS)
+          const popup = new maplibregl.Popup(getMapPopupOptions())
           const dismissPopup = () => popup.remove()
           const { element, destroy } = createPopupContent(
             <SeismicEventPopupContent event={event} onClose={dismissPopup} />

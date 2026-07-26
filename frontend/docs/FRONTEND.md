@@ -135,6 +135,8 @@ Bordes siempre blancos (`#ffffff`) — no codifican severidad.
 
 Sin cambios de rol: constantes MapLibre; popups con `createPopupContent()` + glass `.cr-popup` en `globals.css`. Sección sísmica usa `popup-seismic-section.tsx` y mensajes según fecha (`formatSeismicEmptyForDate`).
 
+**Vista inicial:** `getMapFitBoundsPadding()` / `getMapPopupOptions()` en `map-popup-options.ts` — desktop reserva paneles (~296px L/R); móvil (`≤767px`) padding simétrico para centrar Chile y dejar hueco al bottom sheet.
+
 ---
 
 ## Layout helpers
@@ -333,7 +335,7 @@ Banner reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`.
 Sin ruta propia. La tarjeta vive en `/dashboard` vía `DashboardComunaCard`.
 
 - Hook: `hooks/use-comuna-today.ts` — hogar → GPS; agrega risk + aire + alertas de comuna + simulacro **solo si región/comuna aplica** + sismo
-- UI: `components/comuna-today/comuna-today-card.tsx` (glass), `comuna-today-share-bar.tsx` (Web Share + PNG vía `html-to-image`)
+- UI: `components/comuna-today/comuna-today-card.tsx` (glass), `comuna-today-share-bar.tsx` (acciones glass+mica; Compartir genera PNG y usa Web Share `files`, fallback descarga)
 - Alertas en la card: lista desglosada (máx. 5) con badge nivel + fuente + texto principal
 
 ---

@@ -4,61 +4,101 @@ import { useState, type ReactNode, type RefObject } from "react"
 import { toPng } from "html-to-image"
 import { Download, Share2 } from "lucide-react"
 
+import {
+  GLASS_MICA_INTERACTIVE_CLASS,
+  GLASS_PANEL_CLASS,
+} from "@/lib/glass-panel"
 import { cn } from "@/lib/utils"
 
-export const COMUNA_ACTION_BTN_CLASS =
-  "inline-flex w-full items-center justify-center gap-1.5 border border-white/20 bg-white/[0.06] px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-white/80 transition-colors hover:bg-white/10 disabled:opacity-50"
+/** Opaque glass + mica — not see-through white/0.06. Content stays above specular. */
+export const COMUNA_ACTION_BTN_CLASS = cn(
+  GLASS_PANEL_CLASS,
+  GLASS_MICA_INTERACTIVE_CLASS,
+  "inline-flex w-full items-center justify-center gap-1.5 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-white/90 transition-colors hover:bg-black/70 hover:text-white disabled:opacity-50",
+)
 
 export type ComunaTodayShareBarProps = {
   codComuna: number
   comunaName: string
   cardRef: RefObject<HTMLDivElement | null>
-  summaryText?: string
   className?: string
   /** Extra actions in the same full-width grid (e.g. Ver mapa / Mi plan). */
   children?: ReactNode
+}
+
+function ActionLabel({ children }: { children: ReactNode }) {
+  return <span className="relative z-[1] inline-flex items-center gap-1.5">{children}</span>
 }
 
 export function ComunaTodayShareBar({
   codComuna,
   comunaName,
   cardRef,
-  summaryText,
   className,
   children,
 }: ComunaTodayShareBarProps) {
   const [exporting, setExporting] = useState(false)
+  const filename = `chilerisk-${codComuna}-hoy.png`
+
+  async function captureCard(): Promise<{ dataUrl: string; file: File } | null> {
+    const node = cardRef.current
+    if (!node) return null
+    const dataUrl = await toPng(node, {
+      cacheBust: true,
+      pixelRatio: 2,
+      backgroundColor: "#0a0e14",
+    })
+    const blob = await (await fetch(dataUrl)).blob()
+    const file = new File([blob], filename, { type: "image/png" })
+    return { dataUrl, file }
+  }
+
+  function triggerDownload(dataUrl: string) {
+    const a = document.createElement("a")
+    a.href = dataUrl
+    a.download = filename
+    a.click()
+  }
 
   async function webShare() {
-    const text =
-      summaryText ??
-      `${comunaName} hoy — ChileRisk. Revisa tu riesgo, aire y alertas.`
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: `${comunaName} · ChileRisk`,
-          text,
-        })
-      } catch {
-        /* cancelled */
+    setExporting(true)
+    try {
+      const exported = await captureCard()
+      if (!exported) return
+
+      const payload: ShareData = {
+        title: `${comunaName} · ChileRisk`,
+        files: [exported.file],
       }
+
+      if (
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare(payload)
+      ) {
+        try {
+          await navigator.share(payload)
+          return
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return
+        }
+      }
+
+      // Desktop / browsers without file Web Share → download the PNG
+      triggerDownload(exported.dataUrl)
+    } catch {
+      /* ignore export errors */
+    } finally {
+      setExporting(false)
     }
   }
 
   async function downloadPng() {
-    const node = cardRef.current
-    if (!node) return
     setExporting(true)
     try {
-      const dataUrl = await toPng(node, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: "#0a0e14",
-      })
-      const a = document.createElement("a")
-      a.href = dataUrl
-      a.download = `chilerisk-${codComuna}-hoy.png`
-      a.click()
+      const exported = await captureCard()
+      if (!exported) return
+      triggerDownload(exported.dataUrl)
     } catch {
       /* ignore export errors */
     } finally {
@@ -71,10 +111,13 @@ export function ComunaTodayShareBar({
       <button
         type="button"
         onClick={() => void webShare()}
+        disabled={exporting}
         className={COMUNA_ACTION_BTN_CLASS}
       >
-        <Share2 className="size-3.5 shrink-0" aria-hidden />
-        Compartir
+        <ActionLabel>
+          <Share2 className="size-3.5 shrink-0" aria-hidden />
+          {exporting ? "Generando…" : "Compartir"}
+        </ActionLabel>
       </button>
       <button
         type="button"
@@ -82,8 +125,10 @@ export function ComunaTodayShareBar({
         disabled={exporting}
         className={COMUNA_ACTION_BTN_CLASS}
       >
-        <Download className="size-3.5 shrink-0" aria-hidden />
-        {exporting ? "Generando…" : "Descargar PNG"}
+        <ActionLabel>
+          <Download className="size-3.5 shrink-0" aria-hidden />
+          {exporting ? "Generando…" : "Descargar PNG"}
+        </ActionLabel>
       </button>
       {children}
     </div>

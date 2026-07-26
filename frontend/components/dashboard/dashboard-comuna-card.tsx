@@ -79,19 +79,18 @@ export function DashboardComunaCard({ className }: { className?: string }) {
             codComuna={data.codComuna}
             comunaName={data.comunaName}
             cardRef={cardRef}
-            summaryText={`${data.comunaName}: riesgo ${data.risk?.severity ?? "—"} (${data.risk?.composite_score.toFixed(0) ?? "—"}/100). ${data.ctaCopy}`}
           >
             <Link href="/monitor" className={COMUNA_ACTION_BTN_CLASS}>
-              Ver mapa
+              <span className="relative z-[1]">Ver mapa</span>
             </Link>
             <Link
               href="/preparation"
               className={cn(
                 COMUNA_ACTION_BTN_CLASS,
-                "border-cyan-400/40 bg-cyan-500/10 text-cyan-200 hover:bg-cyan-500/20",
+                "border-cyan-400/45 bg-cyan-950/80 text-cyan-100 hover:bg-cyan-900/85 hover:text-cyan-50",
               )}
             >
-              Mi plan
+              <span className="relative z-[1]">Mi plan</span>
             </Link>
           </ComunaTodayShareBar>
         </>

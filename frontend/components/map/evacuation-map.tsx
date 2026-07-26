@@ -19,7 +19,10 @@ import {
   WILDFIRE_COLOR_4,
   WILDFIRE_COLOR_5,
 } from "./map-config"
-import { MAP_FIT_BOUNDS_PADDING, MAP_POPUP_OPTIONS } from "./map-popup-options"
+import {
+  getMapFitBoundsPadding,
+  getMapPopupOptions,
+} from "./map-popup-options"
 import { MapNavigationControl } from "./map-navigation-control"
 import {
   addPopupToOverlay,
@@ -149,7 +152,7 @@ export function EvacuationMap({
       popupDestroyRef.current = destroy
       popupRef.current = addPopupToOverlay(
         map,
-        new maplibregl.Popup(MAP_POPUP_OPTIONS)
+        new maplibregl.Popup(getMapPopupOptions())
           .setLngLat(lngLat)
           .setDOMContent(element),
       )
@@ -546,7 +549,10 @@ export function EvacuationMap({
       container,
       style: getStyle("satellite"),
       bounds: CHILE_BOUNDS,
-      fitBoundsOptions: { padding: MAP_FIT_BOUNDS_PADDING, maxZoom: 5 },
+      fitBoundsOptions: {
+        padding: getMapFitBoundsPadding(),
+        maxZoom: 5,
+      },
       maxBounds: [-120, -60, -30, -10],
       minZoom: 3,
       maxZoom: 18,
@@ -561,17 +567,26 @@ export function EvacuationMap({
     sizeObserverRef.current = ro
 
     let detachInteractions: (() => void) | undefined
+    let didInitialFit = false
 
     const onStyleReady = () => {
       void loadLayers(map).then(() => {
         detachInteractions?.()
         detachInteractions = attachMapInteractions(map)
       })
+      map.resize()
+      if (!didInitialFit) {
+        didInitialFit = true
+        map.fitBounds(CHILE_BOUNDS, {
+          padding: getMapFitBoundsPadding(),
+          maxZoom: 5,
+          duration: 0,
+        })
+      }
       if (locationOfferedMapRef.current !== map) {
         locationOfferedMapRef.current = map
         void offerUserLocation(map)
       }
-      map.resize()
     }
 
     map.on("style.load", onStyleReady)
