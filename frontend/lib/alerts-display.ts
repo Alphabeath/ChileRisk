@@ -293,6 +293,10 @@ export function alertAppliesToComuna(
 ): boolean {
   if (alert.region_code != null && alert.region_code !== codregion) return false
   if (alert.source === "chilerisk") {
+    const scope = alert.affected_scope ?? "region"
+    if (scope === "comuna") {
+      return (alert.comuna_codes ?? []).includes(codComuna)
+    }
     return alert.region_code == null || alert.region_code === codregion
   }
   const scope = alert.affected_scope ?? "unknown"

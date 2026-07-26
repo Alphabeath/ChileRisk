@@ -220,6 +220,7 @@ export interface RegionProperties {
   ola_calor_score?: number
   ola_frio_score?: number
   viento_score?: number
+  inundacion_score?: number
   avg_temperature_c?: number | null
   avg_wind_speed_kmh?: number | null
 }
@@ -237,6 +238,7 @@ export interface ComunaProperties {
   ola_calor_score?: number
   ola_frio_score?: number
   viento_score?: number
+  inundacion_score?: number
   temperature_c?: number | null
   wind_speed_kmh?: number | null
   seismic_impact?: {

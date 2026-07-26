@@ -28,6 +28,7 @@ async def get_region_risk(codregion: int, db: AsyncSession = Depends(get_db)):
                 "ola_calor_score": s.ola_calor_score,
                 "ola_frio_score": s.ola_frio_score,
                 "viento_score": s.viento_score,
+                "inundacion_score": s.inundacion_score,
                 "composite_score": s.composite_score,
                 "dominant_hazard": s.dominant_hazard,
                 "severity": s.severity,

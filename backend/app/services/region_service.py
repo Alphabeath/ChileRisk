@@ -13,6 +13,7 @@ from app.models.region import Region
 from app.models.risk_score import RiskScore
 from app.services.risk_utils import compute_composite_and_dominant
 from app.services.risk_service import aggregate_region_scores, get_latest_risks_for_region
+from app.services.alert_evaluator import CLIMATE_SCORE_THRESHOLDS
 
 _national_cache = TTLCache(maxsize=1, ttl=settings.cache_ttl_seconds)
 _region_cache: TTLCache = TTLCache(maxsize=20, ttl=settings.cache_ttl_seconds)
@@ -83,6 +84,7 @@ async def get_region_aggregated_risk(
         "ola_calor_score": agg["ola_calor"],
         "ola_frio_score": agg["ola_frio"],
         "viento_score": agg["viento"],
+        "inundacion_score": agg["inundacion"],
         "composite_score": round(composite, 1),
         "dominant_hazard": dominant,
         "severity": "critico" if composite >= 75 else ("alto" if composite >= 55 else ("moderado" if composite >= 35 else "bajo")),
@@ -131,6 +133,32 @@ async def _build_region_alert_context(
     climate = await get_region_climate_avg(session, codregion)
     risk_computed_at = max(s.computed_at for s in scores)
 
+    # Comunas with elevated flood risk (for alert detail text)
+    flood_threshold = CLIMATE_SCORE_THRESHOLDS["moderado"]
+    high_flood = sorted(
+        [
+            (s.cod_comuna, s.inundacion_score)
+            for s in scores
+            if s.inundacion_score >= flood_threshold
+        ],
+        key=lambda x: x[1],
+        reverse=True,
+    )[:3]
+    flood_comunas: list[str] = []
+    flood_comuna_codes: list[int] = []
+    if high_flood:
+        cod_list = [c for c, _ in high_flood]
+        name_rows = (
+            await session.execute(
+                select(Comuna.cod_comuna, Comuna.name).where(
+                    Comuna.cod_comuna.in_(cod_list)
+                )
+            )
+        ).all()
+        name_map = {row[0]: row[1] for row in name_rows}
+        flood_comuna_codes = [c for c, _ in high_flood if c in name_map]
+        flood_comunas = [name_map[c] for c in flood_comuna_codes]
+
     return {
         "codregion": codregion,
         "name": name,
@@ -139,6 +167,9 @@ async def _build_region_alert_context(
         "ola_calor_score": agg["ola_calor"],
         "ola_frio_score": agg["ola_frio"],
         "viento_score": agg["viento"],
+        "inundacion_score": agg["inundacion"],
+        "flood_comunas": flood_comunas,
+        "flood_comuna_codes": flood_comuna_codes,
         "max_sismo_score": round(max(s.sismo_score for s in scores), 1),
         "composite_score": round(
             compute_composite_and_dominant(agg)[0],

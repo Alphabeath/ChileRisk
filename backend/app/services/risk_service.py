@@ -45,14 +45,15 @@ async def get_latest_risks_for_region(
 
 def aggregate_region_scores(scores: list[RiskScore]) -> dict[str, float]:
     if not scores:
-        return {h: 0.0 for h in ["sismo", "ola_calor", "ola_frio", "viento"]}
+        return {h: 0.0 for h in ["sismo", "ola_calor", "ola_frio", "viento", "inundacion"]}
 
-    hazards = ["sismo", "ola_calor", "ola_frio", "viento"]
+    hazards = ["sismo", "ola_calor", "ola_frio", "viento", "inundacion"]
     score_map = {
         "sismo": "sismo_score",
         "ola_calor": "ola_calor_score",
         "ola_frio": "ola_frio_score",
         "viento": "viento_score",
+        "inundacion": "inundacion_score",
     }
 
     total_weight = 0.0
@@ -123,6 +124,7 @@ async def recompute_all_scores(session: AsyncSession) -> int:
             "ola_calor": round(new_calor, 1),
             "ola_frio": round(new_frio, 1),
             "viento": round(new_viento, 1),
+            "inundacion": rs.inundacion_score,
         }
         composite, dominant = compute_composite_and_dominant(scores_dict)
         sev = severity_from_score(composite)

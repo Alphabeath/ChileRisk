@@ -189,6 +189,7 @@ async def update_climate_scores_from_real_data(session: AsyncSession) -> int:
             "ola_calor": calor,
             "ola_frio": frio,
             "viento": viento,
+            "inundacion": rs.inundacion_score,
         }
         composite, dominant = compute_composite_and_dominant(scores_dict)
         sev = severity_from_score(composite)

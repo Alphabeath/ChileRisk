@@ -114,6 +114,7 @@ async def get_comuna_risk(
         "ola_calor_score": score.ola_calor_score,
         "ola_frio_score": score.ola_frio_score,
         "viento_score": score.viento_score,
+        "inundacion_score": score.inundacion_score,
         "composite_score": score.composite_score,
         "dominant_hazard": score.dominant_hazard,
         "severity": score.severity,

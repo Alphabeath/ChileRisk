@@ -8,6 +8,7 @@ class HazardScores(BaseModel):
     ola_calor: float = Field(ge=0, le=100)
     ola_frio: float = Field(ge=0, le=100)
     viento: float = Field(ge=0, le=100)
+    inundacion: float = Field(ge=0, le=100)
 
 
 class ComunaRiskResponse(BaseModel):
@@ -18,6 +19,7 @@ class ComunaRiskResponse(BaseModel):
     ola_calor_score: float
     ola_frio_score: float
     viento_score: float
+    inundacion_score: float
     composite_score: float
     dominant_hazard: str
     severity: str
@@ -33,6 +35,7 @@ class RegionRiskResponse(BaseModel):
     ola_calor_score: float
     ola_frio_score: float
     viento_score: float
+    inundacion_score: float
     composite_score: float
     dominant_hazard: str
     severity: str

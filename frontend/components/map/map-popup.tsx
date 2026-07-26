@@ -11,6 +11,7 @@ import {
   ExternalLink,
   MapPin,
   Snowflake,
+  Waves,
   Thermometer,
   Wind,
   X,
@@ -42,6 +43,7 @@ const HAZARD_META: Record<string, { label: string; Icon: typeof Activity }> = {
   ola_calor: { label: "Calor", Icon: Thermometer },
   ola_frio: { label: "Frío", Icon: Snowflake },
   viento: { label: "Viento", Icon: Wind },
+  inundacion: { label: "Inundación", Icon: Waves },
 }
 
 const SEVERITY_META = {
@@ -461,6 +463,7 @@ function HazardScores({ properties }: { properties: RegionProperties | ComunaPro
     { key: "ola_calor_score" as const, meta: HAZARD_META.ola_calor },
     { key: "ola_frio_score" as const, meta: HAZARD_META.ola_frio },
     { key: "viento_score" as const, meta: HAZARD_META.viento },
+    { key: "inundacion_score" as const, meta: HAZARD_META.inundacion },
   ].filter((h) => properties[h.key] != null)
 
   if (hazards.length === 0) return null

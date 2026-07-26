@@ -201,6 +201,10 @@ async def compute_and_store_daily_scores(
                 ola_frio = 0.0
                 viento = 0.0
 
+        # Flood score comes from RiskScore (flood_service); ClimateReading has no flood data.
+        latest_rs = latest_map.get(cod)
+        inundacion = latest_rs.inundacion_score if latest_rs else 0.0
+
         # Day window impacts only — do not inherit drifted live RiskScore.sismo.
         sismo = float(sismo_map.get(cod, 0.0))
         if sismo > 0:
@@ -211,6 +215,7 @@ async def compute_and_store_daily_scores(
             "ola_calor": round(ola_calor, 1),
             "ola_frio": round(ola_frio, 1),
             "viento": round(viento, 1),
+            "inundacion": round(inundacion, 1),
         }
         composite, dominant = compute_composite_and_dominant(scores_dict)
         sev = severity_from_score(composite)
@@ -223,6 +228,7 @@ async def compute_and_store_daily_scores(
                 ola_calor_score=scores_dict["ola_calor"],
                 ola_frio_score=scores_dict["ola_frio"],
                 viento_score=scores_dict["viento"],
+                inundacion_score=scores_dict["inundacion"],
                 composite_score=composite,
                 dominant_hazard=dominant,
                 severity=sev,

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 AlertSeverity = Literal["moderado", "alto", "critico"]
-ClimateHazard = Literal["ola_calor", "ola_frio", "viento"]
+ClimateHazard = Literal["ola_calor", "ola_frio", "viento", "inundacion"]
 
 SEISMIC_MAGNITUDE_THRESHOLDS: dict[AlertSeverity, float] = {
     "moderado": 4.0,
@@ -106,6 +106,7 @@ def evaluate_region_hazards(
     ola_calor_score: float,
     ola_frio_score: float,
     viento_score: float,
+    inundacion_score: float = 0.0,
     max_intensity: float | None = None,
     max_magnitude: float | None = None,
 ) -> list[HazardAlertEvaluation]:
@@ -124,6 +125,7 @@ def evaluate_region_hazards(
         ("ola_calor", ola_calor_score),
         ("ola_frio", ola_frio_score),
         ("viento", viento_score),
+        ("inundacion", inundacion_score),
     ):
         climate = evaluate_climate_hazard(hazard, score)
         if climate:

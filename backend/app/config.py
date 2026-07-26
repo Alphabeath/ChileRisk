@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     csn_base_url: str = "https://www.sismologia.cl"
     csn_recent_path: str = "/"
     openmeteo_api_base: str = "https://api.open-meteo.com/v1"
+    use_real_flood: bool = True
+    flood_refresh_minutes: int = 360  # GloFAS updates daily; 6h is conservative
 
     use_real_senapred: bool = True
     senapred_refresh_minutes: int = 10

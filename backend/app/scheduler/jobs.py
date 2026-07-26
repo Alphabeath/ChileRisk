@@ -9,6 +9,7 @@ from app.database import async_session
 from app.services.risk_service import recompute_all_scores
 from app.services.csn_service import sync_recent_csn_events
 from app.services.openmeteo_service import update_climate_scores_from_real_data
+from app.services.flood_service import update_flood_scores
 from app.services.senapred_service import sync_senapred_alerts
 from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
 from app.services.airechile_service import sync_airechile, prune_old_airechile
@@ -266,6 +267,40 @@ async def _sync_sernageomin():
             logger.exception("Failed to persist sernageomin_sync sync run")
 
 
+async def _sync_flood():
+    if not settings.use_real_flood:
+        return
+    started = _utcnow()
+    try:
+        async with async_session() as session:
+            updated = await update_flood_scores(session)
+            status = "ok" if updated else "empty"
+            await record_sync_run(
+                session,
+                job_id="flood_sync",
+                started_at=started,
+                status=status,
+                items_written=updated,
+            )
+        if updated:
+            logger.info("Updated flood scores from Open-Meteo Flood API for %d comunas", updated)
+        else:
+            logger.warning("Flood sync finished with 0 comunas")
+    except Exception as e:
+        logger.exception("Flood sync failed: %s", e)
+        try:
+            async with async_session() as session:
+                await record_sync_run(
+                    session,
+                    job_id="flood_sync",
+                    started_at=started,
+                    status="error",
+                    error_text=str(e),
+                )
+        except Exception:
+            logger.exception("Failed to persist flood_sync sync run")
+
+
 def setup_scheduler():
     if not settings.enable_scheduler:
         logger.info("Scheduler disabled via settings")
@@ -332,6 +367,15 @@ def setup_scheduler():
             replace_existing=True,
         )
 
+    if settings.use_real_flood:
+        scheduler.add_job(
+            _sync_flood,
+            trigger=IntervalTrigger(minutes=settings.flood_refresh_minutes),
+            id="flood_sync",
+            name="Flood discharge sync",
+            replace_existing=True,
+        )
+
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
     if settings.use_real_csn:
@@ -356,6 +400,11 @@ def setup_scheduler():
         logger.info(
             "SERNAGEOMIN volcanic alerts sync enabled (every %d min)",
             settings.sernageomin_refresh_minutes,
+        )
+    if settings.use_real_flood:
+        logger.info(
+            "Flood discharge sync enabled (every %d min)",
+            settings.flood_refresh_minutes,
         )
 
 

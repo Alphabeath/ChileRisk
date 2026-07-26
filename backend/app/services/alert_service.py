@@ -30,6 +30,7 @@ HAZARD_LABELS: dict[str, str] = {
     "ola_calor": "Ola de calor",
     "ola_frio": "Ola de frío",
     "viento": "Viento",
+    "inundacion": "Inundación",
 }
 
 SEVERITY_TO_LEVEL: dict[str, AlertLevel] = {
@@ -136,6 +137,14 @@ def _hazard_risk_detail(
             return f"viento medio {float(wind):.1f} km/h"
         score = float(region.get("viento_score") or 0)
         return f"índice viento {score:.0f}/100"
+
+    if hazard == "inundacion":
+        score = float(region.get("inundacion_score") or 0)
+        flood_comunas = region.get("flood_comunas") or []
+        if flood_comunas:
+            comuna_str = ", ".join(flood_comunas)
+            return f"caudal elevado en {comuna_str} (índice {score:.0f}/100)"
+        return f"caudal fluvial elevado (índice {score:.0f}/100)"
 
     score = float(region.get("composite_score") or 0)
     return f"índice compuesto {score:.1f}/100"
@@ -256,6 +265,7 @@ async def _chilerisk_alerts_from_risk(
             ola_calor_score=float(r.get("ola_calor_score") or 0),
             ola_frio_score=float(r.get("ola_frio_score") or 0),
             viento_score=float(r.get("viento_score") or 0),
+            inundacion_score=float(r.get("inundacion_score") or 0),
             max_intensity=max_intensity,
             max_magnitude=max_magnitude,
         )
@@ -284,7 +294,14 @@ async def _chilerisk_alerts_from_risk(
             risk_detail = _hazard_risk_detail(evaluation, r, seismic)
             display_score = _hazard_score_for_display(r, evaluation)
 
-            title = f"Alerta por {hazard_label.lower()} de {risk_detail}"
+            if hazard == "inundacion":
+                flood_comunas = r.get("flood_comunas") or []
+                if flood_comunas:
+                    title = f"Alerta por caudal elevado en {', '.join(flood_comunas)}"
+                else:
+                    title = "Alerta por caudal elevado"
+            else:
+                title = f"Alerta por {hazard_label.lower()} de {risk_detail}"
 
             csn_url = seismic.get("detail_url") if seismic and hazard == "sismo" else None
 
@@ -302,8 +319,8 @@ async def _chilerisk_alerts_from_risk(
                     synced_at=issued_at,
                     region_code=codregion,
                     region_name=name,
-                    affected_scope="region",
-                    comuna_codes=[],
+                    affected_scope="comuna" if hazard == "inundacion" and r.get("flood_comuna_codes") else "region",
+                    comuna_codes=r.get("flood_comuna_codes", []) if hazard == "inundacion" else [],
                     is_monitor=False,
                     parent_id=None,
                     record_kind="alerta",
@@ -393,6 +410,9 @@ def _alert_applies_to_comuna(
     if alert.region_code is not None and alert.region_code != codregion:
         return False
     if alert.source == "chilerisk":
+        scope = alert.affected_scope or "region"
+        if scope == "comuna":
+            return cod_comuna in (alert.comuna_codes or [])
         return alert.region_code is None or alert.region_code == codregion
     scope = alert.affected_scope or "unknown"
     if scope == "region":

@@ -486,6 +486,7 @@ export function ChileMap() {
           ola_calor_score: risk.ola_calor_score,
           ola_frio_score: risk.ola_frio_score,
           viento_score: risk.viento_score,
+          inundacion_score: risk.inundacion_score,
           temperature_c: risk.temperature_c,
           wind_speed_kmh: risk.wind_speed_kmh,
           seismic_impact: risk.seismic_impact,

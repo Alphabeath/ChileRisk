@@ -18,6 +18,7 @@ class DailyRiskScore(Base):
     ola_calor_score: Mapped[float] = mapped_column(Float, default=0.0)
     ola_frio_score: Mapped[float] = mapped_column(Float, default=0.0)
     viento_score: Mapped[float] = mapped_column(Float, default=0.0)
+    inundacion_score: Mapped[float] = mapped_column(Float, default=0.0)
 
     composite_score: Mapped[float] = mapped_column(Float, default=0.0)
     dominant_hazard: Mapped[str] = mapped_column(String(20), default="sismo")

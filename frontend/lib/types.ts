@@ -32,6 +32,7 @@ export interface NationalRisk {
   ola_calor_score?: number
   ola_frio_score?: number
   viento_score?: number
+  inundacion_score?: number
   avg_temperature_c?: number | null
   avg_wind_speed_kmh?: number | null
 }
@@ -52,6 +53,7 @@ export interface RegionRisk {
     ola_calor_score: number
     ola_frio_score: number
     viento_score: number
+    inundacion_score: number
     temperature_c?: number | null
     wind_speed_kmh?: number | null
   }>
@@ -154,6 +156,7 @@ export interface ComunaRisk {
   ola_calor_score: number
   ola_frio_score: number
   viento_score: number
+  inundacion_score: number
   composite_score: number
   dominant_hazard: string
   severity: "bajo" | "moderado" | "alto" | "critico"

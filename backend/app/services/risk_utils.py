@@ -7,6 +7,7 @@ These are deterministic composite + severity functions used by real data paths
 
 HAZARD_WEIGHTS = {
     "sismo": 1.5,
+    "inundacion": 1.2,
     "ola_calor": 1.0,
     "viento": 0.8,
     "ola_frio": 0.6,

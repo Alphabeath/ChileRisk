@@ -17,6 +17,7 @@ JOB_IDS = (
     "meteo_update",
     "senapred_sync",
     "simulacros_sync",
+    "flood_sync",
 )
 
 

@@ -64,6 +64,17 @@ async def lifespan(app: FastAPI):
             if n_climate:
                 logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
 
+        if settings.use_real_flood:
+            from app.services.flood_service import update_flood_scores
+
+            try:
+                n_flood = await update_flood_scores(session)
+                if n_flood:
+                    logger.info("Updated flood scores for %d comunas at startup", n_flood)
+            except Exception as e:
+                await session.rollback()
+                logger.exception("Initial flood sync failed: %s", e)
+
         if settings.use_real_senapred:
             from app.services.senapred_service import sync_senapred_alerts
 

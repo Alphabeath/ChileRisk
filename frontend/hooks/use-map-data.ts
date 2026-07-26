@@ -31,6 +31,7 @@ function applyNationalRiskToRegions(
       f.properties.ola_calor_score = r.ola_calor_score
       f.properties.ola_frio_score = r.ola_frio_score
       f.properties.viento_score = r.viento_score
+      f.properties.inundacion_score = r.inundacion_score
       if (r.avg_temperature_c != null) f.properties.avg_temperature_c = r.avg_temperature_c
       if (r.avg_wind_speed_kmh != null) f.properties.avg_wind_speed_kmh = r.avg_wind_speed_kmh
     }
