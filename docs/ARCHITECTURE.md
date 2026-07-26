@@ -58,14 +58,28 @@ Variables documented in [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 
 `docker-compose.yml` en raíz:
 
-| Service | Port |
-|---------|------|
-| frontend | 3000 |
-| backend | 8000 |
-| db | 5434 (host) |
-| adminer | 8080 |
+| Service | Port | Notas |
+|---------|------|-------|
+| frontend | 3000 | Healthcheck `127.0.0.1` (Alpine/IPv4) |
+| backend | 8000 | Healthcheck `127.0.0.1` |
+| db | 5434 (host `127.0.0.1` only) | No exponer a Internet |
+| adminer | 8080 | Solo profile `tools` (local); **no** en Dokploy/prod |
 
-`make up` = build + run. Frontend imagen: Next **standalone** + **bun**.
+`make up` = `docker compose --profile tools up --build` (incluye Adminer). Frontend imagen: Next **standalone** + **bun**. Dockerfiles incluyen `HEALTHCHECK` (deploy Dockerfile-only en Dokploy).
+
+### Dokploy (VPS)
+
+App tipo **Docker Compose** apuntando a este repo/`docker-compose.yml`:
+
+1. **No** actives profile `tools` → Adminer no arranca ni abre el puerto 8080.
+2. Env obligatorias (mismo valor FE+BE donde aplique):
+   - `AUTH_SECRET` ≥32 bytes (`openssl rand -base64 48`)
+   - `AUTH_URL` = URL pública del frontend (https://…)
+   - `BACKEND_CORS_ORIGINS` = JSON con el origen del frontend (ej. `["https://tudominio.cl"]`)
+   - OAuth/email si aplica: `GOOGLE_*`, `RESEND_API_KEY`, `AUTH_EMAIL_FROM`
+3. Dominios Traefik/Dokploy: frontend → servicio `frontend:3000`; API pública solo si la necesitas en `backend:8000` (el FE ya habla con `backend` por red interna via `BACKEND_INTERNAL_URL`).
+4. Health: probes usan IPv4 (`127.0.0.1`). Backend `start_period: 180s` — el cold start sincroniza fuentes antes de escuchar. Si el FE queda `unhealthy` con app OK, revisa `localhost`→`::1`.
+5. Postgres: volumen `pgdata`; no publiques `5432`/`5434` fuera del host.
 
 ---
 
@@ -98,4 +112,4 @@ Nueva área (worker, etc.): mismo patrón + entrada en [README.md](./README.md) 
 
 ---
 
-*Last updated: 2026-07-24*
+*Last updated: 2026-07-25*

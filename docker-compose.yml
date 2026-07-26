@@ -4,7 +4,8 @@ services:
     ports:
       - "${FRONTEND_HOST_PORT:-3000}:3000"
     environment:
-      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-in-production}
+      # PyJWT requires ≥32 bytes HMAC; Dokploy/prod MUST set AUTH_SECRET in env.
+      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-generate-a-long-secret}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
@@ -14,7 +15,9 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      # Use 127.0.0.1 — Alpine/busybox wget resolves localhost→::1 but Next listens IPv4 only.
+      # Required for healthy status in Docker/Dokploy (Traefik/health probes).
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -29,7 +32,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://chilerisk:chilerisk@db:5432/chilerisk
       BACKEND_CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001"]'
-      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-in-production}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-generate-a-long-secret}
       AUTH_URL: ${AUTH_URL:-http://localhost:3000}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-noreply@chilerisk.local}
@@ -38,12 +41,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      # Python-based healthcheck (no extra packages needed in slim image)
-      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)"]
+      # 127.0.0.1 avoids IPv6 localhost mismatch on some hosts (Dokploy/VPS).
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status == 200 else 1)"]
       interval: 15s
       timeout: 8s
       retries: 6
-      start_period: 25s
+      # Cold start runs CSN/meteo/SERNAPRED/AireChile syncs before Uvicorn listens (~1–2 min on VPS).
+      start_period: 180s
 
   db:
     image: postgres:16-alpine
@@ -65,19 +69,15 @@ services:
       start_period: 10s
 
   # ============================================
-  # Adminer - Interfaz visual para la base de datos (desarrollo)
+  # Adminer — solo desarrollo local (profile tools)
   # ============================================
-  # Se levanta automáticamente con `docker compose up`
-  # Acceso: http://localhost:8080
-  #
-  # Conexión:
-  #   System: PostgreSQL
-  #   Server: db
-  #   Usuario: chilerisk
-  #   Password: chilerisk
-  #   Base de datos: chilerisk
+  # Local: `make up` / `docker compose --profile tools up`
+  # Dokploy/VPS: no activar profile tools (no exponer Adminer en prod).
+  # Acceso local: http://localhost:8080
+  #   System: PostgreSQL · Server: db · User/Pass/DB: chilerisk
   adminer:
     image: adminer
+    profiles: ["tools"]
     restart: unless-stopped
     ports:
       - "8080:8080"

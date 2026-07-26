@@ -144,7 +144,7 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: `backend/.env.example`
 | `OPENMETEO_API_BASE` | api.open-meteo.com | Clima |
 | `CACHE_TTL_SECONDS` | 300 | Cache general |
 | `CACHE_METEO_TTL_SECONDS` | 21600 | Cache meteo |
-| `AUTH_SECRET` | (requerido prod) | Mismo valor que Auth.js; valida `Authorization: Bearer` |
+| `AUTH_SECRET` | (requerido prod, ≥32 bytes) | Mismo valor que Auth.js; valida `Authorization: Bearer`. Dokploy: `openssl rand -base64 48` |
 | `AUTH_URL` | http://localhost:3000 | Base para enlaces de reset |
 | `RESEND_API_KEY` | — | Email recuperación contraseña |
 | `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |

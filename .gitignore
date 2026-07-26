@@ -1,7 +1,5 @@
 # ChileRisk root .gitignore
 
-# 
-TrueRisk/
 
 # Environment files (never commit real secrets or local config)
 .env

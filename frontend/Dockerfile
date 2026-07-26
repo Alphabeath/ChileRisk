@@ -47,5 +47,8 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Health check endpoint will be added at /api/health
+# 127.0.0.1: Alpine wget resolves localhost→::1; app binds IPv4 only (Dokploy/Dockerfile deploys).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget --spider -q http://127.0.0.1:3000/api/health || exit 1
+
 CMD ["bun", "server.js"]

@@ -36,17 +36,17 @@ help: ## Show this help
 
 # --- Full stack (Docker blessed path) ---
 
-up: ## docker compose up --build (all services)
-	docker compose up --build
+up: ## docker compose --profile tools up --build (incl. Adminer local)
+	docker compose --profile tools up --build
 
 down: ## docker compose down (keeps volumes unless -v)
-	docker compose down
+	docker compose --profile tools down
 
 down-v: ## docker compose down -v (wipes DB volume — destructive)
-	docker compose down -v
+	docker compose --profile tools down -v
 
 logs: ## Follow logs for all services
-	docker compose logs -f
+	docker compose --profile tools logs -f
 
 logs-backend: ## Follow backend logs only
 	docker compose logs -f backend
