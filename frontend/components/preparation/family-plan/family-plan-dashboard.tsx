@@ -94,6 +94,7 @@ export function FamilyPlanDashboard() {
           GLASS_PANEL_CLASS,
           "flex items-center justify-center gap-3 p-8",
         )}
+        data-tour="prep-family-plan"
       >
         <Loader2 className="size-5 animate-spin text-white/50" aria-hidden />
         <span className="text-sm text-white/60">Cargando tu plan...</span>
@@ -103,7 +104,10 @@ export function FamilyPlanDashboard() {
 
   if (isError) {
     return (
-      <div className={cn(GLASS_PANEL_CLASS, "p-6 text-sm text-white/70")}>
+      <div
+        className={cn(GLASS_PANEL_CLASS, "p-6 text-sm text-white/70")}
+        data-tour="prep-family-plan"
+      >
         No se pudo cargar el plan familiar.
       </div>
     )
@@ -120,7 +124,11 @@ export function FamilyPlanDashboard() {
     : "Sin guardar aún"
 
   return (
-    <section aria-labelledby="family-plan-dashboard-heading" className="flex flex-col gap-3">
+    <section
+      aria-labelledby="family-plan-dashboard-heading"
+      className="flex flex-col gap-3"
+      data-tour="prep-family-plan"
+    >
       <CompletionBanner
         pct={pct}
         completedCount={completed.length}

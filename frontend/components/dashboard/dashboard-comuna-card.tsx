@@ -25,7 +25,10 @@ export function DashboardComunaCard({ className }: { className?: string }) {
   const cardRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div
+      className={cn("flex flex-col gap-3", className)}
+      data-tour="dashboard-comuna"
+    >
       {isLoading ? (
         <div
           className="h-[28rem] animate-pulse border border-white/10 bg-white/[0.04]"

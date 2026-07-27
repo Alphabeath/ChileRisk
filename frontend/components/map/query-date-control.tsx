@@ -137,7 +137,12 @@ function QueryDateControlEmbedded() {
   const canRetreat = selectedDate > minDate
 
   return (
-    <div className="flex w-full flex-col" role="group" aria-label="Fecha de consulta">
+    <div
+      className="flex w-full flex-col"
+      role="group"
+      aria-label="Fecha de consulta"
+      data-tour="monitor-date"
+    >
       {/* Title omitted — tab + status strip already show Fecha / date. */}
       <QueryDateBody
         selectedDate={selectedDate}
@@ -184,6 +189,7 @@ function QueryDateControlOverlay({ flow }: { flow: boolean }) {
       style={style}
       role="group"
       aria-label="Fecha de consulta"
+      data-tour="monitor-date"
     >
       <div
         className={cn(

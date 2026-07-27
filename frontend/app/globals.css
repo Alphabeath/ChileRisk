@@ -826,3 +826,185 @@
   }
 }
 
+/* ── Guided tour (driver.js) — glass + mica dark ─────────────────────── */
+.driver-popover.chilerisk-tour-popover {
+  /* Match glass panels; keep overflow visible so the arrow isn't clipped. */
+  overflow: visible;
+  background-color: rgb(8 10 14 / 0.92);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 1px rgb(0 50 160 / 0.35),
+    0 24px 56px rgb(0 0 0 / 0.7),
+    0 0 40px rgb(0 50 160 / 0.18);
+  color: rgb(255 255 255 / 0.92);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  max-width: min(340px, calc(100vw - 2rem));
+  min-width: min(260px, calc(100vw - 2rem));
+  padding: 1.15rem 1rem 0.95rem;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Centered page intros (no spotlight) — slightly larger, easier to spot on map. */
+.driver-popover.chilerisk-tour-popover.driver-popover-side-over {
+  max-width: min(380px, calc(100vw - 2rem));
+  box-shadow:
+    0 0 0 1px rgb(0 50 160 / 0.5),
+    0 28px 64px rgb(0 0 0 / 0.75),
+    0 0 56px rgb(0 50 160 / 0.28);
+}
+
+/* Mica specular on the tour card (override overflow:hidden from .glass-mica). */
+.driver-popover.chilerisk-tour-popover.glass-mica {
+  overflow: visible;
+}
+
+.driver-popover.chilerisk-tour-popover.glass-mica::after {
+  opacity: 0.55;
+  border-radius: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+.driver-popover.chilerisk-tour-popover.glass-mica:hover::after,
+.driver-popover.chilerisk-tour-popover.glass-mica.interactive-mica:hover::after {
+  opacity: 0.78;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-title,
+.driver-popover.chilerisk-tour-popover .driver-popover-description,
+.driver-popover.chilerisk-tour-popover .driver-popover-footer {
+  position: relative;
+  z-index: 1;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-title {
+  color: rgb(255 255 255 / 0.96);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  /* Leave clear lane for the absolute close control. */
+  padding-right: 2.25rem;
+  line-height: 1.35;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-description {
+  color: rgb(255 255 255 / 0.72);
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 0.35rem;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-progress-text {
+  color: rgb(255 255 255 / 0.45);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Keep absolute positioning — do NOT set position:relative (overlaps title). */
+.driver-popover.chilerisk-tour-popover .driver-popover-close-btn {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.35rem;
+  z-index: 2;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(255 255 255 / 0.5);
+  line-height: 1;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-close-btn:hover,
+.driver-popover.chilerisk-tour-popover .driver-popover-close-btn:focus {
+  color: rgb(255 255 255 / 0.95);
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-footer-btn {
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 0;
+  background-color: rgb(255 255 255 / 0.06);
+  color: rgb(255 255 255 / 0.85);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-footer-btn:hover,
+.driver-popover.chilerisk-tour-popover .driver-popover-footer-btn:focus {
+  background-color: rgb(255 255 255 / 0.12);
+  color: #fff;
+}
+
+.driver-popover.chilerisk-tour-popover
+  .driver-popover-navigation-btns
+  button:last-child:not(.driver-popover-btn-disabled) {
+  background-color: color-mix(in oklab, var(--primary-chile) 75%, black);
+  border-color: color-mix(in oklab, var(--primary-chile) 55%, white);
+  color: #fff;
+}
+
+.driver-popover.chilerisk-tour-popover
+  .driver-popover-navigation-btns
+  button:last-child:not(.driver-popover-btn-disabled):hover,
+.driver-popover.chilerisk-tour-popover
+  .driver-popover-navigation-btns
+  button:last-child:not(.driver-popover-btn-disabled):focus {
+  background-color: var(--primary-chile);
+}
+
+/*
+ * Arrow: driver uses border triangles. Default white fill is invisible on our
+ * dark overlay once we restyle the card — paint an opaque glass fill + edge.
+ */
+.driver-popover.chilerisk-tour-popover .driver-popover-arrow {
+  border: 9px solid transparent;
+  filter: drop-shadow(0 0 0.5px rgb(255 255 255 / 0.35));
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-arrow-side-left {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-right-color: transparent;
+  border-left-color: rgb(14 16 20);
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-arrow-side-right {
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  border-right-color: rgb(14 16 20);
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-arrow-side-top {
+  border-bottom-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-top-color: rgb(14 16 20);
+}
+
+.driver-popover.chilerisk-tour-popover .driver-popover-arrow-side-bottom {
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: rgb(14 16 20);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-fade .driver-overlay,
+  .driver-fade .driver-popover {
+    animation: none !important;
+  }
+
+  .driver-popover.chilerisk-tour-popover.glass-mica::after {
+    display: none;
+  }
+}
+

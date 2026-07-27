@@ -44,6 +44,7 @@ export function PreparationPageHero({
       watermark={<ChileWatermark />}
       title="Preparación"
       description="Construye tu Plan Familia Preparada, completa tu kit y sigue los simulacros oficiales para anticiparte ante desastres en Chile."
+      tourId="prep-hero"
       stats={
         <dl className="grid shrink-0 grid-cols-2 gap-2 sm:gap-3 lg:min-w-[16rem]">
           <HeroStatBox label="Pasos del plan" value={planSteps} />

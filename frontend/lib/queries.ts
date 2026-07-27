@@ -24,6 +24,7 @@ export const queryKeys = {
   userProfile: () => ["userProfile"] as const,
   nearestComuna: (lat: number, lon: number) =>
     ["nearestComuna", lat, lon] as const,
+  comunaCatalog: () => ["comunaCatalog"] as const,
   chatThreads: () => ["chatThreads"] as const,
   chatThread: (id: string) => ["chatThread", id] as const,
 }

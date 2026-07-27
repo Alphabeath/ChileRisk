@@ -14,6 +14,8 @@ export interface DashboardSectionProps {
   href: string
   moreLabel?: string
   className?: string
+  /** Optional guided-tour anchor (`data-tour`). */
+  tourId?: string
   children: ReactNode
 }
 
@@ -25,6 +27,7 @@ export function DashboardSection({
   href,
   moreLabel = "Ver más →",
   className,
+  tourId,
   children,
 }: DashboardSectionProps) {
   return (
@@ -35,6 +38,7 @@ export function DashboardSection({
         "flex flex-col p-5 sm:p-6",
         className,
       )}
+      data-tour={tourId}
     >
       <header className="mb-4 flex items-start justify-between gap-3">
         <div className="min-w-0">

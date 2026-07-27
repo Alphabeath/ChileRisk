@@ -300,6 +300,7 @@ function RiskLegendPanelEmbedded() {
       className="flex w-full max-h-[min(60dvh,480px)] flex-col overflow-hidden"
       role="group"
       aria-label="Vistas de mapa (Riesgo / Alertas / Aire)"
+      data-tour="monitor-vistas"
     >
       <div className="min-h-0 flex-1 overflow-y-auto">
         <RiskLegendTabs alertsMaxHeightClass="max-h-[min(50dvh,400px)]" />
@@ -338,6 +339,7 @@ function RiskLegendPanelOverlay({ flow }: { flow: boolean }) {
       style={style}
       role="group"
       aria-label="Vistas de mapa (Riesgo / Alertas / Aire)"
+      data-tour="monitor-vistas"
     >
       <div
         className={cn(

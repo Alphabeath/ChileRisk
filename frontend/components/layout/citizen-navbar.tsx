@@ -14,6 +14,7 @@ import {
 import {
   Backpack,
   CalendarCheck2,
+  CircleHelp,
   Home,
   MessageCircle,
   Monitor,
@@ -22,18 +23,55 @@ import {
   UserCircle,
 } from "lucide-react"
 import { CITIZEN_NAVBAR_LINK_CLASS, CITIZEN_NAVBAR_SHELL_CLASS } from "@/lib/glass-panel"
+import { dispatchTourStart } from "@/lib/tour/tour-steps"
 import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio", icon: Home, section: false },
-  { href: "/monitor", label: "Monitor", icon: Monitor, section: false },
-  { href: "/preparation", label: "Preparación", icon: Backpack, section: false },
-  { href: "/assistant", label: "Asistente", icon: MessageCircle, section: false },
-  { href: "/drills", label: "Simulacros", icon: CalendarCheck2, section: false },
-  { href: "/evacuation", label: "Evacuación", icon: Route, section: false },
-  { href: "/disasters", label: "Desastres", icon: ShieldAlert, section: true },
-  { href: "/account", label: "Cuenta", icon: UserCircle, section: false },
+  { href: "/dashboard", label: "Inicio", icon: Home, section: false, tourId: "nav-inicio" },
+  { href: "/monitor", label: "Monitor", icon: Monitor, section: false, tourId: "nav-monitor" },
+  {
+    href: "/preparation",
+    label: "Preparación",
+    icon: Backpack,
+    section: false,
+    tourId: "nav-preparacion",
+  },
+  {
+    href: "/assistant",
+    label: "Asistente",
+    icon: MessageCircle,
+    section: false,
+    tourId: "nav-asistente",
+  },
+  {
+    href: "/drills",
+    label: "Simulacros",
+    icon: CalendarCheck2,
+    section: false,
+    tourId: "nav-simulacros",
+  },
+  {
+    href: "/evacuation",
+    label: "Evacuación",
+    icon: Route,
+    section: false,
+    tourId: "nav-evacuacion",
+  },
+  {
+    href: "/disasters",
+    label: "Desastres",
+    icon: ShieldAlert,
+    section: true,
+    tourId: "nav-desastres",
+  },
+  {
+    href: "/account",
+    label: "Cuenta",
+    icon: UserCircle,
+    section: false,
+    tourId: "nav-cuenta",
+  },
 ] as const
 
 const DRAG_THRESHOLD_PX = 6
@@ -196,6 +234,7 @@ export function CitizenNavbar() {
       )}
       aria-hidden={disasterPhaseNavPinned}
       aria-label="Navegación principal"
+      data-tour="citizen-navbar"
     >
       <div className="relative max-w-full min-w-0">
         <div
@@ -214,8 +253,10 @@ export function CitizenNavbar() {
             dragging && "cursor-grabbing",
           )}
         >
-          {navItems.map(({ href, label, icon: Icon, section }) => {
+          {navItems.map((item) => {
+            const { href, label, icon: Icon, section } = item
             const isActive = isNavActive(pathname, href, section)
+            const tourId = "tourId" in item ? item.tourId : undefined
             return (
               <Link
                 key={href}
@@ -223,6 +264,7 @@ export function CitizenNavbar() {
                 href={href}
                 draggable={false}
                 aria-current={isActive ? "page" : undefined}
+                data-tour={tourId}
                 className={cn(
                   CITIZEN_NAVBAR_LINK_CLASS,
                   "group",
@@ -243,6 +285,22 @@ export function CitizenNavbar() {
               </Link>
             )
           })}
+          <button
+            type="button"
+            onClick={() => dispatchTourStart()}
+            aria-label="Iniciar tour guiado"
+            className={cn(
+              CITIZEN_NAVBAR_LINK_CLASS,
+              "group shrink-0 border-l border-white/10 text-white/55 hover:bg-white/[0.06] hover:text-white/90",
+            )}
+          >
+            <CircleHelp
+              className="size-3.5 shrink-0 transition-transform duration-150 group-hover:scale-[1.15]"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span className="hidden sm:inline">Tour</span>
+          </button>
         </div>
 
         <div

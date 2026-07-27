@@ -93,7 +93,10 @@ const topics: Topic[] = [
 
 export function PreparationTopicGrid() {
   return (
-    <section aria-labelledby="preparation-topics-heading">
+    <section
+      aria-labelledby="preparation-topics-heading"
+      data-tour="prep-topics"
+    >
       <div className="mb-3">
         <h2
           id="preparation-topics-heading"

@@ -1,8 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Bell, Calendar, Eye, Layers, ShieldAlert, Wind } from "lucide-react"
 import { useActiveAlerts, useAirQuality, useQueryDate } from "@/hooks"
+import {
+  TOUR_MONITOR_EVENT,
+  type TourMonitorDetail,
+} from "@/lib/tour/tour-steps"
 import { formatQueryDateLabel, todayIsoDate } from "@/lib/query-date"
 import { cn } from "@/lib/utils"
 import { useUIStore } from "@/stores/ui-store"
@@ -91,6 +95,17 @@ export function MonitorMobileDrawer() {
   const [expanded, setExpanded] = useState(false)
   const [activeTab, setActiveTab] = useState("alertas")
 
+  useEffect(() => {
+    const onTour = (e: Event) => {
+      const detail = (e as CustomEvent<TourMonitorDetail>).detail
+      if (!detail) return
+      if (detail.tab) setActiveTab(detail.tab)
+      if (detail.expand !== undefined) setExpanded(detail.expand)
+    }
+    window.addEventListener(TOUR_MONITOR_EVENT, onTour)
+    return () => window.removeEventListener(TOUR_MONITOR_EVENT, onTour)
+  }, [])
+
   return (
     <MapMobileBottomSheet
       expanded={expanded}
@@ -100,6 +115,7 @@ export function MonitorMobileDrawer() {
       tabs={MONITOR_TABS}
       status={<MonitorStatusStrip />}
       aria-label="Controles del monitor"
+      data-tour="monitor-mobile-sheet"
     >
       {activeTab === "alertas" ? <ActiveAlertsPanel embedded /> : null}
       {activeTab === "fecha" ? <QueryDateControl embedded /> : null}

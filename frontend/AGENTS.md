@@ -61,7 +61,7 @@ Histórico: [docs/archive/FRONTEND-PLAN.md](docs/archive/FRONTEND-PLAN.md) — n
 
 ## Stack
 
-next@16.2.6 · react@19 · Tailwind v4 · maplibre-gl · @dnd-kit · react-day-picker · zustand · React Query · motion · three/r3f.
+next@16.2.6 · react@19 · Tailwind v4 · maplibre-gl · @dnd-kit · react-day-picker · zustand · React Query · motion · three/r3f · driver.js (guided tour).
 
 **No:** `sonner` (pedir antes).
 
@@ -138,4 +138,4 @@ make dev-frontend
 
 ---
 
-*Last updated: 2026-07-26 — Mi comuna en dashboard + Modo Emergencia*
+*Last updated: 2026-07-26 — Guided tour (driver.js) + Mi comuna / Modo Emergencia*

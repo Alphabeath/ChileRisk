@@ -316,6 +316,28 @@ Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComun
 
 ---
 
+## Guided tour (citizen)
+
+Tour multi-ruta con **driver.js**: Dashboard → Navbar → Monitor → Preparación (hub).
+
+| Pieza | Ruta |
+|-------|------|
+| Host | `components/tour/citizen-tour-host.tsx` — montado en `app/(citizen)/layout.tsx` |
+| Steps | `lib/tour/tour-steps.ts` (`buildTourSteps`, anclas `data-tour`) |
+| Runner | `lib/tour/run-tour.ts` — navega con `router.push`, espera anclas |
+| Storage | `lib/tour/tour-storage.ts` — key `chilerisk-tour-seen:v1` |
+| Estilos | `globals.css` — `.chilerisk-tour-popover` (glass dark) |
+
+**Disparo:** auto en la primera visita a `/dashboard` si no hay flag; botón **Tour** (`CircleHelp`) en `CitizenNavbar` emite `chilerisk:start-tour`. Al cerrar/completar emite `chilerisk:tour-completed`. Monitor móvil: evento `chilerisk:tour-monitor` expande el bottom sheet y cambia tab (`MonitorMobileDrawer`).
+
+**CTA entre páginas:** el botón siguiente pasa a `Ir a Monitor` / `Ir a Preparación` cuando el próximo step cambia de ruta; el último step usa `Listo`. Intro de Monitor es centrada (sin spotlight del mapa oscuro).
+
+**Modo Emergencia:** `EmergencyModeHost` no monta takeover/banner hasta que el tour esté visto (`hasSeenTour`) y no haya tour activo — evita que el SAE tape el walkthrough de primera visita.
+
+**Anclas:** `dashboard-hero|comuna|summary|shortcuts`, `citizen-navbar`, `nav-inicio|monitor|preparacion|asistente|simulacros|evacuacion|desastres|cuenta`, `monitor-map|alerts|date|vistas|mobile-sheet`, `prep-hero|family-plan|topics`.
+
+---
+
 ## Modo Emergencia
 
 Reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`. Fases: **takeover SAE** (1.ª activación, 12s) → **banner** → **chip reabrible** (post-dismiss). Visuales por severidad en `lib/emergency-ui.ts` (`EMERGENCY_VISUALS`, CTAs).
@@ -390,6 +412,24 @@ Chat agentico (DeepSeek en backend) con tools de lectura: plan familia, alertas,
 
 ---
 
+## Cuenta (`/account`)
+
+**Route:** `app/(citizen)/account/page.tsx` — perfil de sesión + comuna de hogar. Shell `PREPARATION_PAGE_*` + `CitizenPageHero`.
+
+**Layout:** grilla `lg:grid-cols-2` — Perfil | Comuna; fila completa Sesión (cerrar sesión).
+
+| Pieza | Archivo |
+|-------|---------|
+| Perfil (nombre/email, solo lectura) | `components/account/account-profile-card.tsx` |
+| Comuna de hogar | `components/account/account-home-comuna-card.tsx` |
+| Combobox searchable | `components/account/comuna-combobox.tsx` |
+| Cerrar sesión | `components/account/account-session-card.tsx` |
+| Catálogo | `lib/comuna-catalog.ts` + `hooks/use-comuna-catalog.ts` ← `/data/comunas.geojson` |
+
+**Picker:** busca por nombre o región (sin código CUT). **Usar mi ubicación** → `navigator.geolocation` + `GET /api/v1/comunas/nearest`, luego **Guardar** / **Quitar** vía `useUpdateUserProfile` → `PATCH /users/me`. Query key: `comunaCatalog()`.
+
+---
+
 ## Autenticación (Auth.js)
 
 | Ruta | Acceso |
@@ -405,7 +445,7 @@ Post-login / post-registro por defecto: `/dashboard` (Inicio). `callbackUrl` de 
 - Registro / reset: `app/api/auth/register|forgot-password|reset-password`
 - Proxy API autenticado: `app/api/backend/[...path]` → FastAPI con JWT HS256
 - Cliente HTTP: `lib/api.ts` usa base `/api/backend` (same-origin)
-- UI: `components/auth/*`, cuenta en `app/(citizen)/account/page.tsx`
+- UI: `components/auth/*`; cuenta: `components/account/*` + `app/(citizen)/account/page.tsx`
 - **Demo hackathon:** `/login` → `DemoLoginCard` (credenciales + copiar + “Entrar con cuenta demo”). Credenciales en `lib/demo-login.ts`; seed backend `SEED_DEMO_USER`.
 
 Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERNAL_URL`).

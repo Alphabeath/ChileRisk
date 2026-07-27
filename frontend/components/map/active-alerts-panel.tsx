@@ -353,6 +353,7 @@ function ActiveAlertsPanelEmbedded() {
     <aside
       className="flex w-full flex-col"
       aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
+      data-tour="monitor-alerts"
     >
       <div className="border-b border-white/[0.06]">
         <AlertsFilterChips
@@ -407,6 +408,7 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
       )}
       style={style}
       aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
+      data-tour="monitor-alerts"
     >
       <div className="flex w-full items-stretch border-b border-white/10">
         <div

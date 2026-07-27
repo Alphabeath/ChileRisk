@@ -1015,7 +1015,7 @@ export function ChileMap() {
   }, [handleRegionClick, attachComunaListeners, loadRegions, loadComunas])
 
   return (
-    <div className="cr-map relative h-dvh w-full">
+    <div className="cr-map relative h-dvh w-full" data-tour="monitor-map">
       <div
         ref={containerRef}
         className="h-full w-full"

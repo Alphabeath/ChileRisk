@@ -41,6 +41,8 @@ interface MapMobileBottomSheetProps {
   /** When true, sheet is not rendered (e.g. location prompt). */
   hidden?: boolean
   "aria-label"?: string
+  /** Guided-tour anchor (`data-tour`). */
+  "data-tour"?: string
 }
 
 const SHEET_EASE = "cubic-bezier(0.32, 0.72, 0, 1)"
@@ -61,6 +63,7 @@ export function MapMobileBottomSheet({
   children,
   hidden = false,
   "aria-label": ariaLabel = "Controles del mapa",
+  "data-tour": dataTour,
 }: MapMobileBottomSheetProps) {
   const isClient = useIsClient()
   const titleId = useId()
@@ -164,6 +167,7 @@ export function MapMobileBottomSheet({
         aria-modal={expanded ? true : undefined}
         aria-labelledby={titleId}
         aria-label={ariaLabel}
+        data-tour={dataTour}
         className={cn(
           "flex max-h-[min(72dvh,640px)] flex-col border-t border-white/10",
           GLASS_PANEL_CLASS,

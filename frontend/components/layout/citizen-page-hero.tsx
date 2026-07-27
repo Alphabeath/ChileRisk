@@ -32,6 +32,8 @@ export interface CitizenPageHeroProps {
   afterTitle?: ReactNode
   footer?: ReactNode
   className?: string
+  /** Optional guided-tour anchor (`data-tour`). */
+  tourId?: string
 }
 
 export function CitizenPageHero({
@@ -48,6 +50,7 @@ export function CitizenPageHero({
   afterTitle,
   footer,
   className,
+  tourId,
 }: CitizenPageHeroProps) {
   const leadingContent =
     leading ??
@@ -69,7 +72,10 @@ export function CitizenPageHero({
     ) : null)
 
   return (
-    <header className={cn(PREPARATION_HERO_SHELL_CLASS, className)}>
+    <header
+      className={cn(PREPARATION_HERO_SHELL_CLASS, className)}
+      data-tour={tourId}
+    >
       <div
         className={cn("pointer-events-none absolute inset-0", gradientClass)}
         aria-hidden

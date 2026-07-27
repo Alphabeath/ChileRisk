@@ -9,6 +9,12 @@ import { EmergencyReopenChip } from "@/components/emergency/emergency-reopen-chi
 import { EmergencyShareCard } from "@/components/emergency/emergency-share-card"
 import { EmergencyTakeover } from "@/components/emergency/emergency-takeover"
 import { useEmergencyMode } from "@/hooks/use-emergency-mode"
+import {
+  TOUR_COMPLETED_EVENT,
+  TOUR_START_EVENT,
+} from "@/lib/tour/tour-steps"
+import { hasSeenTour } from "@/lib/tour/tour-storage"
+import { isCitizenTourActive } from "@/lib/tour/run-tour"
 import { emergencyAssistantPath } from "@/lib/emergency-ui"
 
 const TAKEOVER_ACK_PREFIX = "chilerisk:emergency-ack:"
@@ -33,6 +39,9 @@ function writeAck(alertId: string) {
 /**
  * Modo Emergencia — phases: SAE takeover (first activation) → banner → reopen chip.
  * Dismissing minimizes to the chip; the alert keeps rendering until it expires.
+ *
+ * Deferred until the citizen guided tour has been completed/skipped, and hidden
+ * again while a replay tour is active (takeover would block the walkthrough).
  */
 export function EmergencyModeHost() {
   const emergency = useEmergencyMode()
@@ -40,9 +49,29 @@ export function EmergencyModeHost() {
   const router = useRouter()
   const [shareOpen, setShareOpen] = useState(false)
   const [takeoverDismissed, setTakeoverDismissed] = useState(false)
+  const [tourAllowsEmergency, setTourAllowsEmergency] = useState(() => {
+    if (typeof window === "undefined") return false
+    return hasSeenTour() && !isCitizenTourActive()
+  })
   const lastTakeoverIdRef = useRef<string | null>(null)
 
   const alertId = emergency.alert?.id ?? null
+
+  useEffect(() => {
+    const sync = () => {
+      setTourAllowsEmergency(hasSeenTour() && !isCitizenTourActive())
+    }
+    const onTourStart = () => setTourAllowsEmergency(false)
+    const onTourCompleted = () => setTourAllowsEmergency(true)
+
+    sync()
+    window.addEventListener(TOUR_START_EVENT, onTourStart)
+    window.addEventListener(TOUR_COMPLETED_EVENT, onTourCompleted)
+    return () => {
+      window.removeEventListener(TOUR_START_EVENT, onTourStart)
+      window.removeEventListener(TOUR_COMPLETED_EVENT, onTourCompleted)
+    }
+  }, [])
 
   useEffect(() => {
     if (!alertId) return
@@ -92,7 +121,12 @@ export function EmergencyModeHost() {
   ])
 
   // `active` already excludes dismissed — keep rendering so the reopen chip survives.
-  if (!emergency.alert || !emergency.severity || emergency.isResolving) {
+  if (
+    !tourAllowsEmergency ||
+    !emergency.alert ||
+    !emergency.severity ||
+    emergency.isResolving
+  ) {
     return null
   }
 

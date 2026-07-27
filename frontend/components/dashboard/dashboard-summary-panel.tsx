@@ -17,6 +17,7 @@ export function DashboardSummaryPanel({ className }: { className?: string }) {
       href="/assistant"
       moreLabel="Asistente →"
       className={className}
+      tourId="dashboard-summary"
     >
       {isLoading ? (
         <div className="flex flex-col gap-2" aria-label="Cargando resumen">

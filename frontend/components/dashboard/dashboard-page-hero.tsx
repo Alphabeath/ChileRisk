@@ -38,7 +38,7 @@ const homeShortcuts = [
 /** Compact home identity strip — no IA summary (lives in DashboardSummaryPanel). */
 export function DashboardPageHero() {
   return (
-    <header className={PREPARATION_HERO_SHELL_CLASS}>
+    <header className={PREPARATION_HERO_SHELL_CLASS} data-tour="dashboard-hero">
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[var(--primary-chile)]/55 via-slate-950/70 to-cyan-950/50"
         aria-hidden
@@ -63,7 +63,10 @@ export function DashboardPageHero() {
         </p>
       </div>
 
-      <div className={cn("relative border-t", GLASS_DIVIDER)}>
+      <div
+        className={cn("relative border-t", GLASS_DIVIDER)}
+        data-tour="dashboard-shortcuts"
+      >
         <div className="grid grid-cols-3 divide-x divide-white/10">
           {homeShortcuts.map(({ href, label, subtitle, icon: Icon, accent }) => (
             <Link key={href} href={href} className="block">
