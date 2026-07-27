@@ -228,7 +228,9 @@ Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky foo
 
 ### 5.6 Modo Emergencia
 
-When `useEmergencyMode` detects alerta naranja/roja for the user’s comuna, `EmergencyModeHost` runs three phases: **takeover SAE** (first activation) → **banner** (persistent) → **chip reabrible** (after dismiss). Severity visuals live in **`lib/emergency-ui.ts`** (`EMERGENCY_VISUALS`, `emergencyVisual()`, CTA classes) — roja pulses faster and stronger than naranja.
+When `useEmergencyMode` detects alerta naranja/roja, `EmergencyModeHost` runs three phases: **takeover SAE** (first activation) → **banner** (persistent) → **chip reabrible** (after dismiss). Severity visuals live in **`lib/emergency-ui.ts`** (`EMERGENCY_VISUALS`, `emergencyVisual()`, CTA classes) — roja pulses faster and stronger than naranja.
+
+**Targeting** (`matchEmergencyAlert`, pure + tested): an alert fires if it applies to the **home comuna** (region from `useComunaRisk(homeCode)` — same source as the Mi comuna card) **or** the GPS location (`useNearestComuna`). Display fields (`comunaName` etc.) come from the matched target; geo wins when the winning alert also applies there. Do not reintroduce a single geo-first/home-first resolution — the mismatch with `useComunaToday` (home-first) silently disabled emergency mode when GPS differed from home.
 
 1. **`EmergencyTakeover`** (`z-[85]`, SAE-style full-screen, once per alert per session — ack in `sessionStorage` `chilerisk:emergency-ack:<id>`):
    - Saturated gradient background (`from-red-700 via-red-900` roja / `from-orange-600 via-orange-800` naranja) + animated hazard stripes top/bottom + concentric expanding rings behind a ringing `BellRing` icon

@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import {
   useActiveAlerts,
@@ -80,6 +80,60 @@ export function mapHazardToEvacuation(
   return null
 }
 
+export type EmergencyTarget = {
+  code: number
+  name: string | null
+  region: number | null
+}
+
+export type EmergencyAlertMatch = {
+  alert: ActiveAlert
+  target: EmergencyTarget
+}
+
+type ResolvedTarget = EmergencyTarget & { region: number }
+
+/**
+ * Multi-target matching: an emergency alert fires if it applies to the GPS
+ * location OR the home comuna. The matched target drives display fields; geo
+ * wins when the winning alert also applies there ("you are here").
+ */
+export function matchEmergencyAlert(
+  alerts: ActiveAlert[],
+  geo: EmergencyTarget | null,
+  home: EmergencyTarget | null,
+): EmergencyAlertMatch | null {
+  const targets: ResolvedTarget[] = [geo, home].filter(
+    (t): t is ResolvedTarget => t != null && t.region != null,
+  )
+  if (targets.length === 0) return null
+
+  const seen = new Set<string>()
+  const candidates: ActiveAlert[] = []
+  for (const alert of alerts) {
+    if (!EMERGENCY_LEVELS.has(alert.level)) continue
+    if (seen.has(alert.id)) continue
+    const applies = targets.some((t) => alertAppliesToComuna(alert, t.region, t.code))
+    if (!applies) continue
+    seen.add(alert.id)
+    candidates.push(alert)
+  }
+  if (candidates.length === 0) return null
+
+  const alert = sortActiveAlertsBySeverity(candidates)[0]
+  if (!alert) return null
+
+  const target =
+    geo != null &&
+    geo.region != null &&
+    alertAppliesToComuna(alert, geo.region, geo.code)
+      ? geo
+      : (targets.find((t) => alertAppliesToComuna(alert, t.region, t.code)) ??
+        targets[0])
+
+  return { alert, target }
+}
+
 export function useEmergencyMode(): EmergencyModeState {
   const { data: profile, isLoading: profileLoading, isError: profileError } =
     useUserProfile()
@@ -123,32 +177,36 @@ export function useEmergencyMode(): EmergencyModeState {
     profileError || profileLoading
       ? null
       : (profile?.home_comuna_code ?? null)
+  const homeName = profileError ? null : (profile?.home_comuna_name ?? null)
 
-  const fromGeo = Boolean(nearest?.cod_comuna)
-  const comunaCode = fromGeo
-    ? nearest!.cod_comuna
-    : homeCode && homeCode > 0
-      ? homeCode
+  /** Home region comes from its risk score (same source as `useComunaToday`). */
+  const { data: homeRisk } = useComunaRisk(homeCode ?? 0)
+  const homeRegion = homeRisk?.codregion ?? null
+
+  const geoTarget: EmergencyTarget | null = nearest?.cod_comuna
+    ? {
+        code: nearest.cod_comuna,
+        name: nearest.name ?? null,
+        region: nearest.codregion ?? null,
+      }
+    : null
+  const homeTarget: EmergencyTarget | null =
+    homeCode && homeCode > 0
+      ? { code: homeCode, name: homeName, region: homeRegion }
       : null
-  const comunaName = fromGeo
-    ? (nearest?.name ?? null)
-    : profileError
-      ? null
-      : (profile?.home_comuna_name ?? null)
+  const match = matchEmergencyAlert(alerts, geoTarget, homeTarget)
 
-  const { data: risk } = useComunaRisk(comunaCode ?? 0)
-  const regionCode = nearest?.codregion ?? risk?.codregion ?? null
+  const emergencyAlert = match?.alert ?? null
+  const matchedTarget = match?.target ?? null
 
-  const emergencyAlert = useMemo(() => {
-    if (comunaCode == null || regionCode == null) return null
-    const candidates = alerts.filter(
-      (a) =>
-        EMERGENCY_LEVELS.has(a.level) &&
-        alertAppliesToComuna(a, regionCode, comunaCode),
-    )
-    if (candidates.length === 0) return null
-    return sortActiveAlertsBySeverity(candidates)[0] ?? null
-  }, [alerts, comunaCode, regionCode])
+  const comunaCode =
+    matchedTarget?.code ??
+    (nearest?.cod_comuna ?? (homeCode && homeCode > 0 ? homeCode : null))
+  const comunaName =
+    matchedTarget?.name ??
+    (nearest?.cod_comuna ? (nearest.name ?? null) : homeName)
+  const regionCode =
+    matchedTarget?.region ?? (nearest?.codregion ?? homeRegion)
 
   useEffect(() => {
     if (emergencyAlert) lastDismissIdRef.current = emergencyAlert.id
@@ -160,7 +218,7 @@ export function useEmergencyMode(): EmergencyModeState {
     return readDismissed(emergencyAlert.id)
   }, [emergencyAlert, dismissedIds])
 
-  const dismiss = useCallback(() => {
+  function dismiss() {
     const id = emergencyAlert?.id ?? lastDismissIdRef.current
     if (!id) return
     writeDismissed(id)
@@ -170,10 +228,10 @@ export function useEmergencyMode(): EmergencyModeState {
       next.add(id)
       return next
     })
-  }, [emergencyAlert])
+  }
 
   /** Undo a dismiss (reopen chip) — banner reappears while the alert is active. */
-  const reactivate = useCallback(() => {
+  function reactivate() {
     const id = emergencyAlert?.id ?? lastDismissIdRef.current
     if (!id) return
     clearDismissed(id)
@@ -183,7 +241,7 @@ export function useEmergencyMode(): EmergencyModeState {
       next.delete(id)
       return next
     })
-  }, [emergencyAlert])
+  }
 
   const hazard =
     emergencyAlert?.hazard_type ??
@@ -196,9 +254,9 @@ export function useEmergencyMode(): EmergencyModeState {
     emergencyAlert?.category,
   )
 
+  const geoReady = Boolean(nearest?.cod_comuna) && nearest?.codregion != null
   const waitingHomeOrGeo =
-    !comunaCode &&
-    (profileLoading || (!geoDone && !profileError && !homeCode))
+    !geoReady && (profileLoading || (!geoDone && !profileError && !homeCode))
   const waitingNearest = Boolean(coords) && nearestLoading && !nearest
   const waitingAlerts = alertsLoading && !alertsFetched
 

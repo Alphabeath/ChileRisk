@@ -320,7 +320,7 @@ Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComun
 
 Reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`. Fases: **takeover SAE** (1.ª activación, 12s) → **banner** → **chip reabrible** (post-dismiss). Visuales por severidad en `lib/emergency-ui.ts` (`EMERGENCY_VISUALS`, CTAs).
 
-- Hook: `hooks/use-emergency-mode.ts` — GPS/`useNearestComuna` → fallback `home_comuna_code`; filtra `useActiveAlerts` con `level` naranja/roja + `alertAppliesToComuna`; dismiss por `sessionStorage` keyed por `alert.id`; `reactivate()` revierte el dismiss (chip)
+- Hook: `hooks/use-emergency-mode.ts` — matching multi-objetivo (`matchEmergencyAlert`, puro + tests): la alerta naranja/roja dispara si aplica al **hogar** (`home_comuna_code` + región vía `useComunaRisk`, misma fuente que `useComunaToday`) **o** al GPS (`useNearestComuna`); el objetivo que matchea alimenta `comunaCode/comunaName/regionCode` (geo gana si la alerta también aplica ahí). Dismiss por `sessionStorage` keyed por `alert.id`; `reactivate()` lo revierte (chip)
 - UI: `components/emergency/`
   - `emergency-takeover.tsx` — full-screen SAE `z-[85]` (anillos + campana + countdown 12s); ack en `sessionStorage` `chilerisk:emergency-ack:<id>`; colapsa a banner con Escape/CTA/timeout
   - `emergency-banner.tsx` — fixed bajo navbar; cinta de peligro animada + fondo saturado + título `font-black` + chip "ACTIVA · hace Xm" (tick 30s) + **`getActiveAlertMainText`** + detail SERNAPRED vía **`sanitizeAlertHtml`** o **`htmlToPlainText`**; CTAs ¿Qué hago? (sólido) / Evacuar (outline, solo tsunami/volcán) / Compartir; ✕ minimiza al chip
