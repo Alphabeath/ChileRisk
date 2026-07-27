@@ -228,18 +228,28 @@ Mobile wizard chrome: sticky compact step nav below `lg` (`top-20`) + sticky foo
 
 ### 5.6 Modo Emergencia
 
-When `useEmergencyMode` detects alerta naranja/roja for the user’s comuna, `EmergencyModeHost` mounts:
+When `useEmergencyMode` detects alerta naranja/roja for the user’s comuna, `EmergencyModeHost` runs three phases: **takeover SAE** (first activation) → **banner** (persistent) → **chip reabrible** (after dismiss). Severity visuals live in **`lib/emergency-ui.ts`** (`EMERGENCY_VISUALS`, `emergencyVisual()`, CTA classes) — roja pulses faster and stronger than naranja.
 
-1. **`EmergencyPageFrame`** (`z-30`, `pointer-events-none`): viewport edge tint via CSS gradients (fade inward ~64–72px) + opacity pulse (`.emergency-page-frame` in `globals.css`). Roja = red; naranja = orange. Static (no pulse) under `prefers-reduced-motion`.
+1. **`EmergencyTakeover`** (`z-[85]`, SAE-style full-screen, once per alert per session — ack in `sessionStorage` `chilerisk:emergency-ack:<id>`):
+   - Saturated gradient background (`from-red-700 via-red-900` roja / `from-orange-600 via-orange-800` naranja) + animated hazard stripes top/bottom + concentric expanding rings behind a ringing `BellRing` icon
+   - Giant title `Alerta {Roja|Naranja}` (`text-5xl sm:text-7xl font-black uppercase`), hazard label, `getActiveAlertMainText(alert)`
+   - CTAs: ¿Qué hago? (solid white) / Evacuar ahora (outline, only tsunami/volcanic) / Entendido (collapses)
+   - Auto-collapses to banner after 12s (visible countdown bar); Escape or any CTA also collapses. Focus goes to the primary CTA; `role="alertdialog"`.
 2. **`EmergencyBanner`** (`z-40`, under navbar):
-   - Title: `Alerta {nivel} — {hazard} en {comuna}`
-   - Body: `getActiveAlertMainText(alert)` (what the alert is about); optional truncated `content`/`risk_detail`
-   - CTAs: ¿Qué hago? / Evacuar / Compartir / dismiss
-   - Colors: `bg-red-950/90` or `bg-orange-950/90` + pulse; align with `ALERT_LEVEL_META`
+   - Animated caution-tape stripe bar on top (`.emergency-stripe-bar`), saturated background (`from-red-700/95 to-red-950/95` — **not** near-black), entrance slide-down + flash (`.emergency-banner-enter`)
+   - Title `text-xl sm:text-2xl font-black uppercase` + "• ACTIVA · hace Xm" chip with live dot (30s tick via `useNowTick`)
+   - Body: `getActiveAlertMainText(alert)`; optional detail from `content`/`risk_detail` — if HTML, **`sanitizeAlertHtml`** + `.alert-html-content`; else plain text via **`htmlToPlainText`**
+   - CTAs: ¿Qué hago? (solid white, primary) / Evacuar (outline, only when `evacuationHazard` is tsunami/volcanic) / Compartir (ghost); X **minimizes** to the reopen chip (not a full hide)
+3. **`EmergencyReopenChip`** (`z-40`, under navbar): pulsing pill `ALERTA {nivel} — {comuna}`; click calls `reactivate()` (undoes dismiss — clears `sessionStorage` + state in `useEmergencyMode`). The host keeps rendering while dismissed (`active` excludes dismissed — early-return must check `alert`/`isResolving`, not `active`).
+4. **`EmergencyPageFrame`** (`z-30`, `pointer-events-none`): elliptical vignette via a single `radial-gradient` (`.emergency-page-frame` in `globals.css`) + opacity pulse (0.55–0.95). Color + period from `emergencyVisual()` via CSS vars `--emergency-frame-color` / `--emergency-frame-period` (roja 1.4s, naranja 2.2s). With `calm` (banner minimized): static + dimmer (`.emergency-page-frame--calm`). Static under `prefers-reduced-motion`. Do **not** stack four edge linear-gradients (corner seams).
+
+**¿Qué hago?** minimizes the alert to the reopen chip (`dismiss()`) and navigates to **`/assistant?q=<prompt>`** (`emergencyAssistantPath()` in `lib/emergency-ui.ts`) — `AssistantChat` auto-sends `?q=` once on mount (ref guard + `history.replaceState` cleans the URL). No guide sheet: the assistant answers in-context with geo + thread history, and the banner never covers the chat.
 
 Do **not** change global `CITIZEN_NAVBAR_CLEARANCE_PX` when the banner is absent.
 
-Guide / share use existing `Drawer` (vaul) + glass panel tokens.
+Share uses **`EmergencySheet`** (fixed `createPortal` bottom sheet at `z-[90]`, opaque `bg-neutral-950`) — not vaul Drawer — so the panel always paints above navbar / takeover / vignette.
+
+**Share card** (`EmergencyShareCard`): the sheet previews a saturated alert card (severity gradient + caution stripes + giant `ALERTA {nivel}` + alert text + emerald "Estoy seguro/a" status band + `chilerisk.cl` footer). Capture follows the Mi comuna pattern (`comuna-today-share-bar.tsx`): `toPng(cardRef, { pixelRatio: 2 })` → `File` → `navigator.share({ files })` when `canShare`, else PNG download; enriched caption text (`ALERTA {nivel} — {hazard} en {comuna}. Estoy seguro/a · …`) also ships in the share payload and via "Copiar texto".
 
 ---
 
@@ -253,9 +263,11 @@ Guide / share use existing `Drawer` (vaul) + glass panel tokens.
 | Map navigation control (zoom/compass) | `z-20` (same glass stack) |
 | Map mobile bottom sheet | `z-70` (portal) |
 | Citizen navbar | `z-50` |
-| Emergency banner (Modo Emergencia) | `z-40` (bajo navbar, sobre contenido) |
+| Emergency takeover SAE (Modo Emergencia) | `z-[85]` (sobre navbar, bajo `EmergencySheet`) |
+| Emergency banner / reopen chip (Modo Emergencia) | `z-40` (bajo navbar, sobre contenido) |
 | Emergency page frame (bordes) | `z-30` (`pointer-events-none`) |
-| Drawers (vaul emergency / sheets) | `z-50`–`z-60` |
+| Drawers (vaul map / misc sheets) | overlay `z-[70]`, content `z-[80]` |
+| Emergency share sheet | `z-[90]` (`EmergencySheet` portal) |
 
 Floating map UI (`md+`): `position: fixed`, columns under navbar. Draggable panels: `useDraggablePanel` only. Map zoom/compass: `MapNavigationControl` (React glass — not native MapLibre `NavigationControl`).
 
@@ -401,4 +413,4 @@ import { CITIZEN_NAVBAR_SHELL_CLASS, CITIZEN_NAVBAR_LINK_CLASS } from "@/lib/gla
 
 ---
 
-**Last updated:** 2026-07-26 — Emergency page frame + banner copy; Mi comuna embebida en `/dashboard`.
+**Last updated:** 2026-07-26 — Modo Emergencia de alto impacto (takeover SAE + banner saturado + chip reabrible + `lib/emergency-ui.ts`); Mi comuna embebida en `/dashboard`.

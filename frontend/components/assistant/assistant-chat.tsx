@@ -84,11 +84,13 @@ export function AssistantChat() {
   const profileRef = useRef(profile)
   const geoStatusRef = useRef(geoStatus)
   const nearestLoadingRef = useRef(nearestLoading)
-  coordsRef.current = coords
-  nearestRef.current = nearestComuna
-  profileRef.current = profile
-  geoStatusRef.current = geoStatus
-  nearestLoadingRef.current = nearestLoading
+  useEffect(() => {
+    coordsRef.current = coords
+    nearestRef.current = nearestComuna
+    profileRef.current = profile
+    geoStatusRef.current = geoStatus
+    nearestLoadingRef.current = nearestLoading
+  })
 
   useEffect(() => {
     if (!threadId || !threadDetail || threadDetail.id !== threadId) return
@@ -152,8 +154,8 @@ export function AssistantChat() {
     lon?: number
     comuna_code?: number
   }> {
-    const deadline = Date.now() + timeoutMs
-    while (Date.now() < deadline) {
+    const maxAttempts = Math.ceil(timeoutMs / 150)
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       if (geoStatusRef.current === "denied") break
       const c = coordsRef.current
       const n = nearestRef.current
@@ -178,6 +180,22 @@ export function AssistantChat() {
         profileRef.current?.home_comuna_code ??
         undefined,
     }
+  }
+
+  function applyFinal(pendingId: string, response: ChatResponse) {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === pendingId
+          ? {
+              ...m,
+              content: response.reply,
+              sources: response.sources,
+              tools: response.tool_calls_used,
+              pending: false,
+            }
+          : m,
+      ),
+    )
   }
 
   async function send(text: string) {
@@ -254,21 +272,17 @@ export function AssistantChat() {
     }
   }
 
-  function applyFinal(pendingId: string, response: ChatResponse) {
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === pendingId
-          ? {
-              ...m,
-              content: response.reply,
-              sources: response.sources,
-              tools: response.tool_calls_used,
-              pending: false,
-            }
-          : m,
-      ),
-    )
-  }
+  const autoPromptSentRef = useRef(false)
+  useEffect(() => {
+    if (autoPromptSentRef.current) return
+    const q = new URLSearchParams(window.location.search).get("q")
+    if (!q?.trim()) return
+    autoPromptSentRef.current = true
+    window.history.replaceState(null, "", "/assistant")
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void send(q)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const showSuggestions = messages.length === 1 && messages[0]?.id === "welcome"
   const alertCount = alerts?.length ?? 0

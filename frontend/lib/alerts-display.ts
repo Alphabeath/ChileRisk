@@ -240,6 +240,160 @@ export function getActiveAlertMainText(alert: ActiveAlert): string {
   return alert.title?.trim() || "Alerta"
 }
 
+const HTML_ENTITY_MAP: Record<string, string> = {
+  nbsp: " ",
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+}
+
+const ALERT_HTML_ALLOWED = new Set([
+  "P",
+  "BR",
+  "STRONG",
+  "B",
+  "EM",
+  "I",
+  "U",
+  "TABLE",
+  "THEAD",
+  "TBODY",
+  "TR",
+  "TH",
+  "TD",
+  "UL",
+  "OL",
+  "LI",
+  "SPAN",
+  "DIV",
+])
+
+export function isLikelyHtml(input: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(input.trim())
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, ent: string) => {
+    const key = ent.toLowerCase()
+    if (key in HTML_ENTITY_MAP) return HTML_ENTITY_MAP[key]
+    if (key.startsWith("#x")) {
+      const code = Number.parseInt(key.slice(2), 16)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+    }
+    if (key.startsWith("#")) {
+      const code = Number.parseInt(key.slice(1), 10)
+      return Number.isFinite(code) ? String.fromCodePoint(code) : match
+    }
+    return match
+  })
+}
+
+function escapeHtmlText(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+}
+
+/**
+ * Allowlist sanitizer for SERNAPRED `content` HTML.
+ * Drops scripts/styles/event handlers and inline `style=` (e.g. color:black).
+ */
+export function sanitizeAlertHtml(input: string): string {
+  const raw = input.trim()
+  if (!raw) return ""
+
+  if (typeof DOMParser === "undefined") {
+    return raw
+      .replace(/<(script|style|iframe|object|embed|link)[\s\S]*?<\/\1>/gi, "")
+      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+      .replace(/\sstyle\s*=\s*("[^"]*"|'[^']*')/gi, "")
+  }
+
+  try {
+    const doc = new DOMParser().parseFromString(raw, "text/html")
+    doc
+      .querySelectorAll("script,style,iframe,object,embed,link")
+      .forEach((el) => el.remove())
+
+    const serialize = (node: Node): string => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        return escapeHtmlText(node.textContent ?? "")
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return ""
+      const el = node as Element
+      const tag = el.tagName
+      const kids = Array.from(el.childNodes).map(serialize).join("")
+      if (!ALERT_HTML_ALLOWED.has(tag)) return kids
+      const t = tag.toLowerCase()
+      if (t === "br") return "<br>"
+      const attrs: string[] = []
+      if (t === "td" || t === "th") {
+        const colspan = el.getAttribute("colspan")
+        const rowspan = el.getAttribute("rowspan")
+        if (colspan && /^\d+$/.test(colspan)) attrs.push(`colspan="${colspan}"`)
+        if (rowspan && /^\d+$/.test(rowspan)) attrs.push(`rowspan="${rowspan}"`)
+      }
+      const attr = attrs.length ? ` ${attrs.join(" ")}` : ""
+      return `<${t}${attr}>${kids}</${t}>`
+    }
+
+    return Array.from(doc.body.childNodes).map(serialize).join("").trim()
+  } catch {
+    return ""
+  }
+}
+
+/**
+ * Strip HTML from SERNAPRED `content` (and similar) for plain-text UI.
+ * Inserts breaks between blocks/cells so tables don't smash words together.
+ */
+export function htmlToPlainText(input: string): string {
+  const raw = input.trim()
+  if (!raw) return ""
+
+  let text: string
+  if (typeof DOMParser !== "undefined") {
+    try {
+      const doc = new DOMParser().parseFromString(raw, "text/html")
+      doc.querySelectorAll("br").forEach((br) => {
+        br.replaceWith(doc.createTextNode("\n"))
+      })
+      doc.querySelectorAll("p,div,li,tr,h1,h2,h3,h4,h5,h6").forEach((el) => {
+        el.appendChild(doc.createTextNode("\n"))
+      })
+      doc.querySelectorAll("td,th").forEach((el) => {
+        el.appendChild(doc.createTextNode(" | "))
+      })
+      text = doc.body.textContent ?? ""
+    } catch {
+      text = raw.replace(/<[^>]+>/g, " ")
+    }
+  } else {
+    text = raw
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
+      .replace(/<\/(td|th)>/gi, " | ")
+      .replace(/<[^>]+>/g, " ")
+  }
+
+  text = decodeHtmlEntities(text)
+
+  return text
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+\|/g, " |")
+    .replace(/\|\s+/g, "| ")
+    .replace(/(?:\|\s*){2,}/g, "| ")
+    .replace(/\s+([,.;:!?…])/g, "$1")
+    .trim()
+}
+
 /** @deprecated Use formatChileRiskAlertMainText */
 export function formatChileRiskAlertSummary(alert: ActiveAlert): string {
   return formatChileRiskAlertMainText(alert)

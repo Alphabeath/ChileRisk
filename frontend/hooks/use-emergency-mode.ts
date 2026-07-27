@@ -32,6 +32,7 @@ export type EmergencyModeState = {
   coords: { lat: number; lon: number } | null
   dismissed: boolean
   dismiss: () => void
+  reactivate: () => void
   evacuationHazard: EvacuationHazardParam | null
   isResolving: boolean
 }
@@ -48,6 +49,14 @@ function readDismissed(alertId: string): boolean {
 function writeDismissed(alertId: string) {
   try {
     sessionStorage.setItem(`${DISMISS_STORAGE_PREFIX}${alertId}`, "1")
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function clearDismissed(alertId: string) {
+  try {
+    sessionStorage.removeItem(`${DISMISS_STORAGE_PREFIX}${alertId}`)
   } catch {
     /* ignore quota / private mode */
   }
@@ -163,6 +172,19 @@ export function useEmergencyMode(): EmergencyModeState {
     })
   }, [emergencyAlert])
 
+  /** Undo a dismiss (reopen chip) — banner reappears while the alert is active. */
+  const reactivate = useCallback(() => {
+    const id = emergencyAlert?.id ?? lastDismissIdRef.current
+    if (!id) return
+    clearDismissed(id)
+    setDismissedIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }, [emergencyAlert])
+
   const hazard =
     emergencyAlert?.hazard_type ??
     emergencyAlert?.dominant_hazard ??
@@ -196,6 +218,7 @@ export function useEmergencyMode(): EmergencyModeState {
     coords,
     dismissed,
     dismiss,
+    reactivate,
     evacuationHazard,
     isResolving,
   }

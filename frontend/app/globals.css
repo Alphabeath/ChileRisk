@@ -344,14 +344,24 @@
   }
 }
 
-/* Modo Emergencia — marco de bordes con fade + pulse */
+/* Modo Emergencia — vignette elíptica + pulse (sin costuras en esquinas).
+   Color y período vienen de lib/emergency-ui.ts (roja 1.4s / naranja 2.2s). */
 .emergency-page-frame {
-  --emergency-frame-color: rgba(218, 41, 28, 0.55);
-  animation: emergency-frame-pulse 2.2s ease-in-out infinite;
+  --emergency-frame-color: rgba(218, 41, 28, 0.42);
+  --emergency-frame-period: 1.4s;
+  animation: emergency-frame-pulse var(--emergency-frame-period) ease-in-out
+    infinite;
 }
 
 .emergency-page-frame--naranja {
-  --emergency-frame-color: rgba(251, 146, 60, 0.5);
+  --emergency-frame-color: rgba(251, 146, 60, 0.34);
+  --emergency-frame-period: 2.2s;
+}
+
+/* Minimizado (chip): la emergencia sigue, pero sin pulso y más tenue */
+.emergency-page-frame--calm {
+  animation: none;
+  opacity: 0.4;
 }
 
 .emergency-page-frame::before {
@@ -359,26 +369,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      var(--emergency-frame-color),
-      transparent 72px
-    ),
-    linear-gradient(to top, var(--emergency-frame-color), transparent 72px),
-    linear-gradient(to right, var(--emergency-frame-color), transparent 64px),
-    linear-gradient(to left, var(--emergency-frame-color), transparent 64px);
-  background-repeat: no-repeat;
-  background-size:
-    100% 72px,
-    100% 72px,
-    64px 100%,
-    64px 100%;
-  background-position:
-    top,
-    bottom,
-    left,
-    right;
+  /* Single radial avoids diagonal seams from stacked edge gradients */
+  background: radial-gradient(
+    ellipse 82% 76% at 50% 50%,
+    transparent 52%,
+    var(--emergency-frame-color) 100%
+  );
 }
 
 @keyframes emergency-frame-pulse {
@@ -387,6 +383,176 @@
     opacity: 0.55;
   }
   50% {
+    opacity: 0.95;
+  }
+}
+
+/* Cinta de peligro animada (borde superior de banner / takeover) */
+.emergency-stripe-bar {
+  background: repeating-linear-gradient(
+    -45deg,
+    #1c0503 0,
+    #1c0503 14px,
+    #da291c 14px,
+    #da291c 28px
+  );
+  background-size: 200% 100%;
+  animation: emergency-stripe-scroll 1.1s linear infinite;
+}
+
+@keyframes emergency-stripe-scroll {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 39.6px 0;
+  }
+}
+
+/* Entrada del banner: slide-down + flash único */
+.emergency-banner-enter {
+  animation: emergency-banner-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes emergency-banner-enter {
+  0% {
+    transform: translateY(-14px);
+    opacity: 0;
+    filter: brightness(2.1);
+  }
+  55% {
+    filter: brightness(1.35);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+/* Icono del banner: pulso rápido según severidad (hereda período del frame) */
+.emergency-banner-icon {
+  animation: emergency-icon-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes emergency-icon-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0);
+  }
+}
+
+/* Dot "ACTIVA" — latido */
+.emergency-live-dot {
+  animation: emergency-live-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes emergency-live-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.72);
+  }
+}
+
+/* Takeover SAE — campana, anillos concéntricos, countdown, entrada */
+.emergency-takeover {
+  animation: emergency-takeover-in 0.4s ease-out both;
+}
+
+@keyframes emergency-takeover-in {
+  from {
+    opacity: 0;
+    transform: scale(1.035);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.emergency-takeover-bell {
+  animation: emergency-bell-ring 1.6s ease-in-out infinite;
+  transform-origin: 50% 12%;
+}
+
+@keyframes emergency-bell-ring {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  12% {
+    transform: rotate(-9deg);
+  }
+  28% {
+    transform: rotate(8deg);
+  }
+  44% {
+    transform: rotate(-6deg);
+  }
+  60% {
+    transform: rotate(4deg);
+  }
+  76% {
+    transform: rotate(0deg);
+  }
+}
+
+.emergency-takeover-ring {
+  animation: emergency-ring-expand 2s ease-out infinite;
+}
+
+.emergency-takeover-ring--delayed {
+  animation-delay: 1s;
+}
+
+@keyframes emergency-ring-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0.42);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.9);
+    opacity: 0;
+  }
+}
+
+.emergency-takeover-countdown {
+  transform-origin: left;
+  animation: emergency-countdown linear both;
+}
+
+@keyframes emergency-countdown {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Chip reabrible — entrada (el centrado va en el wrapper, no en la animación,
+   para no bloquear el hover:scale del botón) */
+.emergency-chip-enter {
+  animation: emergency-chip-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes emergency-chip-in {
+  from {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
     opacity: 1;
   }
 }
@@ -396,6 +562,74 @@
     animation: none;
     opacity: 0.75;
   }
+  .emergency-stripe-bar,
+  .emergency-banner-icon,
+  .emergency-live-dot,
+  .emergency-takeover-bell,
+  .emergency-takeover-ring,
+  .emergency-takeover-ring--delayed {
+    animation: none;
+  }
+  .emergency-banner-enter,
+  .emergency-takeover,
+  .emergency-chip-enter,
+  .emergency-takeover-countdown {
+    animation: none;
+  }
+}
+
+/* SERNAPRED alert HTML (sanitized) — dark UI, keep table/paragraph structure */
+.alert-html-content {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.alert-html-content p {
+  margin: 0 0 0.65rem;
+}
+
+.alert-html-content p:last-child {
+  margin-bottom: 0;
+}
+
+.alert-html-content strong,
+.alert-html-content b {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.alert-html-content table {
+  width: 100%;
+  margin: 0.65rem 0;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.alert-html-content th,
+.alert-html-content td {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 0.35rem 0.45rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.alert-html-content th {
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+}
+
+.alert-html-content ul,
+.alert-html-content ol {
+  margin: 0.5rem 0 0.65rem;
+  padding-left: 1.15rem;
+}
+
+.alert-html-content li {
+  margin-bottom: 0.25rem;
 }
 
 @media print {

@@ -47,7 +47,7 @@ function DrawerOverlay({
     <DrawerPrimitive.Overlay
       data-slot="drawer-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 supports-backdrop-filter:backdrop-blur-sm",
+        "fixed inset-0 z-[70] bg-black/50 supports-backdrop-filter:backdrop-blur-sm",
         className
       )}
       {...props}
@@ -67,7 +67,7 @@ function DrawerContent({
         data-slot="drawer-content"
         className={cn(
           // Explicit bottom-sheet layout (do not rely only on vaul data attrs for position).
-          "fixed inset-x-0 bottom-0 z-[60] mt-24 flex max-h-[85vh] min-h-[45vh] flex-col rounded-none border-t border-white/10 text-sm text-white/90 outline-none",
+          "fixed inset-x-0 bottom-0 z-[80] mt-24 flex max-h-[85vh] min-h-[45vh] flex-col rounded-none border-t border-white/10 text-sm text-white/90 outline-none",
           GLASS_PANEL_CLASS,
           GLASS_MICA_INTERACTIVE_CLASS,
           className
@@ -78,7 +78,9 @@ function DrawerContent({
           className="mx-auto mt-3 h-1 w-12 shrink-0 rounded-none bg-white/30"
           aria-hidden
         />
-        {children}
+        <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+          {children}
+        </div>
       </DrawerPrimitive.Content>
     </DrawerPortal>
   )

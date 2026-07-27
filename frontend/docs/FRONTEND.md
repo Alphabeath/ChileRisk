@@ -318,15 +318,19 @@ Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComun
 
 ## Modo Emergencia
 
-Banner reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`.
+Reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`. Fases: **takeover SAE** (1.ª activación, 12s) → **banner** → **chip reabrible** (post-dismiss). Visuales por severidad en `lib/emergency-ui.ts` (`EMERGENCY_VISUALS`, CTAs).
 
-- Hook: `hooks/use-emergency-mode.ts` — GPS/`useNearestComuna` → fallback `home_comuna_code`; filtra `useActiveAlerts` con `level` naranja/roja + `alertAppliesToComuna`; dismiss por `sessionStorage` keyed por `alert.id`
+- Hook: `hooks/use-emergency-mode.ts` — GPS/`useNearestComuna` → fallback `home_comuna_code`; filtra `useActiveAlerts` con `level` naranja/roja + `alertAppliesToComuna`; dismiss por `sessionStorage` keyed por `alert.id`; `reactivate()` revierte el dismiss (chip)
 - UI: `components/emergency/`
-  - `emergency-page-frame.tsx` — marco fijo `inset-0` `z-30` (gradientes en bordes + pulse; rojo/naranja); CSS en `globals.css`
-  - `emergency-banner.tsx` — fixed bajo navbar; título severidad + **`getActiveAlertMainText`** (de qué trata) + detail opcional; CTAs ¿Qué hago? / Evacuar / Compartir / ✕
-  - `emergency-guide-panel.tsx` — drawer + `sendChatStreaming` (mensaje usuario forzado; sin `system_prompt` en contrato)
-  - `emergency-share-card.tsx` — “Estoy seguro/a en {comuna}” + Web Share / clipboard
-  - `emergency-action-sheet.tsx` — drawer con las 3 acciones (disponible; el host usa CTAs del banner)
+  - `emergency-takeover.tsx` — full-screen SAE `z-[85]` (anillos + campana + countdown 12s); ack en `sessionStorage` `chilerisk:emergency-ack:<id>`; colapsa a banner con Escape/CTA/timeout
+  - `emergency-banner.tsx` — fixed bajo navbar; cinta de peligro animada + fondo saturado + título `font-black` + chip "ACTIVA · hace Xm" (tick 30s) + **`getActiveAlertMainText`** + detail SERNAPRED vía **`sanitizeAlertHtml`** o **`htmlToPlainText`**; CTAs ¿Qué hago? (sólido) / Evacuar (outline, solo tsunami/volcán) / Compartir; ✕ minimiza al chip
+  - `emergency-reopen-chip.tsx` — pill pulsante bajo navbar; click → `reactivate()`
+  - `emergency-page-frame.tsx` — marco fijo `inset-0` `z-30` (vignette elíptica + pulse; período/color por severidad vía CSS vars; `calm` al minimizar); CSS en `globals.css`
+  - `emergency-sheet.tsx` — bottom sheet portal (`z-[90]`) para compartir
+  - `emergency-share-card.tsx` — preview de tarjeta visual (gradiente por severidad + cinta de peligro + “Estoy seguro/a”) capturada con `toPng` (pixelRatio 2, mismo patrón que `comuna-today-share-bar`) → Web Share con archivo / descarga PNG / copiar texto enriquecido
+  - `emergency-action-sheet.tsx` — drawer vaul legacy (disponible; el host usa CTAs del banner)
+
+**¿Qué hago?** → minimiza a chip (`dismiss()`) + `emergencyAssistantPath()` (`lib/emergency-ui.ts`) navega a `/assistant?q=<prompt de emergencia>`; `AssistantChat` auto-envía `?q=` al montar (una vez, limpia la URL con `history.replaceState`). Sin sheet de guía.
 
 ---
 
