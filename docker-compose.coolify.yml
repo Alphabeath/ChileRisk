@@ -1,11 +1,9 @@
 services:
   frontend:
     build: ./frontend
-    ports:
-      - "3000:3000"
     environment:
-      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-generate-a-long-secret}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: https://chilerisk.cl
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       BACKEND_INTERNAL_URL: http://backend:8000
@@ -22,15 +20,11 @@ services:
 
   backend:
     build: ./backend
-    expose:
-      - "8000"
-    env_file:
-      - .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-chilerisk}:${POSTGRES_PASSWORD:-chilerisk}@db:5432/${POSTGRES_DB:-chilerisk}
-      BACKEND_CORS_ORIGINS: '${BACKEND_CORS_ORIGINS:-["http://localhost:3000","http://localhost:3001"]}'
-      AUTH_SECRET: ${AUTH_SECRET:-dev-change-me-generate-a-long-secret}
-      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS}
+      AUTH_SECRET: ${AUTH_SECRET}
+      AUTH_URL: https://chilerisk.cl
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-noreply@chilerisk.local}
     depends_on:
