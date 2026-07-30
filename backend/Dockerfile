@@ -1,23 +1,42 @@
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1.7
 
+# ── Stage 1: builder ────────────────────────────────────────────────
+# Installs uv (fast Python installer) and all dependencies.
+# Cache mount preserves uv downloads between builds.
+FROM python:3.12-slim AS builder
 WORKDIR /app
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Monorepo hygiene: prevent Python from writing .pyc/__pycache__ inside the image
-# (complements backend/.dockerignore + backend/.gitignore).
-# PYTHONUNBUFFERED ensures logs are emitted immediately (good for Docker).
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+# Copy only pyproject.toml first — maximizes layer caching when only code changes.
+COPY pyproject.toml ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install --system --no-cache .
 
-# Context is already filtered by backend/.dockerignore (prevents __pycache__, *.pyc, .env*, etc.)
+# Now copy the application source.
 COPY . .
 
-RUN chmod +x /app/scripts/entrypoint.sh \
-    && useradd --create-home --shell /bin/bash appuser \
-    && chown -R appuser:appuser /app
+# ── Stage 2: runtime ────────────────────────────────────────────────
+# Clean image with only installed packages + application code.
+# No build tools, no pip, no uv — minimal attack surface and size.
+FROM python:3.12-slim AS runtime
+WORKDIR /app
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH=/usr/local/bin:$PATH
+
+# Copy only the installed packages and their CLI entrypoints from builder.
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy application code.
+COPY --from=builder /app /app
+
+# Non-root user for security.
+RUN useradd --create-home --shell /bin/bash appuser \
+    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000

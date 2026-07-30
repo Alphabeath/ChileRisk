@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 # Multi-stage Dockerfile for ChileRisk Frontend (Next.js 16)
 # Uses bun as the package manager (standardized for this monorepo).
 # Required by project rules (AGENTS.md)
@@ -10,7 +11,8 @@ WORKDIR /app
 
 # Install dependencies using bun (bun.lock is the source of truth)
 COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    bun install --frozen-lockfile
 
 # 2. Builder stage
 FROM base AS builder
