@@ -13,8 +13,8 @@ function isMapRoute(pathname: string): boolean {
   return (
     pathname === "/monitor" ||
     pathname.startsWith("/monitor/") ||
-    pathname === "/evacuation" ||
-    pathname.startsWith("/evacuation/")
+    pathname === "/evacuacion" ||
+    pathname.startsWith("/evacuacion/")
   )
 }
 

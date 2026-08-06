@@ -1,4 +1,4 @@
-"""Daily risk snapshots for map choropleth (compute-once per calendar day)."""
+"""Daily risk snapshots (compute-once per calendar day; feeds alert evaluator)."""
 
 from __future__ import annotations
 
@@ -186,29 +186,27 @@ async def compute_and_store_daily_scores(
     for comuna in comunas:
         cod = comuna.cod_comuna
         climate = climate_map.get(cod)
+        latest_rs = latest_map.get(cod)
         if climate:
             ola_calor = climate["ola_calor"]
             ola_frio = climate["ola_frio"]
             viento = climate["viento"]
         else:
-            latest = latest_map.get(cod)
-            if latest:
-                ola_calor = latest.ola_calor_score
-                ola_frio = latest.ola_frio_score
-                viento = latest.viento_score
-            else:
-                ola_calor = 0.0
-                ola_frio = 0.0
-                viento = 0.0
+            ola_calor = 0.0
+            ola_frio = 0.0
+            viento = 0.0
 
         # Flood score comes from RiskScore (flood_service); ClimateReading has no flood data.
-        latest_rs = latest_map.get(cod)
         inundacion = latest_rs.inundacion_score if latest_rs else 0.0
 
-        # Day window impacts only — do not inherit drifted live RiskScore.sismo.
+        # Day window impacts only — do not inherit a score without a real event.
         sismo = float(sismo_map.get(cod, 0.0))
         if sismo > 0:
             sismo = sismo * 1.2
+
+        # Do not materialize a zero-valued snapshot for a comuna with no observed input.
+        if climate is None and latest_rs is None and sismo <= 0:
+            continue
 
         scores_dict = {
             "sismo": round(sismo, 1),

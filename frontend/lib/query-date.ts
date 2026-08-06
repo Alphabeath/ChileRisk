@@ -1,6 +1,8 @@
+/** Window for map `?date=` UI — mirrors backend Chile calendar day rules. See docs/QUERY-DATE.md */
+
 export const QUERY_DATE_MAX_DAYS_BACK = 30
 
-/** Default selected day: today in Chile (approx. via local browser TZ for UI bounds). */
+/** Default selected day: today (browser local TZ for UI bounds). */
 export function todayIsoDate(): string {
   return formatIsoDate(new Date())
 }
@@ -45,6 +47,17 @@ export function formatQueryDateLabel(iso: string, reference = todayIsoDate()): s
   if (iso === yesterday) return "Ayer"
   const [y, m, day] = iso.split("-")
   return `${day}/${m}/${y}`
+}
+
+/** Short label for narrow map rails (`Hoy` / `Ayer` / `dd/mm`). */
+export function formatQueryDateCompactLabel(
+  iso: string,
+  reference = todayIsoDate(),
+): string {
+  const label = formatQueryDateLabel(iso, reference)
+  if (label === "Hoy" || label === "Ayer") return label
+  const [, m, day] = iso.split("-")
+  return `${day}/${m}`
 }
 
 export function formatSeismicEmptyForDate(iso: string): string {

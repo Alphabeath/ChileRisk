@@ -1,11 +1,11 @@
 """Risk scoring service (v2 — uses precomputed seismic impacts)."""
 
-import random
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
 from app.models.risk_score import RiskScore
 from app.services.impact_service import get_max_risk_per_comuna_from_impacts
@@ -29,18 +29,28 @@ async def get_latest_risk_for_comuna(
 async def get_latest_risks_for_region(
     session: AsyncSession, codregion: int
 ) -> list[RiskScore]:
-    comunas_stmt = select(Comuna.cod_comuna).where(Comuna.codregion == codregion)
-    cods = [row[0] for row in (await session.execute(comunas_stmt)).all()]
-
-    if not cods:
-        return []
-
-    scores: list[RiskScore] = []
-    for cod in cods:
-        s = await get_latest_risk_for_comuna(session, cod)
-        if s:
-            scores.append(s)
-    return scores
+    """Latest RiskScore per comuna of a region in a single query (no N+1)."""
+    ranked = (
+        select(
+            RiskScore.id,
+            func.row_number()
+            .over(
+                partition_by=RiskScore.cod_comuna,
+                order_by=RiskScore.computed_at.desc(),
+            )
+            .label("rn"),
+        )
+        .join(Comuna, Comuna.cod_comuna == RiskScore.cod_comuna)
+        .where(Comuna.codregion == codregion)
+        .subquery()
+    )
+    stmt = (
+        select(RiskScore)
+        .join(ranked, ranked.c.id == RiskScore.id)
+        .where(ranked.c.rn == 1)
+        .order_by(RiskScore.cod_comuna.asc())
+    )
+    return list((await session.execute(stmt)).scalars().all())
 
 
 def aggregate_region_scores(scores: list[RiskScore]) -> dict[str, float]:
@@ -72,7 +82,7 @@ def aggregate_region_scores(scores: list[RiskScore]) -> dict[str, float]:
 
 
 async def get_comuna_map_scores(session: AsyncSession) -> list[dict]:
-    """Minimal data for map choropleth coloring: only what is needed to paint comunas."""
+    """Latest composite_score per comuna (alert gating / tooling — not map fill)."""
     subq = (
         select(
             RiskScore.cod_comuna,
@@ -102,18 +112,36 @@ async def recompute_all_scores(session: AsyncSession) -> int:
 
     impact_map = await get_max_risk_per_comuna_from_impacts(session, hours=24)
 
+    climate_subq = (
+        select(
+            ClimateReading.cod_comuna,
+            func.max(ClimateReading.measured_at).label("max_measured_at"),
+        )
+        .group_by(ClimateReading.cod_comuna)
+        .subquery()
+    )
+    climate_rows = (
+        await session.execute(
+            select(ClimateReading).join(
+                climate_subq,
+                (ClimateReading.cod_comuna == climate_subq.c.cod_comuna)
+                & (ClimateReading.measured_at == climate_subq.c.max_measured_at),
+            )
+        )
+    ).scalars().all()
+    climate_map = {row.cod_comuna: row for row in climate_rows}
+
     now_utc = datetime.now(timezone.utc)
     updated = 0
     for rs in all_scores:
-        drift = 2.8
-        new_calor = max(3.0, min(97.0, rs.ola_calor_score + random.uniform(-drift, drift)))
-        new_frio = max(3.0, min(97.0, rs.ola_frio_score + random.uniform(-drift, drift)))
-        new_viento = max(3.0, min(97.0, rs.viento_score + random.uniform(-drift, drift)))
+        climate = climate_map.get(rs.cod_comuna)
+        new_calor = float(climate.ola_calor_score) if climate else 0.0
+        new_frio = float(climate.ola_frio_score) if climate else 0.0
+        new_viento = float(climate.viento_score) if climate else 0.0
 
         sismo_from_impact = impact_map.get(rs.cod_comuna, 0.0)
 
-        # Sismo is real-data only: score comes from recent seismic impacts.
-        # Never random-walk — that left Magallanes (e.g. Natales) at 80+ with zero quakes.
+        # Sismo comes only from recent seismic impacts.
         if sismo_from_impact > 0:
             new_sismo = min(97.0, sismo_from_impact * 1.2)
         else:
@@ -141,32 +169,3 @@ async def recompute_all_scores(session: AsyncSession) -> int:
 
     await session.commit()
     return updated
-
-
-async def ensure_risk_scores_exist(session: AsyncSession) -> int:
-    """Create a zeroed RiskScore row for every comuna that lacks one (neutral bootstrap, no synthetic data)."""
-    comunas = (await session.execute(select(Comuna))).scalars().all()
-    existing_cods = set(
-        (await session.execute(select(RiskScore.cod_comuna))).scalars().all()
-    )
-    to_add = []
-    now = datetime.now(timezone.utc)
-    for c in comunas:
-        if c.cod_comuna not in existing_cods:
-            to_add.append(
-                RiskScore(
-                    cod_comuna=c.cod_comuna,
-                    sismo_score=0.0,
-                    ola_calor_score=0.0,
-                    ola_frio_score=0.0,
-                    viento_score=0.0,
-                    composite_score=0.0,
-                    dominant_hazard="sismo",
-                    severity="bajo",
-                    computed_at=now,
-                )
-            )
-    if to_add:
-        session.add_all(to_add)
-        await session.commit()
-    return len(to_add)

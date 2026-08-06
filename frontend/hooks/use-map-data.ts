@@ -1,12 +1,17 @@
 import { useQueryClient } from "@tanstack/react-query"
-import { useCallback, useState } from "react"
-import { getNationalRisk, getComunaMapScores, getComunaRisk } from "@/lib/api"
+import { useCallback, useRef } from "react"
+
+import { getComunaRisk, getNationalRisk } from "@/lib/api"
+import {
+  prepareComunasGeojson,
+  type ComunaFeatureCollection,
+} from "@/lib/comunas-geojson"
+import { STALE, staleTimeForLive } from "@/lib/query-cache"
 import { queryKeys } from "@/lib/queries"
 import { todayIsoDate } from "@/lib/query-date"
-import { LOADING_SOURCE, useLoadingStore } from "@/stores/loading-store"
-import type { NationalRisk, ComunaMapScore } from "@/lib/types"
+import type { NationalRisk } from "@/lib/types"
 
-interface EnrichedGeojson {
+export interface EnrichedGeojson {
   type: string
   features: Array<{
     type: string
@@ -15,9 +20,13 @@ interface EnrichedGeojson {
   }>
 }
 
+/**
+ * Stamp regional risk metrics onto region features for territory popups
+ * (weather / hazard bars). Map choropleth uses `alert_level`, not scores.
+ */
 function applyNationalRiskToRegions(
   geojson: EnrichedGeojson,
-  riskMap: Map<number, NationalRisk>
+  riskMap: Map<number, NationalRisk>,
 ) {
   if (!geojson.features) return
   for (const f of geojson.features) {
@@ -32,130 +41,97 @@ function applyNationalRiskToRegions(
       f.properties.ola_frio_score = r.ola_frio_score
       f.properties.viento_score = r.viento_score
       f.properties.inundacion_score = r.inundacion_score
-      if (r.avg_temperature_c != null) f.properties.avg_temperature_c = r.avg_temperature_c
-      if (r.avg_wind_speed_kmh != null) f.properties.avg_wind_speed_kmh = r.avg_wind_speed_kmh
+      if (r.avg_temperature_c != null)
+        f.properties.avg_temperature_c = r.avg_temperature_c
+      if (r.avg_wind_speed_kmh != null)
+        f.properties.avg_wind_speed_kmh = r.avg_wind_speed_kmh
     }
   }
 }
 
-function applyComunaScoresToGeojson(
-  geojson: EnrichedGeojson,
-  scoreMap: Map<number, number>
-) {
-  if (!geojson.features) return
-  for (const f of geojson.features) {
-    const cod = f.properties?.cod_comuna as number | undefined
-    const cs = cod != null ? scoreMap.get(cod) : undefined
-    if (cs != null) {
-      f.properties.composite_score = cs
-    }
-  }
-}
+let cachedRegionsUrl: string | null = null
+let cachedRegionsBase: EnrichedGeojson | null = null
+let cachedComunasUrl: string | null = null
+let cachedComunasPrepared: ComunaFeatureCollection | null = null
 
+/**
+ * Geometry loading for the monitor map. FeatureCollections live in refs /
+ * module caches — NOT React state — so choropleth refreshes never re-render
+ * the map tree or re-tile sources (feature-state carries level changes).
+ */
 export function useMapData() {
   const queryClient = useQueryClient()
-  const [regionsGeojson, setRegionsGeojson] = useState<EnrichedGeojson | null>(null)
-  const [comunasGeojson, setComunasGeojson] = useState<EnrichedGeojson | null>(null)
-  const [regionsBaseGeojson, setRegionsBaseGeojson] = useState<EnrichedGeojson | null>(null)
-  const [comunasBaseGeojson, setComunasBaseGeojson] = useState<EnrichedGeojson | null>(null)
+  const regionsBaseRef = useRef<EnrichedGeojson | null>(null)
 
-  const fetchRiskForDate = useCallback(
+  const fetchNationalRiskMap = useCallback(
     async (date: string) => {
       const resolved = date || todayIsoDate()
-      const [national, comunaScores] = await Promise.all([
-        queryClient.fetchQuery({
-          queryKey: queryKeys.nationalRisk(resolved),
-          queryFn: () => getNationalRisk(resolved),
-          staleTime: 5 * 60 * 1000,
-        }),
-        queryClient.fetchQuery({
-          queryKey: queryKeys.comunaMapScores(resolved),
-          queryFn: () => getComunaMapScores(resolved),
-          staleTime: 5 * 60 * 1000,
-        }),
-      ])
-      return {
-        nationalMap: new Map(national.map((r) => [r.codregion, r])),
-        comunaMap: new Map(
-          comunaScores.map((s: ComunaMapScore) => [s.cod_comuna, s.composite_score])
-        ),
-      }
+      const national = await queryClient.fetchQuery({
+        queryKey: queryKeys.nationalRisk(resolved),
+        queryFn: () => getNationalRisk(resolved),
+        staleTime: staleTimeForLive(resolved, STALE.risk),
+      })
+      return new Map(national.map((r) => [r.codregion, r]))
     },
-    [queryClient]
+    [queryClient],
   )
 
-  const withMapLoading = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
-    const { track, untrack } = useLoadingStore.getState()
-    track(LOADING_SOURCE.MAP_DATA)
-    try {
-      return await fn()
-    } finally {
-      untrack(LOADING_SOURCE.MAP_DATA)
-    }
-  }, [])
-
+  /**
+   * Fetch (cached) region geometry and stamp national-risk props for popups.
+   * Caller `setData`s the returned FC once per date — never on alert ticks.
+   */
   const loadRegions = useCallback(
     async (regionsUrl: string, date: string) => {
-      return withMapLoading(async () => {
+      let base = cachedRegionsUrl === regionsUrl ? cachedRegionsBase : null
+      if (!base) {
         const res = await fetch(regionsUrl)
-        const base = (await res.json()) as EnrichedGeojson
-        const geojson = structuredClone(base) as EnrichedGeojson
-
-        const { nationalMap } = await fetchRiskForDate(date)
-        applyNationalRiskToRegions(geojson, nationalMap)
-
-        setRegionsBaseGeojson(base)
-        setRegionsGeojson(geojson)
-        return geojson
-      })
+        base = (await res.json()) as EnrichedGeojson
+        cachedRegionsUrl = regionsUrl
+        cachedRegionsBase = base
+      }
+      const geojson = structuredClone(base) as EnrichedGeojson
+      const nationalMap = await fetchNationalRiskMap(date)
+      applyNationalRiskToRegions(geojson, nationalMap)
+      regionsBaseRef.current = base
+      return geojson
     },
-    [fetchRiskForDate, withMapLoading]
+    [fetchNationalRiskMap],
   )
 
-  const loadComunas = useCallback(
-    async (comunasUrl: string, date: string) => {
-      return withMapLoading(async () => {
-        const res = await fetch(comunasUrl)
-        const base = (await res.json()) as EnrichedGeojson
-        const geojson = structuredClone(base) as EnrichedGeojson
+  /** Fetch (cached) comuna geometry, prepared for `promoteId: cod_comuna`. */
+  const loadComunas = useCallback(async (comunasUrl: string, date: string) => {
+    void date
+    let prepared =
+      cachedComunasUrl === comunasUrl ? cachedComunasPrepared : null
+    if (!prepared) {
+      const res = await fetch(comunasUrl)
+      const raw = (await res.json()) as Parameters<
+        typeof prepareComunasGeojson
+      >[0]
+      prepared = prepareComunasGeojson(raw)
+      cachedComunasUrl = comunasUrl
+      cachedComunasPrepared = prepared
+    }
+    // Keep prepared FC as the base — feature-state stamps levels, never props.
+    return prepared as unknown as EnrichedGeojson
+  }, [])
 
-        const { comunaMap } = await fetchRiskForDate(date)
-        applyComunaScoresToGeojson(geojson, comunaMap)
-
-        setComunasBaseGeojson(base)
-        setComunasGeojson(geojson)
-        return geojson
-      })
-    },
-    [fetchRiskForDate, withMapLoading]
-  )
-
+  /**
+   * Re-stamp national risk props for a new date. Returns the regions FC for
+   * the caller to `setData` (16 features — cheap); null when regions never
+   * loaded. Comunas geometry is never re-set on date change.
+   */
   const refreshMapRisk = useCallback(
-    async (date: string) => {
-      if (!regionsBaseGeojson && !comunasBaseGeojson) return null
+    async (date: string): Promise<EnrichedGeojson | null> => {
+      const regionsBase = regionsBaseRef.current
+      if (!regionsBase) return null
 
-      return withMapLoading(async () => {
-        const { nationalMap, comunaMap } = await fetchRiskForDate(date)
-
-        let nextRegions: EnrichedGeojson | null = null
-        let nextComunas: EnrichedGeojson | null = null
-
-        if (regionsBaseGeojson) {
-          nextRegions = structuredClone(regionsBaseGeojson) as EnrichedGeojson
-          applyNationalRiskToRegions(nextRegions, nationalMap)
-          setRegionsGeojson(nextRegions)
-        }
-
-        if (comunasBaseGeojson) {
-          nextComunas = structuredClone(comunasBaseGeojson) as EnrichedGeojson
-          applyComunaScoresToGeojson(nextComunas, comunaMap)
-          setComunasGeojson(nextComunas)
-        }
-
-        return { regions: nextRegions, comunas: nextComunas }
-      })
+      const nationalMap = await fetchNationalRiskMap(date)
+      const nextRegions = structuredClone(regionsBase) as EnrichedGeojson
+      applyNationalRiskToRegions(nextRegions, nationalMap)
+      return nextRegions
     },
-    [regionsBaseGeojson, comunasBaseGeojson, fetchRiskForDate, withMapLoading]
+    [fetchNationalRiskMap],
   )
 
   const fetchComunaRisk = useCallback(
@@ -163,15 +139,13 @@ export function useMapData() {
       return queryClient.fetchQuery({
         queryKey: queryKeys.comunaRisk(codcomuna, date),
         queryFn: () => getComunaRisk(codcomuna, date),
-        staleTime: 5 * 60 * 1000,
+        staleTime: staleTimeForLive(date, STALE.risk),
       })
     },
-    [queryClient]
+    [queryClient],
   )
 
   return {
-    regionsGeojson,
-    comunasGeojson,
     loadRegions,
     loadComunas,
     refreshMapRisk,

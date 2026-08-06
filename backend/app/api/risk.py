@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
 from app.core.limiter import limiter
-from app.schemas.risk import ComunaMapScore
+from app.schemas.risk import ComunaMapScore, NationalRiskEntry
 from app.services.daily_risk_service import (
     get_comuna_map_scores_for_date,
     get_national_risk_for_date,
@@ -15,7 +15,7 @@ from app.services.query_date_window import clamp_query_date, today_chile
 router = APIRouter()
 
 
-@router.get("/national", response_model=list[dict])
+@router.get("/national", response_model=list[NationalRiskEntry])
 @limiter.limit("100/minute")
 async def get_national_risk(
     request: Request,
@@ -39,7 +39,11 @@ async def get_comuna_map_scores(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    """Lightweight scores for map coloring (composite_score per comuna)."""
+    """Latest composite_score per comuna (alert evaluator input / tooling).
+
+    Not used for map choropleth — the monitor paints fills from active
+    `alert_level`, not scores.
+    """
     query_date = clamp_query_date(date or today_chile())
     data = await get_comuna_map_scores_for_date(db, query_date)
     return data

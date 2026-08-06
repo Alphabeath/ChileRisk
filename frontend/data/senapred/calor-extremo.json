@@ -1,0 +1,210 @@
+{
+  "slug": "calor-extremo",
+  "group": "preparate",
+  "title": "Calor intenso o extremo",
+  "sourceUrl": "https://senapred.cl/calor-extremo/",
+  "blurb": "El calor es aquello que siente un ser vivo ante una temperatura elevada y que puede afectar su normal funcionamiento. Su manifestación excesiva o exagerada se…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/calor-extremo/BG_calor-extremo_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué son los eventos de Calor?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "El calor es aquello que siente un ser vivo ante una temperatura elevada y que puede afectar su normal funcionamiento. Su manifestación excesiva o exagerada se entiende como calor intenso o extremo."
+            },
+            {
+              "text": "El calor intenso o extremo se presenta en condiciones de un tiempo cálido inusual con temperaturas máximas y mínimas elevadas en una región determinada y que pueden ser persistente en días consecutivos, sobrepasando umbrales locales de temperatura. Junto con la temperatura, otro parámetro considerado en el monitoreo del calor es la humedad."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/calor-extremo/BG_calor-extremo_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de calor intenso o extremo?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantente informado/a respecto al pronóstico meteorológico y atento/a a las alertas por calor intenso o extremo emitidas e información brindada por las autoridades pertinentes."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Bebe líquidos, aunque no sientas sed, prioriza el consumo de agua de manera constante y mesurada. Beber grandes cantidades de agua en poco tiempo puede ser dañino para la salud."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita el consumo de comidas altas en calorías, de bebidas alcohólicas y azucaradas o con cafeína. Aumenta el consumo de frutas y verduras."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Niños, niñas, personas mayores, personas con discapacidad y personas con enfermedades crónicas, pueden deshidratarse con mayor facilidad. Vigila su temperatura corporal y condición general. Si observas confusión o somnolencia dirígete a un centro de salud."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Procura mantener el interior de tu hogar a una temperatura más baja que el exterior, bajando cortinas, cerrando o abriendo ventanas. Utiliza las habitaciones más frescas de la vivienda. Apaga luces y equipos eléctricos que no estén en uso."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si necesitas refrescarte toma duchas frías o utiliza toallas humedecidas en antebrazos y cuello."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Para prevenir intoxicaciones, evita comer alimentos que se descompongan rápidamente con la alta temperatura. Mantén los alimentos refrigerados y vigila las medidas higiénicas de conservación. No compres alimentos en locales no autorizados."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén los sectores cercanos a tu vivienda libres de vegetación y estancamientos de agua ya que podría influir en la aparición de vectores como mosquitos y/o ratones."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_11.png",
+          "text": "El calor intenso o extremo puede afectar la salud y bienestar de las personas, siendo las personas mayores, personas con discapacidad, recién nacidos, niños y niñas, personas gestantes, personas con enfermedades crónicas, entre otras, las de mayor vulnerabilidad frente a la alta temperatura."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/calor-extremo/BG_calor-extremo_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás al aire libre",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_01-150x150.png",
+          "text": "Evita exponerte al sol durante las horas centrales del día (11:00 a 17:00 horas en donde existe una máxima radiación ultravioleta). Usa protección solar sobre factor 50 y reaplica cada 2 horas. Complementa con el uso de sombrero, lentes de sol y sombrillas. Permanece en lugares frescos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_02-150x150.png",
+          "text": "Si realizas cualquier actividad física al aire libre, hazlo durante las primeras horas del día o en la noche."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_03-150x150.png",
+          "text": "Descansa con frecuencia a la sombra y mantente hidratado. Usa ropa (de colores claros) y calzado ligero, transpirable y holgado, que permitan la ventilación. Evita el uso de telas sintéticas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_04-150x150.png",
+          "text": "Nunca dejes a personas ni mascotas en el interior de vehículos, en un corto periodo de tiempo la temperatura del interior puede superar ampliamente la temperatura del exterior, provocando golpes de calor."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_05-150x150.png",
+          "text": "Procura no pasear a tu mascota en horarios de mayor exposición al sol. En caso de ser necesario, utiliza protección en las patas de tu mascota y lleva agua para que pueda beber."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_06-150x150.png",
+          "text": "Solicita ayuda si presentas mareos, debilidad, ansiedad, sed intensa o cefalea intensa, espasmos musculares dolorosos. Para más recomendaciones a la población, visita www.minsal.cl"
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones por sector",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_07-150x150.png",
+          "text": "Mantén hidratados cultivos, huertas y vegetación en general. El aumento de las temperaturas incrementa la evapotranspiración, generando mayores demandas hídricas por parte de los cultivos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_08-150x150.png",
+          "text": "Procura mantener a la sombra, ofrecer alimento y agua a animales y ganado. Considera que el estrés térmico reduce la ganancia en peso de los animales, estos a su vez requieren más agua para regular su temperatura corporal. Para más información visita www.minagri.cl"
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_09-150x150.png",
+          "text": "Infórmate sobre la aparición de Marea Roja. El aumento de la temperatura superficial del mar, puede favorecer el aumento y concentración de microalgas tóxicas o no tóxicas, en moluscos bivalvos (choros, almejas, ostiones, machas, entre otros). Para más información visita www.sernapesca.cl."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/calor-extremo/icon_calor_extremo_10-150x150.png",
+          "text": "No hagas uso de fuego, ni uses herramientas que generen chispas en zonas cercanas a vegetación. La vegetación seca, la baja humedad y la alta temperatura, generan condiciones favorables para la propagación de incendios forestales. Revisa recomendaciones específicas para incendios forestales en www.senapred.cl , www.conaf.cl"
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8912/20_preparate_con_senapred_calor_intenso_o_extremo_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8913/20_get_ready_with_senapred_intense_or_extreme_heat_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8915/20_preparez_vous_a_laide_du_senapred_chaleur_intense_ou_extreme_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-4.pdf?sequence=4&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/calor-extremo.png"
+}

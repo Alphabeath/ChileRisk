@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-08-03T04:22:00Z",
+  "note": "Cota 30 m excluded (v1). Heavy polygons are PMTiles only; lines/points stay GeoJSON.",
+  "tippecanoe": "docker",
+  "layers": {
+    "tsunamiAreas": { "pmtiles": "tsunami-areas.pmtiles", "sourceLayer": "tsunami_areas" },
+    "tsunamiRoutes": { "geojson": "tsunami-routes.geojson" },
+    "tsunamiMeetingPoints": { "geojson": "tsunami-meeting-points.geojson" },
+    "volcanicHazards": { "pmtiles": "volcanic-hazards.pmtiles", "sourceLayer": "volcanic_hazards" },
+    "volcanicRadii": { "geojson": "volcanic-radii.geojson" },
+    "activeVolcanoes": { "geojson": "active-volcanoes.geojson" },
+    "volcanicRoutes": { "geojson": "volcanic-routes.geojson" },
+    "volcanicMeetingPoints": { "geojson": "volcanic-meeting-points.geojson" },
+    "wildfireOccurrence": { "pmtiles": "wildfire-occurrence.pmtiles", "sourceLayer": "wildfire_occurrence" }
+  }
+}

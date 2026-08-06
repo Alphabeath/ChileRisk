@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { auth } from "@/auth"
-import { createBackendApiToken } from "@/lib/api-token"
+import { createGuestBackendApiToken } from "@/lib/api-token"
 import { getBackendInternalUrl } from "@/lib/backend-url"
 
+/**
+ * Same-origin proxy → FastAPI. Always attaches a Bearer JWT.
+ * Until NextAuth exists, uses guest (`sub: "guest"`).
+ */
 async function proxyRequest(req: NextRequest, pathSegments: string[]) {
-  const session = await auth()
-  if (!session?.user?.id) {
-    return NextResponse.json({ detail: "Unauthorized" }, { status: 401 })
-  }
-
   const targetPath = `/${pathSegments.join("/")}`
   const url = new URL(targetPath, getBackendInternalUrl())
   url.search = req.nextUrl.search
 
-  const token = await createBackendApiToken({
-    sub: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-  })
+  const token = await createGuestBackendApiToken()
 
   const headers = new Headers()
   const contentType = req.headers.get("content-type")
@@ -39,7 +33,6 @@ async function proxyRequest(req: NextRequest, pathSegments: string[]) {
   const responseContentType =
     backendRes.headers.get("Content-Type") ?? "application/json"
 
-  // Pass through SSE / streaming bodies without buffering the whole payload.
   if (
     responseContentType.includes("text/event-stream") &&
     backendRes.body

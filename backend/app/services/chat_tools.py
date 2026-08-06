@@ -534,7 +534,7 @@ async def _dispatch(
                 "origin": {"lat": lat, "lon": lon},
                 "total_candidates": total,
                 "items": enriched,
-                "app_path": "/evacuation",
+                "app_path": "/evacuacion",
                 "presentation_hint": (
                     "Lista cada punto con sector, distancia_km y un enlace Markdown "
                     "usando maps_directions_url (texto: Abrir en Google Maps)."

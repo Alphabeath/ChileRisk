@@ -1,12 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
 
+/** Docker / Dokploy health probe — keep cheap and unauthenticated. */
 export async function GET() {
-  return NextResponse.json(
-    {
-      status: "ok",
-      service: "frontend",
-      timestamp: new Date().toISOString(),
-    },
-    { status: 200 }
-  );
+  return NextResponse.json({ ok: true })
 }

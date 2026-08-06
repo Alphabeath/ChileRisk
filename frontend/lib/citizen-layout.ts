@@ -1,34 +1,63 @@
-/** Floating citizen navbar: `top-4` + bar with icon + label (~40px) + gap below. */
-export const CITIZEN_NAVBAR_TOP_PX = 16
-export const CITIZEN_NAVBAR_HEIGHT_PX = 40
-export const CITIZEN_NAVBAR_CLEARANCE_PX =
-  CITIZEN_NAVBAR_TOP_PX + CITIZEN_NAVBAR_HEIGHT_PX + 8
+/** Fixed top bar height (brand row + padding). */
+export const CITIZEN_NAVBAR_HEIGHT_PX = 48
 
-/** Sticky offset for disaster detail phase nav (below floating citizen navbar). */
-export const DISASTER_PHASE_NAV_STICKY_TOP_PX = 80
+/** Offset below fixed navbar for page content and map panels. */
+export const CITIZEN_NAVBAR_CLEARANCE_PX = CITIZEN_NAVBAR_HEIGHT_PX
 
-/** Default `top` for map panels under the navbar (matches `useDraggablePanel` fixed default). */
-export const MAP_PANEL_DEFAULT_TOP_PX = CITIZEN_NAVBAR_CLEARANCE_PX
+/** Tailwind class for padding-top under the fixed citizen navbar. */
+export const CITIZEN_NAVBAR_PAD_TOP_CLASS = "pt-12" as const
 
-/** Left inset for alerts column. */
+/** Left inset for alerts column (`lg+`). Medium desktop is flush (`left-0`). */
 export const MAP_PANEL_LEFT_INSET_PX = 16
 
-/** Right inset for controls/info column and MapLibre controls. */
+/** Right inset for future controls/info column and MapLibre controls. */
 export const MAP_PANEL_RIGHT_INSET_PX = 16
 
-/** Shared width for draggable map overlays (alerts, date, risk legend). */
+/**
+ * Expanded floating panel width (Alertas, Fecha).
+ * Also the always-on width from `lg` up when a panel is collapsed.
+ */
 export const MAP_PANEL_WIDTH_CLASS =
-  "w-[260px] max-w-[calc(100vw-2rem)]" as const
+  "w-[320px] max-w-[calc(100vw-2rem)]" as const
 
-/** @deprecated Use MAP_PANEL_WIDTH_CLASS */
-export const MAP_RISK_LEGEND_WIDTH_CLASS = MAP_PANEL_WIDTH_CLASS
+/**
+ * Collapsed rail on medium desktop (`md`–`lg`): hug title + value chrome.
+ * From `lg` (1024px) the collapsed chrome still uses full panel width.
+ */
+export const MAP_PANEL_RAIL_WIDTH_CLASS =
+  "w-max max-w-[calc(100vw-2rem)] lg:w-[320px]" as const
+
+/** Mono ops title for Alertas / Fecha chrome (rail + expanded). */
+export const MAP_PANEL_TITLE_CLASS =
+  "font-mono text-[11px] font-bold uppercase tracking-[1.1px] text-muted-foreground" as const
+
+/** Width class for a desktop map panel given expand state. */
+export function mapPanelWidthClass(expanded: boolean): string {
+  return expanded ? MAP_PANEL_WIDTH_CLASS : MAP_PANEL_RAIL_WIDTH_CLASS
+}
+
+/**
+ * Fixed left position: flush on medium (`md`–`lg`), padded from `lg`.
+ * Pair with `MAP_PANEL_LEFT_INSET_PX` for top/maxHeight math on `lg+`.
+ */
+export const MAP_PANEL_LEFT_POSITION_CLASS = "left-0 lg:left-4" as const
+
+/**
+ * matchMedia for medium desktop rail behavior.
+ * True when viewport is below Tailwind `lg` (1024px).
+ * Desktop column is already `hidden` below `md`, so this covers `md`–`lg`.
+ */
+export const MAP_DESKTOP_COMPACT_QUERY = "(max-width: 1023px)" as const
 
 /**
  * Tailwind breakpoint for map mobile chrome.
- * Below `md` (768px): hide floating columns, show persistent bottom sheet.
- * `md+`: desktop floating panels + DnD.
+ * Below `md` (768px): hide floating columns, show mobile sheet entry.
+ * `md+`: desktop floating panels.
  */
 export const MAP_MOBILE_BREAKPOINT = "md" as const
+
+/** matchMedia for Tailwind `md` and up — close mobile sheets/menus when true. */
+export const MAP_DESKTOP_MIN_QUERY = "(min-width: 768px)" as const
 
 /** Floating map panel columns — visible from `md` up. Use on flex column hosts. */
 export const MAP_DESKTOP_ONLY_CLASS = "hidden md:flex" as const

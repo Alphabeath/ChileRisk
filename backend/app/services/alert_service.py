@@ -1,4 +1,4 @@
-"""Active alerts: SERNAPRED (DB) + ChileRisk (on read) + SERNAGEOMIN (DB)."""
+"""Active alerts: SERNAPRED + ChileRisk + SERNAGEOMIN + MeteoChile AAA."""
 
 from datetime import date, datetime, timedelta, timezone
 
@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.comuna import Comuna
+from app.models.meteochile_aaa_alert import MeteoChileAaaAlert
 from app.models.senapred_alert import SenapredAlert
 from app.models.sernageomin_volcanic_alert import SernageominVolcanicAlert
 from app.schemas.alert import ActiveAlertOut, AlertLevel, HazardType, RecordKind
@@ -15,6 +16,7 @@ from app.services.alert_evaluator import (
     evaluate_region_hazards,
 )
 from app.services.impact_service import get_max_seismic_metrics_by_region
+from app.services.meteochile_aaa_service import list_active_meteochile_aaa_rows
 from app.services.query_date_window import day_bounds_utc, today_chile
 from app.services.region_service import get_all_regions_for_alerts
 from app.services.senapred_service import (
@@ -101,21 +103,25 @@ def _hazard_score_for_display(region: dict, evaluation: HazardAlertEvaluation) -
 def _hazard_risk_detail(
     evaluation: HazardAlertEvaluation,
     region: dict,
-    seismic: dict[str, float] | None,
-) -> str:
+    seismic: dict | None,
+) -> str | None:
     hazard = evaluation.hazard
 
     if hazard == "sismo":
+        # Titles always use real CSN magnitude — never invent "intensidad referencial".
         if seismic and seismic.get("max_magnitude"):
-            mag_type = seismic.get("magnitude_type", "Ml")
-            return f"cercano de magnitud {seismic['max_magnitude']:.1f} {mag_type}"
+            raw_type = seismic.get("magnitude_type")
+            mag_type = (
+                raw_type.strip()
+                if isinstance(raw_type, str) and raw_type.strip()
+                else "Ml"
+            )
+            return (
+                f"cercano de magnitud {float(seismic['max_magnitude']):.1f} {mag_type}"
+            )
         if evaluation.trigger_metric == "magnitude":
             return f"cercano de magnitud {evaluation.trigger_value:.1f} Ml"
-        score = float(region.get("max_sismo_score") or region.get("sismo_score") or 0)
-        if score > 0:
-            approx = (score / 100.0) * 10.0
-            return f"intensidad referencial de {approx:.1f} (riesgo {score:.0f} de 100)"
-        return "en monitoreo"
+        return None
 
     if hazard == "ola_calor":
         temp = region.get("avg_temperature_c")
@@ -294,6 +300,10 @@ async def _chilerisk_alerts_from_risk(
             risk_detail = _hazard_risk_detail(evaluation, r, seismic)
             display_score = _hazard_score_for_display(r, evaluation)
 
+            if hazard == "sismo" and not risk_detail:
+                # No ChileRisk sismo alert without a real CSN magnitude in the title.
+                continue
+
             if hazard == "inundacion":
                 flood_comunas = r.get("flood_comunas") or []
                 if flood_comunas:
@@ -384,6 +394,56 @@ async def _sernageomin_alerts_to_out(session: AsyncSession) -> list[ActiveAlertO
     return [_sernageomin_row_to_out(r) for r in rows]
 
 
+def _meteochile_row_to_out(row: MeteoChileAaaAlert) -> ActiveAlertOut:
+    level: AlertLevel = (
+        row.level
+        if row.level in ("preventiva", "amarilla", "naranja", "roja", "informativa")
+        else "amarilla"
+    )
+    issued = row.issued_at or row.synced_at
+    if issued.tzinfo is None:
+        issued = issued.replace(tzinfo=timezone.utc)
+    synced = row.synced_at
+    if synced.tzinfo is None:
+        synced = synced.replace(tzinfo=timezone.utc)
+    category = row.fenomeno or "Meteorología DMC"
+    return ActiveAlertOut(
+        id=f"meteochile:{row.row_key}",
+        source="meteochile",
+        level=level,
+        category=category,
+        title=row.title,
+        content=row.content,
+        url_access=None,
+        external_url=row.external_url,
+        issued_at=issued,
+        synced_at=synced,
+        region_code=row.region_code,
+        region_name=row.region_name,
+        affected_scope=(
+            row.affected_scope
+            if row.affected_scope in ("region", "comuna", "unknown")
+            else "unknown"
+        ),
+        comuna_codes=list(row.comuna_codes or []),
+        is_monitor=False,
+        parent_id=None,
+        thread_root_id=None,
+        record_kind="alerta",
+        hazard_type="otros",
+        composite_score=None,
+        dominant_hazard="clima",
+        severity=None,
+        risk_detail=None,
+    )
+
+
+async def _meteochile_alerts_to_out(session: AsyncSession) -> list[ActiveAlertOut]:
+    """v1: only current AAA vigentes (no historical ?date= snapshots)."""
+    rows = await list_active_meteochile_aaa_rows(session)
+    return [_meteochile_row_to_out(r) for r in rows]
+
+
 def _sort_alerts(alerts: list[ActiveAlertOut]) -> list[ActiveAlertOut]:
     level_rank = {
         "roja": 0,
@@ -447,9 +507,11 @@ async def list_active_alerts(
     )
     chilerisk = await _chilerisk_alerts_from_risk(session, query_date=qd)
     sernageomin: list[ActiveAlertOut] = []
+    meteochile: list[ActiveAlertOut] = []
     if is_today:
         sernageomin = await _sernageomin_alerts_to_out(session)
-    merged = senapred + chilerisk + sernageomin
+        meteochile = await _meteochile_alerts_to_out(session)
+    merged = senapred + chilerisk + sernageomin + meteochile
 
     if comuna is not None:
         row = await session.get(Comuna, comuna)

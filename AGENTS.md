@@ -1,6 +1,6 @@
 # AGENTS.md — ChileRisk (root)
 
-Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS-QUICK.md](docs/HARNESS-QUICK.md) (flujo compacto) · detalle: [docs/HARNESS.md](docs/HARNESS.md) · `make verify`
+Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS.md](docs/HARNESS.md) (playbooks) · `make verify`
 
 ---
 
@@ -10,7 +10,7 @@ Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS-QU
 |-------|----------------|
 | UI, mapa, hooks, Next.js | [frontend/AGENTS.md](frontend/AGENTS.md) |
 | API, DB, scheduler, integraciones | [backend/AGENTS.md](backend/AGENTS.md) |
-| Contrato FE↔BE o `?date=` | [docs/HARNESS-QUICK.md](docs/HARNESS-QUICK.md) contract/cross + área |
+| Contrato FE↔BE o `?date=` | [docs/HARNESS.md](docs/HARNESS.md) contract/cross + área |
 
 | Tocas… | Editar |
 |--------|--------|
@@ -56,24 +56,8 @@ Puertos y stack: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Implement loop | Grok `/implement` |
 | UI pulida | `frontend-design` |
 | Next perf | `vercel-react-best-practices` |
-| Memoria persistente | `engram_mem_*` (ver docs/ENGRAM-PROTOCOL.md) |
 
 Skills detalle: [docs/HARNESS.md](docs/HARNESS.md) §8.
-
----
-
-## Memoria (engram)
-
-**Antes de tocar archivos:**
-
-```
-engram_mem_context
-engram_mem_search "<área o keywords>"
-```
-
-Guarda solo ARCH/PATTERN/BUG no triviales (máx 2-3/sesión). Si guardaste memorias → `engram_mem_session_summary` al cerrar.
-
-Protocolo completo + formato: [docs/ENGRAM-PROTOCOL.md](docs/ENGRAM-PROTOCOL.md)
 
 ---
 
@@ -81,8 +65,8 @@ Protocolo completo + formato: [docs/ENGRAM-PROTOCOL.md](docs/ENGRAM-PROTOCOL.md)
 
 No `git commit`/`push`/PRs. No tocar compose/root `.env`/.gitignore sin OK. No carpetas top-level nuevas sin proponer. No `TrueRisk/`. No commitear `.env`.
 
-Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verify`. Si usaste `engram_mem_save` → `engram_mem_session_summary`.
+Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verify`.
 
 ---
 
-*Last updated: 2026-06-17*
+*Last updated: 2026-07-31*

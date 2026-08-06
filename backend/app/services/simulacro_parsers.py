@@ -229,7 +229,7 @@ def _region_slug_part(region_name: str | None) -> str:
     return raw or "chile"
 
 
-def _synthetic_slug(
+def _generated_slug(
     *,
     region_name: str | None,
     drill_date: date,
@@ -386,7 +386,7 @@ def _parse_unlinked_calendar_block(
     if drill_date is None:
         return None
     drill_type = _normalize_drill_type(text)
-    slug = _synthetic_slug(
+    slug = _generated_slug(
         region_name=region_name,
         drill_date=drill_date,
         drill_type=drill_type,

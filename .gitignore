@@ -58,6 +58,13 @@ yarn.lock
 # Local scratch / IDE (AGENTS.md: misc/ off-limits)
 misc/
 
+# Build scratch (GDAL evacuacion pipeline, etc.)
+.tmp/
+
+# Raw evacuation shapefiles (~200MB+) — build with `make evacuacion-data`
+frontend/data/evacuacion-source/**
+!frontend/data/evacuacion-source/README.md
+
 # caveman-compress backups
 *.original.md
 

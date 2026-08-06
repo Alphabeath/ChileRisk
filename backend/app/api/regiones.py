@@ -1,17 +1,24 @@
 """Region detail endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
+from app.core.limiter import limiter
+from app.schemas.risk import RegionRiskDetailResponse
 from app.services.region_service import get_region_aggregated_risk
 from app.services.risk_service import get_latest_risks_for_region
 
 router = APIRouter()
 
 
-@router.get("/{codregion}/risk")
-async def get_region_risk(codregion: int, db: AsyncSession = Depends(get_db)):
+@router.get("/{codregion}/risk", response_model=RegionRiskDetailResponse)
+@limiter.limit("60/minute")
+async def get_region_risk(
+    request: Request,
+    codregion: int = Path(ge=1, le=16),
+    db: AsyncSession = Depends(get_db),
+) -> RegionRiskDetailResponse:
     """Detailed risk for one region + list of its comunas with scores."""
     region_data = await get_region_aggregated_risk(db, codregion)
     if not region_data:
@@ -19,9 +26,9 @@ async def get_region_risk(codregion: int, db: AsyncSession = Depends(get_db)):
 
     comuna_scores = await get_latest_risks_for_region(db, codregion)
 
-    return {
+    return RegionRiskDetailResponse(
         **region_data,
-        "comunas": [
+        comunas=[
             {
                 "cod_comuna": s.cod_comuna,
                 "sismo_score": s.sismo_score,
@@ -35,4 +42,4 @@ async def get_region_risk(codregion: int, db: AsyncSession = Depends(get_db)):
             }
             for s in comuna_scores
         ],
-    }
+    )

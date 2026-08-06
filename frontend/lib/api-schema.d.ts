@@ -115,7 +115,10 @@ export interface paths {
         };
         /**
          * Get Comuna Map Scores
-         * @description Lightweight scores for map coloring (composite_score per comuna).
+         * @description Latest composite_score per comuna (alert evaluator input / tooling).
+         *
+         *     Not used for map choropleth — the monitor paints fills from active
+         *     `alert_level`, not scores.
          */
         get: operations["get_comuna_map_scores_api_v1_risk_comunas_get"];
         put?: never;
@@ -232,9 +235,29 @@ export interface paths {
         };
         /**
          * List Active Alerts
-         * @description Alertas activas: SERNAPRED (alertas + eventos) + ChileRisk.
+         * @description Alertas activas: SERNAPRED + ChileRisk + SERNAGEOMIN + MeteoChile.
          */
         get: operations["list_active_alerts_api_v1_alerts_active_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/meteochile/zones": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Meteochile Zone Geojson
+         * @description GeoJSON de franjas DMC AAA activas (polígonos oficiales, no regiones CUT).
+         */
+        get: operations["list_meteochile_zone_geojson_api_v1_alerts_meteochile_zones_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -643,7 +666,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "senapred" | "chilerisk" | "sernageomin";
+            source: "senapred" | "chilerisk" | "sernageomin" | "meteochile";
             /**
              * Level
              * @enum {string}
@@ -871,12 +894,80 @@ export interface components {
              */
             message_count: number;
         };
+        /** CompareOut */
+        CompareOut: {
+            /** Regiones */
+            regiones: components["schemas"]["CompareRegionEntry"][];
+        };
+        /** CompareRegionEntry */
+        CompareRegionEntry: {
+            /** Codregion */
+            codregion: number;
+            /** Name */
+            name: string;
+            /** Composite Score */
+            composite_score: number;
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            /** Severity */
+            severity: string;
+        };
+        /** ComunaImpact */
+        ComunaImpact: {
+            /** Cod Comuna */
+            cod_comuna: number;
+            /** Name */
+            name: string;
+            /** Codregion */
+            codregion: number;
+            /** Distance Km */
+            distance_km: number;
+            /** Estimated Intensity */
+            estimated_intensity: number;
+            /** Risk Score */
+            risk_score: number;
+        };
         /** ComunaMapScore */
         ComunaMapScore: {
             /** Cod Comuna */
             cod_comuna: number;
             /** Composite Score */
             composite_score: number;
+        };
+        /** ComunaRiskDetail */
+        ComunaRiskDetail: {
+            /** Cod Comuna */
+            cod_comuna: number;
+            /** Name */
+            name: string;
+            /** Codregion */
+            codregion: number;
+            /** Sismo Score */
+            sismo_score: number;
+            /** Ola Calor Score */
+            ola_calor_score: number;
+            /** Ola Frio Score */
+            ola_frio_score: number;
+            /** Viento Score */
+            viento_score: number;
+            /** Inundacion Score */
+            inundacion_score: number;
+            /** Composite Score */
+            composite_score: number;
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            /** Severity */
+            severity: string;
+            /**
+             * Computed At
+             * Format: date-time
+             */
+            computed_at: string;
+            /** Temperature C */
+            temperature_c?: number | null;
+            /** Wind Speed Kmh */
+            wind_speed_kmh?: number | null;
+            seismic_impact?: components["schemas"]["SeismicImpactDetail"] | null;
         };
         /** ContactIn */
         ContactIn: {
@@ -1224,6 +1315,8 @@ export interface components {
             name?: string | null;
             /** Provider Account Id */
             provider_account_id: string;
+            /** Google Id Token */
+            google_id_token?: string | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1267,6 +1360,56 @@ export interface components {
             /** Distance Km */
             distance_km?: number | null;
         };
+        /** NationalAvgScores */
+        NationalAvgScores: {
+            /** Composite Score */
+            composite_score: number;
+            /** Sismo */
+            sismo: number;
+            /** Ola Calor */
+            ola_calor: number;
+            /** Ola Frio */
+            ola_frio: number;
+            /** Viento */
+            viento: number;
+        };
+        /** NationalRiskEntry */
+        NationalRiskEntry: {
+            /** Codregion */
+            codregion: number;
+            /** Name */
+            name: string;
+            /** Composite Score */
+            composite_score: number;
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            /** Severity */
+            severity: string;
+            /** Sismo Score */
+            sismo_score: number;
+            /** Ola Calor Score */
+            ola_calor_score: number;
+            /** Ola Frio Score */
+            ola_frio_score: number;
+            /** Viento Score */
+            viento_score: number;
+            /** Comuna Count */
+            comuna_count: number;
+        };
+        /** NationalStatsOut */
+        NationalStatsOut: {
+            /**
+             * Timestamp
+             * Format: date-time
+             */
+            timestamp: string;
+            national_avg: components["schemas"]["NationalAvgScores"];
+            severity_distribution: components["schemas"]["SeverityDistribution"];
+            /** Top Regions */
+            top_regions: components["schemas"]["RegionRankEntry"][];
+            /** Bottom Regions */
+            bottom_regions: components["schemas"]["RegionRankEntry"][];
+        };
         /** NearestComunaOut */
         NearestComunaOut: {
             /** Cod Comuna */
@@ -1308,6 +1451,107 @@ export interface components {
              * @default
              */
             special_needs: string;
+        };
+        /** RegionAvgScores */
+        RegionAvgScores: {
+            /** Composite */
+            composite: number;
+            /** Sismo */
+            sismo: number;
+            /** Ola Calor */
+            ola_calor: number;
+            /** Ola Frio */
+            ola_frio: number;
+            /** Viento */
+            viento: number;
+        };
+        /** RegionComunaScore */
+        RegionComunaScore: {
+            /** Cod Comuna */
+            cod_comuna: number;
+            /** Sismo Score */
+            sismo_score: number;
+            /** Ola Calor Score */
+            ola_calor_score: number;
+            /** Ola Frio Score */
+            ola_frio_score: number;
+            /** Viento Score */
+            viento_score: number;
+            /** Inundacion Score */
+            inundacion_score: number;
+            /** Composite Score */
+            composite_score: number;
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            /** Severity */
+            severity: string;
+        };
+        /** RegionExtremeScores */
+        RegionExtremeScores: {
+            /** Composite */
+            composite: number;
+            /** Comuna Name */
+            comuna_name: string;
+        };
+        /** RegionRankEntry */
+        RegionRankEntry: {
+            /** Codregion */
+            codregion: number;
+            /** Name */
+            name: string;
+            /** Composite Score */
+            composite_score: number;
+        };
+        /** RegionRiskDetailResponse */
+        RegionRiskDetailResponse: {
+            /** Codregion */
+            codregion: number;
+            /** Name */
+            name: string;
+            /**
+             * Risk Computed At
+             * Format: date-time
+             */
+            risk_computed_at: string;
+            /** Sismo Score */
+            sismo_score: number;
+            /** Ola Calor Score */
+            ola_calor_score: number;
+            /** Ola Frio Score */
+            ola_frio_score: number;
+            /** Viento Score */
+            viento_score: number;
+            /** Inundacion Score */
+            inundacion_score: number;
+            /** Composite Score */
+            composite_score: number;
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            /** Severity */
+            severity: string;
+            /** Comuna Count */
+            comuna_count: number;
+            /** Avg Temperature C */
+            avg_temperature_c?: number | null;
+            /** Avg Wind Speed Kmh */
+            avg_wind_speed_kmh?: number | null;
+            /** Comunas */
+            comunas: components["schemas"]["RegionComunaScore"][];
+        };
+        /** RegionStatsOut */
+        RegionStatsOut: {
+            /** Codregion */
+            codregion: number;
+            /** Name */
+            name: string;
+            /** Comuna Count */
+            comuna_count: number;
+            avg_scores: components["schemas"]["RegionAvgScores"];
+            max_scores: components["schemas"]["RegionExtremeScores"];
+            min_scores: components["schemas"]["RegionExtremeScores"];
+            /** Dominant Hazard */
+            dominant_hazard: string;
+            severity_breakdown: components["schemas"]["SeverityDistribution"];
         };
         /** RegisterRequest */
         RegisterRequest: {
@@ -1364,6 +1608,107 @@ export interface components {
              * @default
              */
             meeting_point: string;
+        };
+        /** SeismicEventResponse */
+        SeismicEventResponse: {
+            /** Id */
+            id: number;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Magnitude */
+            magnitude: number;
+            /** Depth Km */
+            depth_km: number;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Occurred At Local */
+            occurred_at_local?: string | null;
+            /** Source */
+            source: string;
+            /** Detail Url */
+            detail_url?: string | null;
+            /**
+             * Is Perceived
+             * @default false
+             */
+            is_perceived: boolean;
+            /** Intensity Report Url */
+            intensity_report_url?: string | null;
+            /** Reported Intensity Max */
+            reported_intensity_max?: number | null;
+            /** Related Senapred Events */
+            related_senapred_events?: components["schemas"]["SenapredAlertBrief"][];
+            /** Related Senapred Alerts */
+            related_senapred_alerts?: components["schemas"]["SenapredAlertBrief"][];
+            /** Raw Data */
+            raw_data?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** SeismicImpactDetail */
+        SeismicImpactDetail: {
+            /** Event Id */
+            event_id: number;
+            /** Distance Km */
+            distance_km: number;
+            /** Estimated Intensity */
+            estimated_intensity: number;
+            /** Risk Score */
+            risk_score: number;
+            /** Magnitude */
+            magnitude: number;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Detail Url */
+            detail_url?: string | null;
+        };
+        /** SeismicImpactResponse */
+        SeismicImpactResponse: {
+            event: components["schemas"]["SeismicEventResponse"];
+            /** Affected Comunas */
+            affected_comunas: components["schemas"]["ComunaImpact"][];
+            /** Total Affected */
+            total_affected: number;
+        };
+        /** SenapredAlertBrief */
+        SenapredAlertBrief: {
+            /** Id */
+            id: string;
+            /**
+             * Record Kind
+             * @enum {string}
+             */
+            record_kind: "alerta" | "evento";
+            /** Title */
+            title: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "preventiva" | "amarilla" | "naranja" | "roja" | "informativa";
+            /** External Url */
+            external_url?: string | null;
+            /** Hazard Type */
+            hazard_type?: string | null;
+        };
+        /** SeverityDistribution */
+        SeverityDistribution: {
+            /** Bajo */
+            bajo: number;
+            /** Moderado */
+            moderado: number;
+            /** Alto */
+            alto: number;
+            /** Critico */
+            critico: number;
         };
         /** SimulacroListResponse */
         SimulacroListResponse: {
@@ -1499,6 +1844,19 @@ export interface components {
              * @default
              */
             summary: string;
+        };
+        /** TrendsOut */
+        TrendsOut: {
+            period: components["schemas"]["TrendsPeriod"];
+            /** Message */
+            message: string;
+        };
+        /** TrendsPeriod */
+        TrendsPeriod: {
+            /** Start */
+            start: string;
+            /** End */
+            end: string;
         };
         /** UserProfileOut */
         UserProfileOut: {
@@ -1729,9 +2087,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    }[];
+                    "application/json": components["schemas"]["NationalRiskEntry"][];
                 };
             };
             /** @description Validation Error */
@@ -1794,7 +2150,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RegionRiskDetailResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1860,7 +2216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ComunaRiskDetail"];
                 };
             };
             /** @description Validation Error */
@@ -1892,7 +2248,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SeismicEventResponse"][];
                 };
             };
             /** @description Validation Error */
@@ -1923,7 +2279,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["SeismicImpactResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1952,6 +2308,8 @@ export interface operations {
                 kind?: ("alerta" | "evento") | null;
                 /** @description sismo | volcan | incendio | incendio_estructural | remocion | otros */
                 hazard?: ("sismo" | "volcan" | "incendio" | "incendio_estructural" | "remocion" | "otros") | null;
+                /** @description Si true, incluye HTML/texto `content` (~MB). El monitor solo necesita metadatos; default false. */
+                include_content?: boolean;
             };
             header?: never;
             path?: never;
@@ -1966,6 +2324,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActiveAlertOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_meteochile_zone_geojson_api_v1_alerts_meteochile_zones_get: {
+        parameters: {
+            query?: {
+                /** @description Solo disponible para hoy (franjas DMC vigentes). */
+                date?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -2014,7 +2406,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["NationalStatsOut"];
                 };
             };
         };
@@ -2036,7 +2428,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["RegionStatsOut"];
                 };
             };
             /** @description Validation Error */
@@ -2067,7 +2459,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["TrendsOut"];
                 };
             };
             /** @description Validation Error */
@@ -2084,7 +2476,7 @@ export interface operations {
     compare_api_v1_stats_compare_get: {
         parameters: {
             query: {
-                /** @description Comma-separated region codes */
+                /** @description Comma-separated region codes (max 8) */
                 codregions: string;
             };
             header?: never;
@@ -2099,7 +2491,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["CompareOut"];
                 };
             };
             /** @description Validation Error */

@@ -1,9 +1,11 @@
+import asyncio
 import hashlib
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
+import httpx
 import resend
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +18,56 @@ from app.models.user import User
 logger = logging.getLogger("chilerisk.auth")
 
 RESET_TOKEN_TTL_HOURS = 1
+
+_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
+
+
+async def _verify_google_id_token(token: str | None) -> dict | None:
+    """Validate a Google ID token server-side (Google verifies signature+exp)."""
+    if not token:
+        return None
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(_TOKENINFO_URL, params={"id_token": token})
+    except httpx.HTTPError:
+        logger.exception("Google tokeninfo request failed")
+        return None
+    if resp.status_code != 200:
+        return None
+    return resp.json()
+
+
+async def resolve_google_identity(
+    *,
+    email: str,
+    provider_account_id: str,
+    google_id_token: str | None,
+) -> tuple[str, str]:
+    """Return (normalized_email, provider_account_id).
+
+    With GOOGLE_CLIENT_ID configured (strict mode), the ID token is validated
+    against Google and the claims override the client-supplied values. Without
+    it, the legacy trust path is kept (Next.js/Auth.js already validated the
+    token server-side).
+    """
+    if not settings.google_client_id:
+        return email.strip().lower(), provider_account_id
+
+    if not google_id_token:
+        raise ValueError("missing_google_token")
+    claims = await _verify_google_id_token(google_id_token)
+    if claims is None:
+        raise ValueError("invalid_google_token")
+    if claims.get("aud") != settings.google_client_id:
+        logger.warning("Google token aud mismatch: %r", claims.get("aud"))
+        raise ValueError("invalid_google_token")
+    if claims.get("email_verified") is not True:
+        raise ValueError("invalid_google_token")
+    claims_email = claims.get("email")
+    claims_sub = claims.get("sub")
+    if not isinstance(claims_email, str) or not isinstance(claims_sub, str):
+        raise ValueError("invalid_google_token")
+    return claims_email.strip().lower(), claims_sub
 
 
 def hash_password(password: str) -> str:
@@ -170,15 +222,24 @@ async def _send_reset_email(to_email: str, reset_url: str) -> None:
         return
 
     resend.api_key = settings.resend_api_key
-    resend.Emails.send(
-        {
-            "from": settings.auth_email_from,
-            "to": [to_email],
-            "subject": "Recupera tu contraseña — ChileRisk",
-            "html": (
-                "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
-                f'<p><a href="{reset_url}">Restablecer contraseña</a></p>'
-                "<p>Si no solicitaste esto, ignora este correo.</p>"
-            ),
-        }
-    )
+
+    def _send_sync() -> None:
+        # resend SDK is sync HTTP — offload to the threadpool to keep the loop free.
+        resend.Emails.send(
+            {
+                "from": settings.auth_email_from,
+                "to": [to_email],
+                "subject": "Recupera tu contraseña — ChileRisk",
+                "html": (
+                    "<p>Recibimos una solicitud para restablecer tu contraseña.</p>"
+                    f'<p><a href="{reset_url}">Restablecer contraseña</a></p>'
+                    "<p>Si no solicitaste esto, ignora este correo.</p>"
+                ),
+            }
+        )
+
+    try:
+        await asyncio.to_thread(_send_sync)
+    except Exception:
+        # 204 always: never leak whether the email exists.
+        logger.exception("Failed to send password reset email to %s", to_email)

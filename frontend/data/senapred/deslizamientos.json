@@ -1,0 +1,161 @@
+{
+  "slug": "deslizamientos",
+  "group": "preparate",
+  "title": "Deslizamientos",
+  "sourceUrl": "https://senapred.cl/deslizamientos/",
+  "blurb": "Movimiento ladera abajo, de una masa de suelo o roca cuyo desplazamiento ocurre predominantemente a lo largo de ésta, con una gran deformación del terreno.",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/deslizamientos/BG_deslizamiento_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un deslizamiento?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Movimiento ladera abajo, de una masa de suelo o roca cuyo desplazamiento ocurre predominantemente a lo largo de ésta, con una gran deformación del terreno."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/deslizamientos/BG_deslizamiento_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vives, trabajas o visitas zonas con riesgo de deslizamiento",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Identifica las laderas más cercanas a tu casa y averigua si en ellas han ocurrido deslizamientos o derrumbes con anterioridad."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si puedes, inspecciona la ladera y entorno en busca de grietas o evidencias de inclinación en la vegetación. De observar estos cambios, avisa al municipio correspondiente para que se tomen las medidas necesarias en conjunto con los organismos técnicos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita la tala de arboles en la ladera o la intervención de estas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si vas a construir cerca de una ladera, busca un lugar apropiado, considerando la distancia y eventuales acciones de intervención. En caso de requerir medidas de mitigación, asesórate por especialistas."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_10.png",
+          "text": "Infórmate de las condiciones del tiempo en: www.meteochile.cl"
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/deslizamientos/BG_deslizamiento_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de un deslizamiento?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_01-150x150.png",
+          "text": "Si te encuentras en una zona de riesgo y observas un deslizamiento, mantén la calma, ponte a resguardo y, si puedes, avisa a tu comunidad."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_02-150x150.png",
+          "text": "Si debes evacuar, lleva tu kit de emergencia previamente armado. No intentes rescatar o recuperar bienes materiales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_03-150x150.png",
+          "text": "Avisa a los organismos de primera respuesta: Bomberos (132), Carabineros (133) y autoridades locales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_04-150x150.png",
+          "text": "Mantente atento a la información oficial de las autoridades."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_05-150x150.png",
+          "text": "No expongas tu vida o la de tu familia grabando el evento o adoptando acciones de riesgo."
+        }
+      ]
+    },
+    {
+      "heading": "Luego de un deslizamiento",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_06-150x150.png",
+          "text": "Mantente lejos de las zonas afectadas. No te acerques a áreas donde haya ocurrido un deslizamiento, es posible que aún siga inestable y se generen nuevos movimientos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_11-150x150.png",
+          "text": "No camines sobre el depósito o escombros que dejó el deslizamiento."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_07-150x150.png",
+          "text": "Retorna sólo cuando las autoridades locales así lo indiquen."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_08-150x150.png",
+          "text": "Colabora con las tareas de rehabilitación de acuerdo con lo que indique la autoridad local."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/deslizamientos/icon_deslizamiento_09-150x150.png",
+          "text": "No construyas sobre el material deslizado ni sobre los escombros."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8863/05_preparate_con_senapred_deslizamientos_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8864/05_get_ready_with_senapred_landslides_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8865/05_preparez_vous_a_%20laide_du_senapred_glissements_de_terrain_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/deslizamientos.jpg"
+}

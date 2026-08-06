@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 AlertLevel = Literal["preventiva", "amarilla", "naranja", "roja", "informativa"]
-AlertSource = Literal["senapred", "chilerisk", "sernageomin"]
+AlertSource = Literal["senapred", "chilerisk", "sernageomin", "meteochile"]
 RecordKind = Literal["alerta", "evento"]
 HazardType = Literal[
     "sismo",

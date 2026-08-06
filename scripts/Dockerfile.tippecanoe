@@ -1,0 +1,19 @@
+# tippecanoe 2.x with native .pmtiles output (felt/tippecanoe).
+# Build once: docker build -t chilerisk-tippecanoe:2.79.0 -f scripts/Dockerfile.tippecanoe scripts/
+FROM ubuntu:24.04
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential \
+    ca-certificates \
+    git \
+    libsqlite3-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG TIPPECANOE_REF=2.79.0
+RUN git clone --depth 1 --branch "${TIPPECANOE_REF}" https://github.com/felt/tippecanoe.git /src \
+    && make -C /src -j"$(nproc)" \
+    && make -C /src install \
+    && rm -rf /src
+
+ENTRYPOINT ["tippecanoe"]

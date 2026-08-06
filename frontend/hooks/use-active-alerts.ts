@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
+
+import { useQueryDate } from "@/hooks/use-query-date"
 import { getActiveAlerts } from "@/lib/api"
+import { STALE, staleTimeForLive } from "@/lib/query-cache"
 import { queryKeys } from "@/lib/queries"
-import { useQueryDate } from "./use-query-date"
 import type { ActiveAlertParams } from "@/lib/types"
 
 export function useActiveAlerts(params: ActiveAlertParams = {}) {
@@ -12,6 +14,6 @@ export function useActiveAlerts(params: ActiveAlertParams = {}) {
   return useQuery({
     queryKey: [...queryKeys.activeAlerts(date), merged] as const,
     queryFn: () => getActiveAlerts(merged),
-    staleTime: 2 * 60 * 1000,
+    staleTime: staleTimeForLive(date, STALE.alerts),
   })
 }

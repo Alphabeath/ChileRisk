@@ -13,10 +13,13 @@ from app.models.comuna import Comuna
 from app.models.seismic_event import SeismicEvent
 from app.models.seismic_impact import SeismicImpact
 from app.models.senapred_alert import SenapredAlert
+from app.schemas.event import ComunaImpact, SeismicImpactResponse
 from app.services.seismic_alert_match import nearest_region_code, find_related_senapred
+from app.services.seismic_event_utils import event_to_response
 from app.services.seismic_service import (
     haversine_km,
     estimate_intensity,
+    compute_sismo_score_for_comuna,
     intensity_to_risk_score,
 )
 
@@ -67,6 +70,85 @@ async def compute_and_store_event_impact(
     if inserted:
         await session.commit()
     return inserted
+
+
+async def get_event_impact(
+    session: AsyncSession, event: SeismicEvent
+) -> SeismicImpactResponse:
+    """Estimated impact of one event per comuna (precomputed, live fallback)."""
+    precomputed = (
+        await session.execute(
+            select(SeismicImpact)
+            .where(SeismicImpact.event_id == event.id)
+            .order_by(SeismicImpact.risk_score.desc())
+        )
+    ).scalars().all()
+
+    if precomputed:
+        comuna_ids = [imp.cod_comuna for imp in precomputed]
+        comunas = (
+            await session.execute(
+                select(Comuna).where(Comuna.cod_comuna.in_(comuna_ids))
+            )
+        ).scalars().all()
+        comuna_map = {c.cod_comuna: c for c in comunas}
+        impacts = [
+            ComunaImpact(
+                cod_comuna=imp.cod_comuna,
+                name=comuna_map[imp.cod_comuna].name
+                if imp.cod_comuna in comuna_map
+                else "Desconocida",
+                codregion=comuna_map[imp.cod_comuna].codregion
+                if imp.cod_comuna in comuna_map
+                else 0,
+                distance_km=imp.distance_km,
+                estimated_intensity=imp.estimated_intensity,
+                risk_score=imp.risk_score,
+            )
+            for imp in precomputed
+        ]
+        return SeismicImpactResponse(
+            event=await event_to_response(session, event),
+            affected_comunas=impacts[:50],
+            total_affected=len(impacts),
+        )
+
+    comunas = (await session.execute(select(Comuna))).scalars().all()
+
+    impacts: list[ComunaImpact] = []
+    ev_dict = {
+        "latitude": event.latitude,
+        "longitude": event.longitude,
+        "magnitude": event.magnitude,
+        "depth_km": event.depth_km,
+        "occurred_at": event.occurred_at,
+    }
+
+    for c in comunas:
+        if c.latitude is None or c.longitude is None:
+            continue
+        dist = haversine_km(c.latitude, c.longitude, event.latitude, event.longitude)
+        intensity = estimate_intensity(event.magnitude, dist, event.depth_km)
+        if intensity < 3.0:
+            continue
+        risk = compute_sismo_score_for_comuna(c.latitude, c.longitude, [ev_dict])
+        impacts.append(
+            ComunaImpact(
+                cod_comuna=c.cod_comuna,
+                name=c.name,
+                codregion=c.codregion,
+                distance_km=round(dist, 1),
+                estimated_intensity=round(intensity, 2),
+                risk_score=risk,
+            )
+        )
+
+    impacts.sort(key=lambda x: x.risk_score, reverse=True)
+    return SeismicImpactResponse(
+        event=await event_to_response(session, event),
+        affected_comunas=impacts[:50],
+        total_affected=len(impacts),
+    )
 
 
 async def get_max_risk_per_comuna_from_impacts(

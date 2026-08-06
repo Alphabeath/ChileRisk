@@ -25,7 +25,7 @@ Actualiza documentación en el **mismo task** (mismo PR / misma sesión) si el c
 ## Jerarquía (no duplicar todo en AGENTS.md)
 
 1. **`AGENTS.md`** (raíz, `frontend/`, `backend/`) — **índice + reglas de scope/prohibiciones + tabla “dónde poner X”**. Enlaza a docs específicas; no reemplaza la referencia larga.
-2. **`backend/docs/`** y **`frontend/docs/`** — referencia estable por stack (API, UI, ML).
+2. **`backend/docs/`** y **`frontend/docs/`** — referencia estable por stack (API, UI).
 3. **`docs/`** (raíz) — solo cross-cutting: arquitectura, query-date, mantenimiento.
 4. **`frontend/docs/DESIGN.md`** — sistema visual (glass, tokens, patrones citizen).
 
@@ -41,7 +41,6 @@ Si un párrafo largo vive en dos sitios, **una sola fuente de verdad** y el otro
 - [ ] ¿Feature cross-cutting? → doc dedicada en `docs/` o sección en `ARCHITECTURE.md`
 - [ ] Fecha `Last updated` en el doc tocado (formato `YYYY-MM-DD`)
 - [ ] `make verify` en la raíz (o al menos el target del área: `verify-frontend` / `verify-backend`)
-- [ ] Si se guardó memoria persistente (`engram_mem_save`) → llamar `engram_mem_session_summary`. No editar ENGRAM-PROTOCOL.md salvo cambio real del protocolo.
 
 ---
 
@@ -51,4 +50,4 @@ Ediciones en `docs/` (raíz), `backend/docs/` y `frontend/docs/` están **permit
 
 ---
 
-*Last updated: 2026-07-13*
+*Last updated: 2026-07-31*

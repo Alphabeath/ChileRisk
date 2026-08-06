@@ -1,0 +1,216 @@
+{
+  "slug": "inundaciones",
+  "group": "preparate",
+  "title": "Inundaciones",
+  "sourceUrl": "https://senapred.cl/inundaciones",
+  "blurb": "La inundación se define como un proceso donde una masa de agua cubre áreas normalmente secas.",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/inundaciones/BG_inun_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una inundación?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "La inundación se define como un proceso donde una masa de agua cubre áreas normalmente secas."
+            },
+            {
+              "text": "Las inundaciones se manifiestan principalmente como crecidas de los cursos de agua, cauces, quebradas, lagos y lagunas. También son generadas por desbordes de canales y de colectores de aguas lluvias."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/inundaciones/BG_inun_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vives, trabajas o visitas zonas próximas a ríos, quebradas, canales, lagos, embalses y otros cursos de agua​",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate sobre desbordes e inundaciones ocurridos anteriormente. Consulta por estas zonas de riesgo al municipio o a comunidades locales organizadas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén vigilancia de cauces, quebradas, lagos y lagunas en periodos de lluvia intensa y en época de deshielo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No botes basura en cursos de agua (ríos, quebradas, acequias, canales y colectores de evacuación de aguas lluvias) incluso si se encuentran sin agua, ya que se puede generar obstrucciones y posteriores desbordes e inundaciones."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Avisa al municipio en caso de obstrucción y desbordes de los cursos de agua."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Procura mantener libres de desechos y desperdicios el entorno de tu vivienda."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantente informado sobre las condiciones de tiempo en www.meteochile.gob.cl y de alertas vigentes en www.senapred.cl."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Entre las causas se pueden mencionar factores naturales tales como:",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "bullets": [
+                "Lluvias intensas y/o prolongadas.",
+                "Derretimiento de nieves y hielos.",
+                "Saturación de suelos.",
+                "Modificación de cursos de aguas producto de terremotos, tsunamis o remociones en masa.",
+                "Formación de presas naturales por deslizamientos de tierra o madera caída, y presas construidas por animales como los castores, especialmente en la zona extrema sur del país."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "bullets": [
+                "Colectores de aguas lluvias desbordados por la intensidad de la lluvia.",
+                "Obstrucción de los cursos de agua por basura, vegetación y escombros.",
+                "Intervención de cauces naturales disminuyendo su capacidad a través de: escombros, urbanización en áreas inundables, canalizaciones o cambios en la dirección del caudal, entre otros.",
+                "La ruptura de represas o la abertura de sus compuertas."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/inundaciones/BG_inun_03-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de una inundación?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_01-1-150x150.png",
+          "text": "Si estás en un sector cercano a ríos, quebradas, canales, lagos o lagunas, ante una crecida o desborde del nivel del agua aléjate hacia zonas de mayor altura y lejos del peligro."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_02-1-150x150.png",
+          "text": "Si estás conduciendo, evita transitar por zonas inundadas como calles, caminos o pasos bajo nivel. Reduce tu velocidad y asegúrate de conducir de manera segura y responsable."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_03-1-150x150.png",
+          "text": "Si es posible, desconecta el interruptor general del sistema eléctrico, corta el gas y el agua de la vivienda."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_04-1-150x150.png",
+          "text": "Camina por lugares altos y libres de agua, manteniendo precaución de posibles socavones inundados. Evita realizar acciones temerarias, como cruzar puentes o pasarelas sobre ríos, arroyos, quebradas u otros cursos de agua desbordados."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_05-1-150x150.png",
+          "text": "Evacúa tu vivienda. Si no puedes hacerlo, abandona los pisos bajos y dirígete a los pisos superiores o a estructuras elevadas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_06-150x150.png",
+          "text": "Si observas a alguien en peligro o en una situación de emergencia, informa inmediatamente a las autoridades y evita exponerte. Avisa a Bomberos (132) o a Carabineros (133) de la situación."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_07-150x150.png",
+          "text": "Si las autoridades solicitan la evacuación del sector donde te encuentras, hazlo inmediatamente."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_07-150x150.png",
+          "text": "Regresa a tu hogar cuando las autoridades lo indiquen. Al volver, verifica el correcto funcionamiento de las instalaciones eléctricas, de gas y agua. Si es necesario, realiza la limpieza y desinfección de tu vivienda."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_09-150x150.png",
+          "text": "Si no puedes evacuar con tus animales, evita dejarlos encerrados o amarrados."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/inundaciones/icon_inun_10-150x150.png",
+          "text": "Mantente informado y sigue las instrucciones de las autoridades sobre la calidad del agua y de la seguridad de su consumo. Además, elimina alimentos que estuvieron en contacto con el agua de la inundación."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8886/12_preparate_con_senapred_inundaciones_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8887/12_get_ready_with_senapred_floods_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8888/12_preparez_vous_a_laide_du_senapred_Inondations_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-5.pdf?sequence=5&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/inundaciones.png"
+}

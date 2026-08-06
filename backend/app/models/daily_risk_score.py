@@ -7,7 +7,7 @@ from app.database import Base
 
 
 class DailyRiskScore(Base):
-    """Persisted risk snapshot per comuna for one Chile calendar day (map choropleth)."""
+    """Persisted risk snapshot per comuna for one Chile calendar day (alert gating)."""
 
     __tablename__ = "daily_risk_scores"
 

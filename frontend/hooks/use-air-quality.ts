@@ -1,7 +1,13 @@
 import { useQuery } from "@tanstack/react-query"
-import { getAirQuality, getAirQualityByComuna, getAirQualityZone } from "@/lib/api"
+
+import { useQueryDate } from "@/hooks/use-query-date"
+import {
+  getAirQuality,
+  getAirQualityByComuna,
+  getAirQualityZone,
+} from "@/lib/api"
+import { STALE, staleTimeForLive } from "@/lib/query-cache"
 import { queryKeys } from "@/lib/queries"
-import { useQueryDate } from "./use-query-date"
 
 export function useAirQuality(opts?: {
   date?: string
@@ -15,9 +21,8 @@ export function useAirQuality(opts?: {
 
   return useQuery({
     queryKey: queryKeys.airQuality(date, { region, episodeOnly }),
-    queryFn: () =>
-      getAirQuality({ date, region, episode_only: episodeOnly }),
-    staleTime: 5 * 60 * 1000,
+    queryFn: () => getAirQuality({ date, region, episode_only: episodeOnly }),
+    staleTime: staleTimeForLive(date, STALE.air),
   })
 }
 
@@ -29,17 +34,18 @@ export function useAirQualityByComuna(codComuna: number, date?: string) {
     queryKey: queryKeys.airQualityByComuna(codComuna, d),
     queryFn: () => getAirQualityByComuna(codComuna, d),
     enabled: codComuna > 0,
-    staleTime: 5 * 60 * 1000,
+    staleTime: staleTimeForLive(d, STALE.air),
   })
 }
 
-export function useAirQualityZone(slug: string | null, date?: string) {  const { selectedDate } = useQueryDate()
+export function useAirQualityZone(slug: string | null, date?: string) {
+  const { selectedDate } = useQueryDate()
   const d = date ?? selectedDate
 
   return useQuery({
     queryKey: queryKeys.airQualityZone(slug ?? "", d),
     queryFn: () => getAirQualityZone(slug!, d),
     enabled: Boolean(slug),
-    staleTime: 5 * 60 * 1000,
+    staleTime: staleTimeForLive(d, STALE.air),
   })
 }

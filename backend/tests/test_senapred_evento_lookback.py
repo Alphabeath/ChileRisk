@@ -28,7 +28,6 @@ def test_historical_next_calendar_day_excluded():
     qd = date(2026, 6, 3)
     start, end = senapred_list_time_bounds(qd)
     assert end is not None
-    assert not (start <= end < end)  # end is exclusive
     issued_at_end = end
     assert not (start <= issued_at_end < end)
 

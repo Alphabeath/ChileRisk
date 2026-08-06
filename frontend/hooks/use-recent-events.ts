@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query"
+
+import { useQueryDate } from "@/hooks/use-query-date"
 import { getRecentEvents } from "@/lib/api"
+import { STALE, staleTimeForLive } from "@/lib/query-cache"
 import { queryKeys } from "@/lib/queries"
-import { useQueryDate } from "./use-query-date"
 
 export function useRecentEvents(date?: string) {
   const { selectedDate } = useQueryDate()
@@ -10,6 +12,6 @@ export function useRecentEvents(date?: string) {
   return useQuery({
     queryKey: queryKeys.recentEvents(resolved),
     queryFn: () => getRecentEvents(resolved),
-    staleTime: 0,
+    staleTime: staleTimeForLive(resolved, STALE.events),
   })
 }

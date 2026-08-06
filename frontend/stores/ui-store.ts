@@ -1,77 +1,57 @@
 import { create } from "zustand"
+import { persist } from "zustand/middleware"
+
+import type { AlertFilter } from "@/lib/alert-types"
 import { clampQueryDate, todayIsoDate } from "@/lib/query-date"
 
-export interface PanelPosition {
-  x: number
-  y: number
-}
-
-interface UIState {
-  selectedRegion: number | null
-  selectedComuna: number | null
-  selectedEventId: number | null
-  sidebarOpen: boolean
-  mapStyle: "default" | "satellite" | "terrain"
+type UIPersistedState = {
   selectedDate: string
-  /** Draggable panel positions (persist to localStorage later). */
-  panelPositions: Record<string, PanelPosition>
-  /** Bumped when all panel positions reset (corner panels remeasure). */
-  panelLayoutVersion: number
-  /** Bumped to force map layers + query refetch from toolbar. */
-  mapDataRefreshNonce: number
-  /** Disaster detail phase nav is sticky (hides main citizen navbar). */
-  disasterPhaseNavPinned: boolean
-  /** Map color mode — controls fill of regions/comunas. Session-only. */
-  mapColorMode: "risk" | "alerts" | "air"
-  setSelectedRegion: (region: number | null) => void
-  setSelectedComuna: (comuna: number | null) => void
-  setSelectedEventId: (eventId: number | null) => void
-  toggleSidebar: () => void
-  setMapStyle: (style: "default" | "satellite" | "terrain") => void
-  setSelectedDate: (date: string) => void
-  setPanelPosition: (panelId: string, position: PanelPosition) => void
-  resetPanelPosition: (panelId: string) => void
-  resetAllPanelPositions: () => void
-  requestMapDataRefresh: () => void
-  setDisasterPhaseNavPinned: (pinned: boolean) => void
-  setMapColorMode: (mode: "risk" | "alerts" | "air") => void
+  alertsExpanded: boolean
+  dateExpanded: boolean
+  alertsFilter: AlertFilter
 }
 
-export const useUIStore = create<UIState>((set) => ({
-  selectedRegion: null,
-  selectedComuna: null,
-  selectedEventId: null,
-  sidebarOpen: true,
-  mapStyle: "default",
-  selectedDate: todayIsoDate(),
-  panelPositions: {},
-  panelLayoutVersion: 0,
-  mapDataRefreshNonce: 0,
-  disasterPhaseNavPinned: false,
-  mapColorMode: "alerts",
-  setSelectedRegion: (region) => set({ selectedRegion: region }),
-  setSelectedComuna: (comuna) => set({ selectedComuna: comuna }),
-  setSelectedEventId: (eventId) => set({ selectedEventId: eventId }),
-  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-  setMapStyle: (style) => set({ mapStyle: style }),
-  setSelectedDate: (date) => set({ selectedDate: clampQueryDate(date) }),
-  setPanelPosition: (panelId, position) =>
-    set((state) => ({
-      panelPositions: { ...state.panelPositions, [panelId]: position },
-    })),
-  resetPanelPosition: (panelId) =>
-    set((state) => {
-      const rest = { ...state.panelPositions }
-      delete rest[panelId]
-      return { panelPositions: rest }
+type UIState = UIPersistedState & {
+  setSelectedDate: (iso: string) => void
+  setAlertsExpanded: (expanded: boolean) => void
+  setDateExpanded: (expanded: boolean) => void
+  setAlertsFilter: (filter: AlertFilter) => void
+}
+
+const STORAGE_KEY = "chilerisk-ui-v1"
+
+export const useUIStore = create<UIState>()(
+  persist(
+    (set) => ({
+      selectedDate: todayIsoDate(),
+      alertsExpanded: false,
+      dateExpanded: false,
+      alertsFilter: "all",
+      setSelectedDate: (iso) => set({ selectedDate: clampQueryDate(iso) }),
+      setAlertsExpanded: (expanded) => set({ alertsExpanded: expanded }),
+      setDateExpanded: (expanded) => set({ dateExpanded: expanded }),
+      setAlertsFilter: (filter) => set({ alertsFilter: filter }),
     }),
-  resetAllPanelPositions: () =>
-    set((state) => ({
-      panelPositions: {},
-      panelLayoutVersion: state.panelLayoutVersion + 1,
-    })),
-  requestMapDataRefresh: () =>
-    set((state) => ({ mapDataRefreshNonce: state.mapDataRefreshNonce + 1 })),
-  setDisasterPhaseNavPinned: (pinned) => set({ disasterPhaseNavPinned: pinned }),
-  setMapColorMode: (mode) => set({ mapColorMode: mode }),
-}))
+    {
+      name: STORAGE_KEY,
+      skipHydration: true,
+      partialize: (state): UIPersistedState => ({
+        selectedDate: state.selectedDate,
+        alertsExpanded: state.alertsExpanded,
+        dateExpanded: state.dateExpanded,
+        alertsFilter: state.alertsFilter,
+      }),
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<UIPersistedState>
+        return {
+          ...current,
+          ...p,
+          selectedDate: clampQueryDate(p.selectedDate ?? current.selectedDate),
+          alertsExpanded: p.alertsExpanded ?? current.alertsExpanded,
+          dateExpanded: p.dateExpanded ?? current.dateExpanded,
+          alertsFilter: p.alertsFilter ?? current.alertsFilter,
+        }
+      },
+    },
+  ),
+)

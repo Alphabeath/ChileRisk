@@ -1,0 +1,106 @@
+{
+  "slug": "lactancia-en-emergencia",
+  "group": "inclusiva",
+  "title": "Lactancia en Emergencia",
+  "sourceUrl": "https://senapred.cl/lactancia-en-emergencia/",
+  "blurb": "La Organización Mundial de la Salud recomienda iniciar la lactancia durante la primera hora de vida del recién nacido, amamantar de manera exclusiva durante…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/lactancia-en-emergencia/BG-lactancia_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "Recuerda que la lactancia materna según la OMS es el mejor alimento",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "La Organización Mundial de la Salud recomienda iniciar la lactancia durante la primera hora de vida del recién nacido, amamantar de manera exclusiva durante los primeros seis meses de vida (es decir sin otros alimentos, agua o jugos) y, posteriormente, continuar de manera complementada con otros alimentos hasta los dos años o hasta que la madre y/o el niño o niña así lo decidan."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "¿Por qué se recomienda la lactancia materna durante una emergencia?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_01-150x150.png",
+          "text": "La leche materna entrega a los lactantes todos los nutrientes necesarios para su pleno desarrollo y se adapta a las necesidades individuales de cada niño o niña."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_02-150x150.png",
+          "text": "Protege contra la deshidratación y la desnutrición, riesgos que se ven aumentados durante una emergencia."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_03-150x150.png",
+          "text": "Ofrece protección inmunológica y previene diarreas e infecciones respiratorias."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_04-150x150.png",
+          "text": "Provee seguridad alimentaria, ya que no necesita preparación. Durante una emergencia es probable que no existan las condiciones higiénicas necesarias para la preparación de la fórmula infantil y/o la limpieza de mamaderas y chupetes."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_05-150x150.png",
+          "text": "Brinda seguridad y calma, tanto a la madre como al lactante, ayudando a reducir el estrés que se vive durante una emergencia."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_06.png",
+          "text": "Porque la lactancia materna salva vidas. Especialmente en una situación de emergencia."
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué es importante saber en torno a lactancia materna en una situación de emergencia?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "El miedo y el estrés no afectan la cantidad o la calidad de la leche materna, pero puede dificultar que la leche fluya desde el pecho y hacer que la madre se encuentre menos perceptiva acerca de las señales de hambre del niño o niña."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "La mejor forma de mantener o aumentar la producción de leche materna es amamantar de manera frecuente y efectiva, respondiendo a las señales tempranas de hambre del niño o niña."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si existe disponibilidad y la madre así lo decide, puede amamantar en un espacio destinado para este efecto, que le pueda dar mayor tranquilidad."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si la madre inició lactancia mixta, no puede amamantar o decide no seguir haciéndolo, es importante que sepa que la lactancia se puede recuperar. Aun cuando no se logre la lactancia exclusiva, cualquier dosis de leche materna disminuirá el riesgo de enfermedad del lactante y facilitará la contención emocional y el vínculo en una situación de estrés."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/lactancia-en-emergencia/icon-lactancia_07.png",
+          "text": "Si el lactante se encuentra enfermo, puede amamantar y lo ideal es que lo continúe haciendo."
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/lactancia-en-emergencia.jpg"
+}

@@ -1,0 +1,144 @@
+{
+  "slug": "tsunami",
+  "group": "preparate",
+  "title": "Tsunami",
+  "sourceUrl": "https://senapred.cl/tsunami/",
+  "blurb": "Un tsunami es un fenómeno físico originado por sismos que afectan al fondo oceánico, remociones en masa, derrumbes submarinos, erupciones volcánicas u otros…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/tsunami/BG_tsunami_01-1.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un tsunami?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un tsunami es un fenómeno físico originado por sismos que afectan al fondo oceánico, remociones en masa, derrumbes submarinos, erupciones volcánicas u otros eventos que afecten la columna de agua. Se manifiesta en la costa como una gran masa que puede inundar y causar destrucción en las zonas costeras, dependiendo del nivel de preparación de éstas para enfrentar tsunamis. Los tsunamis provocados por sismos cercanos a la costa pueden llegar en pocos minutos y sus efectos pueden prolongarse durante varias horas tras el sismo. En nuestro país, también pueden producirse tsunamis regionales o transoceánicos, cuyo origen está a cientos o miles de kilómetros de distancia, tardando horas en alcanzar nuestras costas."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tsunami/BG_tsunami_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vives, trabajas o visitas zonas con riesgo de tsunami",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Identifica si te encuentras en un Área de Evacuación por tsunami consultando los Planos de Evacuación en www.senapred.cl."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate e identifica las Vías de Evacuación, Puntos de Encuentro y Áreas de Seguridad disponibles a través de SENAPRED o el municipio correspondiente."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_09.png",
+          "text": "Un Área de Evacuación es un lugar delimitado que debe ser evacuado por las personas debido a un evento inminente o en curso, como un tsunami."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tsunami/BG_tsunami_03-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de tsunami?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_01-150x150.png",
+          "text": "Si sientes un sismo que te dificulta mantenerte en pie y te encuentras en un Área de Evacuación por tsunami, evacúa inmediatamente y dirígete hacia terrenos elevados, un Punto de Encuentro y/o Área de Seguridad."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_02-150x150.png",
+          "text": "Si después de un sismo observas que el mar se retira de forma inusual, exponiendo el fondo marino, evacúa inmediatamente hacia terrenos elevados, un Punto de Encuentro y/o Área de Seguridad."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_03-150x150.png",
+          "text": "Prioriza la evacuación horizontal hacia un Punto de Encuentro y/o Área de Seguridad. Si esto no es posible, y sólo como segunda alternativa, considera realizar una evacuación vertical hacia edificios de al menos ocho pisos y sube lo más alto posible."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_04-150x150.png",
+          "text": "Si estás navegando, sigue las instrucciones de la autoridad marítima. Si no puedes acceder a esa información, dirígete mar adentro, a aguas profundas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_05-150x150.png",
+          "text": "Si conduces por rutas urbanas costeras, evacúa a pie hacia un Punto de Encuentro y/o Área de Seguridad, dejando tu vehículo sin obstruir las Vías de Evacuación. Si conduces por caminos rurales, reduce la velocidad y aléjate del borde costero hacia terrenos elevados."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_06-150x150.png",
+          "text": "Aléjate de desembocaduras de cursos de agua. No cruces esteros o ríos. El tsunami puede ingresar por estos varios kilómetros, inundando las zonas ribereñas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_07-150x150.png",
+          "text": "Mantente informado de alertas y avisos a través de los canales oficiales. En caso de que las autoridades determinen la evacuación por tsunami, dirígete hacia un Punto de Encuentro y/o Área de Seguridad. Puedes revisar las alertas vigentes en www.senapred.cl."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tsunami/icon_tsunami_08-150x150.png",
+          "text": "Regresa a tu hogar solo cuando las autoridades lo indiquen."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8892/02_preparate_con_senapred_tsunami_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8903/02_get_ready_with_senapred_tsunami_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8914/02_preparez_vous_a_laide_du_senapred_tsunami_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-2.pdf?sequence=2&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/tsunami.png"
+}

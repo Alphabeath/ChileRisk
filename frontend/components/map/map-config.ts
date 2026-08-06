@@ -1,213 +1,171 @@
-import type maplibregl from "maplibre-gl"
+import type * as maplibregl from "maplibre-gl"
 
-export const MAP_STYLE =
-  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-
-/** Font glyphs for volcano labels on raster evacuation basemaps (Carto CDN). */
-export const EVACUATION_MAP_GLYPHS =
-  "https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf"
-
-export const EVACUATION_SATELLITE_STYLE: maplibregl.StyleSpecification = {
-  version: 8 as unknown as maplibregl.StyleSpecification["version"],
-  glyphs: EVACUATION_MAP_GLYPHS,
-  sources: {
-    esri: {
-      type: "raster",
-      tiles: [
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      ],
-      tileSize: 256,
-      attribution: "ESRI World Imagery",
-    },
-  },
-  layers: [{ id: "esri", type: "raster", source: "esri" }],
-}
-
-export const EVACUATION_STREETS_STYLE: maplibregl.StyleSpecification = {
-  version: 8 as unknown as maplibregl.StyleSpecification["version"],
-  glyphs: EVACUATION_MAP_GLYPHS,
-  sources: {
-    osm: {
-      type: "raster",
-      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-      tileSize: 256,
-      attribution: "© OpenStreetMap contributors",
-    },
-  },
-  layers: [{ id: "osm", type: "raster", source: "osm" }],
-}
-
-export const TSUNAMI_EVACUATION_AREAS_URL = "/data/tsunami/evacuation-areas.geojson"
-export const TSUNAMI_EVACUATION_ROUTES_URL = "/data/tsunami/evacuation-routes.kmz"
-export const TSUNAMI_MEETING_POINTS_URL = "/data/tsunami/meeting-points.kmz"
-
-export const VOLCANIC_ACTIVE_VOLCANOES_URL = "/data/volcanos/active-volcanoes.geojson"
-export const VOLCANIC_EVACUATION_ROUTES_URL = "/data/volcanos/volcanic-routes.kmz"
-export const VOLCANIC_EVACUATION_MEETING_POINTS_URL = "/data/volcanos/volcanic-meeting-points.kmz"
-export const VOLCANIC_RADII_URL = "/data/volcanos/volcanic-radii.geojson"
-export const VOLCANIC_HAZARDS_URL = "/data/volcanos/volcanic-hazards.geojson"
-
-export const WILDFIRE_OCCURRENCE_URL = "/data/wildfire/wildfire-occurrence.geojson"
-
-export const EVACUATION_LAYER_IDS = {
-  areasSource: "tsunami-areas",
-  areasFill: "tsunami-areas-fill",
-  areasLine: "tsunami-areas-line",
-  routes: "tsunami-routes",
-  routesArrowImage: "tsunami-routes-arrow",
-  routesArrowsSource: "tsunami-routes-arrows-source",
-  routesArrows: "tsunami-routes-arrows",
-  meetingPoints: "tsunami-meeting-points",
-  volcanoesSource: "volcanoes-active",
-  volcanoesIconImage: "volcano-marker-sdf",
-  volcanoes: "volcanoes-active-icons",
-  volcanoesLabels: "volcanoes-active-labels",
-  volcanicRoutes: "volcanic-routes",
-  volcanicMeetingPoints: "volcanic-meeting-points",
-  volcanicRadiiSource: "volcanic-radii",
-  volcanicRadii: "volcanic-radii-lines",
-  volcanicHazardsSource: "volcanic-hazards",
-  volcanicHazardsBajoFill: "volcanic-hazards-bajo-fill",
-  volcanicHazardsMedioFill: "volcanic-hazards-medio-fill",
-  volcanicHazardsAltoFill: "volcanic-hazards-alto-fill",
-  volcanicHazardsBajoLine: "volcanic-hazards-bajo-line",
-  volcanicHazardsMedioLine: "volcanic-hazards-medio-line",
-  volcanicHazardsAltoLine: "volcanic-hazards-alto-line",
-  volcanicRoutesArrowImage: "volcanic-routes-arrow",
-  volcanicRoutesArrowsSource: "volcanic-routes-arrows-source",
-  volcanicRoutesArrows: "volcanic-routes-arrows",
-  wildfireOccurrenceSource: "wildfire-occurrence",
-  wildfireOccurrenceFill1: "wildfire-occurrence-1-fill",
-  wildfireOccurrenceFill2: "wildfire-occurrence-2-fill",
-  wildfireOccurrenceFill3: "wildfire-occurrence-3-fill",
-  wildfireOccurrenceFill4: "wildfire-occurrence-4-fill",
-  wildfireOccurrenceFill5: "wildfire-occurrence-5-fill",
-  wildfireOccurrenceLine1: "wildfire-occurrence-1-line",
-  wildfireOccurrenceLine2: "wildfire-occurrence-2-line",
-  wildfireOccurrenceLine3: "wildfire-occurrence-3-line",
-  wildfireOccurrenceLine4: "wildfire-occurrence-4-line",
-  wildfireOccurrenceLine5: "wildfire-occurrence-5-line",
-} as const
-
-/** Matches KML LineStyle00 in evacuation-routes.kmz (aabbggrr ffe65c00). */
-export const EVACUATION_ROUTE_COLOR = "#005ce6"
-
-/** Default line width for evacuation routes on the map. */
-export const EVACUATION_ROUTE_LINE_WIDTH = 4
-
-/** Symbol scale for meeting point icons (KMZ PNG). */
-export const EVACUATION_MEETING_POINT_ICON_SIZE = 1.5
-
-/** Legend swatch — matches green meeting point markers in KMZ. */
-export const EVACUATION_MEETING_POINT_COLOR = "#22c55e"
-
-/** Volcanic evacuation route color (distinct from tsunami blue). */
-export const VOLCANIC_ROUTE_COLOR = "#ea580c"
-
-/** Volcanic meeting points accent (amber). */
-export const VOLCANIC_MEETING_POINT_COLOR = "#f59e0b"
-
-/** SERNAGEOMIN volcanic hazard fill colors (Alto / Medio / Bajo). */
-export const VOLCANIC_HAZARD_COLOR_ALTO = "#dc2626"
-export const VOLCANIC_HAZARD_COLOR_MEDIO = "#ea580c"
-export const VOLCANIC_HAZARD_COLOR_BAJO = "#eab308"
-
-/** Matching outline colors for hazard polygons. */
-export const VOLCANIC_HAZARD_LINE_COLOR_ALTO = "#b91c1c"
-export const VOLCANIC_HAZARD_LINE_COLOR_MEDIO = "#c2410c"
-export const VOLCANIC_HAZARD_LINE_COLOR_BAJO = "#ca8a04"
-
-/** Wildfire occurrence fill colors (gridcode 1-5, kernel density classes). */
-export const WILDFIRE_COLOR_1 = "#6b7fa0"
-export const WILDFIRE_COLOR_2 = "#5a9e82"
-export const WILDFIRE_COLOR_3 = "#d4b832"
-export const WILDFIRE_COLOR_4 = "#d07020"
-export const WILDFIRE_COLOR_5 = "#b82828"
-
-/** Matching outline colors for wildfire polygons. */
-export const WILDFIRE_LINE_COLOR_1 = "#4a5a72"
-export const WILDFIRE_LINE_COLOR_2 = "#3d7560"
-export const WILDFIRE_LINE_COLOR_3 = "#a89020"
-export const WILDFIRE_LINE_COLOR_4 = "#a05818"
-export const WILDFIRE_LINE_COLOR_5 = "#8a1e1e"
-
-/** Draw Bajo → Medio → Alto so higher severity paints above overlaps. */
-export const VOLCANIC_HAZARD_FILL_LAYER_IDS = [
-  EVACUATION_LAYER_IDS.volcanicHazardsBajoFill,
-  EVACUATION_LAYER_IDS.volcanicHazardsMedioFill,
-  EVACUATION_LAYER_IDS.volcanicHazardsAltoFill,
-] as const
-
-export const VOLCANIC_HAZARD_LINE_LAYER_IDS = [
-  EVACUATION_LAYER_IDS.volcanicHazardsBajoLine,
-  EVACUATION_LAYER_IDS.volcanicHazardsMedioLine,
-  EVACUATION_LAYER_IDS.volcanicHazardsAltoLine,
-] as const
-
-export const WILDFIRE_FILL_LAYER_IDS = [
-  EVACUATION_LAYER_IDS.wildfireOccurrenceFill1,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceFill2,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceFill3,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceFill4,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceFill5,
-] as const
-
-export const WILDFIRE_LINE_LAYER_IDS = [
-  EVACUATION_LAYER_IDS.wildfireOccurrenceLine1,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceLine2,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceLine3,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceLine4,
-  EVACUATION_LAYER_IDS.wildfireOccurrenceLine5,
-] as const
-
-export function isVolcanoLayer(layerId: string): boolean {
-  return (
-    layerId === EVACUATION_LAYER_IDS.volcanoes ||
-    layerId === EVACUATION_LAYER_IDS.volcanoesLabels
-  )
-}
-
-export function isVolcanicHazardLayer(layerId: string): boolean {
-  return (
-    (VOLCANIC_HAZARD_FILL_LAYER_IDS as readonly string[]).includes(layerId) ||
-    (VOLCANIC_HAZARD_LINE_LAYER_IDS as readonly string[]).includes(layerId)
-  )
-}
-
-export function isWildfireLayer(layerId: string): boolean {
-  return (
-    (WILDFIRE_FILL_LAYER_IDS as readonly string[]).includes(layerId) ||
-    (WILDFIRE_LINE_LAYER_IDS as readonly string[]).includes(layerId)
-  )
-}
-
-/** Hide evacuation polygons until the user is zoomed into a comuna-scale view. */
-export const EVACUATION_AREAS_MIN_ZOOM = 10
-
-/** Wildfire occurrence polygons — visible at region level for overview. */
-export const WILDFIRE_OCCURRENCE_MIN_ZOOM = 5
-
-/** Meeting points only render when close enough to read labels and icons. */
-export const EVACUATION_MEETING_POINTS_MIN_ZOOM = 11
-
-/** Evacuation route lines — same comuna-scale threshold as areas. */
-export const EVACUATION_ROUTES_MIN_ZOOM = EVACUATION_AREAS_MIN_ZOOM
-
-/** Direction arrows at route ends — same scale as evacuation areas. */
-export const EVACUATION_ROUTE_ARROWS_MIN_ZOOM = EVACUATION_AREAS_MIN_ZOOM
-
+/** Source: [caracena/chile-geojson](https://github.com/caracena/chile-geojson) (16 regiones). */
 export const REGIONS_DATA_URL = "/data/regional.geojson"
-export const COMUNAS_DATA_URL = "/data/comunas.geojson"
+
+/**
+ * Comunas from the same repo (`1.geojson`…`16.geojson` merged).
+ * Three tiers for A/B: `"full"` / `"medium"`
+ * (~2.3 MB, runtime default) / `"simplified"` (~0.3 MB, fallback).
+ * NOTE: `"full"` no longer ships in `public/data/` — the raw file lives outside
+ * the repo (~/data/chilerisk/comunas_full.geojson, ~18 MB). It only applies if
+ * you copy it locally for A/B testing; otherwise its URL 404s.
+ */
+export type ComunasDetail = "full" | "medium" | "simplified"
+/** Toggle A/B: full vs simplified. Runtime default is medium (visual balance). */
+export const COMUNAS_DETAIL: ComunasDetail = "medium"
+
+const COMUNAS_DATA_URLS: Record<ComunasDetail, string> = {
+  full: "/data/comunas_full.geojson",
+  medium: "/data/comunas_medium.geojson",
+  simplified: "/data/comunas_simplified.geojson",
+}
+
+export const COMUNAS_DATA_URL = COMUNAS_DATA_URLS[COMUNAS_DETAIL]
+
+/**
+ * Precomputed comuna label anchor points (345 features, pole-of-inaccessibility
+ * from the simplified build). Loaded lazily for the zoom ≥ 7 label layer —
+ * never computed at runtime.
+ */
+export const COMUNAS_LABELS_DATA_URL = "/data/comunas_labels.geojson"
+
+/** Alert fill pulse updates per second (rAF throttled; MapLibre transition blends between ticks). */
+export const ALERT_PULSE_FPS = 10
+
+/** Paint transition so stepped opacity updates still look continuous. */
+export const ALERT_PULSE_TRANSITION_MS = 90
 
 export const CHILE_BOUNDS: [number, number, number, number] = [-76, -56, -66, -17]
 
+/** Camera zoom limits for `/monitor` MapLibre map. */
+export const MAP_MIN_ZOOM = 3
+export const MAP_MAX_ZOOM = 10
+
+/**
+ * Uniform fly animation duration (ms) for every map camera fly:
+ * sismo click, locate button, auto-centrado al entrar, focus de punto de
+ * encuentro. Reference was the page-entry fly (1500 ms) — slowed further.
+ */
+export const MAP_FLY_DURATION_MS = 2500
+
 export const COMUNAS_MIN_ZOOM = 7
 
-export const REGION_LINE_COLOR = "#ffffff"
-export const REGION_LINE_HOVER = "#ffffff"
+export interface MapThemeColors {
+  regionLine: string
+  regionLineHover: string
+  comunaLine: string
+  comunaLineHover: string
+  regionLabelColor: string
+  regionLabelHalo: string
+  comunaLabelColor: string
+  comunaLabelHalo: string
+  /** Rest / hover fill opacity — higher in light so alert colors stay vivid on positron. */
+  regionFillOpacity: number
+  regionFillOpacityHover: number
+  comunaFillOpacity: number
+  comunaFillOpacityHover: number
+}
 
-export const COMUNA_LINE_COLOR = "#ffffff"
-export const COMUNA_LINE_HOVER = "#ffffff"
+/** Layer colors per app theme. Dark values match the old map's CARTO dark-matter tuning. */
+export const MAP_THEME_COLORS: Record<"dark" | "light", MapThemeColors> = {
+  dark: {
+    regionLine: "#ffffff",
+    regionLineHover: "#ffffff",
+    comunaLine: "#ffffff",
+    comunaLineHover: "#ffffff",
+    regionLabelColor: "rgba(168, 176, 180, 1)",
+    regionLabelHalo: "#222",
+    comunaLabelColor: "#e2e8f0",
+    comunaLabelHalo: "#1e293b",
+    regionFillOpacity: 0.52,
+    regionFillOpacityHover: 0.98,
+    comunaFillOpacity: 0.42,
+    comunaFillOpacityHover: 0.95,
+  },
+  light: {
+    regionLine: "#334155",
+    regionLineHover: "#0f172a",
+    comunaLine: "#334155",
+    comunaLineHover: "#0f172a",
+    regionLabelColor: "#334155",
+    regionLabelHalo: "#ffffff",
+    comunaLabelColor: "#1e293b",
+    comunaLabelHalo: "#ffffff",
+    regionFillOpacity: 0.68,
+    regionFillOpacityHover: 0.98,
+    comunaFillOpacity: 0.58,
+    comunaFillOpacityHover: 0.95,
+  },
+}
+
+/**
+ * Alert fill pulse period (ms). Faster = more urgent.
+ * Global loop uses the shortest period among visible severities.
+ */
+export const ALERT_PULSE_PERIOD_MS: Record<
+  "preventiva" | "amarilla" | "naranja" | "roja" | "informativa",
+  number
+> = {
+  roja: 3800,
+  naranja: 4400,
+  amarilla: 5000,
+  preventiva: 6200,
+  informativa: 6200,
+}
+
+/** Shortest pulse period from alert level / severity strings (fallback: preventiva). */
+export function alertPulsePeriodMs(
+  severities: Iterable<string | null | undefined>,
+): number {
+  let period = ALERT_PULSE_PERIOD_MS.preventiva
+  for (const s of severities) {
+    if (
+      s === "roja" ||
+      s === "naranja" ||
+      s === "amarilla" ||
+      s === "preventiva" ||
+      s === "informativa"
+    ) {
+      const p = ALERT_PULSE_PERIOD_MS[s]
+      if (p < period) period = p
+    }
+  }
+  return period
+}
+
+/** Map GEC air levels onto alert pulse periods (worse → faster). */
+const AIR_PULSE_AS_ALERT: Record<string, keyof typeof ALERT_PULSE_PERIOD_MS> = {
+  emergencia: "roja",
+  preemergencia: "naranja",
+  alerta: "amarilla",
+  regular: "preventiva",
+  bueno: "informativa",
+}
+
+export function airPulsePeriodMs(
+  levels: Iterable<string | null | undefined>,
+): number {
+  return alertPulsePeriodMs(
+    [...levels].map((l) => (l ? AIR_PULSE_AS_ALERT[l] : undefined)),
+  )
+}
+
+/** Opacity expression: hover stays at max; rest uses `pulsed` (0–1 → rest…hover). */
+export function fillOpacityPaint(
+  rest: number,
+  hover: number,
+  pulsed?: number,
+): maplibregl.ExpressionSpecification | number {
+  const base =
+    pulsed == null ? rest : rest + (hover - rest) * pulsed
+  return [
+    "case",
+    ["boolean", ["feature-state", "hover"], false],
+    hover,
+    base,
+  ]
+}
 
 export interface RegionProperties {
   codregion: number

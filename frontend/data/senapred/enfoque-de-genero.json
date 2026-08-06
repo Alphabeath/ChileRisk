@@ -1,0 +1,438 @@
+{
+  "slug": "enfoque-de-genero",
+  "group": "inclusiva",
+  "title": "Enfoque de Género",
+  "sourceUrl": "https://senapred.cl/enfoque-de-genero/",
+  "blurb": "Reconoce tu entorno, averigua si donde vives o en el lugar que visitas existe alguna amenaza e infórmate sobre el plan de emergencia del municipio respectivo.",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/enfoque-de-genero/BG-genero_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "Recomendaciones Generales",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Reconoce tu entorno, averigua si donde vives o en el lugar que visitas existe alguna amenaza e infórmate sobre el plan de emergencia del municipio respectivo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Elabora y pon en práctica tu Plan Familia Preparada, entrando a www.senapred.cl, donde además podrás aprender cómo preparar tu kit de emergencia."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate a través de medios oficiales y sigue las recomendaciones de las autoridades."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Los desastres, NO afectan a todos y todas por igual, estos tienen impactos diferentes sobre la calidad de vida de las mujeres, niños, niñas, hombres, diversidades sexo-genéricas, personas mayores, personas con discapacidad, grupos étnicos, entre otros. Por lo que debes considerar las vulnerabilidades, necesidades y capacidades, de cada uno de ellos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Una emergencia no afecta sólo a personas, considera que animales y mascotas también se ven afectados. Para mayor información, ingresa a: https://web.senapred.cl/dimension-animal/"
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_06.png"
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ministerio de la Mujer y Equidad de Género"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Whatsapp silencioso"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si eres víctima o testigo de violencia de género pide ayuda o contención a personas de confianza u ofrece tu apoyo. De ser posible, denuncia."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enfoque-de-genero/BG-genero_02-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "Complementa tu Kit...",
+      "blocks": [
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_01_v.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Kit de higiene menstrual",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Considera los elementos de tu preferencia."
+            }
+          ]
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_02_v.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Ropa interior",
+      "blocks": [
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_03_v.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Método anticonceptivo y/o preservativos",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa su fecha de vencimiento y que estén en buen estado."
+            }
+          ]
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_04_v.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Medicamento de terapia hormonal",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate acerca de sus condiciones de almacenamiento y revisa su fecha de vencimiento."
+            }
+          ]
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_05_v.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Elementos de acuerdo a las condiciones de tu embarazo y/o la edad del bebé. Por ejemplo:",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "bullets": [
+                "Ropa para la persona gestante y/o el niño o la niña. Apósitos maternales.",
+                "Toallas húmedas adicionales. Pañales desechables.",
+                "Crema para las coceduras.",
+                "Mamadera, leche en polvo.",
+                "Un juguete de preferencia del niño o niña."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Elementos y/o accesorios de acuerdo a tu identidad de género",
+      "blocks": []
+    },
+    {
+      "heading": "En situaciones de emergencia",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ten el número telefónico de tu médico, matrona, consultorio u hospital más cercano. Si después de la emergencia el centro de salud se ha visto afectado, ubica otro cerca de tu domicilio o albergue."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate acerca de los síntomas de alarma durante el embarazo, como por ejemplo, sangrado genital, dolor y fiebre persistente."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Monitorea si el niño o niña presenta algún síntoma de enfermedad, como por ejemplo, decaimiento, irritabilidad, falta de apetito, fiebre, vómitos, diarrea, entre otros."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si estás amamantando, intenta mantener la lactancia e hidratarte bien."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "¿Sabías qué?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Las situaciones de emergencia o desastres no afectan homogéneamente a la población. Puedes revisar la infografía disponible en www.senapred.cl"
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enfoque-de-genero/BG-genero_03-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si realizas labores de cuidado",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ten el número telefónico de tu médico, matrona, consultorio u hospital más cercano. Si después de la emergencia el centro de salud se ha visto afectado, ubica otro cerca de tu domicilio o albergue."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate acerca de los síntomas de alarma durante el embarazo, como por ejemplo, sangrado genital, dolor y fiebre persistente."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Monitorea si el niño o niña presenta algún síntoma de enfermedad, como por ejemplo, decaimiento, irritabilidad, falta de apetito, fiebre, vómitos, diarrea, entre otros."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si estás amamantando, intenta mantener la lactancia e hidratarte bien."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enfoque-de-genero/BG-genero_04.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás gestando o en periodo de lactancia",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ten el número telefónico de tu médico, matrona, consultorio u hospital más cercano. Si después de la emergencia el centro de salud se ha visto afectado, ubica otro cerca de tu domicilio o albergue."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate acerca de los síntomas de alarma durante el embarazo, como por ejemplo, sangrado genital, dolor y fiebre persistente."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Monitorea si el niño o niña presenta algún síntoma de enfermedad, como por ejemplo, decaimiento, irritabilidad, falta de apetito, fiebre, vómitos, diarrea, entre otros."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si estás amamantando, intenta mantener la lactancia e hidratarte bien."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enfoque-de-genero/BG-genero_05-1.png"
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si eres víctima o testigo de una situación de violencia, recuerda que puedes denunciar o informarte en los números que se indican."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ministerio de la Mujer y Equidad de Género"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "1455",
+      "blocks": []
+    },
+    {
+      "heading": "FONO ORIENTACIÓN",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Disponible de 8:00 a 00:00, excepto festivos."
+            }
+          ]
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/enfoque-de-genero/icon-genero_07.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "133",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "CARABINEROS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "149",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "FONO FAMILIA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "147",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "FONO NIÑOS"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "134",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "PDI"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8919/22_preperate_con_senapred_recomendaciones_con_enfoque_de_genero_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8920/22_get_ready_with_senapred_recommendations_with_gender_perspective_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8921/22_preparez_vous_a_laide_du_senapred_recommandations_approche_de_genre_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/enfoque-de-genero.png"
+}

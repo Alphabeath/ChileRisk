@@ -33,7 +33,7 @@ scan_file() {
   done < <(grep -oE '\]\([^)]+\)' "$file" 2>/dev/null | sed 's/^\](//;s/)$//' || true)
 }
 
-for file in AGENTS.md docs/*.md backend/AGENTS.md backend/docs/*.md frontend/AGENTS.md frontend/docs/*.md frontend/docs/archive/*.md; do
+for file in AGENTS.md docs/*.md backend/AGENTS.md backend/docs/*.md frontend/AGENTS.md frontend/docs/*.md; do
   [[ -f "$file" ]] || continue
   scan_file "$file"
 done

@@ -1,7 +1,5 @@
 # Harness — playbooks para agentes
 
-**Versión corta (tokens):** [HARNESS-QUICK.md](./HARNESS-QUICK.md) — leer esa primero; este archivo solo si necesitas pasos largos.
-
 Índice: [README.md](./README.md) · Mantenimiento: [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) · `make verify`
 
 ---
@@ -10,13 +8,55 @@
 
 1. Identifica área: `frontend/`, `backend/`, o ambos.
 2. Abre el `AGENTS.md` de esa área (no leas el índice completo de la raíz salvo duda de scope).
-3. `engram_mem_context` + `engram_mem_search "<keywords>"` (ver [ENGRAM-PROTOCOL.md](./ENGRAM-PROTOCOL.md)). Guarda solo ARCH/PATTERN/BUG no triviales (máx 2-3/sesión). `engram_mem_session_summary` solo si `mem_save`.
-4. `Grep`/`Glob` un archivo vecino al cambio.
-5. Al cerrar: `make verify` + checklist en [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
+3. `Grep`/`Glob` un archivo vecino al cambio.
+4. Al cerrar: `make verify` + checklist en [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
 
 ---
 
-## 1. Nuevo endpoint HTTP (backend)
+## 1. Pick area
+
+| Touch | Open |
+|-------|------|
+| UI/map/hooks | `frontend/AGENTS.md` |
+| API/DB/jobs | `backend/AGENTS.md` |
+| `?date=` / FE↔BE | `QUERY-DATE.md` + both areas |
+
+---
+
+## 2. Flows compactos
+
+**FE UI/component**
+`frontend/AGENTS` → `docs/DESIGN` (map/citizen) → code `components/` `hooks/` → `docs/FRONTEND` if public → `make verify`
+
+**FE map overlay**
++ `map-overlays.tsx` · `useDraggablePanel` · `citizen-layout.ts`
+
+**BE endpoint**
+`backend/AGENTS` → `schemas/` → `api/` + `main.py` → `services/` → `backend/docs/BACKEND` → FE? see contract → `make verify`
+
+**Contract change**
+`schemas/*` → `make sync-contract` (OpenAPI → `frontend/lib/api-schema.d.ts`) · update `lib/types.ts` / `lib/api.ts` · `BACKEND.md` + `FRONTEND.md` · OpenAPI wins · `make verify-contract`
+
+**Cross-stack**
+`QUERY-DATE.md` → BE `query_date_window` · FE `query-date.ts` `ui-store` hooks `api.ts` · data fetch: [FRONTEND.md § TanStack Query](../frontend/docs/FRONTEND.md#datos-del-backend-tanstack-query)
+
+**Bugfix only**
+code (+tests) · docs optional · `make verify` anyway
+
+---
+
+## 3. Docs map (no read all)
+
+| Need | File |
+|------|------|
+| API tables | `backend/docs/BACKEND.md` |
+| Components | `frontend/docs/FRONTEND.md` |
+| Glass/UI | `frontend/docs/DESIGN.md` |
+| Docker/monorepo | `docs/ARCHITECTURE.md` |
+
+---
+
+## 4. Nuevo endpoint HTTP (backend)
 
 | Paso | Acción |
 |------|--------|
@@ -26,14 +66,14 @@
 | 4 | `app/api/<recurso>.py` + `main.py` router |
 | 5 | `app/services/` si hay lógica |
 | 6 | Actualizar tabla endpoints en `BACKEND.md` |
-| 7 | Si el frontend consume → playbook **2** o **3** |
+| 7 | Si el frontend consume → playbook **contract** |
 | 8 | `make verify` |
 
 **Contrato canónico (runtime):** `GET http://localhost:8000/openapi.json` (FastAPI). Resumen humano en `BACKEND.md`.
 
 ---
 
-## 2. Cambio de contrato (respuesta JSON existente)
+## 5. Cambio de contrato (respuesta JSON existente)
 
 | Paso | Acción |
 |------|--------|
@@ -46,7 +86,7 @@
 
 ---
 
-## 3. Nuevo componente / hook UI (frontend)
+## 6. Nuevo componente / hook UI (frontend)
 
 | Paso | Acción |
 |------|--------|
@@ -58,7 +98,7 @@
 
 ---
 
-## 4. Panel u overlay en el mapa
+## 7. Panel u overlay en el mapa
 
 | Paso | Acción |
 |------|--------|
@@ -70,7 +110,7 @@
 
 ---
 
-## 5. Feature cross-stack (`?date=`, alertas unificadas, etc.)
+## 8. Feature cross-stack (`?date=`, alertas unificadas, etc.)
 
 | Paso | Acción |
 |------|--------|
@@ -82,14 +122,14 @@
 
 ---
 
-## 6. Solo bugfix interno
+## 9. Solo bugfix interno
 
 - Sin cambio de contrato ni UX documentada → código + tests si existen; docs opcionales.
 - Igual recomendado: `make verify` (barra mínima de calidad).
 
 ---
 
-## 7. Comandos de verificación
+## 10. Comandos de verificación
 
 ```bash
 make verify          # docs links + OpenAPI contract + lint/tsc/tests FE + compileall BE
@@ -100,11 +140,11 @@ make verify-frontend
 make verify-backend
 ```
 
-`verify-backend` ejecuta `pytest` solo si está instalado en el host; en Docker: `docker compose exec backend python -m pytest tests/ -q`.
+`make verify` = links + OpenAPI contract + `bun lint` + `tsc` + `bun test` + `compileall` (+ pytest si está en host). `verify-backend` ejecuta `pytest` solo si está instalado en el host; en Docker: `docker compose exec backend python -m pytest tests/ -q`.
 
 ---
 
-## 8. Skills del repo (`.agents/skills/`)
+## 11. Skills del repo (`.agents/skills/`)
 
 | Invocación / necesidad | Skill |
 |------------------------|--------|
@@ -116,10 +156,9 @@ make verify-backend
 | React/Next perf | `vercel-react-best-practices` |
 | shadcn en frontend | `frontend/.agents/skills/shadcn` |
 | Delegar subagentes comprimidos | `cavecrew` |
-| Memoria persistente (engram) | `engram_mem_*` tools (ver ENGRAM-PROTOCOL.md) |
 
 No sustituyen leer `AGENTS.md` del área; complementan tareas largas o formato.
 
 ---
 
-*Last updated: 2026-06-10*
+*Last updated: 2026-08-02*

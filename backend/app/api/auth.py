@@ -15,6 +15,7 @@ from app.services.auth_service import (
     register_user,
     request_password_reset,
     reset_password,
+    resolve_google_identity,
     upsert_google_user,
     verify_user_credentials,
 )
@@ -73,13 +74,28 @@ async def oauth_google(
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        email, provider_account_id = await resolve_google_identity(
+            email=body.email,
+            provider_account_id=body.provider_account_id,
+            google_id_token=body.google_id_token,
+        )
         user = await upsert_google_user(
             db,
-            email=body.email,
+            email=email,
             name=body.name,
-            provider_account_id=body.provider_account_id,
+            provider_account_id=provider_account_id,
         )
     except ValueError as exc:
+        if str(exc) == "missing_google_token":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Google ID token required",
+            ) from exc
+        if str(exc) == "invalid_google_token":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid Google ID token",
+            ) from exc
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="OAuth account linkage failed",

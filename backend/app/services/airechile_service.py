@@ -102,9 +102,6 @@ async def _upsert_rows(session: AsyncSession, rows: list[dict[str, Any]]) -> int
 
 async def sync_airechile(session: AsyncSession) -> int:
     """Scrape Aire Chile home + zone details; upsert today's Chile calendar day."""
-    if not settings.use_real_airechile:
-        return 0
-
     base = settings.airechile_base_url
     today = today_chile()
     timeout = settings.airechile_request_timeout_seconds

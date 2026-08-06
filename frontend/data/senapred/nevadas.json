@@ -1,0 +1,186 @@
+{
+  "slug": "nevadas",
+  "group": "preparate",
+  "title": "Nevadas",
+  "sourceUrl": "https://senapred.cl/nevadas/",
+  "blurb": "Una nevada es una precipitación en forma de pequeños cristales de hielo, generalmente ramificados, provenientes de la congelación de partículas de agua en…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/nevadas/BG_nevadas_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una nevada?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Una nevada es una precipitación en forma de pequeños cristales de hielo, generalmente ramificados, provenientes de la congelación de partículas de agua en suspensión en la troposfera. Estos cristales se pueden agrupar al caer y llegar a la superficie terrestre en forma de copos blancos, los cuales a su vez y en determinadas condiciones de temperatura se agrupan formando una capa sobre la superficie terrestre."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/nevadas/BG_nevadas_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de nevadas?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate sobre desbordes e inundaciones ocurridos anteriormente. Consulta por estas zonas de riesgo al municipio o a comunidades locales organizadas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén vigilancia de cauces, quebradas, lagos y lagunas en periodos de lluvia intensa y en época de deshielo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No botes basura en cursos de agua (ríos, quebradas, acequias, canales y colectores de evacuación de aguas lluvias) incluso si se encuentran sin agua, ya que se puede generar obstrucciones y posteriores desbordes e inundaciones."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantente informado sobre las condiciones de tiempo en www.meteochile.gob.cl y de alertas vigentes en www.senapred.cl."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevadas_14.png",
+          "text": "Las nubes que producen la nieve son las mismas que producen la lluvia, pues uno y otro tipo de precipitación se diferencian únicamente por la temperatura del aire. La nieve se produce cuando la temperatura del aire es inferior a 0°C."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/nevadas/BG_nevadas_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en una casa o edificio",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_01-150x150.png",
+          "text": "Limpia la nieve acumulada en techumbres y estructuras que puedan colapsar debido al peso adicional."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_02-150x150.png",
+          "text": "Limpia y despeja la nieve acumulada en caminos de acceso a tu vivienda."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_03-150x150.png",
+          "text": "Cubre artefactos, maquinarias y cañerías, para evitar que se congelen."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_04-150x150.png",
+          "text": "No realices desplazamientos innecesarios. Evita salir de tu hogar."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás al aire libre",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_05-150x150.png",
+          "text": "Al caminar, hazlo con precaución considerando las condiciones del terreno. Utiliza calzado adecuado para evitar resbalar. En caso de tormenta de nieve o ventisca busca refugio inmediatamente."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_06-150x150.png",
+          "text": "Si ves a alguien en situación de calle, comunícate con el Fono Calle: 800 104 777 opción CERO del Ministerio de Desarrollo Social y Familia (disponibles en las regiones de: Valparaíso, Metropolitana, O’Higgins, Maule, Ñuble y Biobío) o contacta a tu municipio."
+        }
+      ]
+    },
+    {
+      "heading": "Al conducir",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_07-150x150.png",
+          "text": "Infórmate de las condiciones de la ruta y siempre movilízate acompañado. Desplázate con precaución y manteniendo una distancia prudente con el vehículo que te antecede."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_08-150x150.png",
+          "text": "Utiliza cadenas, enciende las luces y neblineros. Evita la conducción durante la noche."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_09-150x150.png",
+          "text": "Durante una tormenta de nieve o ventisca detente en un lugar seguro, enciende las luces intermitentes del vehículo. Espera mejores condiciones para continuar."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en el campo",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevada_10-150x150.png",
+          "text": "Asegura forraje y agua para los animales y evita el pastoreo temprano. Mantén hembras por parir y crías en recintos protegidos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevadas_13-150x150.png",
+          "text": "Si requieres movilizarte y no puedes usar vehículos motorizados en caminos cubiertos con nieve, utiliza medios alternativos de transporte tales como caballos o carretas."
+        }
+      ]
+    },
+    {
+      "heading": "En el ámbito marítimo, lacustre y fluvial",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/nevadas/icon_nevadas_12-150x150.png",
+          "text": "Ante la reducción de visibilidad durante la navegación, da a conocer tu posición mediante el uso de radio y señales acústicas, y mantente atento a las indicaciones de la Autoridad Marítima."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8893/14_preparate_con_senapred_nevadas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8894/14_get_ready_with_senapred_snowfall_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8895/14_preparez_vous_a_laide_du_senapred_chutes_de_neige_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/nevadas.png"
+}

@@ -1,0 +1,196 @@
+{
+  "slug": "invierno",
+  "group": "preparate",
+  "title": "Invierno",
+  "sourceUrl": "https://senapred.cl/invierno/",
+  "blurb": "Durante el invierno, se producen diversas situaciones de riesgo hacia la población, provocadas por las distintas condiciones del clima, como las lluvias…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/invierno/BG_invierno_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Cuáles son los riesgos del invierno para la población?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Durante el invierno, se producen diversas situaciones de riesgo hacia la población, provocadas por las distintas condiciones del clima, como las lluvias intensas, el viento fuerte, la nieve y el frío. Algunos de estos fenómenos pueden generar aumentos de caudal, desborde de ríos, inundaciones, deslizamientos, aluviones y entre otras amenazas que afectan a personas, viviendas y sistemas productivos, tanto en áreas urbanas como rurales."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Prepara tu vivienda y entorno",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa y asegura el techo. Además de limpiar canaletas y desagües."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Elimina las ramas de árboles cercanos que pudiesen caer sobre tu vivienda."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén las acequias y vías de evacuación de aguas lluvias libres de desechos y desperdicios."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/invierno/icon_invierno_17.png"
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si ves a alguien en situación de calle, comunícate con el Fono Calle: 800 104 777 opción CERO del Ministerio de Desarrollo Social y Familia (disponibles en las regiones de: Valparaíso, Metropolitana, O’Higgins, Maule, Ñuble y Biobío) o contacta a tu municipio."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/invierno/BG_invierno_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "En el interior de tu vivienda",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_01-150x150.png",
+          "text": "Ten a mano linternas ante un eventual corte de energía. No uses velas, ya que podrían volcar y provocar un incendio."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_02-150x150.png",
+          "text": "Mantén siempre reservas de agua potable, ante eventuales cortes en el suministro."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_03-150x150.png",
+          "text": "Verifica el estado de los sistemas de calefacción, a fin de evitar fugas e incendios."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_04-150x150.png",
+          "text": "Si utilizas calefacción a parafina, leña, gas natural, gas licuado o gas de ciudad, mantén ventilado tu hogar. No uses braseros en lugares cerrados, los gases de la combustión podrían ser fatales."
+        }
+      ]
+    },
+    {
+      "heading": "En el exterior de tu vivienda",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_05-150x150.png",
+          "text": "Evita salir de tu casa si llueve intensamente, ha nevado o hace mucho frio, a menos que sea necesario."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_09-150x150.png",
+          "text": "Si vives en un sector cercano a un río o quebrada, aléjate de la zona de peligro ante un eventual aumento de caudal."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_06-150x150.png",
+          "text": "En tormentas eléctricas evita espacios abiertos y aléjate de estructuras metálicas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_10-150x150.png",
+          "text": "Evita realizar actividades en la montaña o zona cordillerana si el pronóstico indica condiciones desfavorables como: lluvia, nieve o vientos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_07-150x150.png",
+          "text": "Frente a fuertes vientos, aléjate del tendido eléctrico, grandes árboles y carteles publicitarios por riesgo a que colapsen."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_11-150x150.png",
+          "text": "Ante pronóstico de heladas, protege cultivos y animales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_08-150x150.png",
+          "text": "Evita acciones temerarias, como cruce de pasos a desnivel o calles anegadas o inundadas."
+        }
+      ]
+    },
+    {
+      "heading": "Protege tu salud",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_12-150x150.png",
+          "text": "Evita los cambios bruscos de temperatura y viste con ropa de abrigo adecuada."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_13-150x150.png",
+          "text": "Evita la actividad física durante días de contaminación ambiental."
+        }
+      ]
+    },
+    {
+      "heading": "En caso de inundación de tu vivienda",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_14-150x150.png",
+          "text": "Desconecta el interruptor general del sistema eléctrico, corta el gas y el agua. Recuerda verificar estas instalaciones al volver a tu vivienda."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_16-150x150.png",
+          "text": "Cuando la autoridad indique que puedes regresar a tu hogar, inicia la limpieza y desinfección, eliminando ropa, medicamentos y alimentos que se hayan mojado."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno/icon_invierno_15-150x150.png",
+          "text": "Evacúa tu vivienda, si no puedes hacerlo, abandona las plantas bajas y dirígete a los pisos superiores o estructuras elevadas."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8879/10_preparate_con_senapred_invierno_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8880/10_get_ready_with_senapred_winter_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8882/10_preparez_vous_a_laide_du_senapred_hiver_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/invierno.png"
+}

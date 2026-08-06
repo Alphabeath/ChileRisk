@@ -1,5 +1,5 @@
 """
-Pure risk scoring utilities (extracted from legacy mock_service).
+ Pure risk scoring utilities shared by the real-data scoring services.
 
 These are deterministic composite + severity functions used by real data paths
 (risk_service, openmeteo, daily_risk, region). No synthetic data generation.
@@ -16,6 +16,8 @@ HAZARD_WEIGHTS = {
 
 def compute_composite_and_dominant(scores: dict[str, float]) -> tuple[float, str]:
     """Weighted average composite with dominant hazard bonus."""
+    # DB rows may carry NULL before defaults are flushed — treat as zero.
+    scores = {hazard: float(score or 0.0) for hazard, score in scores.items()}
     weighted_sum = 0.0
     total_weight = 0.0
     dominant = max(scores, key=scores.get)

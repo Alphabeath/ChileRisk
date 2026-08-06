@@ -13,7 +13,6 @@ from app.core.auth import get_current_user
 from app.config import settings
 from app.core.limiter import limiter
 from app.data.seed_comunas import seed_comunas
-from app.data.seed_demo_user import ensure_demo_user
 from app.data.seed_regions import seed_regions
 from app.database import async_session
 import app.models  # noqa: F401 — register ORM metadata
@@ -21,7 +20,7 @@ from app.scheduler import setup_scheduler, shutdown_scheduler
 from app.schemas.system import HealthSyncSummary
 from app.services.csn_service import sync_recent_csn_events
 from app.services.meeting_point_service import seed_meeting_points
-from app.services.risk_service import ensure_risk_scores_exist, recompute_all_scores
+from app.services.risk_service import recompute_all_scores
 from app.services.sync_status_service import latest_sync_runs
 
 logging.basicConfig(
@@ -46,45 +45,36 @@ async def lifespan(app: FastAPI):
         if n_regions or n_comunas:
             logger.info("Seeded %d regions and %d comunas", n_regions, n_comunas)
 
-        await ensure_demo_user(session)
-
         n_meeting = await seed_meeting_points(session)
         if n_meeting:
             logger.info("Seeded %d meeting points", n_meeting)
 
-        n_scores = await ensure_risk_scores_exist(session)
-        if n_scores:
-            logger.info("Ensured %d initial zeroed risk scores for comunas", n_scores)
+        real_events = await sync_recent_csn_events(session, hours=168)
+        if real_events:
+            logger.info("Synced %d real seismic events from CSN (sismologia.cl) at startup", real_events)
 
-        if settings.use_real_csn:
-            real_events = await sync_recent_csn_events(session, hours=168)
-            if real_events:
-                logger.info("Synced %d real seismic events from CSN (sismologia.cl) at startup", real_events)
+        from app.services.openmeteo_service import update_climate_scores_from_real_data
 
-        if settings.use_real_meteo:
-            from app.services.openmeteo_service import update_climate_scores_from_real_data
-
-            n_climate = await update_climate_scores_from_real_data(session)
-            if n_climate:
-                logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
+        n_climate = await update_climate_scores_from_real_data(session)
+        if n_climate:
+            logger.info("Updated %d comunas with real climate data from Open-Meteo at startup", n_climate)
 
         # Flood sync is deferred: ~18 Open-Meteo batches + 429 retries can block
         # Uvicorn past Docker healthcheck start_period and mark the API unhealthy.
 
-        if settings.use_real_senapred:
-            from app.services.senapred_service import sync_senapred_alerts
+        from app.services.senapred_service import sync_senapred_alerts
 
-            try:
-                n_alertas, n_eventos = await sync_senapred_alerts(session)
-                if n_alertas or n_eventos:
-                    logger.info(
-                        "Synced %d SERNAPRED alertas + %d eventos at startup",
-                        n_alertas,
-                        n_eventos,
-                    )
-            except Exception as e:
-                await session.rollback()
-                logger.exception("Initial SERNAPRED sync failed: %s", e)
+        try:
+            n_alertas, n_eventos = await sync_senapred_alerts(session)
+            if n_alertas or n_eventos:
+                logger.info(
+                    "Synced %d SERNAPRED alertas + %d eventos at startup",
+                    n_alertas,
+                    n_eventos,
+                )
+        except Exception as e:
+            await session.rollback()
+            logger.exception("Initial SERNAPRED sync failed: %s", e)
 
         from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
 
@@ -99,30 +89,38 @@ async def lifespan(app: FastAPI):
             await session.rollback()
             logger.exception("Initial simulacros sync failed: %s", e)
 
-        if settings.use_real_airechile:
-            from app.services.airechile_service import sync_airechile, prune_old_airechile
+        from app.services.airechile_service import sync_airechile, prune_old_airechile
 
-            try:
-                n_air = await sync_airechile(session)
-                if n_air:
-                    logger.info("Synced %d Aire Chile zones at startup", n_air)
-                await prune_old_airechile(session)
-            except Exception as e:
-                await session.rollback()
-                logger.exception("Initial Aire Chile sync failed: %s", e)
+        try:
+            n_air = await sync_airechile(session)
+            if n_air:
+                logger.info("Synced %d Aire Chile zones at startup", n_air)
+            await prune_old_airechile(session)
+        except Exception as e:
+            await session.rollback()
+            logger.exception("Initial Aire Chile sync failed: %s", e)
 
-        if settings.use_real_sernageomin:
-            from app.services.sernageomin_service import sync_sernageomin_alerts
+        from app.services.sernageomin_service import sync_sernageomin_alerts
 
-            try:
-                n_volc = await sync_sernageomin_alerts(session)
-                if n_volc:
-                    logger.info(
-                        "Synced %d SERNAGEOMIN volcanic alerts at startup", n_volc
-                    )
-            except Exception as e:
-                await session.rollback()
-                logger.exception("Initial SERNAGEOMIN sync failed: %s", e)
+        try:
+            n_volc = await sync_sernageomin_alerts(session)
+            if n_volc:
+                logger.info(
+                    "Synced %d SERNAGEOMIN volcanic alerts at startup", n_volc
+                )
+        except Exception as e:
+            await session.rollback()
+            logger.exception("Initial SERNAGEOMIN sync failed: %s", e)
+
+        from app.services.meteochile_aaa_service import sync_meteochile_aaa
+
+        try:
+            n_aaa = await sync_meteochile_aaa(session)
+            if n_aaa:
+                logger.info("Synced %d MeteoChile AAA rows at startup", n_aaa)
+        except Exception as e:
+            await session.rollback()
+            logger.exception("Initial MeteoChile AAA sync failed: %s", e)
 
         n_recomputed = await recompute_all_scores(session)
         if n_recomputed:
@@ -135,25 +133,24 @@ async def lifespan(app: FastAPI):
     setup_scheduler()
 
     flood_task: asyncio.Task | None = None
-    if settings.use_real_flood:
-        async def _startup_flood_sync() -> None:
-            from app.services.flood_service import update_flood_scores
+    async def _startup_flood_sync() -> None:
+        from app.services.flood_service import update_flood_scores
 
-            try:
-                async with async_session() as session:
-                    n_flood = await update_flood_scores(session)
-                    if n_flood:
-                        logger.info(
-                            "Updated flood scores for %d comunas (background startup)",
-                            n_flood,
-                        )
-                    else:
-                        logger.warning("Background flood startup sync finished with 0 comunas")
-            except Exception:
-                logger.exception("Background flood startup sync failed")
+        try:
+            async with async_session() as session:
+                n_flood = await update_flood_scores(session)
+                if n_flood:
+                    logger.info(
+                        "Updated flood scores for %d comunas (background startup)",
+                        n_flood,
+                    )
+                else:
+                    logger.warning("Background flood startup sync finished with 0 comunas")
+        except Exception:
+            logger.exception("Background flood startup sync failed")
 
-        flood_task = asyncio.create_task(_startup_flood_sync())
-        logger.info("Flood sync scheduled in background (non-blocking startup)")
+    flood_task = asyncio.create_task(_startup_flood_sync())
+    logger.info("Flood sync scheduled in background (non-blocking startup)")
 
     yield
 

@@ -1,0 +1,204 @@
+{
+  "slug": "tornado-trombas-marinas",
+  "group": "preparate",
+  "title": "Tornados – Trombas Marinas",
+  "sourceUrl": "https://senapred.cl/tornado-trombas-marinas/",
+  "blurb": "Es un fenómeno meteorológico local (eolo-meteoro), que se produce en una zona muy específica del territorio. Ocurre durante tormentas de gran intensidad y…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/tornado-trombas-marinas/bg_tornado-tromba-marina_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un tornado?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Es un fenómeno meteorológico local (eolo-meteoro), que se produce en una zona muy específica del territorio. Ocurre durante tormentas de gran intensidad y puede durar desde minutos hasta horas. Se caracteriza por tener un movimiento circular y forma de embudo alargado (o una cuerda), que desciende desde la base de una nube de desarrollo vertical (cumuliforme). Su diámetro, por lo general, es de algunas decenas o cientos de metros. Los vientos asociados a un tornado pueden superar los 100 a 300 km/h, lo que hace de este fenómeno el más intenso y de mayor capacidad destructiva a nivel atmosférico."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué es una tromba marina?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En términos generales, corresponde al mismo fenómeno que el tornado pero generado sobre el agua, pudiendo también llegar a tierra y causar daños."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tornado-trombas-marinas/bg_tornado-tromba-marina_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Frente al riesgo de tornados – trombas marinas, presta atención a las siguientes señales:",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Lluvia fuerte y sostenida mayor a lo normal."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En zonas cordilleranas, temperatura ambiental más alta de lo normal."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Aumento de turbiedad del agua en los cauces."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Cambios repentinos en la disminución o aumento del nivel y caudal de un curso de agua."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Fuerte ruido de fondo, como de muchos camiones acercándose."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_alu_07.png",
+          "text": "Mantente informado sobre las condiciones de tiempo en www.meteochile.gob.cl y de alertas vigentes en www.senapred.cl."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tornado-trombas-marinas/bg_tornado-tromba-marina_03.png"
+        },
+        {
+          "kind": "subheading",
+          "text": "En caso que un tornado amenace el lugar donde vives, trabajas o visitas"
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_01-150x150.png",
+          "text": "Dirígete al nivel más bajo de la edificación, a las habitaciones interiores o lugar central como baños, parte baja de la escalera o clóset. El sitio más seguro es un subterráneo o sótano."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_02-150x150.png",
+          "text": "Evita lugares abiertos y estructuras con techos grandes y ligeros como gimnasios, y galpones. Aléjate de ventanas, tragaluces, puertas y paredes exteriores."
+        },
+        {
+          "kind": "subheading",
+          "text": "Si te encuentras al aire libre"
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_04-150x150.png",
+          "text": "Y no hay un lugar donde refugiarte, recuéstate sobre el suelo, idealmente en alguna zanja o depresión del piso. Cubre tu cabeza y cuello."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_05-150x150.png",
+          "text": "Si te movilizas en vehículo y ves un tornado en las cercanías, aléjate y busca refugio. El desplazamiento de un tornado es incierto."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_06-150x150.png",
+          "text": "Aléjate de estructuras como carteles publicitarios, gigantografías, tendido eléctrico y otros que pudiesen ser arrojados por el viento."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_07-150x150.png",
+          "text": "Si vas por el borde costero y observas en el mar la formación de una tromba marina, aléjate del lugar. Ésta podría llegar a tierra."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_08-150x150.png",
+          "text": "Tras el paso del tornado, mantén precaución por donde caminas, podría haber vidrios rotos, clavos, entre otros escombros que pueden causarte lesiones. Aléjate del tendido eléctrico caído, estructuras y edificios dañados."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_09-150x150.png",
+          "text": "Si hay personas atrapadas o heridas, avisa a los servicios de urgencia correspondientes 131 (SAMU), 132 (Bomberos), 133 (Carabineros)."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_10-150x150.png",
+          "text": "Si observas un evento de estas características, avisa a la Dirección Meteorológica de Chile, Servicio Meteorológico de la Armada o SENAPRED."
+        },
+        {
+          "kind": "subheading",
+          "text": "si te encuentras realizando alguna actividad marítima"
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_11-150x150.png",
+          "text": "Si ves la formación de una tromba marina, dirige tu nave en la dirección contraria, alejándote del fenómeno."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_12-150x150.png",
+          "text": "Suspende toda faena de buceo, pesca o maniobras, poniendo al personal bajo resguardo y con sus chalecos salvavidas puestos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_13-150x150.png",
+          "text": "En puerto, suspende toda actividad de transferencia de carga o combustibles, retirando al personal hacia el Área de Seguridad, llevando sus respectivos elementos de protección personal."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_14-150x150.png",
+          "text": "Informa la ocurrencia de este fenómeno al fono de Emergencias Marítimas 137. Si es posible, efectúa el registro de las condiciones ambientales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tornado-trombas-marinas/icon_tornado-tromba-marina_15-150x150.png",
+          "text": "Antes de reiniciar las actividades, verifica los daños sufridos a la infraestructura y el funcionamiento de los equipos, para evitar accidentes."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8899/16_preparate_con_senapred_tornados_trombas_marinas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8900/16_get_ready_with_senapred_tornadoes_waterspouts_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8901/16_preparez_vous_a_laide_du_senapred_tornades_trombes_marines_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/tornado-trombas-marinas.png"
+}

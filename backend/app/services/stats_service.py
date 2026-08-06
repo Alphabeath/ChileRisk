@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.models.comuna import Comuna
 from app.models.region import Region
 from app.models.risk_score import RiskScore
 
@@ -33,26 +34,21 @@ async def get_national_stats(session: AsyncSession) -> dict:
     )
     sev_counts = {row[0]: row[1] for row in sev_result.all()}
 
-    top_stmt = (
-        select(Region.codregion, Region.name, func.avg(RiskScore.composite_score).label("avg"))
-        .join(RiskScore, RiskScore.cod_comuna.in_(
-            select(RiskScore.cod_comuna).where(Region.codregion == RiskScore.cod_comuna)
-        ))
+    region_score_stmt = (
+        select(
+            Region.codregion,
+            Region.name,
+            func.avg(RiskScore.composite_score).label("avg"),
+        )
+        .join(Comuna, Comuna.codregion == Region.codregion)
+        .join(RiskScore, RiskScore.cod_comuna == Comuna.cod_comuna)
         .group_by(Region.codregion, Region.name)
-        .order_by(func.avg(RiskScore.composite_score).desc())
-        .limit(3)
     )
+
+    top_stmt = region_score_stmt.order_by(func.avg(RiskScore.composite_score).desc()).limit(3)
     top_rows = (await session.execute(top_stmt)).all()
 
-    bottom_stmt = (
-        select(Region.codregion, Region.name, func.avg(RiskScore.composite_score).label("avg"))
-        .join(RiskScore, RiskScore.cod_comuna.in_(
-            select(RiskScore.cod_comuna).where(Region.codregion == RiskScore.cod_comuna)
-        ))
-        .group_by(Region.codregion, Region.name)
-        .order_by(func.avg(RiskScore.composite_score).asc())
-        .limit(3)
-    )
+    bottom_stmt = region_score_stmt.order_by(func.avg(RiskScore.composite_score).asc()).limit(3)
     bottom_rows = (await session.execute(bottom_stmt)).all()
 
     result = {
@@ -91,15 +87,9 @@ async def get_region_stats(session: AsyncSession, codregion: int) -> dict | None
 
     scores = (
         await session.execute(
-            select(RiskScore).where(
-                RiskScore.cod_comuna.in_(
-                    select(RiskScore.cod_comuna).where(
-                        RiskScore.cod_comuna.in_(
-                            select(RiskScore.cod_comuna).join(Region, Region.codregion == codregion)
-                        )
-                    )
-                )
-            )
+            select(RiskScore)
+            .join(Comuna, Comuna.cod_comuna == RiskScore.cod_comuna)
+            .where(Comuna.codregion == codregion)
         )
     ).scalars().all()
 
@@ -168,11 +158,9 @@ async def compare_regions(session: AsyncSession, codregions: list[int]) -> dict:
             continue
         scores = (
             await session.execute(
-                select(RiskScore).where(RiskScore.cod_comuna.in_(
-                    select(RiskScore.cod_comuna).where(RiskScore.cod_comuna.in_(
-                        select(RiskScore.cod_comuna).join(Region, Region.codregion == cod)
-                    ))
-                ))
+                select(RiskScore)
+                .join(Comuna, Comuna.cod_comuna == RiskScore.cod_comuna)
+                .where(Comuna.codregion == cod)
             )
         ).scalars().all()
         if not scores:

@@ -1,0 +1,222 @@
+{
+  "slug": "incendios-forestales",
+  "group": "preparate",
+  "title": "Incendios Forestales",
+  "sourceUrl": "https://senapred.cl/incendios-forestales/",
+  "blurb": "Un incendio forestal es un fuego que, cualquiera sea su origen, se propaga sin control en terrenos rurales o cercano a viviendas, a través de árboles,…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/incendios-forestales/iiff_BG_2025-1.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un incendio forestal?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un incendio forestal es un fuego que, cualquiera sea su origen, se propaga sin control en terrenos rurales o cercano a viviendas, a través de árboles, matorrales y pastizales, verdes o secos. Estos se incrementan y propagan con mayor facilidad cuando hay altas temperaturas, fuertes vientos, sequedad de la vegetación y del ambiente."
+            },
+            {
+              "text": "En el mundo, los incendios forestales constituyen la causa más importante de destrucción de vegetación. Además, se pueden perder viviendas, animales, fuentes de trabajo e incluso vidas humanas."
+            },
+            {
+              "text": "En Chile, el 99% de los incendios forestales son originados por causas humanas debido a negligencias, descuidos en el uso del fuego o mala intención. El 1% restante corresponde a causas naturales, como, por ejemplo ocasionados por rayos en tormentas secas o erupciones volcánicas."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/incendios-forestales/iiff_BG_02_2025.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Cómo prevenir los incendios forestales?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén los alrededores de tu vivienda despejados de vegetación y desechos que se puedan quemar."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita fumar en lugares con vegetación que puedan arder. Nunca arrojes residuos de cigarrillos ni fósforos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No prendas fogatas, no hagas asados (parrilladas), ni uses fuentes de calor en zonas cercanas a vegetación."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Se recomienda NO realizar quemas. Existen alternativas para la eliminación de desechos agrícolas y forestales que no necesitan uso de fuego. Si es imprescindible, recuerda que es bajo períodos autorizados y que debes avisar a CONAF o a tu municipio. Para más información ingresa a www.conaf.cl."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No uses herramientas que generen chispas, como galleteros (esmeril- angular), orilladoras (desbrozadoras), soldadoras, sopletes, entre otras, en días de altas temperaturas o si estás en una zona de vegetación. Puedes encontrar más información sobre el uso de herramientas en www.conaf.cl"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si es imprescindible hacer uso de fuego o de una de las herramientas indicadas anteriormente, ten SIEMPRE las siguientes precauciones:"
+            },
+            {
+              "bullets": [
+                "Mantén los alrededores despejados de vegetación (pasto, ramas, árboles, entre otros) y desechos que se puedan quemar.",
+                "Delimita la zona en que harás uso de fuego (considera arena, piedras, zanjas) para impedir o evitar que se propague y dispón siempre de elementos para apagarlo (tierra, arena o agua)."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si en la zona que habitas observas que el tendido eléctrico colinda de manera peligrosa con árboles y otro tipo de vegetación, informa a la empresa eléctrica para que ejecute acciones preventivas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si visitas parques o reservas nacionales, al ingresar, infórmate con el guardaparques de las medidas preventivas y alternativas de evacuación ante la ocurrencia de incendios forestales."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/incendios-forestales/telefono_iiff.png"
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Siempre debes alertar a tu comunidad vecinal y avisar a CONAF, Bomberos, Carabineros o PDI."
+            },
+            {
+              "text": "No asumas que alguien más ya ha realizado la llamada. La rápida comunicación de la emergencia es esencial para una respuesta oportuna."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/incendios-forestales/iiff_BG_03_2025.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de un incendio forestal?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_01-150x150.png",
+          "text": "Evita realizar acciones temerarias, actúa con calma y sigue las instrucciones de equipos de respuesta y autoridades."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_02-150x150.png",
+          "text": "Aléjate lo más posible del avance del fuego o el humo. Recuerda que el incendio forestal puede ser de rápida propagación."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_03-150x150.png",
+          "text": "Utiliza ropa y zapatos adecuados, y cubre tu nariz y boca con un paño húmedo para evitar inhalar humo."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_04-150x150.png",
+          "text": "Se recomienda evacuar a pie. Los vehículos generan mayor congestión para una evacuación expedita y se pueden generar accidentes."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_05-150x150.png",
+          "text": "Si no puedes evacuar con tus animales, evita dejarlos encerrados o amarrados."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_06-150x150.png",
+          "text": "No regreses al área quemada hasta que ello sea autorizado por las autoridades encargadas de la emergencia. El incendio puede reactivarse. Mantente informado de los pronósticos meteorológicos y alertas vigentes a través de la Dirección Meteorológica de Chile y SENAPRED."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-forestales/icon_iiff_07-1-150x150.png",
+          "text": "Mantén comunicación con tus cercanos y vecinos, privilegiando mensajes de texto o vía redes sociales, como WhatsApp."
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Generar un incendio forestal por negligencia o imprudencia es un delito con multas y penas privativas de libertad (de cárcel) de hasta 5 años. Provocarlo de manera intencional equivale a penas de hasta 20 años de cárcel ."
+            }
+          ]
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/incendios-forestales/zorro_iiff-1.png",
+          "alt": ""
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8866/06_preparate_con_senapred_incendios_forestales_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8867/06_get_ready_with_senapred_wildfires_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8868/06_preparez_vous_a_laide_du_senapred_incendies_forestiers_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-3.pdf?sequence=3&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/incendios-forestales.png"
+}

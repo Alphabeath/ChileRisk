@@ -8,6 +8,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Virtualenvs (uv pip install --system ignores them; 300MB of dead weight)
+.venv/
+venv/
+
 # Packaging and build artifacts
 *.egg-info/
 build/

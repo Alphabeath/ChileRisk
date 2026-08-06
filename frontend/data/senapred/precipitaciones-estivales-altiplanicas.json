@@ -1,0 +1,98 @@
+{
+  "slug": "precipitaciones-estivales-altiplanicas",
+  "group": "preparate",
+  "title": "Precipitaciones Estivales Altiplánicas",
+  "sourceUrl": "https://senapred.cl/precipitaciones-estivales-altiplanicas/",
+  "blurb": "Son precipitaciones que ocurren en la zona altiplánica, concentradas entre los meses de noviembre y marzo. Durante este periodo, la precipitación es originada…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/precipitaciones-estivales-altiplanicas/BG_pea_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es la precipitación estival altiplánica?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Son precipitaciones que ocurren en la zona altiplánica, concentradas entre los meses de noviembre y marzo. Durante este periodo, la precipitación es originada por tormentas convectivas (masas de aire que ascienden) que se desarrollan durante la tarde y primeras horas de la noche."
+            },
+            {
+              "text": "Los días con episodios lluviosos tienden a agruparse en secuencias de alrededor de una semana, separados por secuencias de episodios secos de similar duración."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/precipitaciones-estivales-altiplanicas/BG_pea_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de precipitaciones estivales?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_01-150x150.png",
+          "text": "Reconoce en tu entorno los posibles riesgos que pudieran ocasionar emergencias o desastres, como la activación de quebradas y probables crecidas de cauces."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_02.png",
+          "text": "Prepara y revisa el techo de tu vivienda, las bajadas de agua y canaletas, despejándolas de cualquier elemento que obstruya el flujo de agua. Mantén limpias veredas y calzadas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_03-150x150.png",
+          "text": "Si las condiciones meteorológicas son desfavorables, conduce con precaución. Calles y caminos podrían estar con barro, escombros y otros elementos no visibles. No intentes cruzar un cauce en vehículo."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_04-150x150.png",
+          "text": "Evita internarte en zonas alejadas especialmente cuando las condiciones meteorológicas sean desfavorables. Mantente informado de los pronósticos meteorológicos y alertas vigentes a través de la Dirección Meteorológica de Chile y SENAPRED."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_05-150x150.png",
+          "text": "Utiliza senderos y rutas establecidas, reconoce los posibles refugios y su ubicación durante tu estadía en la zona."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_06-150x150.png",
+          "text": "Mantén en tu vivienda y/o vehículo elementos de emergencia, alimentos y ropa de abrigo para situaciones de aislamiento producto del corte de rutas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/precipitaciones-estivales-altiplanicas/icon_pea_07.png",
+          "text": "Infórmate de las condiciones del tiempo en: www.meteochile.cl"
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8909/19_preparate_con_senapred_precipitaciones_estivales_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8910/19_get_ready_with_senapred_summer_rainfall_at_the_altiplano_region_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8911/19_preparez_vous_a_laide_du_senapred_precipitations_estivales_sur_laltiplano_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/precipitaciones-estivales-altiplanicas.png"
+}

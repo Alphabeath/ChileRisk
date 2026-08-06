@@ -1,0 +1,303 @@
+{
+  "slug": "excursion-en-montana-o-zonas-cordilleranas",
+  "group": "preparate",
+  "title": "Excursión en Montaña o Zonas Cordilleranas",
+  "sourceUrl": "https://senapred.cl/excursion-en-montana-o-zonas-cordilleranas/",
+  "blurb": "La montaña y zonas cordilleranas ofrecen paisajes únicos, pero también son ambientes cambiantes donde se pueden presentar condiciones meteorológicas adversas,…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/bg-montana_01.png"
+    },
+    {
+      "kind": "text",
+      "paragraphs": [
+        {
+          "text": "La montaña y zonas cordilleranas ofrecen paisajes únicos, pero también son ambientes cambiantes donde se pueden presentar condiciones meteorológicas adversas, tales como desprendimientos, avalanchas u otras situaciones inseguras para quienes desconocen el entorno. Incluso cuando en la zona baja haya buen tiempo, en la alta cordillera pueden presentarse lluvia, nieve, frío y vientos de gran intensidad. Sobre los 1.500 m de altitud, personas y vehículos experimentan efectos por la diferencia térmica, la menor concentración de oxígeno y la gravedad, lo que puede provocar problemas de salud como mal de altura, fatiga o deshidratación. Para disfrutar de estos lugares de manera segura, es fundamental prepararse mediante capacitación y participación en cursos o clubes de montañismo formales, donde la educación en montaña sea uno de los ejes principales de las excursiones o salidas."
+        }
+      ]
+    },
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/bg-montana_02.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "Antes de una excursión - planifica tu salida",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No vayas sola/o a la montaña, procura ir siempre acompañado/a."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Capacítate previamente con un/a guía/instructor/a acreditado/a, o acompáñate de alguien con experiencia."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Elige el lugar considerando el terreno, ruta segura, refugios disponibles, condiciones del tiempo y factores como la distancia, la altitud y tu condición física."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Informa siempre tu salida a personas de confianza (amigos, cordada o familiares), detallando lugar, ruta, fecha de ida y de regreso, para que puedan alertar a las autoridades si no vuelves en el plazo previsto."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén tu celular cargado."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Usa mapas, GPS o aplicaciones offline; guárdalos protegidos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si visitas lugares con nieve, se recomienda llevar una pala."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Prepárate para la excursión, considerando llevar al menos:",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "2 litros de agua, aunque la excursión sea por pocas horas. Siempre existe el riesgo de deshidratarse."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Calzado cerrado con suela gruesa y caña alta, idealmente zapatos para senderismo. asegúrate de llevar calcetines de recambio. En caso de nieve, debes contar con zapatos especiales."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Vestuario para abrigarte por capas (1ra, 2da y 3ra). Siempre vístete con prendas cómodas, livianas y aislantes. Recuerda que el tiempo cambia rápidamente en la montaña, por lo que debes llevar ropa, idealmente térmica e impermeable."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Sombrero o gorro, bloqueador solar, anteojos de sol o antiparras. También lleva guantes o mitones y bastones, en especial si cargarás mucho peso."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Alimento suficiente para la duración de la excursión, considerando una cantidad adicional de reserva en caso de algún imprevisto. Frutos secos y dulces constituyen una buena alternativa."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Elementos de primeros auxilios. Recuerda capacitarte en su uso. Agrega siempre linternas (preferentemente frontales), silbatos y mantas térmicas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Una carpa adecuada e implementos necesarios en caso de que vayas a pernoctar. Enciende fuego sólo en lugares autorizados."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Procura que la vestimenta sea de tonos visibles a la distancia, para evitar mimetizarte con el entorno. Esto facilitará tu ubicación en caso de extravío."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Mantente alerta sobre:",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Peligros del terreno, tales como:"
+            },
+            {
+              "bullets": [
+                "Desprendimientos y caída de piedras.",
+                "Avalanchas y aludes.",
+                "Grietas en glaciares.",
+                "Barrancos.",
+                "Crecidas de ríos y activación de quebradas."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Condiciones meteorológicas, tales como:"
+            },
+            {
+              "bullets": [
+                "Niebla.",
+                "Tormentas eléctricas, especialmente rayos.",
+                "Rachas de viento.",
+                "Ventisca.",
+                "Nevadas.",
+                "Tormentas de polvo o arena."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Características de la flora y fauna:"
+            },
+            {
+              "bullets": [
+                "Animales salvajes e insectos (ejemplos: puma, zorro, chingue, quique, alacrán, araña del trigo, entre otros).",
+                "Vegetación urticante, espinosa y/o venenosa.",
+                "Vectores (vinchuca, mosquitos, ratones, entre otros)."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/bg-montana_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Durante la excursión",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/icon-montana_01-150x150.png",
+          "text": "Informa tu ruta en Carabineros y registra tu ingreso y salida con los Guardaparques en Áreas Protegidas. Considera el número de excursionistas, edades, estado de salud, lugares de campamento y fecha de regreso. Deja un número de contacto y a quién llamar en caso de emergencia."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/icon-montana_02-150x150.png",
+          "text": "Avanza en horarios seguros, conoce tus límites y descansa."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/icon-montana_03-150x150.png",
+          "text": "Mantén referencias del entorno para no desorientarte."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/icon-montana_04-150x150.png",
+          "text": "Si coincides con otro grupo de excursionistas conversa con ellos para saber en qué condiciones se encuentran, informarte sobre las condiciones del terreno hacia dónde te diriges y solicita ayuda en caso de ser necesario."
+        }
+      ]
+    },
+    {
+      "heading": "Al finalizar la excursión",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/excursion-en-montana-o-zonas-cordilleranas/icon-montana_05-150x150.png",
+          "text": "Informa a Carabineros y Guardaparques si corresponde, que has regresado. Recuerda avisar a tus familiares y amigos que la excursión ha finalizado."
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en situaciones que requieran asistencia?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ante situaciones de emergencia o personas extraviadas, llama a Carabineros de Chile (133) y Bomberos de Chile (132)."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Para una rápida intervención de los grupos de rescate, informa:"
+            },
+            {
+              "bullets": [
+                "Lugar donde te encuentras según el mapa y/o coordenadas. Si no cuentas con ello, da referencias del lugar señalando las características de la zona.",
+                "Explica lo sucedido de manera clara y tranquila.",
+                "Datos personales del grupo en excursión y estado de salud de las personas. Indica si hay una persona accidentada y si ésta puede desplazarse de sus propios medios.",
+                "Condiciones meteorológicas en el lugar, tales como visibilidad, viento, precipitaciones, nieve, temperatura, entre otras. Implementos con los que cuentas para afrontar la emergencia, por ejemplo: carpa, botiquín, agua, alimento, equipamiento, entre otros."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Sigue las instrucciones de los equipos de rescate."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8935/Triptico_Excursion%20en%20montan%CC%83a%20o%20zonas%20cordilleranas.pdf?sequence=1&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/excursion-en-montana-o-zonas-cordilleranas.png"
+}

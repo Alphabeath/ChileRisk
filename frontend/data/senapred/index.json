@@ -1,0 +1,177 @@
+[
+  {
+    "slug": "aluviones",
+    "title": "Aluviones",
+    "blurb": "Un aluvión es un flujo de barro donde el agua arrastra el material suelto (detritos) por una ladera, quebrada o cauce. Puede viajar muchos kilómetros desde su…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/aluviones.png"
+  },
+  {
+    "slug": "calor-extremo",
+    "title": "Calor intenso o extremo",
+    "blurb": "El calor es aquello que siente un ser vivo ante una temperatura elevada y que puede afectar su normal funcionamiento. Su manifestación excesiva o exagerada se…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/calor-extremo.png"
+  },
+  {
+    "slug": "deslizamientos",
+    "title": "Deslizamientos",
+    "blurb": "Movimiento ladera abajo, de una masa de suelo o roca cuyo desplazamiento ocurre predominantemente a lo largo de ésta, con una gran deformación del terreno.",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/deslizamientos.jpg"
+  },
+  {
+    "slug": "enos",
+    "title": "ENOS – El Niño y La Niña",
+    "blurb": "El Niño-Oscilación del Sur (ENOS), es una anomalía del sistema acoplado océano-atmósfera que se caracteriza por calentamientos y enfriamientos del océano que…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/enos.png"
+  },
+  {
+    "slug": "erupciones-volcanicas",
+    "title": "Erupciones Volcánicas",
+    "blurb": "Un volcán es una estructura geológica donde ha tenido o tiene lugar la salida al exterior de magma y gases, generados en el interior de la tierra. El material…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/erupciones-volcanicas.png"
+  },
+  {
+    "slug": "excursion-en-montana-o-zonas-cordilleranas",
+    "title": "Excursión en Montaña o Zonas Cordilleranas",
+    "blurb": "La montaña y zonas cordilleranas ofrecen paisajes únicos, pero también son ambientes cambiantes donde se pueden presentar condiciones meteorológicas adversas,…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/excursion-en-montana-o-zonas-cordilleranas.png"
+  },
+  {
+    "slug": "heladas",
+    "title": "Heladas",
+    "blurb": "Descenso de la temperatura del aire superficial por debajo del punto de congelación, que, dependiendo de la humedad del aire, la intensidad del viento y la…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/heladas.png"
+  },
+  {
+    "slug": "humo-de-incendio-forestal",
+    "title": "Humo de Incendios Forestales",
+    "blurb": "El humo generado por los incendios forestales es una mezcla de aire caliente, material particulado en suspensión y gases de diferentes categorías que varían…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/humo-de-incendio-forestal.png"
+  },
+  {
+    "slug": "incendios-estructurales",
+    "title": "Incendios Estructurales",
+    "blurb": "Un incendio estructural corresponde a aquel tipo de incendio que se produce en casas, edificios, locales comerciales, etc. La gran mayoría de los incendios…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/incendios-estructurales.png"
+  },
+  {
+    "slug": "incendios-forestales",
+    "title": "Incendios Forestales",
+    "blurb": "Un incendio forestal es un fuego que, cualquiera sea su origen, se propaga sin control en terrenos rurales o cercano a viviendas, a través de árboles,…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/incendios-forestales.png"
+  },
+  {
+    "slug": "inundaciones",
+    "title": "Inundaciones",
+    "blurb": "La inundación se define como un proceso donde una masa de agua cubre áreas normalmente secas.",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/inundaciones.png"
+  },
+  {
+    "slug": "invierno",
+    "title": "Invierno",
+    "blurb": "Durante el invierno, se producen diversas situaciones de riesgo hacia la población, provocadas por las distintas condiciones del clima, como las lluvias…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/invierno.png"
+  },
+  {
+    "slug": "invierno-zona-austral",
+    "title": "Invierno – Zona Austral",
+    "blurb": "Durante el invierno en la zona austral de Chile, entre las regiones de Los Lagos, Aysén y Magallanes, se presentan diversas situaciones de riesgo para la…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/invierno-zona-austral.png"
+  },
+  {
+    "slug": "marejadas",
+    "title": "Marejadas",
+    "blurb": "Es un oleaje que se manifiesta por efecto del viento local o generado en otro lugar del océano. Las olas pueden viajar cientos o miles de kilómetros, afectando…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/marejadas.png"
+  },
+  {
+    "slug": "materiales-peligrosos",
+    "title": "Materiales Peligrosos",
+    "blurb": "Es toda sustancia que, por su naturaleza, produce o puede producir daños momentáneos o permanentes a la salud humana, animal o vegetal, a los bienes y/o al…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/materiales-peligrosos.png"
+  },
+  {
+    "slug": "nevadas",
+    "title": "Nevadas",
+    "blurb": "Una nevada es una precipitación en forma de pequeños cristales de hielo, generalmente ramificados, provenientes de la congelación de partículas de agua en…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/nevadas.png"
+  },
+  {
+    "slug": "precipitaciones-estivales-altiplanicas",
+    "title": "Precipitaciones Estivales Altiplánicas",
+    "blurb": "Son precipitaciones que ocurren en la zona altiplánica, concentradas entre los meses de noviembre y marzo. Durante este periodo, la precipitación es originada…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/precipitaciones-estivales-altiplanicas.png"
+  },
+  {
+    "slug": "sismos",
+    "title": "Sismos",
+    "blurb": "Un sismo es un movimiento de la superficie terrestre. Es un proceso de liberación súbita de una gran cantidad de energía debido principalmente al roce de…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/sismos.png"
+  },
+  {
+    "slug": "tormenta-de-polvo-2",
+    "title": "Tormenta de Polvo",
+    "blurb": "Las tormentas de polvo son un fenómeno meteorológico de Mesoescala (uno a cientos de kilómetros) que se caracterizan por vientos intensos, los que suelen estar…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/tormenta-de-polvo-2.png"
+  },
+  {
+    "slug": "tormentas-electricas",
+    "title": "Tormentas Eléctricas",
+    "blurb": "Son descargas bruscas de electricidad atmosférica que se manifiestan por un resplandor breve (rayo) y por un ruido seco o estruendo (trueno). Las tormentas se…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/tormentas-electricas.png"
+  },
+  {
+    "slug": "tornado-trombas-marinas",
+    "title": "Tornados – Trombas Marinas",
+    "blurb": "Es un fenómeno meteorológico local (eolo-meteoro), que se produce en una zona muy específica del territorio. Ocurre durante tormentas de gran intensidad y…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/tornado-trombas-marinas.png"
+  },
+  {
+    "slug": "tsunami",
+    "title": "Tsunami",
+    "blurb": "Un tsunami es un fenómeno físico originado por sismos que afectan al fondo oceánico, remociones en masa, derrumbes submarinos, erupciones volcánicas u otros…",
+    "group": "preparate",
+    "cardImage": "/data/senapred/img/catalog/tsunami.png"
+  },
+  {
+    "slug": "dimension-animal",
+    "title": "Protección Animal",
+    "blurb": "SENAPRED conformó la Mesa Temática de Gestión del Riesgo de Desastres Dimensión Animal , instancia integrada por 14 organizaciones, tanto del ámbito público,…",
+    "group": "inclusiva",
+    "cardImage": "/data/senapred/img/catalog/dimension-animal.png"
+  },
+  {
+    "slug": "enfoque-de-genero",
+    "title": "Enfoque de Género",
+    "blurb": "Reconoce tu entorno, averigua si donde vives o en el lugar que visitas existe alguna amenaza e infórmate sobre el plan de emergencia del municipio respectivo.",
+    "group": "inclusiva",
+    "cardImage": "/data/senapred/img/catalog/enfoque-de-genero.png"
+  },
+  {
+    "slug": "lactancia-en-emergencia",
+    "title": "Lactancia en Emergencia",
+    "blurb": "La Organización Mundial de la Salud recomienda iniciar la lactancia durante la primera hora de vida del recién nacido, amamantar de manera exclusiva durante…",
+    "group": "inclusiva",
+    "cardImage": "/data/senapred/img/catalog/lactancia-en-emergencia.jpg"
+  }
+]

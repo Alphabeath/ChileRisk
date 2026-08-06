@@ -1,0 +1,150 @@
+{
+  "slug": "aluviones",
+  "group": "preparate",
+  "title": "Aluviones",
+  "sourceUrl": "https://senapred.cl/aluviones/",
+  "blurb": "Un aluvión es un flujo de barro donde el agua arrastra el material suelto (detritos) por una ladera, quebrada o cauce. Puede viajar muchos kilómetros desde su…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/aluviones/bg_alu_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un aluvión?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un aluvión es un flujo de barro donde el agua arrastra el material suelto (detritos) por una ladera, quebrada o cauce. Puede viajar muchos kilómetros desde su origen, aumentando de tamaño a medida que avanza pendiente abajo transportando rocas, hojas, ramas, árboles e infraestructura que encuentre a su paso, alcanzando gran velocidad."
+            },
+            {
+              "text": "A lo largo de nuestro país los aluviones se originan principalmente por precipitaciones intensas en zonas de altas pendientes y quebradas. En sectores cordilleranos han ocurrido situaciones de lluvias sostenidas en el tiempo y con isoterma cero* más alta que lo normal, que han generado este tipo de flujos."
+            },
+            {
+              "text": "De acuerdo con las características de ocupación territorial un aluvión puede provocar pérdidas de vidas humanas y cuantiosos daños en viviendas, obras civiles, instalaciones mineras, obras de riego, telecomunicaciones, entre otras."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/aluviones/bg_alu_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vives, trabajas o visitas zonas con riesgo de aluvión, presta atención a las siguientes señales",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Lluvia fuerte y sostenida mayor a lo normal."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En zonas cordilleranas, temperatura ambiental más alta de lo normal."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Aumento de turbiedad del agua en los cauces."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Cambios repentinos en la disminución o aumento del nivel y caudal de un curso de agua."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Fuerte ruido de fondo, como de muchos camiones acercándose."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_07.png",
+          "text": "Mantente informado sobre las condiciones de tiempo en www.meteochile.gob.cl y de alertas vigentes en www.senapred.cl."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/aluviones/bg_alu_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de un aluvión?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_01-150x150.png",
+          "text": "Si estas cercano a sectores altos, precordillera, cordillera, laderas, no te ubiques en quebradas o desembocaduras por donde podrían pasar aluviones, ni en obras como puentes o badenes."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_02-150x150.png",
+          "text": "Si debes evacuar, hazlo hacia lugares que la autoridad haya definido como Puntos de Encuentro. Si no existen, aléjate del curso de ríos, esteros y quebradas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_03-150x150.png",
+          "text": "Si el aluvión se está acercando y no puedes evacuar hacia un Punto de Encuentro, evacua hacia zonas superiores de casas, techos, edificios u otra estructura."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_04-150x150.png",
+          "text": "Si estás conduciendo y llegas a un área afectada por el aluvión, evita cruzarla y aléjate del lugar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_05-150x150.png",
+          "text": "Aléjate de la zona afectada por el aluvión, podrían generarse otros en la cercanía."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/aluviones/icon_alu_06-150x150.png",
+          "text": "Vuelve a tu hogar cuando las autoridades indiquen que es seguro hacerlo."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8860/04_preparate_con_senapred_aluviones_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8861/04_get_ready_with_senapred_mudslides_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8862/04_preparez_vous_a_laide_du_senapred_coulees_de_boue_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/aluviones.png"
+}

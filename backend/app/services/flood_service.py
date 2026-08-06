@@ -181,9 +181,6 @@ def _parse_flood_item(item: dict) -> float:
 
 async def update_flood_scores(session: AsyncSession) -> int:
     """Fetch river discharge for all comunas, compute inundacion_score, update risk."""
-    if not settings.use_real_flood:
-        return 0
-
     comunas = (
         await session.execute(
             select(Comuna).where(

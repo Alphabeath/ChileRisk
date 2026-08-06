@@ -2,10 +2,11 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
+from app.core.limiter import limiter
 from app.schemas.simulacro import (
     DrillSource,
     DrillType,
@@ -26,7 +27,9 @@ def _to_out(row) -> SimulacroOut:
 
 
 @router.get("", response_model=SimulacroListResponse)
+@limiter.limit("60/minute")
 async def list_simulacros_endpoint(
+    request: Request,
     session: AsyncSession = Depends(get_db),
     from_date: date | None = Query(default=None, alias="from"),
     to_date: date | None = Query(default=None, alias="to"),
@@ -62,7 +65,9 @@ async def list_simulacros_endpoint(
 
 
 @router.get("/next", response_model=SimulacroOut | None)
+@limiter.limit("60/minute")
 async def next_simulacro_endpoint(
+    request: Request,
     session: AsyncSession = Depends(get_db),
 ) -> SimulacroOut | None:
     row = await get_next_simulacro(session)
@@ -72,7 +77,9 @@ async def next_simulacro_endpoint(
 
 
 @router.get("/{slug}", response_model=SimulacroOut)
+@limiter.limit("60/minute")
 async def simulacro_detail_endpoint(
+    request: Request,
     slug: str,
     session: AsyncSession = Depends(get_db),
 ) -> SimulacroOut:

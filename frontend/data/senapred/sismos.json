@@ -1,0 +1,157 @@
+{
+  "slug": "sismos",
+  "group": "preparate",
+  "title": "Sismos",
+  "sourceUrl": "https://senapred.cl/sismos",
+  "blurb": "Un sismo es un movimiento de la superficie terrestre. Es un proceso de liberación súbita de una gran cantidad de energía debido principalmente al roce de…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/sismos/BG_sismo_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un sismo?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un sismo es un movimiento de la superficie terrestre. Es un proceso de liberación súbita de una gran cantidad de energía debido principalmente al roce de placas tectónicas, fallas geológicas o volcanismo."
+            },
+            {
+              "text": "La mayoría de los sismos destructores en Chile están relacionados al movimiento convergente de la placa de Nazca por debajo de la Sudamericana; estas placas que se comprimen entre sí acumulan una gran cantidad de energía a lo largo de su zona de contacto, produciendo deformación en sus bordes. Cuando la energía almacenada es lo suficientemente grande, estas placas se mueven liberando parte de la energía y deformación acumulada durante decenas o cientos de años."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/sismos/BG_sismo_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Prepárate",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Verifica de qué material está construida tu vivienda, colegio o lugar de trabajo. En caso de ser adobe o autoconstrucción, debes evacuar inmediatamente durante un sismo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Identifica Lugares de Protección Sísmica¹, alejados de ventanas y elementos que puedan caerte encima. Ancla los muebles al piso, los muros o el cielo, para que no se vuelquen durante un sismo."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_11.png",
+          "text": "Un lugar de protección sísmica es una construcción sismo resistente, y al interior se encuentra protegida de la caída o volcamiento de muebles u objetos (luminarias, cielo falso, ductos de aire acondicionado, entre otros). En una construcción no sismo resistente, no hay lugares seguros en su interior, por lo tanto, el Área de Seguridad se encontrará siempre fuera del inmueble, en un lugar alejado de edificios, postes y cables. Los Lugares de Protección Sísmica deben estar demarcados."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/sismos/BG_sismo_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso sismo?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_01-150x150.png",
+          "text": "Mantén la calma y ubícate en un Lugar de Protección Sísmica."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_03-150x150.png",
+          "text": "Protégete y afírmate debajo de un elemento firme. Si no es posible ubicarte debajo, ubícate junto a él."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_05-150x150.png",
+          "text": "Corta la energía eléctrica de tu vivienda y cierra las llaves de paso de agua y gas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_07-150x150.png",
+          "text": "Si estás en la calle, aléjate de los edificios, postes y cables eléctricos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_09-150x150.png",
+          "text": "Si estás en un evento de asistencia masiva, mantén la calma y quédate en tu lugar, protege tu cabeza y cuello con los brazos. Sigue las instrucciones de los encargados de seguridad."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_02-150x150.png",
+          "text": "Si vas conduciendo por un túnel, puente o autopista urbana, reduce la velocidad y detente cuando hayas salido de ese lugar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_04-150x150.png",
+          "text": "Si estás en la costa y el sismo te dificultó mantenerte en pie, evacúa inmediatamente hacia un punto de encuentro y/o área de seguridad."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_06-150x150.png",
+          "text": "Para iluminar usa sólo linternas, no utilices velas, fósforos o encendedores, evita provocar chispas que pueden generar una explosión en caso de fuga de gas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_08-150x150.png",
+          "text": "Al evacuar un edificio, hazlo por la escalera de emergencia, no utilices ascensores."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/sismos/icon_sismo_10-150x150.png",
+          "text": "Si quedas encerrado o atrapado, mantén la calma y pide auxilio."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8859/01_preparate_con_senapred_sismos_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8870/01_get_ready_with_senapred_earthquakes_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8881/01_preparez_vous_a_laide_du_senapred_seismes_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-1.pdf?sequence=1&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/sismos.png"
+}

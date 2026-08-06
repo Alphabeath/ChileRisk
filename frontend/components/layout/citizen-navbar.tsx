@@ -4,320 +4,312 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   useCallback,
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
-  type MouseEvent as ReactMouseEvent,
-  type PointerEvent as ReactPointerEvent,
+  type CSSProperties,
+  type RefObject,
 } from "react"
+import { Menu, X } from "lucide-react"
+import { motion, useReducedMotion } from "motion/react"
+
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import {
-  Backpack,
-  CalendarCheck2,
-  CircleHelp,
-  Home,
-  MessageCircle,
-  Monitor,
-  Route,
-  ShieldAlert,
-  UserCircle,
-} from "lucide-react"
-import { CITIZEN_NAVBAR_LINK_CLASS, CITIZEN_NAVBAR_SHELL_CLASS } from "@/lib/glass-panel"
-import { dispatchTourStart } from "@/lib/tour/tour-steps"
-import { useUIStore } from "@/stores/ui-store"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
+  CITIZEN_NAV_ITEMS,
+  isNavActive,
+  type CitizenNavItem,
+} from "@/lib/citizen-nav"
+import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
+import { useCloseOnDesktopMd } from "@/lib/use-close-on-desktop-md"
 import { cn } from "@/lib/utils"
 
-const navItems = [
-  { href: "/dashboard", label: "Inicio", icon: Home, section: false, tourId: "nav-inicio" },
-  { href: "/monitor", label: "Monitor", icon: Monitor, section: false, tourId: "nav-monitor" },
-  {
-    href: "/preparation",
-    label: "Preparación",
-    icon: Backpack,
-    section: false,
-    tourId: "nav-preparacion",
-  },
-  {
-    href: "/assistant",
-    label: "Asistente",
-    icon: MessageCircle,
-    section: false,
-    tourId: "nav-asistente",
-  },
-  {
-    href: "/drills",
-    label: "Simulacros",
-    icon: CalendarCheck2,
-    section: false,
-    tourId: "nav-simulacros",
-  },
-  {
-    href: "/evacuation",
-    label: "Evacuación",
-    icon: Route,
-    section: false,
-    tourId: "nav-evacuacion",
-  },
-  {
-    href: "/disasters",
-    label: "Desastres",
-    icon: ShieldAlert,
-    section: true,
-    tourId: "nav-desastres",
-  },
-  {
-    href: "/account",
-    label: "Cuenta",
-    icon: UserCircle,
-    section: false,
-    tourId: "nav-cuenta",
-  },
-] as const
+const NAV_LINK_CLASS =
+  "relative z-10 flex h-full shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[1.2px] whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
 
-const DRAG_THRESHOLD_PX = 6
+const SHEET_LINK_CLASS =
+  "relative z-10 flex min-h-11 w-full items-center gap-3 px-4 py-3 text-sm font-semibold uppercase tracking-[1.2px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
 
-function isNavActive(pathname: string, href: string, section?: boolean) {
-  if (section) return pathname.startsWith(href)
-  return pathname === href
-}
+type PillBox = { x: number; y: number; width: number; height: number }
 
-function useHorizontalNavScroll() {
-  const ref = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-  const [dragging, setDragging] = useState(false)
-  const dragRef = useRef({
-    tracking: false,
-    dragging: false,
-    moved: false,
-    startX: 0,
-    startScroll: 0,
-    pointerId: -1,
-  })
+const SPRING = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.8 }
 
-  const update = useCallback(() => {
-    const el = ref.current
-    if (!el) return
-    const { scrollLeft, scrollWidth, clientWidth } = el
-    const maxScroll = scrollWidth - clientWidth
-    setCanScrollLeft(scrollLeft > 1)
-    setCanScrollRight(maxScroll > 1 && scrollLeft < maxScroll - 1)
-  }, [])
+function useActivePill(
+  containerRef: RefObject<HTMLElement | null>,
+  pathname: string,
+) {
+  const [pill, setPill] = useState<PillBox | null>(null)
+
+  const measure = useCallback(() => {
+    const root = containerRef.current
+    if (!root) return
+    const active = root.querySelector<HTMLElement>("[aria-current='page']")
+    if (!active) {
+      setPill(null)
+      return
+    }
+    const rootRect = root.getBoundingClientRect()
+    const elRect = active.getBoundingClientRect()
+    setPill({
+      x: elRect.left - rootRect.left + root.scrollLeft,
+      y: elRect.top - rootRect.top + root.scrollTop,
+      width: elRect.width,
+      height: elRect.height,
+    })
+  }, [containerRef])
 
   useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [update])
+    measure()
+    // Labels expand/collapse after paint on md–xl; remeasure next frame.
+    const raf = requestAnimationFrame(measure)
+    const root = containerRef.current
+    if (!root) return () => cancelAnimationFrame(raf)
 
-  const onPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    // Primary button / touch / pen only — ignore right-click, etc.
-    if (e.pointerType === "mouse" && e.button !== 0) return
-    const el = ref.current
-    if (!el) return
-    if (el.scrollWidth <= el.clientWidth + 1) return
-
-    // Only arm tracking — do not steal the gesture until the pointer moves.
-    // That keeps a plain click/tap able to activate links.
-    dragRef.current = {
-      tracking: true,
-      dragging: false,
-      moved: false,
-      startX: e.clientX,
-      startScroll: el.scrollLeft,
-      pointerId: e.pointerId,
+    const ro = new ResizeObserver(measure)
+    ro.observe(root)
+    for (const child of root.querySelectorAll("[data-nav-item]")) {
+      ro.observe(child)
     }
-  }, [])
 
-  const onPointerMove = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
-      const drag = dragRef.current
-      if (!drag.tracking || drag.pointerId !== e.pointerId) return
-      const el = ref.current
-      if (!el) return
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [containerRef, measure, pathname])
 
-      const dx = e.clientX - drag.startX
+  return pill
+}
 
-      if (!drag.dragging) {
-        if (Math.abs(dx) < DRAG_THRESHOLD_PX) return
-        drag.dragging = true
-        drag.moved = true
-        el.setPointerCapture(e.pointerId)
-        setDragging(true)
-      }
-
-      e.preventDefault()
-      el.scrollLeft = drag.startScroll - dx
-      update()
-    },
-    [update],
+function DesktopNavLink({
+  item,
+  active,
+}: {
+  item: CitizenNavItem
+  active: boolean
+}) {
+  const Icon = item.icon
+  const className = cn(
+    NAV_LINK_CLASS,
+    active ? "px-3 text-primary-foreground" : "px-2.5 xl:px-3",
+    !active && "text-muted-foreground hover:bg-muted hover:text-foreground",
+  )
+  const body = (
+    <span className="relative z-10 flex items-center gap-2">
+      <Icon className="size-3.5 shrink-0" aria-hidden />
+      <span className={cn(active ? "inline" : "hidden xl:inline")}>
+        {item.label}
+      </span>
+    </span>
   )
 
-  const endDrag = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current
-    if (!drag.tracking || drag.pointerId !== e.pointerId) return
-    const wasDragging = drag.dragging
-    drag.tracking = false
-    drag.dragging = false
-    setDragging(false)
-    const el = ref.current
-    if (wasDragging && el?.hasPointerCapture(e.pointerId)) {
-      el.releasePointerCapture(e.pointerId)
-    }
-  }, [])
-
-  /** Block link navigation when the gesture was a drag, not a tap/click. */
-  const onClickCapture = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (!dragRef.current.moved) return
-    e.preventDefault()
-    e.stopPropagation()
-    dragRef.current.moved = false
-  }, [])
-
-  return {
-    ref,
-    canScrollLeft,
-    canScrollRight,
-    dragging,
-    update,
-    onScroll: update,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: endDrag,
-    onPointerCancel: endDrag,
-    onClickCapture,
+  if (active) {
+    return (
+      <Link
+        href={item.href}
+        data-nav-item=""
+        className={className}
+        aria-current="page"
+        aria-label={item.label}
+      >
+        {body}
+      </Link>
+    )
   }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        delay={200}
+        render={
+          <Link
+            href={item.href}
+            data-nav-item=""
+            className={className}
+            aria-label={item.label}
+          />
+        }
+      >
+        {body}
+      </TooltipTrigger>
+      <TooltipContent side="bottom" className="uppercase tracking-[1.2px]">
+        {item.label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+function SlidingPill({
+  pill,
+  reduceMotion,
+  instant = false,
+  style,
+}: {
+  pill: PillBox | null
+  reduceMotion: boolean | null
+  /** Skip spring (sheet highlight: no cross-item motion while open). */
+  instant?: boolean
+  style?: CSSProperties
+}) {
+  if (!pill) return null
+  return (
+    <motion.span
+      className="pointer-events-none absolute z-0 bg-primary"
+      initial={false}
+      animate={{
+        left: pill.x,
+        top: pill.y,
+        width: pill.width,
+        height: pill.height,
+      }}
+      transition={
+        reduceMotion || instant ? { duration: 0 } : SPRING
+      }
+      style={style}
+      aria-hidden
+    />
+  )
 }
 
 export function CitizenNavbar() {
   const pathname = usePathname()
-  const disasterPhaseNavPinned = useUIStore((s) => s.disasterPhaseNavPinned)
-  const {
-    ref: scrollRef,
-    canScrollLeft,
-    canScrollRight,
-    dragging,
-    update,
-    onScroll,
-    onPointerDown,
-    onPointerMove,
-    onPointerUp,
-    onPointerCancel,
-    onClickCapture,
-  } = useHorizontalNavScroll()
-  const activeLinkRef = useRef<HTMLAnchorElement>(null)
-
-  useEffect(() => {
-    const link = activeLinkRef.current
-    const scroller = scrollRef.current
-    if (!link || !scroller) return
-    const linkLeft = link.offsetLeft
-    const linkRight = linkLeft + link.offsetWidth
-    const viewLeft = scroller.scrollLeft
-    const viewRight = viewLeft + scroller.clientWidth
-    if (linkLeft < viewLeft + 8 || linkRight > viewRight - 8) {
-      link.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" })
-    }
-    const id = window.setTimeout(update, 320)
-    return () => window.clearTimeout(id)
-  }, [pathname, scrollRef, update])
+  const [open, setOpen] = useState(false)
+  const closeMenu = useCallback(() => setOpen(false), [])
+  useCloseOnDesktopMd(closeMenu)
+  const reduceMotion = useReducedMotion()
+  const desktopNavRef = useRef<HTMLElement>(null)
+  const sheetNavRef = useRef<HTMLElement>(null)
+  const desktopPill = useActivePill(desktopNavRef, pathname)
+  const sheetPillMeasured = useActivePill(sheetNavRef, open ? pathname : "")
+  // Avoid spring/jump from display:none (0×0) → visible on first open.
+  const sheetPill = open ? sheetPillMeasured : null
 
   return (
-    <nav
+    <header
       className={cn(
-        "fixed top-4 left-1/2 z-50 w-fit max-w-[calc(100vw-2rem)] -translate-x-1/2 transition-[transform,opacity] duration-200 ease-out",
-        disasterPhaseNavPinned &&
-          "pointer-events-none -translate-y-[calc(100%+1.25rem)] opacity-0",
+        "fixed inset-x-0 top-0 z-[60] border-x-0 border-t-0 border-b",
+        SURFACE_PANEL_SHELL_CLASS,
+        "bg-background/55 supports-[backdrop-filter]:bg-background/40",
       )}
-      aria-hidden={disasterPhaseNavPinned}
-      aria-label="Navegación principal"
       data-tour="citizen-navbar"
     >
-      <div className="relative max-w-full min-w-0">
-        <div
-          ref={scrollRef}
-          onScroll={onScroll}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
-          onClickCapture={onClickCapture}
+      <div className="relative z-10 flex h-12 items-stretch justify-center px-3 sm:px-4">
+        <TooltipProvider delay={200}>
+          <nav
+            ref={desktopNavRef}
+            className="relative hidden h-full min-w-0 items-stretch justify-center gap-0 md:flex"
+            aria-label="Navegación principal"
+          >
+            <SlidingPill pill={desktopPill} reduceMotion={reduceMotion} />
+            <Link
+              href="/inicio"
+              className={cn(
+                NAV_LINK_CLASS,
+                "px-3 text-foreground hover:bg-muted",
+              )}
+            >
+              ChileRisk
+            </Link>
+            <Separator orientation="vertical" className="mx-1" />
+            {CITIZEN_NAV_ITEMS.map((item) => (
+              <DesktopNavLink
+                key={item.href}
+                item={item}
+                active={isNavActive(pathname, item.href, item.section)}
+              />
+            ))}
+          </nav>
+        </TooltipProvider>
+
+        <Link
+          href="/inicio"
           className={cn(
-            CITIZEN_NAVBAR_SHELL_CLASS,
-            // touch-none: horizontal scroll via pointer drag after threshold (mouse + touch).
-            "max-w-full min-w-0 touch-none overscroll-x-contain select-none",
-            canScrollLeft || canScrollRight ? "cursor-grab" : null,
-            dragging && "cursor-grabbing",
+            NAV_LINK_CLASS,
+            // Match sheet link size on mobile (text-sm), not desktop ops 10px.
+            "px-3 text-sm text-foreground hover:bg-muted md:hidden",
           )}
         >
-          {navItems.map((item) => {
-            const { href, label, icon: Icon, section } = item
-            const isActive = isNavActive(pathname, href, section)
-            const tourId = "tourId" in item ? item.tourId : undefined
-            return (
-              <Link
-                key={href}
-                ref={isActive ? activeLinkRef : undefined}
-                href={href}
-                draggable={false}
-                aria-current={isActive ? "page" : undefined}
-                data-tour={tourId}
-                className={cn(
-                  CITIZEN_NAVBAR_LINK_CLASS,
-                  "group",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-white/55 hover:bg-white/[0.06] hover:text-white/90",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "size-3.5 shrink-0 transition-transform duration-150",
-                    !isActive && "group-hover:scale-[1.15]",
-                  )}
-                  strokeWidth={isActive ? 2.25 : 2}
-                  aria-hidden
-                />
-                <span>{label}</span>
-              </Link>
-            )
-          })}
-          <button
-            type="button"
-            onClick={() => dispatchTourStart()}
-            aria-label="Iniciar tour guiado"
-            className={cn(
-              CITIZEN_NAVBAR_LINK_CLASS,
-              "group shrink-0 border-l border-white/10 text-white/55 hover:bg-white/[0.06] hover:text-white/90",
-            )}
-          >
-            <CircleHelp
-              className="size-3.5 shrink-0 transition-transform duration-150 group-hover:scale-[1.15]"
-              strokeWidth={2}
-              aria-hidden
-            />
-            <span className="hidden sm:inline">Tour</span>
-          </button>
-        </div>
+          ChileRisk
+        </Link>
 
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-black/75 to-transparent transition-opacity duration-200",
-            canScrollLeft ? "opacity-100" : "opacity-0",
-          )}
-        />
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-black/75 to-transparent transition-opacity duration-200",
-            canScrollRight ? "opacity-100" : "opacity-0",
-          )}
-        />
+        <Sheet open={open} onOpenChange={setOpen}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-1/2 right-2 size-11 -translate-y-1/2 md:hidden sm:right-3"
+            aria-expanded={open}
+            aria-controls="citizen-nav-sheet"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            {open ? (
+              <X className="size-5" aria-hidden />
+            ) : (
+              <Menu className="size-5" aria-hidden />
+            )}
+          </Button>
+
+          <SheetContent
+            id="citizen-nav-sheet"
+            side="right"
+            showCloseButton={false}
+            className="z-[55] w-full max-w-none border-border bg-background p-0 pt-12 sm:max-w-sm"
+          >
+            <SheetHeader className="border-b border-border p-4">
+              <SheetTitle className="text-left text-base">Menú</SheetTitle>
+              <SheetDescription className="sr-only">
+                Navegación principal de ChileRisk
+              </SheetDescription>
+            </SheetHeader>
+            <nav
+              ref={sheetNavRef}
+              className="relative flex flex-col py-2"
+              aria-label="Navegación principal"
+            >
+              <SlidingPill
+                pill={sheetPill}
+                reduceMotion={reduceMotion}
+                instant
+              />
+              {CITIZEN_NAV_ITEMS.map((item) => {
+                const active = isNavActive(pathname, item.href, item.section)
+                const Icon = item.icon
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-nav-item=""
+                    className={cn(
+                      SHEET_LINK_CLASS,
+                      active
+                        ? "text-primary-foreground"
+                        : "text-foreground hover:bg-muted",
+                    )}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    <Icon className="size-5 shrink-0" aria-hidden />
+                    {item.label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
-    </nav>
+    </header>
   )
 }

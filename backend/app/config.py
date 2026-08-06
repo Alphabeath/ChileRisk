@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from pydantic import model_validator
 
 
 class Settings(BaseSettings):
@@ -8,15 +7,11 @@ class Settings(BaseSettings):
     enable_scheduler: bool = True
     risk_refresh_minutes: int = 15
 
-    use_real_csn: bool = True
-    use_real_meteo: bool = True
     csn_base_url: str = "https://www.sismologia.cl"
     csn_recent_path: str = "/"
     openmeteo_api_base: str = "https://api.open-meteo.com/v1"
-    use_real_flood: bool = True
     flood_refresh_minutes: int = 360  # GloFAS updates daily; 6h is conservative
 
-    use_real_senapred: bool = True
     senapred_refresh_minutes: int = 10
     senapred_aws_region: str = "us-east-1"
     senapred_cognito_identity_pool_id: str = "us-east-1:17c696bc-53e1-49a2-991f-f1b65f752fda"
@@ -34,32 +29,32 @@ class Settings(BaseSettings):
     simulacros_request_timeout_seconds: int = 30
     simulacros_max_recent_pages: int = 5
 
-    use_real_airechile: bool = True
     airechile_base_url: str = "https://airechile.mma.gob.cl/"
     airechile_refresh_minutes: int = 180
     airechile_request_timeout_seconds: int = 30
 
-    use_real_sernageomin: bool = True
     sernageomin_alerts_url: str = "https://www.sernageomin.cl/alertas-volcanicas/"
     sernageomin_refresh_minutes: int = 60
     sernageomin_request_timeout_seconds: int = 30
     # Public site often presents an incomplete TLS chain; default off so sync works.
     sernageomin_ssl_verify: bool = False
 
+    meteochile_aaa_url: str = (
+        "https://archivos.meteochile.gob.cl/portaldmc/AAA/datos_AAA.json"
+    )
+    meteochile_refresh_minutes: int = 15
+    meteochile_request_timeout_seconds: int = 30
+
     cache_ttl_seconds: int = 300
     cache_meteo_ttl_seconds: int = 21600
 
     auth_secret: str = ""
     auth_url: str = "http://localhost:3000"
+    # Client ID del OAuth Google del frontend (Auth.js). Si se define, el backend
+    # valida el ID token vía tokeninfo y las claims reemplazan lo enviado por el cliente.
+    google_client_id: str = ""
     resend_api_key: str = ""
     auth_email_from: str = "noreply@chilerisk.local"
-
-    # Hackathon / local demo login (seeded on startup when enabled).
-    seed_demo_user: bool = True
-    demo_user_email: str = "demo@chilerisk.cl"
-    demo_user_password: str = "ChileRisk2026!"
-    demo_user_name: str = "Demo Hackathon"
-    demo_user_home_comuna: int | None = 4102  # Coquimbo
 
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
@@ -68,10 +63,6 @@ class Settings(BaseSettings):
     chat_history_enabled: bool = True
 
     model_config = {"env_file": ".env", "extra": "ignore"}
-
-    @model_validator(mode="after")
-    def _validate(self) -> "Settings":
-        return self
 
 
 settings = Settings()

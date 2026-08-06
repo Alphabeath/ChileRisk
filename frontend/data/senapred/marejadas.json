@@ -1,0 +1,149 @@
+{
+  "slug": "marejadas",
+  "group": "preparate",
+  "title": "Marejadas",
+  "sourceUrl": "https://senapred.cl/marejadas",
+  "blurb": "Es un oleaje que se manifiesta por efecto del viento local o generado en otro lugar del océano. Las olas pueden viajar cientos o miles de kilómetros, afectando…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/marejadas/bg-marejadas_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una marejada?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Es un oleaje que se manifiesta por efecto del viento local o generado en otro lugar del océano. Las olas pueden viajar cientos o miles de kilómetros, afectando durante varios días a las distintas actividades marítimas: transferencia de carga, navegación costera, pesca, buceo, deportes y recreación."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/marejadas/bg-marejadas_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Durante un evento de marejadas",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No te expongas a rompientes y oleaje, particularmente en sectores de roqueríos. Suspende actividades recreativas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Nunca ingreses a bañarte a una playa señalizada con bandera roja o que no cuente con personal salvavidas. Pones en peligro tu vida debido al fuerte oleaje y corrientes."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si te movilizas en vehículo, conduce con precaución, ya que podría haber obstáculos en el camino, arrastre de arena, piedras, algas, entre otros."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si posees un negocio en el sector costero, ya sea de venta o servicio, evalúa el cierre del recinto y toma los resguardos necesarios para evitar posibles daños o afectación a clientes y trabajadores."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En tu vivienda, toma los resguardos necesarios tales como proteger ventanas y utilizar barreras (sacos de arena) que impidan el ingreso del agua."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_07.png",
+          "text": "Se califican como “ANORMALES”, cuando el fenómeno tiene características diferentes a los valores promedio de oleaje (altura, dirección, período), por lo que pueden ingresar a las bahías y puertos, generando severos daños a la infraestructura costera, además de inundaciones por sobrepasos, reducción de playas, cortes de tránsito y suspensión de otras actividades."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/marejadas/bg-marejadas_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Para el ámbito marítimo",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_01-150x150.png",
+          "text": "Verifica el buen estado de la embarcación y de su equipamiento."
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/marejadas/icon_marejadas_02-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_03-150x150.png",
+          "text": "Mientras te encuentres a bordo de la embarcación, siempre lleva puesto el chaleco salvavidas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_04-150x150.png",
+          "text": "Los sectores de pesca artesanal, buceo, y trabajadores portuarios deberán permanecer atentos a las eventuales acciones de cierre de puertos y caletas por parte de la autoridad marítima."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_05-150x150.png",
+          "text": "Presta atención a las indicaciones de la Autoridad Marítima, radioavisos náuticos y mensajes de seguridad. Visite www.shoa.cl o llame al +56322208000."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_06-150x150.png",
+          "text": "Si observas acciones temerarias, situaciones de peligro o presentas algún inconveniente, comunícate con la Armada de Chile al fono 137 Emergencias Marítimas o con las radioestaciones costeras."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/marejadas/icon_marejadas_08.png",
+          "text": "Infórmate de los avisos de marejadas en www.meteoarmada.directemar.cl"
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8896/15_preparate_con_senapred_nevadas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8897/15_get_ready_with_senapred_sea_swell_waves_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8898/15_preparez_vous_a_laide_du_senapred_evenements_de_fortes_houles_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/marejadas.png"
+}

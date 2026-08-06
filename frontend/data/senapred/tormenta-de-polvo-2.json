@@ -1,0 +1,143 @@
+{
+  "slug": "tormenta-de-polvo-2",
+  "group": "preparate",
+  "title": "Tormenta de Polvo",
+  "sourceUrl": "https://senapred.cl/tormenta-de-polvo-2/",
+  "blurb": "Las tormentas de polvo son un fenómeno meteorológico de Mesoescala (uno a cientos de kilómetros) que se caracterizan por vientos intensos, los que suelen estar…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/tormenta-de-polvo-2/BG_tormenta_polvo_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una tormenta de polvo?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Las tormentas de polvo son un fenómeno meteorológico de Mesoescala (uno a cientos de kilómetros) que se caracterizan por vientos intensos, los que suelen estar acompañados de masas de aire de características secas que atraviesan zonas áridas. La superficie de estas áreas, está cubierta por arena y polvo la que con presencia de fuertes vientos, levantarán los distintos granos del suelo y los más livianos se elevarán y adoptarán la forma de una gran nube oscura que puede alcanzar varios cientos de metros de altura, recorriendo grandes distancias en el aire (kms.)."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tormenta-de-polvo-2/BG_tormenta_polvo_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de una tormenta de polvo?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate de las condiciones de viento y evolución del evento a través de los organismos oficiales y por medios de comunicación (radio, televisión)."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Utiliza una mascarilla que cubra nariz y boca. En caso de no contar con una, humedece un pañuelo o alguna otra pieza de tela. Además, protege tus ojos, en lo posible usando gafas herméticas. NUNCA te frotes los ojos. Si se irritan, enjuágalos con abundante agua."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Hidrátate regularmente. Las tormentas de polvo pueden ocurrir con temperaturas más elevadas de lo normal."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_09.png",
+          "text": "Las tormentas de polvo, por el desplazamiento de gran cantidad de polvo y/o arena, reduce considerablemente la visibilidad y son especialmente peligrosas para las personas con sistemas respiratorios comprometidos o sistemas inmunológicos debilitados."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tormenta-de-polvo-2/BG_tormenta_polvo_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en una casa o edificio",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_01-150x150.png",
+          "text": "Cierra ventanas, cortinas, persianas, puertas y conductos de ventilación. Cubre con paños húmedos rendijas en puertas y ventanas. Busca refugio en una habitación interior, procura alejarte de ventanas debido a que los vidrios podrían romperse."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_02-150x150.png",
+          "text": "Cubre depósitos de agua y alimentos para evitar que les caiga polvo y tierra."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás al aire libre",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_03-150x150.png",
+          "text": "Cubre tu cuerpo, debido a que las partículas de polvo y arena se pueden movilizar a altas velocidades golpeándote. Los fuertes vientos también pueden impulsar objetos por el aire pudiendo causar lesiones. Busca refugio detrás de una roca, montículo u otra estructura estable."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_04-150x150.png",
+          "text": "Si te encuentras con un grupo de personas, permanece junto a ellas. En una tormenta de polvo te puedes desorientar fácilmente."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_05-150x150.png",
+          "text": "Si estás acampando o de excursión, en una zona completamente abierta, ponte en cuclillas o agáchate, cúbrete con la mochila, saco de dormir o una manta protegiendo tu cabeza y espalda."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_06-150x150.png",
+          "text": "Si estás conduciendo estaciónate en un lugar seguro, permanece dentro del vehículo con ventanas y puertas cerradas. Enciende las luces e intermitentes del vehículo. Espera mejores condiciones para continuar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_07-150x150.png",
+          "text": "En el campo procura mantener, especialmente a hembras por parir y crías, en lugares protegidos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormenta-de-polvo-2/icon_tormenta_polvo_08-150x150.png",
+          "text": "Si estás a bordo de una embarcación, al igual que en tierra, protege la vista y vías respiratorias, mantente hidratado, cierra puertas y ventanas y pon atención a las instrucciones de la Autoridad Marítima."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8902/17_preparate_con_senapred_tormenta_de_polvo_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8904/17_get_ready_with_senapred_dust_storm_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "#"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/tormenta-de-polvo-2.png"
+}

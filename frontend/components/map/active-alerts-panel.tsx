@@ -1,25 +1,21 @@
 "use client"
 
-import { useLayoutEffect, useMemo, useState } from "react"
-import {
-  CITIZEN_NAVBAR_CLEARANCE_PX,
-  MAP_PANEL_LEFT_INSET_PX,
-} from "@/lib/citizen-layout"
-import {
-  AlertTriangle,
-  Bell,
-  BellOff,
-  CheckCircle2,
-  ChevronDown,
-} from "lucide-react"
-import { useActiveAlerts, useAirQuality, useDraggablePanel } from "@/hooks"
-import { sortActiveAlertsBySeverity } from "@/lib/alerts-display"
-import { MAP_PANEL_DRAG_HANDLE_CLASS, MAP_PANEL_SHELL_CLASS } from "@/lib/map-panel-styles"
-import type { ActiveAlert, AirQualityZone } from "@/lib/types"
-import { cn } from "@/lib/utils"
-import { ActiveAlertCard, AirQualityAlertCard } from "./alert-ui"
+import { useMemo } from "react"
+import { CheckCircle2, ChevronDown } from "lucide-react"
 
-type AlertFilter = "all" | "chilerisk" | "senapred" | "sernageomin" | "airechile"
+import { ActiveAlertCard, AirQualityAlertCard } from "@/components/map/alert-ui"
+import { useMonitorLiveData } from "@/components/map/monitor-live-data"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { ActiveAlert, AirQualityZone, AlertFilter } from "@/lib/alert-types"
+import { sortActiveAlertsBySeverity, filterActiveAlertsBySource } from "@/lib/alerts-display"
+import {
+  MAP_PANEL_TITLE_CLASS,
+  mapPanelWidthClass,
+} from "@/lib/citizen-layout"
+import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
+import { useMapDesktopCompact } from "@/lib/use-map-desktop-compact"
+import { useUIStore } from "@/stores/ui-store"
+import { cn } from "@/lib/utils"
 
 type PanelItem =
   | { kind: "alert"; alert: ActiveAlert }
@@ -28,12 +24,12 @@ type PanelItem =
 const FILTER_OPTIONS: { value: AlertFilter; label: string }[] = [
   { value: "all", label: "Todas" },
   { value: "chilerisk", label: "Chile Risk" },
-  { value: "senapred", label: "Sernapred" },
+  { value: "senapred", label: "Senapred" },
   { value: "sernageomin", label: "Volcán" },
+  { value: "meteochile", label: "Meteo" },
   { value: "airechile", label: "Aire" },
 ]
 
-/** Align with ALERT_LEVEL_PRIORITY (0 = most severe). */
 const AIR_SORT_PRIORITY: Record<string, number> = {
   emergencia: 0,
   preemergencia: 1,
@@ -74,96 +70,60 @@ function sortPanelItems(items: PanelItem[]): PanelItem[] {
   })
 }
 
-function SkeletonCard() {
-  return (
-    <div className="px-3 py-2.5">
-      <div className="mb-2 flex items-center gap-2">
-        <div className="h-4 w-16 animate-pulse rounded-sm bg-white/[0.06]" />
-        <div className="h-3 w-12 animate-pulse rounded-sm bg-white/[0.04]" />
-      </div>
-      <div className="h-3 w-full animate-pulse rounded-sm bg-white/[0.08]" />
-      <div className="mt-1.5 h-3 w-2/3 animate-pulse rounded-sm bg-white/[0.08]" />
-      <div className="mt-2 h-2.5 w-1/2 animate-pulse rounded-sm bg-white/[0.04]" />
-    </div>
-  )
-}
-
 function EmptyState({ filter }: { filter: AlertFilter }) {
   const { title, hint } =
     filter === "chilerisk"
-      ? { title: "Sin alertas ChileRisk", hint: "El motor de riesgo no reporta emergencias" }
+      ? {
+          title: "Sin alertas ChileRisk",
+          hint: "El motor de riesgo no reporta emergencias",
+        }
       : filter === "senapred"
-        ? { title: "Sin alertas SERNAPRED", hint: "No hay alertas ni eventos publicados" }
+        ? {
+            title: "Sin alertas SENAPRED",
+            hint: "No hay alertas ni eventos publicados",
+          }
         : filter === "sernageomin"
           ? {
               title: "Sin alertas SERNAGEOMIN",
               hint: "No hay volcanes con alerta elevada vigente",
             }
-          : filter === "airechile"
+          : filter === "meteochile"
             ? {
-                title: "Sin datos Aire Chile",
-                hint: "Cobertura parcial (zonas PPDA). Sin snapshot para este día",
+                title: "Sin avisos MeteoChile",
+                hint: "DMC sin Avisos, Alertas ni Alarmas vigentes",
               }
-            : {
-                title: "Sin alertas activas",
-                hint: "SERNAPRED, ChileRisk, SERNAGEOMIN y Aire Chile sin novedades",
-              }
+            : filter === "airechile"
+              ? {
+                  title: "Sin datos Aire Chile",
+                  hint: "Cobertura parcial (zonas PPDA). Sin snapshot para este día",
+                }
+              : {
+                  title: "Sin alertas activas",
+                  hint: "SENAPRED, ChileRisk, SERNAGEOMIN, MeteoChile y Aire Chile sin novedades",
+                }
   return (
-    <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
-      <CheckCircle2 className="size-6 text-emerald-400/70" />
-      <div className="text-[12px] font-medium text-white/80">{title}</div>
-      <div className="text-[10px] text-white/45">{hint}</div>
+    <div className="flex flex-col items-center justify-center gap-1.5 px-3.5 py-8 text-center">
+      <CheckCircle2 className="size-5 text-muted-foreground" />
+      <div className="font-mono text-[10px] font-semibold uppercase tracking-[1.2px] text-foreground">
+        {title}
+      </div>
+      <div className="text-[10px] leading-snug text-muted-foreground">{hint}</div>
     </div>
   )
-}
-
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-6 text-center">
-      <AlertTriangle className="size-5 text-[#DA291C]/80" />
-      <div className="text-[11px] font-medium text-white/80">No se pudieron cargar alertas</div>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-1 rounded-sm px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/55 underline underline-offset-2 hover:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30"
-      >
-        Reintentar
-      </button>
-    </div>
-  )
-}
-
-/** Room for alerts list + header when Fecha/Controles sit below in the left column. */
-const ALERTS_EXPAND_MIN_VIEWPORT_PX = 280
-const LEFT_COLUMN_BOTTOM_RESERVE_PX = 220
-
-function hasViewportSpaceForAlertsExpanded(): boolean {
-  if (typeof window === "undefined") return false
-  const available =
-    window.innerHeight -
-    CITIZEN_NAVBAR_CLEARANCE_PX -
-    MAP_PANEL_LEFT_INSET_PX -
-    LEFT_COLUMN_BOTTOM_RESERVE_PX
-  return available >= ALERTS_EXPAND_MIN_VIEWPORT_PX
 }
 
 function useAlertsPanelModel() {
-  const [filter, setFilter] = useState<AlertFilter>("all")
-  const {
-    data: alerts = [],
-    isLoading: alertsLoading,
-    error: alertsError,
-    refetch: refetchAlerts,
-  } = useActiveAlerts()
-  const {
-    data: airData,
-    isLoading: airLoading,
-    error: airError,
-    refetch: refetchAir,
-  } = useAirQuality()
+  const filter = useUIStore((s) => s.alertsFilter)
+  const setFilter = useUIStore((s) => s.setAlertsFilter)
 
-  const zones = useMemo(() => airData?.items ?? [], [airData?.items])
-  const sortedAlerts = useMemo(() => sortActiveAlertsBySeverity(alerts), [alerts])
+  const { alerts, air, isPending } = useMonitorLiveData()
+  const zones = useMemo(() => air?.items ?? [], [air?.items])
+  /** Pending first paint for this `?date=` — never show EmptyState while fetching. */
+  const isLoading = isPending
+  const sortedAlerts = useMemo(
+    () => sortActiveAlertsBySeverity(alerts),
+    [alerts],
+  )
 
   const allItems = useMemo(() => {
     const items: PanelItem[] = [
@@ -174,8 +134,15 @@ function useAlertsPanelModel() {
   }, [sortedAlerts, zones])
 
   const senapredCount = sortedAlerts.filter((a) => a.source === "senapred").length
-  const chileriskCount = sortedAlerts.filter((a) => a.source === "chilerisk").length
-  const sernageominCount = sortedAlerts.filter((a) => a.source === "sernageomin").length
+  const chileriskCount = sortedAlerts.filter(
+    (a) => a.source === "chilerisk",
+  ).length
+  const sernageominCount = sortedAlerts.filter(
+    (a) => a.source === "sernageomin",
+  ).length
+  const meteochileCount = sortedAlerts.filter(
+    (a) => a.source === "meteochile",
+  ).length
   const airechileCount = zones.length
 
   const counts: Record<AlertFilter, number> = {
@@ -183,26 +150,22 @@ function useAlertsPanelModel() {
     chilerisk: chileriskCount,
     senapred: senapredCount,
     sernageomin: sernageominCount,
+    meteochile: meteochileCount,
     airechile: airechileCount,
   }
 
   const filtered = useMemo(() => {
-    if (filter === "chilerisk") {
-      return allItems.filter((i) => i.kind === "alert" && i.alert.source === "chilerisk")
-    }
-    if (filter === "senapred") {
-      return allItems.filter((i) => i.kind === "alert" && i.alert.source === "senapred")
-    }
-    if (filter === "sernageomin") {
-      return allItems.filter(
-        (i) => i.kind === "alert" && i.alert.source === "sernageomin",
-      )
-    }
     if (filter === "airechile") {
       return allItems.filter((i) => i.kind === "air")
     }
-    return allItems
-  }, [allItems, filter])
+    if (filter === "all") return allItems
+    const bySource = new Set(
+      filterActiveAlertsBySource(sortedAlerts, filter).map((a) => a.id),
+    )
+    return allItems.filter(
+      (i) => i.kind === "alert" && bySource.has(i.alert.id),
+    )
+  }, [allItems, filter, sortedAlerts])
 
   const displayCount =
     filter === "all"
@@ -213,15 +176,9 @@ function useAlertsPanelModel() {
           ? chileriskCount
           : filter === "sernageomin"
             ? sernageominCount
-            : senapredCount
-
-  const hasItems = allItems.length > 0
-  const isLoading = alertsLoading || airLoading
-  const error = alertsError || airError
-  const refetch = () => {
-    void refetchAlerts()
-    void refetchAir()
-  }
+            : filter === "meteochile"
+              ? meteochileCount
+              : senapredCount
 
   return {
     filter,
@@ -229,10 +186,8 @@ function useAlertsPanelModel() {
     filtered,
     counts,
     displayCount,
-    hasItems,
+    hasItems: allItems.length > 0,
     isLoading,
-    error,
-    refetch,
   }
 }
 
@@ -249,7 +204,7 @@ function AlertsFilterChips({
     <div
       role="radiogroup"
       aria-label="Filtrar alertas por fuente"
-      className="grid grid-cols-3 gap-1 px-2 py-1.5"
+      className="grid grid-cols-3 gap-1 px-2.5 py-1.5"
     >
       {FILTER_OPTIONS.map((opt) => {
         const active = filter === opt.value
@@ -262,24 +217,22 @@ function AlertsFilterChips({
             aria-checked={active}
             onClick={() => setFilter(opt.value)}
             className={cn(
-              "inline-flex min-w-0 items-center justify-between gap-1 rounded-none border px-1.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider transition-colors",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+              "inline-flex min-w-0 items-center justify-between gap-1 border px-1.5 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[1.1px] transition-colors",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30",
               active
-                ? "border-white/25 bg-white/[0.12] text-white"
-                : "border-white/10 bg-white/[0.03] text-white/55 hover:bg-white/[0.06] hover:text-white/80",
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
             <span className="truncate">{opt.label}</span>
             <span
               className={cn(
-                "shrink-0 font-mono text-[9px] tabular-nums",
+                "shrink-0 tabular-nums",
                 active
                   ? count > 0
-                    ? "text-[#ff9a9a]"
-                    : "text-white/50"
-                  : count > 0
-                    ? "text-white/70"
-                    : "text-white/35",
+                    ? "text-primary-foreground"
+                    : "text-primary-foreground/70"
+                  : "text-muted-foreground",
               )}
             >
               {count}
@@ -291,48 +244,65 @@ function AlertsFilterChips({
   )
 }
 
+function AlertsListSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-1.5 bg-background"
+      aria-busy
+      aria-label="Cargando alertas"
+    >
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="space-y-2 bg-background px-3.5 py-3">
+          <div className="flex items-start justify-between gap-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-6 w-14" />
+          </div>
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5" />
+          <Skeleton className="mt-1 h-2.5 w-20" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function AlertsListBody({
   open,
-  maxHeightClass,
-  isLoading,
-  error,
-  refetch,
+  className,
   filtered,
   filter,
+  isLoading,
 }: {
   open: boolean
-  maxHeightClass: string
-  isLoading: boolean
-  error: unknown
-  refetch: () => void
+  className?: string
   filtered: PanelItem[]
   filter: AlertFilter
+  isLoading: boolean
 }) {
   return (
     <div
       id="active-alerts-list"
       className={cn(
-        "divide-y divide-white/[0.06] overflow-y-auto",
-        maxHeightClass,
+        "flex min-h-0 flex-col gap-1.5 overflow-y-auto bg-background",
+        className,
         !open && "hidden",
       )}
       role="region"
       aria-live="polite"
     >
       {isLoading ? (
-        <>
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </>
-      ) : error ? (
-        <ErrorState onRetry={refetch} />
+        <AlertsListSkeleton />
       ) : filtered.length === 0 ? (
-        <EmptyState filter={filter} />
+        <div className="bg-background">
+          <EmptyState filter={filter} />
+        </div>
       ) : (
         filtered.map((item) =>
           item.kind === "air" ? (
-            <AirQualityAlertCard key={`air-${item.zone.zone_slug}`} zone={item.zone} />
+            <AirQualityAlertCard
+              key={`air-${item.zone.zone_slug}`}
+              zone={item.zone}
+            />
           ) : (
             <ActiveAlertCard
               key={`${item.alert.source}-${item.alert.id}`}
@@ -351,11 +321,10 @@ function ActiveAlertsPanelEmbedded() {
 
   return (
     <aside
-      className="flex w-full flex-col"
-      aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
-      data-tour="monitor-alerts"
+      className="flex min-h-0 w-full flex-col"
+      aria-label="Alertas activas SENAPRED, ChileRisk y Aire Chile"
     >
-      <div className="border-b border-white/[0.06]">
+      <div className="shrink-0 border-b border-border">
         <AlertsFilterChips
           filter={model.filter}
           setFilter={model.setFilter}
@@ -364,106 +333,104 @@ function ActiveAlertsPanelEmbedded() {
       </div>
       <AlertsListBody
         open
-        maxHeightClass="max-h-[min(60dvh,480px)]"
-        isLoading={model.isLoading}
-        error={model.error}
-        refetch={model.refetch}
+        className="max-h-[min(60dvh,480px)]"
         filtered={model.filtered}
         filter={model.filter}
+        isLoading={model.isLoading}
       />
     </aside>
   )
 }
 
-function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
-  const [openOverride, setOpenOverride] = useState<boolean | null>(null)
-  const [, setResizeEpoch] = useState(0)
+function ActiveAlertsPanelOverlay() {
+  const open = useUIStore((s) => s.alertsExpanded)
+  const setOpen = useUIStore((s) => s.setAlertsExpanded)
+  const compact = useMapDesktopCompact()
   const model = useAlertsPanelModel()
-
-  useLayoutEffect(() => {
-    if (!flow) return
-    const onResize = () => setResizeEpoch((n) => n + 1)
-    window.addEventListener("resize", onResize)
-    return () => window.removeEventListener("resize", onResize)
-  }, [flow])
-
-  const spaceExpanded = flow ? hasViewportSpaceForAlertsExpanded() : false
-  const open = openOverride ?? (flow ? spaceExpanded : false)
-  const { ref, handleProps, style, isDragging } = useDraggablePanel({
-    id: "active-alerts-panel",
-    corner: flow ? undefined : "top-left",
-    cornerInset: 16,
-    flow,
-  })
-
-  const Icon = model.hasItems ? Bell : BellOff
+  const rail = compact === true && !open
 
   return (
     <aside
-      ref={ref}
       className={cn(
-        MAP_PANEL_SHELL_CLASS,
-        "flex flex-col",
-        "max-h-[min(420px,50dvh)]",
+        SURFACE_PANEL_SHELL_CLASS,
+        "flex max-h-[min(520px,calc(100dvh-5.5rem))] flex-col overflow-hidden transition-[width] duration-200 ease-out",
+        mapPanelWidthClass(open || compact === false),
       )}
-      style={style}
-      aria-label="Alertas activas SERNAPRED, ChileRisk y Aire Chile"
-      data-tour="monitor-alerts"
+      aria-label="Alertas activas SENAPRED, ChileRisk y Aire Chile"
     >
-      <div className="flex w-full items-stretch border-b border-white/10">
-        <div
-          {...handleProps}
-          className={cn(MAP_PANEL_DRAG_HANDLE_CLASS, "gap-2.5 py-2.5")}
-          style={{ touchAction: "none" }}
-          data-dragging={isDragging || undefined}
-          aria-label="Arrastrar panel"
-        >
-          <div className="relative shrink-0">
-            <Icon className={cn("size-4", model.hasItems ? "text-white" : "text-white/55")} />
-            {model.hasItems && (
+      {/* Chrome — match territory detail mono header */}
+      <div
+        className={cn(
+          "relative z-10 flex w-full shrink-0 items-center border-b border-border",
+          rail ? "justify-center px-2 py-1" : "justify-between gap-2 px-2.5 py-1",
+        )}
+      >
+        {rail ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-expanded={open}
+            aria-controls="active-alerts-list"
+            aria-label="Expandir alertas"
+            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+          >
+            <span className={MAP_PANEL_TITLE_CLASS}>Alertas</span>
+            <span
+              className={cn(
+                "inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
+                model.hasItems
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {model.displayCount}
+            </span>
+            <ChevronDown
+              className="size-3.5 -rotate-90 transition-transform duration-200"
+              aria-hidden
+            />
+          </button>
+        ) : (
+          <>
+            <p className={cn("min-w-0 truncate", MAP_PANEL_TITLE_CLASS)}>
+              Alertas
+            </p>
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              aria-expanded={open}
+              aria-controls="active-alerts-list"
+              aria-label={open ? "Colapsar alertas" : "Expandir alertas"}
+              className="inline-flex shrink-0 items-center gap-1.5 px-1 py-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+            >
               <span
-                className="absolute -right-1 -top-1 size-1.5 animate-pulse rounded-full bg-[#DA291C]"
-                style={{ boxShadow: "0 0 4px rgba(218,41,28,0.8)" }}
+                className={cn(
+                  "inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
+                  model.hasItems
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {model.displayCount}
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-3.5 transition-transform duration-200",
+                  !open && "-rotate-90",
+                )}
                 aria-hidden
               />
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="block text-[10.5px] font-semibold uppercase tracking-[1.4px] text-white/85">
-              Alertas
-            </span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setOpenOverride((v) => !(v ?? open))}
-          aria-expanded={open}
-          aria-controls="active-alerts-list"
-          aria-label={open ? "Colapsar alertas" : "Expandir alertas"}
-          className="flex shrink-0 items-center gap-2 border-l border-white/10 px-3 transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-white/30"
-        >
-          <span
-            className={cn(
-              "rounded-sm border px-1.5 py-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
-              model.hasItems
-                ? "border-[#DA291C]/40 bg-[#DA291C]/20 text-[#ff9a9a]"
-                : "border-white/10 bg-white/[0.08] text-white/60",
-            )}
-          >
-            {model.displayCount}
-          </span>
-          <ChevronDown
-            className={cn(
-              "size-3.5 text-white/60 transition-transform duration-200",
-              !open && "-rotate-90",
-            )}
-            aria-hidden
-          />
-        </button>
+            </button>
+          </>
+        )}
       </div>
 
-      <div className={cn("border-b border-white/[0.06]", !open && "hidden")}>
+      <div
+        className={cn(
+          "relative z-10 shrink-0 border-b border-border",
+          !open && "hidden",
+        )}
+      >
         <AlertsFilterChips
           filter={model.filter}
           setFilter={model.setFilter}
@@ -473,28 +440,23 @@ function ActiveAlertsPanelOverlay({ flow }: { flow: boolean }) {
 
       <AlertsListBody
         open={open}
-        maxHeightClass="max-h-[min(300px,36dvh)]"
-        isLoading={model.isLoading}
-        error={model.error}
-        refetch={model.refetch}
+        className="relative z-10 min-h-0 flex-1"
         filtered={model.filtered}
         filter={model.filter}
+        isLoading={model.isLoading}
       />
     </aside>
   )
 }
 
 export function ActiveAlertsPanel({
-  flow = false,
   embedded = false,
 }: {
+  /** Kept for call-site compatibility (desktop column). */
   flow?: boolean
-  /** Inside mobile Drawer: no shell, no drag handle, list always open. */
+  /** Inside mobile Sheet: no shell, list always open. */
   embedded?: boolean
 }) {
   if (embedded) return <ActiveAlertsPanelEmbedded />
-  return <ActiveAlertsPanelOverlay flow={flow} />
+  return <ActiveAlertsPanelOverlay />
 }
-
-/** @deprecated Use ActiveAlertsPanel */
-export const SenapredAlertsPanel = ActiveAlertsPanel

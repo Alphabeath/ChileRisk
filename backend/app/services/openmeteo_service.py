@@ -93,20 +93,24 @@ def _parse_weather_item(item: dict) -> dict | None:
     current = item.get("current", {})
     temp = current.get("temperature_2m")
     wind = current.get("wind_speed_10m")
-    if temp is None:
+    if temp is None or wind is None:
+        return None
+    try:
+        temperature_c = float(temp)
+        wind_speed_kmh = float(wind)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(temperature_c) or not math.isfinite(wind_speed_kmh):
         return None
     return {
         "time": current.get("time"),
-        "temperature_c": float(temp),
-        "wind_speed_kmh": float(wind) if wind is not None else 10.0,
+        "temperature_c": temperature_c,
+        "wind_speed_kmh": wind_speed_kmh,
     }
 
 
 async def update_climate_scores_from_real_data(session: AsyncSession) -> int:
     """Fetch weather for all comunas in batches, store readings, update risk scores."""
-    if not settings.use_real_meteo:
-        return 0
-
     comunas = (
         await session.execute(
             select(Comuna).where(
@@ -185,11 +189,11 @@ async def update_climate_scores_from_real_data(session: AsyncSession) -> int:
         rs.viento_score = viento
 
         scores_dict = {
-            "sismo": rs.sismo_score,
-            "ola_calor": calor,
-            "ola_frio": frio,
-            "viento": viento,
-            "inundacion": rs.inundacion_score,
+            "sismo": float(rs.sismo_score or 0.0),
+            "ola_calor": float(calor or 0.0),
+            "ola_frio": float(frio or 0.0),
+            "viento": float(viento or 0.0),
+            "inundacion": float(rs.inundacion_score or 0.0),
         }
         composite, dominant = compute_composite_and_dominant(scores_dict)
         sev = severity_from_score(composite)

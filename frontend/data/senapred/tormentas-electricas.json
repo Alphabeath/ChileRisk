@@ -1,0 +1,169 @@
+{
+  "slug": "tormentas-electricas",
+  "group": "preparate",
+  "title": "Tormentas Eléctricas",
+  "sourceUrl": "https://senapred.cl/tormentas-electricas",
+  "blurb": "Son descargas bruscas de electricidad atmosférica que se manifiestan por un resplandor breve (rayo) y por un ruido seco o estruendo (trueno). Las tormentas se…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/tormentas-electricas/bg_torm_elec_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una tormenta eléctrica?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Son descargas bruscas de electricidad atmosférica que se manifiestan por un resplandor breve (rayo) y por un ruido seco o estruendo (trueno). Las tormentas se asocian a nubes convectivas (cumulonimbus) y pueden estar acompañadas de precipitación en forma de chubascos; pero en ocasiones puede ser nieve o granizo."
+            },
+            {
+              "text": "Una medida de protección en estos casos es la instalación de un pararrayos, elemento que permite interceptar el rayo antes que éste alcance la estructura que se desea proteger, descargando la corriente a tierra a través de un cable grueso. El radio de protección de un pararrayos es igual al triple de su altura, medida desde el suelo. NO es aconsejable instalar un pararrayos de fabricación casera, por lo que SE DEBE buscar asesoría de especialistas."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tormentas-electricas/bg_torm_elec_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Antes de una tormenta eléctrica",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En el exterior de tu vivienda, asegura todos los elementos que pudieran volar con una ráfaga de viento."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Retira árboles muertos que puedan caer por el viento y herir a personas o causar daños durante el desarrollo de una tormenta."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Ante alerta de vientos intensos, asegura puertas y ventanas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Antes de la llegada de una tormenta, desenchufa los aparatos eléctricos de tu hogar. No basta con tenerlos apagados."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_13.png",
+          "text": "Infórmate de las condiciones del tiempo en: www.meteochile.cl"
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/tormentas-electricas/bg_torm_elec_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en una casa o edificio",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_01-150x150.png",
+          "text": "Permanece al interior del inmueble. No salgas a menos que sea absolutamente necesario."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_03-150x150.png",
+          "text": "Cierra cortinas y persianas para evitar daños en caso de quebrarse los vidrios de las ventanas o ventanales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_04-150x150.png",
+          "text": "Si las tormentas eléctricas son frecuentes en donde vives, evalúa la instalación de pararrayos (NO de fabricación casera)."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás al aire libre",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_05-150x150.png",
+          "text": "Busca refugio en una edificación sólida."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_06-150x150.png",
+          "text": "No utilices objetos metálicos como tendederos, herramientas agrícolas o de construcción, entre otros. Los metales son buenos conductores eléctricos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_07-150x150.png",
+          "text": "Evita acercarte a maquinaria, cercas o rejas de metal, alambrados, mástiles y líneas eléctricas y/o de telefonía."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_08-150x150.png",
+          "text": "Nunca te refugies bajo un árbol, poste o antena."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_09-150x150.png",
+          "text": "Si te encuentras en campo abierto o en un cerro, busca una quebrada sin un curso de agua, agáchate para no ser lo más alto del lugar, quedando lo más cerca posible del suelo."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_10-150x150.png",
+          "text": "Si estas en un vehículo, permanece en él con el motor apagado y con las ventanas cerradas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_11-150x150.png",
+          "text": "No realices deportes náuticos, ni ingreses a piscinas, ríos, lagos, mar o áreas mojadas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/tormentas-electricas/icon_torm_elec_12-150x150.png",
+          "text": "Evita realizar actividades y faenas marítimas, como producción acuícola, pesca, transferencia de carga, entre otros. Sigue las instrucciones de la autoridad marítima."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8906/18_preparate_con_senapred_tormentas_electricas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8907/18_get_ready_with_senapred_thunderstorm_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8908/18_preparez_vous_a_laide_du_senapred_lorage_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/tormentas-electricas.png"
+}

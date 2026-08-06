@@ -1,0 +1,241 @@
+{
+  "slug": "erupciones-volcanicas",
+  "group": "preparate",
+  "title": "Erupciones Volcánicas",
+  "sourceUrl": "https://senapred.cl/erupciones-volcanicas/",
+  "blurb": "Un volcán es una estructura geológica donde ha tenido o tiene lugar la salida al exterior de magma y gases, generados en el interior de la tierra. El material…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/erupciones-volcanicas/erup_BG_01_2025-1.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un volcán?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un volcán es una estructura geológica donde ha tenido o tiene lugar la salida al exterior de magma y gases, generados en el interior de la tierra. El material puede ser expulsado a la superficie como lava que fluye por las laderas del volcán o piroclastos. Se considera activo cuando ha tenido al menos una erupción en los últimos 10 mil años, o bien cuando, sin certeza de esto último, presenta signos cuantificables de actividad, como por ejemplo desgasificación, sismicidad o deformación de la superficie."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/erupciones-volcanicas/erup_BG_02_2025-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vives, trabajas o visitas zonas con riesgo volcánico",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate de las áreas de peligro, vías de evacuación, Puntos de Encuentro Transitorios (PET) o Puntos de Encuentro en SERNAGEOMIN, en SENAPRED y/o en el municipio respectivo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si visitas áreas próximas y/o asciendes a volcanes activos, avisa a Carabineros o guardaparques cuando corresponda."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si vives cerca de un volcán, se recomienda que los techos de viviendas, galpones, graneros y edificios tengan un ángulo mayor a 30°, para evitar la acumulación de ceniza y el riesgo de colapso de éstos."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/erupciones-volcanicas/icon_erup_12.png"
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si sientes y/u observas anomalías (sismicidad, fumarolas, ruidos u otros) en algún volcán informa a alguno de los siguientes organismos: Guardaparques de CONAF, Carabineros, SENAPRED, Dirección Meteorológica de Chile o SERNAGEOMIN."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/erupciones-volcanicas/erup_BG_03_2025-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de una erupción volcánica?",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_01-150x150.png",
+          "text": "Si te encuentras en una zona de riesgo, mantén la calma y prepárate con tu familia para evacuar cuando las autoridades lo indiquen."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_02-150x150.png",
+          "text": "Asegura agua fresca y alimentos para tus animales en una zona protegida de la caída de cenizas. Generalmente los animales vuelven a la zona en la cual se alimentan regularmente."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_03-150x150.png",
+          "text": "En caso de caída de ceniza, cierra todas las ventanas, puertas y conductos de ventilación de tu vivienda; cubre con paños húmedos los espacios que queden alrededor de las ventanas y puertas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_04-150x150.png",
+          "text": "Cubre los depósitos y fuentes de agua como pozos y estanques para evitar que se contaminen con cenizas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_05-150x150.png",
+          "text": "Al iniciar la evacuación, corta la energía eléctrica de tu vivienda y cierra las llaves de paso de agua y gas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_06-150x150.png",
+          "text": "Trasládate con tu familia a un Punto de Encuentro Transitorio (PET) o Punto de Encuentro. Vuelve a tu hogar cuando las autoridades indiquen que es seguro hacerlo."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/erupciones-volcanicas/erup_BG_04_2025-1.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si te encuentras al aire libre o debes movilizarte al exterior de tu vivienda",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Usa una mascarilla o paño húmedo para cubrir nariz y boca. Si no los tienes, utiliza la parte delantera de la camisa para reducir la cantidad de cenizas que respiras."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Utiliza gafas con protección lateral (puedes usar los protectores que recomiendan para ciclistas, motociclistas o nadadores). Gafas de sol sólo son recomendables en caso de no contar con otra alternativa. Evite el uso de lentes de contacto."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Utiliza prendas que cubran la mayor extensión del cuerpo. Si la piel se ha impregnado de ceniza, quítate la ropa y lávate con abundante agua. Si presentas ardor o enrojecimiento de la piel, consulta con un médico."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Aléjate de los fondos de valle y no cruces quebradas o ríos, puede haber peligro de lahares (aluviones o flujos volcánicos). Dirígete a lugares en altura."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si estás conduciendo y te sorprende la caída de ceniza, permanece dentro del vehículo con las luces encendidas, las ventanas y puertas cerradas. En caso que puedas avanzar, hazlo lentamente y da prioridad a los vehículos de emergencia."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si posterior a la erupción se ha recomendado la limpieza exterior de ceniza acumulada en techos, patios y calles, apoya las labores utilizando las medidas antes mencionadas para protegerse. La ceniza debe estar humedecida antes de ser removida."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_13.png",
+          "text": "En Chile los volcanes activos de mayor peligrosidad son monitoreados por el Observatorio de los Andes del Sur – OVDAS (SERNAGEOMIN), revisa sus mapas de peligro volcánico en www.sernageomin.cl ."
+        }
+      ]
+    },
+    {
+      "heading": "En una erupción volcánica los principales peligros son:",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_07-150x150.png",
+          "text": "Flujo piroclástico: Flujo formado por fragmentos de roca de tamaño que varían de milímetros a varios metros (piroclástos) y gases, que se desplazan por las laderas de un volcán, como nube ardiente. Se caracteriza por su alta temperatura (centenas de ºC) y velocidad (100-500 km/h), siendo fuertemente destructiva. La mayoría se origina por el colapso de una columna eruptiva explosiva."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_08-150x150.png",
+          "text": "Lahar: Aluvión volcánico formado por una gran descarga de fragmentos volcánicos, transportados por el agua. Se puede formar por el derretimiento repentino de hielo y/o nieve durante una erupción o por el arrastre de material no consolidado en las laderas de un volcán durante lluvias intensas. Pueden alcanzar velocidades de 80 km/h."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_09-150x150.png",
+          "text": "Caída de ceniza: Partículas expulsadas por un volcán y que son trasladadas por el viento, antes de caer en la superficie. El tamaño de las partículas de ceniza es menor a 2 mm."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_10-150x150.png",
+          "text": "Colada de lava: Material incandescente, de alta temperatura (700-1.200ºC) que se forma cuando el magma sale a la superficie y fluye por gravedad, formando flujos de distinta viscosidad que escurren a velocidades entre 1 km/día a 10 km/h."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/erupciones-volcanicas/icon_erup_11-150x150.png",
+          "text": "Avalancha volcánica: Flujo de material volcánico, formado por el colapso parcial o total del volcán y que cae a velocidades que pueden alcanzar los 300 km/h, y puede arrastrar bloques de varias toneladas y de decenas de metros de diámetro."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8922/03_preparate_con_senapred_erupciones_volcanicas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8923/03_get_ready_with_senapred_volcanic_eruption_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8924/03_preparez_vous_a_laide_du_senapred_eruptions_volcaniques_fra.pdf"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Recomendaciones enfocadas para Niños, Niñas y Adolescentes",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/7193/Afiche_recomendacionesNNA-6.pdf?sequence=6&isAllowed=y"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/erupciones-volcanicas.png"
+}

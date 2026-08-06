@@ -16,6 +16,8 @@ class GoogleOAuthRequest(BaseModel):
     email: EmailStr
     name: str | None = Field(default=None, max_length=120)
     provider_account_id: str = Field(min_length=1, max_length=255)
+    # ID token de Google (Auth.js account.id_token). Requerido si GOOGLE_CLIENT_ID está definido.
+    google_id_token: str | None = Field(default=None, max_length=8192)
 
 
 class ForgotPasswordRequest(BaseModel):

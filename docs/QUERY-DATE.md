@@ -23,7 +23,7 @@ El mapa y varios endpoints permiten ver **riesgo, sismos y alertas de un día ca
 | Método | Path | Notas |
 |--------|------|--------|
 | GET | `/api/v1/risk/national?date=` | Agregado regional desde snapshots diarios |
-| GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (coropleta) |
+| GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna (gating / tooling; el mapa no lo usa) |
 | GET | `/api/v1/comunas/{cod}/risk?date=` | Vector de hazards del día |
 | GET | `/api/v1/events?date=` | Sismos en ventana del día (sustituye `hours=` en rutas con date) |
 | GET | `/api/v1/alerts/active?date=` | **Hoy:** ATP vigentes en lookback hasta desactivación/cierre; eventos solo últimas `SENAPRED_EVENTO_ACTIVE_HOURS` (48h). **Histórico:** emitidas ese día civil (`isPrincipal` + dedupe `url_access`; sin cierres ATP/`Cierre de evento`; puede incluir `is_active=False`) |
@@ -49,13 +49,14 @@ Sin `date` → hoy Chile.
 
 | Pieza | Ruta |
 |-------|------|
-| Selector de día | `components/map/query-date-control.tsx` |
-| Estado global | `stores/ui-store.ts` + `hooks/use-query-date.ts` |
-| Overlays del mapa | `components/map/map-overlays.tsx` (`DndContext` compartido) |
-| Hooks que pasan fecha | `use-national-risk`, `use-map-data`, `use-recent-events`, `use-comuna-risk`, `use-active-alerts` |
-| API | `lib/api.ts` — `?date=` en risk/events/alerts |
+| Selector de día | `frontend/components/map/query-date-control.tsx` |
+| Estado (UI) | `frontend/stores/ui-store.ts` + `frontend/hooks/use-query-date.ts` (zustand persist) |
+| Utilidades / ventana | `frontend/lib/query-date.ts` |
+| Overlays del mapa | `frontend/components/map/map-alerts-overlay.tsx` (Alertas + Fecha; sin DnD) |
+| Hooks que pasan fecha | `use-national-risk`, `use-map-data`, `use-active-alerts`, `use-air-quality`, `use-recent-events`, `use-comuna-risk` |
+| API | `lib/api.ts` — `?date=` en risk/events/alerts/air-quality |
 
-Panel de fecha: anclado `bottom-left`, draggable vía `useDraggablePanel({ corner: "bottom-left" })`.
+Panel de fecha: columna izquierda bajo Alertas (desktop); FAB + Sheet (móvil). Sin drag.
 
 ---
 
@@ -65,4 +66,4 @@ Cambios en ventana, TZ, o campos devueltos → actualizar **este archivo**, `bac
 
 ---
 
-*Last updated: 2026-07-25*
+*Last updated: 2026-08-02*

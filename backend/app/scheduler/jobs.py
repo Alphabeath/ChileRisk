@@ -14,6 +14,7 @@ from app.services.senapred_service import sync_senapred_alerts
 from app.services.simulacro_service import sync_simulacros, prune_old_simulacros
 from app.services.airechile_service import sync_airechile, prune_old_airechile
 from app.services.sernageomin_service import sync_sernageomin_alerts
+from app.services.meteochile_aaa_service import sync_meteochile_aaa
 from app.services.sync_status_service import record_sync_run
 
 logger = logging.getLogger("chilerisk.scheduler")
@@ -57,8 +58,6 @@ async def _refresh_risk_scores():
 
 
 async def _sync_real_seismic_events():
-    if not settings.use_real_csn:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -91,8 +90,6 @@ async def _sync_real_seismic_events():
 
 
 async def _update_real_climate_scores():
-    if not settings.use_real_meteo:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -125,8 +122,6 @@ async def _update_real_climate_scores():
 
 
 async def _sync_senapred_alerts():
-    if not settings.use_real_senapred:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -199,8 +194,6 @@ async def _sync_simulacros():
 
 
 async def _sync_airechile():
-    if not settings.use_real_airechile:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -234,8 +227,6 @@ async def _sync_airechile():
 
 
 async def _sync_sernageomin():
-    if not settings.use_real_sernageomin:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -267,9 +258,39 @@ async def _sync_sernageomin():
             logger.exception("Failed to persist sernageomin_sync sync run")
 
 
+async def _sync_meteochile_aaa():
+    started = _utcnow()
+    try:
+        async with async_session() as session:
+            n = await sync_meteochile_aaa(session)
+            status = "ok" if n else "empty"
+            await record_sync_run(
+                session,
+                job_id="meteochile_aaa_sync",
+                started_at=started,
+                status=status,
+                items_written=n,
+            )
+        if n:
+            logger.info("Synced %d MeteoChile AAA rows", n)
+        else:
+            logger.warning("MeteoChile AAA sync finished with 0 rows")
+    except Exception as e:
+        logger.exception("MeteoChile AAA sync failed: %s", e)
+        try:
+            async with async_session() as session:
+                await record_sync_run(
+                    session,
+                    job_id="meteochile_aaa_sync",
+                    started_at=started,
+                    status="error",
+                    error_text=str(e),
+                )
+        except Exception:
+            logger.exception("Failed to persist meteochile_aaa_sync sync run")
+
+
 async def _sync_flood():
-    if not settings.use_real_flood:
-        return
     started = _utcnow()
     try:
         async with async_session() as session:
@@ -314,32 +335,29 @@ def setup_scheduler():
         replace_existing=True,
     )
 
-    if settings.use_real_csn:
-        scheduler.add_job(
-            _sync_real_seismic_events,
-            trigger=IntervalTrigger(minutes=5),
-            id="csn_sync",
-            name="Sync real seismic events from CSN (sismologia.cl)",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _sync_real_seismic_events,
+        trigger=IntervalTrigger(minutes=5),
+        id="csn_sync",
+        name="Sync real seismic events from CSN (sismologia.cl)",
+        replace_existing=True,
+    )
 
-    if settings.use_real_meteo:
-        scheduler.add_job(
-            _update_real_climate_scores,
-            trigger=IntervalTrigger(minutes=60),
-            id="meteo_update",
-            name="Update climate scores from Open-Meteo",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _update_real_climate_scores,
+        trigger=IntervalTrigger(minutes=60),
+        id="meteo_update",
+        name="Update climate scores from Open-Meteo",
+        replace_existing=True,
+    )
 
-    if settings.use_real_senapred:
-        scheduler.add_job(
-            _sync_senapred_alerts,
-            trigger=IntervalTrigger(minutes=settings.senapred_refresh_minutes),
-            id="senapred_sync",
-            name="Sync SERNAPRED alerts",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _sync_senapred_alerts,
+        trigger=IntervalTrigger(minutes=settings.senapred_refresh_minutes),
+        id="senapred_sync",
+        name="Sync SERNAPRED alerts",
+        replace_existing=True,
+    )
 
     scheduler.add_job(
         _sync_simulacros,
@@ -349,63 +367,66 @@ def setup_scheduler():
         replace_existing=True,
     )
 
-    if settings.use_real_airechile:
-        scheduler.add_job(
-            _sync_airechile,
-            trigger=IntervalTrigger(minutes=settings.airechile_refresh_minutes),
-            id="airechile_sync",
-            name="Sync Aire Chile GEC conditions",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _sync_airechile,
+        trigger=IntervalTrigger(minutes=settings.airechile_refresh_minutes),
+        id="airechile_sync",
+        name="Sync Aire Chile GEC conditions",
+        replace_existing=True,
+    )
 
-    if settings.use_real_sernageomin:
-        scheduler.add_job(
-            _sync_sernageomin,
-            trigger=IntervalTrigger(minutes=settings.sernageomin_refresh_minutes),
-            id="sernageomin_sync",
-            name="Sync SERNAGEOMIN volcanic alerts",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _sync_sernageomin,
+        trigger=IntervalTrigger(minutes=settings.sernageomin_refresh_minutes),
+        id="sernageomin_sync",
+        name="Sync SERNAGEOMIN volcanic alerts",
+        replace_existing=True,
+    )
 
-    if settings.use_real_flood:
-        scheduler.add_job(
-            _sync_flood,
-            trigger=IntervalTrigger(minutes=settings.flood_refresh_minutes),
-            id="flood_sync",
-            name="Flood discharge sync",
-            replace_existing=True,
-        )
+    scheduler.add_job(
+        _sync_meteochile_aaa,
+        trigger=IntervalTrigger(minutes=settings.meteochile_refresh_minutes),
+        id="meteochile_aaa_sync",
+        name="Sync MeteoChile DMC AAA alerts",
+        replace_existing=True,
+    )
+
+    scheduler.add_job(
+        _sync_flood,
+        trigger=IntervalTrigger(minutes=settings.flood_refresh_minutes),
+        id="flood_sync",
+        name="Flood discharge sync",
+        replace_existing=True,
+    )
 
     scheduler.start()
     logger.info("APScheduler started — risk refresh every %d minutes", settings.risk_refresh_minutes)
-    if settings.use_real_csn:
-        logger.info("CSN (sismologia.cl) real seismic sync enabled (every 5 min)")
-    if settings.use_real_meteo:
-        logger.info("Open-Meteo real climate updates enabled (every 45 min)")
-    if settings.use_real_senapred:
-        logger.info(
-            "SERNAPRED alerts sync enabled (every %d min)",
-            settings.senapred_refresh_minutes,
-        )
+    logger.info("CSN (sismologia.cl) real seismic sync enabled (every 5 min)")
+    logger.info("Open-Meteo real climate updates enabled (every 60 min)")
+    logger.info(
+        "SERNAPRED alerts sync enabled (every %d min)",
+        settings.senapred_refresh_minutes,
+    )
     logger.info(
         "SERNAPRED simulacros sync enabled (every %d min)",
         settings.simulacros_refresh_minutes,
     )
-    if settings.use_real_airechile:
-        logger.info(
-            "Aire Chile GEC sync enabled (every %d min)",
-            settings.airechile_refresh_minutes,
-        )
-    if settings.use_real_sernageomin:
-        logger.info(
-            "SERNAGEOMIN volcanic alerts sync enabled (every %d min)",
-            settings.sernageomin_refresh_minutes,
-        )
-    if settings.use_real_flood:
-        logger.info(
-            "Flood discharge sync enabled (every %d min)",
-            settings.flood_refresh_minutes,
-        )
+    logger.info(
+        "Aire Chile GEC sync enabled (every %d min)",
+        settings.airechile_refresh_minutes,
+    )
+    logger.info(
+        "SERNAGEOMIN volcanic alerts sync enabled (every %d min)",
+        settings.sernageomin_refresh_minutes,
+    )
+    logger.info(
+        "MeteoChile AAA sync enabled (every %d min)",
+        settings.meteochile_refresh_minutes,
+    )
+    logger.info(
+        "Flood discharge sync enabled (every %d min)",
+        settings.flood_refresh_minutes,
+    )
 
 
 def shutdown_scheduler():

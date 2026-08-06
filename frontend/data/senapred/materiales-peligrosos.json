@@ -1,0 +1,175 @@
+{
+  "slug": "materiales-peligrosos",
+  "group": "preparate",
+  "title": "Materiales Peligrosos",
+  "sourceUrl": "https://senapred.cl/materiales-peligrosos-2/",
+  "blurb": "Es toda sustancia que, por su naturaleza, produce o puede producir daños momentáneos o permanentes a la salud humana, animal o vegetal, a los bienes y/o al…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/materiales-peligrosos/BG-materiales_peligrosos_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un material peligroso?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Es toda sustancia que, por su naturaleza, produce o puede producir daños momentáneos o permanentes a la salud humana, animal o vegetal, a los bienes y/o al medioambiente."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/materiales-peligrosos/BG-materiales_peligrosos_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si ocurre una emergencia por materiales peligrosos, cerca del lugar donde vives o donde te encuentras:",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_01-150x150.png",
+          "text": "Aléjate inmediatamente de la zona afectada, a lo menos dos cuadras (200 metros)."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_02-150x150.png",
+          "text": "Una vez que te encuentres a salvo, y si no hay personal de emergencia en el lugar, comunícate con Bomberos 132 o Carabineros 133. Si la emergencia es en el mar, lago o río llama a DIRECTEMAR al 137."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_03-150x150.png",
+          "text": "Nunca intentes intervenir y sigue las instrucciones de las autoridades."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_04-150x150.png",
+          "text": "Si presentas algún síntoma o malestar, llama a Salud Responde 600 360 7777 o dirígete al servicio de salud más cercano."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_05-150x150.png",
+          "text": "Si evacuaste a un lugar seguro, permanece en ese lugar hasta que las autoridades lo indiquen."
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué es una emergencia por materiales peligrosos?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Situación causada o que involucra un material peligroso que produce una alteración en las personas, bienes, servicios o ambiente, generando la movilización de los organismos de respuesta especializados."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Puedes identificar algunos materiales peligrosos por los siguientes símbolos:",
+      "blocks": [
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_06-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Tóxico"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_07-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Radioactivo"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_08-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Biológico"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_09-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Gases Comprimidos"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_10-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Corrosivo"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_11-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Inflamable"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_13-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Explosivo"
+        },
+        {
+          "kind": "figure",
+          "src": "/data/senapred/img/materiales-peligrosos/icon-mat_pel_12-150x150.png",
+          "alt": ""
+        },
+        {
+          "kind": "subheading",
+          "text": "Oxidante"
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8876/09_preparate_con_senapred_materiales_peligrosos_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8877/09_get_ready_with_senapred_hazardous_materials_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8878/09_preparez_vous_a_laide_du_senapred_matieres_dangereuses_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/materiales-peligrosos.png"
+}

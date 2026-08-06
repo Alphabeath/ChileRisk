@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -22,7 +24,17 @@ from app.services.chat_agent_service import run_chat_agent, stream_chat_agent
 from app.services import chat_history_service
 from app.services.user_profile_service import resolve_comuna_code
 
+logger = logging.getLogger("chilerisk.chat")
+
 router = APIRouter()
+
+_UNAVAILABLE_DETAIL = (
+    "El asistente no está disponible en este momento. Inténtalo de nuevo."
+)
+
+
+def _sse(event: str, data: dict[str, Any]) -> str:
+    return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
 def _last_user_message(body: ChatRequest) -> str:
@@ -47,15 +59,19 @@ async def chat(
         lat=body.lat,
         lon=body.lon,
     )
-    result = await run_chat_agent(
-        db,
-        user_id=user.id,
-        messages=body.messages,
-        comuna_code=comuna,
-        region_code=body.region_code,
-        lat=body.lat,
-        lon=body.lon,
-    )
+    try:
+        result = await run_chat_agent(
+            db,
+            user_id=user.id,
+            messages=body.messages,
+            comuna_code=comuna,
+            region_code=body.region_code,
+            lat=body.lat,
+            lon=body.lon,
+        )
+    except Exception as exc:
+        logger.exception("Chat agent failed for user %s", user.id)
+        raise HTTPException(status_code=503, detail=_UNAVAILABLE_DETAIL) from exc
 
     thread_id = body.thread_id
     if settings.chat_history_enabled:
@@ -100,24 +116,29 @@ async def chat_stream(
 
     async def event_gen():
         final_payload = None
-        async for chunk in stream_chat_agent(
-            db,
-            user_id=user.id,
-            messages=body.messages,
-            comuna_code=comuna,
-            region_code=body.region_code,
-            lat=body.lat,
-            lon=body.lon,
-        ):
-            if chunk.startswith("event: done"):
-                # Patch thread_id after persistence
-                try:
-                    data_line = chunk.strip().split("\ndata: ", 1)[1]
-                    final_payload = json.loads(data_line)
-                except Exception:
-                    final_payload = None
-                continue
-            yield chunk
+        try:
+            async for chunk in stream_chat_agent(
+                db,
+                user_id=user.id,
+                messages=body.messages,
+                comuna_code=comuna,
+                region_code=body.region_code,
+                lat=body.lat,
+                lon=body.lon,
+            ):
+                if chunk.startswith("event: done"):
+                    # Patch thread_id after persistence
+                    try:
+                        data_line = chunk.strip().split("\ndata: ", 1)[1]
+                        final_payload = json.loads(data_line)
+                    except Exception:
+                        final_payload = None
+                    continue
+                yield chunk
+        except Exception:
+            logger.exception("Chat stream failed for user %s", user.id)
+            yield _sse("error", {"detail": _UNAVAILABLE_DETAIL})
+            return
 
         thread_id = body.thread_id
         reply = (final_payload or {}).get("reply") or ""

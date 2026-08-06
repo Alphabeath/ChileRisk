@@ -1,15 +1,10 @@
-# Frontend — documentación
+# Frontend docs
 
-UI, componentes y diseño. Cross-stack: [../../docs/README.md](../../docs/README.md).
+Documentación del frontend nuevo (`frontend/`).
 
-| Documento | Contenido |
-|-----------|-----------|
-| [FRONTEND.md](./FRONTEND.md) | Componentes, hooks, mapa, overlays |
-| [DESIGN.md](./DESIGN.md) | Sistema visual (glass, tokens, citizen) |
-| [archive/FRONTEND-PLAN.md](./archive/FRONTEND-PLAN.md) | Plan MVP 2026-05-27 — **histórico, no usar** |
+| Doc | Contenido |
+|---|---|
+| [FRONTEND.md](FRONTEND.md) | Referencia estable: stack, rutas, mapa (mapcn), superficies/Mica |
+| [DESIGN.md](DESIGN.md) | Identidad ops + tema dual + Mica + paletas de dominio |
 
-**Índice agente:** [../AGENTS.md](../AGENTS.md) · **Playbooks:** [../../docs/HARNESS.md](../../docs/HARNESS.md)
-
----
-
-*Last updated: 2026-06-05*
+*Last updated: 2026-08-01*

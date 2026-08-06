@@ -1,0 +1,191 @@
+{
+  "slug": "enos",
+  "group": "preparate",
+  "title": "ENOS – El Niño y La Niña",
+  "sourceUrl": "https://senapred.cl/enos/",
+  "blurb": "El Niño-Oscilación del Sur (ENOS), es una anomalía del sistema acoplado océano-atmósfera que se caracteriza por calentamientos y enfriamientos del océano que…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/enos/BG_ENOS_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es el evento ENOS?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "El Niño-Oscilación del Sur (ENOS), es una anomalía del sistema acoplado océano-atmósfera que se caracteriza por calentamientos y enfriamientos del océano que afectan significativamente en los procesos oceanográficos y meteorológicos a escala regional y global. Presenta tres fases conocidas como El Niño, La Niña y Neutro."
+            },
+            {
+              "text": "Durante un episodio El Niño, los vientos del este se debilitan y las aguas superficiales en el Pacífico ecuatorial central aumentan sostenidamente la temperatura superficial del mar (TSM) por sobre los 0.5 °C respecto del promedio, por un período de tiempo de 5 meses."
+            },
+            {
+              "text": "La fase contraria a El Niño, es La Niña y ocurre cuando la TSM presenta temperaturas por debajo de los 0.5°C respecto del promedio, por un período de tiempo de 5 meses, debido al aumento significativo de los vientos del este, disminuyendo la TSM. La fase Neutra ocurre cuando la TSM oscila entre los -0,5°C y los 0,5°C respecto del promedio en el Pacífico Ecuatorial. Esta condición se asemeja a patrones de tiempo normal."
+            },
+            {
+              "text": "Inicialmente “El Niño” se refería a una corriente de aguas cálidas que avanzaba a lo largo de la costa de Ecuador y Perú, alterando la pesquería local. Como este evento ocurría cerca de la fecha de navidad se le denominó “El Niño”."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "El Niño-oscilación del sur (ENOS): impacto en chile",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "El evento ENOS genera cambios meteorológicos y oceanográficos en cada una de sus fases. En la fase “El Niño” en invierno puede generar un aumento en las lluvias y temperaturas de la zona central y centro-sur del país. En el mar aumenta la temperatura, disminuyendo la disponibilidad de recursos pesqueros. Durante la fase “La Niña”, se producen efectos contrarios. En invierno, en la zona central y centro-sur disminuyen las lluvias y las temperaturas, y el mar se enfría favoreciendo la actividad pesquera."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Fase \"El Niño\"",
+      "blocks": [
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enos/BG_ENOS_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Zona Norte Altiplánica",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_01-1-150x150.png",
+          "text": "Mantén reservas de agua para afrontar la escasez de lluvias estivales."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_02-1-150x150.png",
+          "text": "Planifica actividades agrícolas acorde al déficit hídrico."
+        }
+      ]
+    },
+    {
+      "heading": "Zona Centro y Centro-Sur",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_03-150x150.png",
+          "text": "Mantén el techo de tu vivienda en buen estado. Limpia acequias y vías de evacuación de agua alrededor de tu hogar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_04-150x150.png",
+          "text": "Prepara tu terreno para evitar acumulación de agua o inundación en los cultivos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_05-150x150.png",
+          "text": "Revisa constantemente las instalaciones de acumulación y conducción de agua, para evitar colapsos y rompimiento de éstas."
+        }
+      ]
+    },
+    {
+      "heading": "Zona Austral",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_01-1-150x150.png",
+          "text": "Reserva agua para afrontar los meses secos de verano."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_07-1-150x150.png",
+          "text": "Protege los cultivos del frío. Resguarda a tus animales, como también los almacenamientos de agua, para evitar el congelamiento."
+        }
+      ]
+    },
+    {
+      "heading": "Fase \"La Niña\"",
+      "blocks": [
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/enos/BG_ENOS_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "Zona Norte Altiplánica",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_03-150x150.png",
+          "text": "Mantén el techo de tu vivienda en buen estado. Limpia acequias y vías de evacuación de agua alrededor de tu hogar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_05-150x150.png",
+          "text": "Revisa constantemente las instalaciones de acumulación y conducción de agua, para evitar colapsos y rompimientos de éstas."
+        }
+      ]
+    },
+    {
+      "heading": "Zona Centro y Centro-Sur",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_07-1-150x150.png",
+          "text": "Protege los cultivos del frío. Resguarda a tus animales, como también los almacenamientos de agua, para evitar el congelamiento."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_02-1-150x150.png",
+          "text": "Planifica actividades agrícolas acorde al déficit hídrico."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_06-1-150x150.png",
+          "text": "Haz uso eficiente del agua y energía, por menor disponibilidad del recurso hídrico y mayor demanda de combustibles."
+        }
+      ]
+    },
+    {
+      "heading": "Zona Austral",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_05-150x150.png",
+          "text": "Revisa constantemente las instalaciones de acumulación y conducción de agua, para evitar colapsos y rompimiento de éstas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/enos/icon_ENOS_07-1-150x150.png",
+          "text": "Protege los cultivos del frío. Resguarda a tus animales, como también los almacenamientos de agua, para evitar el congelamiento."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8916/21_preparate_con_senapred_enos_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8917/21_get_ready_with_senapred_enso_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8918/21_preparez_vous_a_laide_du_senapred_enso_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/enos.png"
+}

@@ -1,6 +1,5 @@
 # Multi-stage Dockerfile for ChileRisk Frontend (Next.js 16)
 # Uses bun as the package manager (standardized for this monorepo).
-# Required by project rules (AGENTS.md)
 
 FROM oven/bun:1-alpine AS base
 

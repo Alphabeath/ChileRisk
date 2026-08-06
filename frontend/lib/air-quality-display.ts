@@ -4,37 +4,32 @@ import type { AirQualityLevel, AirQualityZone } from "@/lib/types"
 
 export const AIR_QUALITY_LEVEL_META: Record<
   AirQualityLevel,
-  { label: string; hex: string; short: string; badge: string }
+  { label: string; hex: string; short: string }
 > = {
   bueno: {
     label: "Bueno",
     hex: "#2eae00",
     short: "Bueno",
-    badge: "bg-emerald-500/10 text-emerald-300 border-emerald-400/40",
   },
   regular: {
     label: "Regular",
     hex: "#f5d400",
     short: "Regular",
-    badge: "bg-amber-500/10 text-amber-300 border-amber-400/40",
   },
   alerta: {
     label: "Alerta",
     hex: "#ff9800",
     short: "Alerta",
-    badge: "bg-orange-500/10 text-orange-300 border-orange-400/40",
   },
   preemergencia: {
     label: "Preemergencia",
     hex: "#e65100",
     short: "Preemerg.",
-    badge: "bg-orange-600/15 text-orange-200 border-orange-500/45",
   },
   emergencia: {
     label: "Emergencia",
     hex: "#c62828",
     short: "Emerg.",
-    badge: "bg-[#DA291C]/15 text-[#ff9a9a] border-[#DA291C]/45",
   },
 }
 
@@ -81,7 +76,7 @@ export function computeComunaAirLevels(
   return result
 }
 
-/** Highest severity per region among covered comunas. */
+/** Highest severity per region among zones sharing `region_code`. */
 export function computeRegionAirLevels(
   zones: AirQualityZone[],
 ): Map<number, AirQualityLevel> {

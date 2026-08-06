@@ -48,7 +48,7 @@ Consulta por día: [QUERY-DATE.md](./QUERY-DATE.md).
 
 ## Data sources
 
-All data comes from real providers (CSN, Open-Meteo, SERNAPRED, Aire Chile, SERNAGEOMIN) when the corresponding `USE_REAL_*` flags are enabled. When disabled, the source contributes no data (no synthetic/mock fallbacks).
+All operational data comes from real providers (CSN, Open-Meteo, SERNAPRED, Aire Chile, SERNAGEOMIN). If a provider is unavailable, the source contributes no data and no replacement value is generated.
 
 Variables documented in [backend/docs/BACKEND.md](../backend/docs/BACKEND.md).
 
@@ -109,10 +109,11 @@ Nueva área (worker, etc.): mismo patrón + entrada en [README.md](./README.md) 
 | [frontend/docs/README.md](../frontend/docs/README.md) | Índice frontend |
 | [HARNESS.md](./HARNESS.md) | Playbooks + `make verify` |
 | [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Política de actualización |
+| [QUERY-DATE.md](./QUERY-DATE.md) | Semántica de `?date=` |
 | [backend/docs/BACKEND.md](../backend/docs/BACKEND.md) | API, modelos, servicios |
 | [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md) | Componentes y hooks |
-| [backend/docs/ML-INTEGRATION.md](../backend/docs/ML-INTEGRATION.md) | ML futuro |
+| [frontend/docs/DESIGN.md](../frontend/docs/DESIGN.md) | Sistema visual citizen |
 
 ---
 
-*Last updated: 2026-07-25*
+*Last updated: 2026-07-31*

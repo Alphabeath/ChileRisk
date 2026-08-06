@@ -27,7 +27,7 @@
 - **Evacuación tsunami** — Capas oficiales, geolocalización y puntos de encuentro cercanos
 - **Modo emergencia** — Banner reactivo ante alertas naranja/roja aplicables a la comuna del usuario
 - **Auth** — NextAuth v5 + JWT FastAPI (email/contraseña; Google OAuth opcional)
-- **Datos reales solamente** — Sin mocks sintéticos: si una fuente está deshabilitada (`USE_REAL_*=false`), no aporta datos
+- **Datos reales solamente** — Si una fuente no responde, no se generan datos de reemplazo
 
 ---
 
@@ -73,7 +73,7 @@ graph LR
 
 ## Risk Engine
 
-Motor **determinístico** (reglas + pesos). ML planificado: [docs ML](backend/docs/ML-INTEGRATION.md).
+Motor **determinístico** (reglas + pesos).
 
 | Hazard | Fuente principal | Método |
 |--------|------------------|--------|
@@ -149,11 +149,11 @@ Severidad: `bajo` &lt; 35 · `moderado` &lt; 55 · `alto` &lt; 75 · `critico` �
 
 | Source | Data | Notes |
 |--------|------|-------|
-| [CSN / sismologia.cl](https://www.sismologia.cl) | Catálogo sísmico reciente | Scrape; `USE_REAL_CSN` |
-| [Open-Meteo](https://open-meteo.com) | Clima por comuna | Batch REST; `USE_REAL_METEO` |
-| [Open-Meteo Flood](https://open-meteo.com/en/docs/flood-api) | Riesgo de inundación (GloFAS) | Background sync; `USE_REAL_FLOOD` |
+| [CSN / sismologia.cl](https://www.sismologia.cl) | Catálogo sísmico reciente | Scrape |
+| [Open-Meteo](https://open-meteo.com) | Clima por comuna | Batch REST |
+| [Open-Meteo Flood](https://open-meteo.com/en/docs/flood-api) | Riesgo de inundación (GloFAS) | Background sync |
 | [SERNAPRED](https://senapred.cl) | Alertas ATP + eventos + simulacros | Cognito anónimo + AppSync / scrape |
-| [SERNAGEOMIN](https://www.sernageomin.cl/alertas-volcanicas/) | Alertas volcánicas OVDAS | Scrape HTML; `USE_REAL_SERNAGEOMIN` |
+| [SERNAGEOMIN](https://www.sernageomin.cl/alertas-volcanicas/) | Alertas volcánicas OVDAS | Scrape HTML |
 | [Aire Chile](https://airechile.mma.gob.cl/) | Condiciones GEC (zonas PPDA) | Scrape; cobertura parcial |
 
 ---
@@ -209,8 +209,6 @@ make up
 | Adminer (profile `tools`) | [http://localhost:8080](http://localhost:8080) |
 | Postgres (host) | `127.0.0.1:5434` |
 
-Cuenta demo (hackathon, si `SEED_DEMO_USER=true`): ver `DEMO_USER_*` en backend config / card en `/login`.
-
 ### 4. Native (opcional)
 
 ```bash
@@ -250,7 +248,7 @@ Prefijo `/api/v1`. Contrato canónico: OpenAPI en runtime. Resumen humano: [back
 |-------|-------------|
 | `/health` | Health + resumen de syncs (público) |
 | `/api/v1/auth/*` | Registro, credentials, OAuth Google, reset password |
-| `/api/v1/risk/national` · `/risk/comunas` | Riesgo agregado / coropleta (`?date=`) |
+| `/api/v1/risk/national` · `/risk/comunas` | Riesgo agregado / scores por comuna (`?date=`; mapa pinta por alertas) |
 | `/api/v1/comunas/{cod}/risk` · `/nearest` | Vector de hazards / comuna GPS |
 | `/api/v1/events` · `/events/{id}/impact` | Sismos del día + impacto territorial |
 | `/api/v1/alerts/active` | SERNAPRED + ChileRisk + SERNAGEOMIN |
@@ -288,9 +286,9 @@ Parámetro `date`: día civil Chile (`YYYY-MM-DD`), ventana 30 días — [QUERY-
 │   │   ├── schemas/          # Pydantic (contrato FE↔BE)
 │   │   ├── services/         # Riesgo, syncs, chat, dashboard
 │   │   ├── scheduler/        # APScheduler jobs
-│   │   └── data/             # Seed geo + demo user
+│   │   └── data/             # Geografía y catálogos oficiales
 │   ├── alembic/              # Migraciones
-│   └── docs/                 # BACKEND.md, ML-INTEGRATION.md
+│   └── docs/                 # BACKEND.md
 ├── docs/                     # Arquitectura, harness, query-date
 ├── docker-compose.yml
 ├── Makefile                  # up, verify, sync-contract, …

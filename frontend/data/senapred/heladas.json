@@ -1,0 +1,167 @@
+{
+  "slug": "heladas",
+  "group": "preparate",
+  "title": "Heladas",
+  "sourceUrl": "https://senapred.cl/heladas",
+  "blurb": "Descenso de la temperatura del aire superficial por debajo del punto de congelación, que, dependiendo de la humedad del aire, la intensidad del viento y la…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/heladas/BG_heladass_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es una helada?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Descenso de la temperatura del aire superficial por debajo del punto de congelación, que, dependiendo de la humedad del aire, la intensidad del viento y la condición del terreno puede formar hielo, escarcha o depósitos de humedad congelada y producir daños en la vegetación."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/heladas/BG_heladass_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Qué hacer en caso de heladas?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Viste adecuadamente, por capas y ropa de abrigo. Utiliza calzado cerrado y mantén tus manos, cuello y cabeza protegidos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Aumenta el consumo de alimentos altos en calorías (como frutos secos) y frutas ricas en vitamina C (como cítricos). Bebe líquidos calientes para mantener la temperatura corporal."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita cambios bruscos de temperatura. Al salir de un lugar temperado, cubre tu nariz y boca para evitar respirar aire frío."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita que niños, niñas, personas mayores y personas enfermas crónicas se expongan al frío. Limpia, ventila y calefacciona los ambientes en forma adecuada. Sigue las recomendaciones de la Campaña de Invierno del Ministerio de Salud, visite www.minsal.cl"
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_12.png",
+          "text": "Infórmate de las condiciones del tiempo en: www.meteochile.cl"
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en una casa o edificio",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_01-150x150.png",
+          "text": "Cierra puertas y ventanas que generen corrientes de aire. Trata de mantener una misma temperatura al interior."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_02-150x150.png",
+          "text": "Si usas calefactores y/o chimeneas mantén una ventilación adecuada y mantenla alejada de elementos inflamables. Procura realizar mantención de estos artefactos por parte de personal calificado."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_03-150x150.png",
+          "text": "Vigila la temperatura de las habitaciones de niños y niñas pequeños y personas mayores, principalmente durante la noche y madrugada, debido a que ellos pierden el calor corporal más rápido que una persona adulta."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_04-150x150.png",
+          "text": "Evita el hacinamiento para reducir el contagio de enfermedades respiratorias."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_05-150x150.png",
+          "text": "Protege el medidor del agua de tu casa, cubriéndolo con algún elemento que lo aísle de la escarcha y hielo."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás al aire libre",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_06-150x150.png",
+          "text": "Evita permanecer expuesto a las bajas temperaturas. Dirígete a un lugar con calefacción."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_07-150x150.png",
+          "text": "Al caminar, hazlo con precaución considerando las condiciones del terreno. Utiliza calzado adecuado para evitar resbalar."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_08-150x150.png",
+          "text": "Si conduces un vehículo, hazlo con precaución y manteniendo una distancia prudente con el que te antecede."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_09-150x150.png",
+          "text": "Si ves a alguien en situación de calle, comunícate con el Fono Calle: 800 104 777 opción CERO del Ministerio de Desarrollo Social y Familia (disponibles en las regiones de: Valparaíso, Metropolitana, O’Higgins, Maule, Ñuble y Biobío) o contacta a tu municipio."
+        }
+      ]
+    },
+    {
+      "heading": "Si estás en el campo",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_10-150x150.png",
+          "text": "Asegura forraje y agua para los animales y evita el pastoreo temprano. Mantén hembras por parir y crías en recintos protegidos."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/heladas/icon_heladas_11-150x150.png",
+          "text": "Protege las especies vegetales sensibles a heladas como lechuga, tomate, albahaca, entre otras."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8889/13_preparate_con_senapred_heladas_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8890/13_get_ready_with_senapred_frosts_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8891/13_preparez_vous_a_laide_du_senapred_gelees_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/heladas.png"
+}

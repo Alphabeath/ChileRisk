@@ -2,10 +2,11 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db
+from app.core.limiter import limiter
 from app.schemas.air_quality import AirQualityListResponse, AirQualityZoneOut
 from app.services.airechile_service import (
     get_airechile_by_comuna,
@@ -27,7 +28,9 @@ def _to_out(row) -> AirQualityZoneOut:
 
 
 @router.get("", response_model=AirQualityListResponse)
+@limiter.limit("60/minute")
 async def list_air_quality(
+    request: Request,
     session: AsyncSession = Depends(get_db),
     date_param: date | None = Query(default=None, alias="date"),
     region: int | None = Query(default=None, ge=1, le=16),
@@ -53,7 +56,9 @@ async def list_air_quality(
 
 
 @router.get("/by-comuna/{cod_comuna}", response_model=AirQualityZoneOut)
+@limiter.limit("60/minute")
 async def air_quality_by_comuna(
+    request: Request,
     cod_comuna: int,
     session: AsyncSession = Depends(get_db),
     date_param: date | None = Query(default=None, alias="date"),
@@ -72,12 +77,15 @@ async def air_quality_by_comuna(
 
 
 @router.get("/{slug}", response_model=AirQualityZoneOut)
+@limiter.limit("60/minute")
 async def air_quality_zone(
+    request: Request,
     slug: str,
     session: AsyncSession = Depends(get_db),
     date_param: date | None = Query(default=None, alias="date"),
 ) -> AirQualityZoneOut:
     """Detail for one Aire Chile zone slug."""
+
     if not get_zone(slug):
         raise HTTPException(status_code=404, detail="Unknown Aire Chile zone slug")
     d = _resolve_date(date_param)

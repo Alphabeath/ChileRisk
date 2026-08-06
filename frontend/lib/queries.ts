@@ -3,15 +3,8 @@ export const queryKeys = {
   regionRisk: (codregion: number) => ["regionRisk", codregion] as const,
   comunaRisk: (codcomuna: number, date: string) =>
     ["comunaRisk", codcomuna, date] as const,
-  comunaMapScores: (date: string) => ["comunaMapScores", date] as const,
   recentEvents: (date: string) => ["recentEvents", date] as const,
-  eventImpact: (eventId: number) => ["eventImpact", eventId] as const,
   activeAlerts: (date: string) => ["activeAlerts", date] as const,
-  familyPlan: () => ["familyPlan"] as const,
-  simulacros: (params: Record<string, unknown>) =>
-    ["simulacros", params] as const,
-  nextSimulacro: () => ["nextSimulacro"] as const,
-  simulacro: (slug: string) => ["simulacro", slug] as const,
   airQuality: (
     date: string,
     params: { region?: number; episodeOnly?: boolean } = {},
@@ -20,11 +13,15 @@ export const queryKeys = {
     ["airQualityZone", slug, date] as const,
   airQualityByComuna: (codComuna: number, date: string) =>
     ["airQualityByComuna", codComuna, date] as const,
-  dashboardSummary: () => ["dashboardSummary"] as const,
-  userProfile: () => ["userProfile"] as const,
-  nearestComuna: (lat: number, lon: number) =>
-    ["nearestComuna", lat, lon] as const,
-  comunaCatalog: () => ["comunaCatalog"] as const,
-  chatThreads: () => ["chatThreads"] as const,
-  chatThread: (id: string) => ["chatThread", id] as const,
+  meteoChileZones: (date: string) => ["meteoChileZones", date] as const,
+  simulacros: (params: Record<string, unknown> = {}) =>
+    ["simulacros", params] as const,
+  simulacroNext: () => ["simulacroNext"] as const,
+  simulacro: (slug: string) => ["simulacro", slug] as const,
+  nearestMeetingPoints: (params: {
+    lat: number
+    lon: number
+    hazard?: string
+    limit?: number
+  }) => ["nearestMeetingPoints", params] as const,
 }

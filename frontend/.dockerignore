@@ -32,3 +32,6 @@ README.md
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Raw SHP source (~200MB) — only public/data/evacuacion runtime assets are needed in the image
+data/evacuacion-source

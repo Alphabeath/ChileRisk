@@ -1,455 +1,192 @@
-# FRONTEND.md — Component & hook reference
+# Frontend — referencia estable
 
-Referencia de lo **shipped** en el mapa y datos. Índice agente: [AGENTS.md](../AGENTS.md). Diseño: [DESIGN.md](./DESIGN.md).
+## Stack
 
----
+- Next.js 16 (Turbopack) + React + Tailwind CSS. Auth UI aún no; el monitor usa proxy `/api/backend` con JWT guest.
+- HTTP: `lib/api.ts` → same-origin `/api/backend/*` (firma `jose` + `AUTH_SECRET`) → FastAPI. **TanStack Query** (`@tanstack/react-query`) — ver § [Datos del backend (TanStack Query)](#datos-del-backend-tanstack-query).
+- Docker: `frontend/Dockerfile` (multi-stage bun + `output: "standalone"` en `next.config.ts`) + `.dockerignore`. Health: `GET /api/health`.
+- Mapas: **MapLibre GL JS 6.1** vía wrapper vendido `components/ui/map.tsx` (mapcn: exporta `Map`, `MapControls`, `useMap`, `MapGeoJSON`, etc.).
+- Superficies / Mica: `lib/surface.ts` + `MicaLightProvider` en root layout — ver [DESIGN.md](DESIGN.md).
 
-## Map page composition
+## Rutas
 
-**Route:** `app/(citizen)/monitor/page.tsx`
+Índice canónico en [AGENTS.md](../AGENTS.md). Existentes hoy:
 
-```tsx
-<ChileMap />
-<MapOverlays />  // desktop columns + mobile Drawer
-```
+| Ruta | Página | Estado |
+|---|---|---|
+| `/` | Landing (sin citizen navbar) | pública |
+| `/monitor` | Mapa multi-amenaza (API real + Alertas + Fecha) | pública + navbar |
+| `/evacuacion` | Mapa evacuación (capas tsunami/volcán/incendio + puntos cercanos) | pública + navbar |
+| `/desastres`, `/desastres/[tipo]` | Guías de preparación SENAPRED (catálogo + detalle) | pública + navbar |
+| `/inicio`, `/preparacion`, `/asistente`, `/simulacros`, `/cuenta` | Stubs “Próximamente” | pública + navbar |
 
-**Evacuation:** `app/(citizen)/evacuation/page.tsx` → `EvacuationPageShell` (same breakpoint pattern).
+Citizen chrome vive en `app/(citizen)/` (route group; URLs sin prefijo). Auth (`/iniciar-sesion`, …) aún no. Código de features en inglés.
 
-### Responsive map chrome (`md` = 768px)
+## Superficies y Mica
+
+- Tokens: `SURFACE_PANEL_CLASS`, `SURFACE_MICA_INTERACTIVE_CLASS`, `SURFACE_PANEL_SHELL_CLASS` en `lib/surface.ts`.
+- CSS theme-aware: `.surface-mica` en `app/globals.css` (`--mica-spot`, `--mica-mid`, blend claro/oscuro).
+- Provider: `components/mica-light-provider.tsx` (rAF + `pointer: fine` + `prefers-reduced-motion`) montado dentro de `ThemeProvider` en `app/layout.tsx`.
+- Cableado actual: shell de `MapControls` (`ControlGroup`), card de `MapPopup` en `components/ui/map.tsx`, `CitizenNavbar`, y paneles de `/evacuacion`.
+
+## Mapa de evacuación (`/evacuacion`)
+
+Página dedicada (no `ChileMap`). Host **mapcn** (`Map` / `useMap` / `MapControls` / `MapPopup`).
+
+- `app/(citizen)/evacuacion/page.tsx` → `EvacuationPageShell`
+- `components/map/evacuacion-map.tsx` — mapa + capas imperativas; basemap **satélite** (default) / **calle** OpenFreeMap Liberty+Dark (cambio de basemap vía `styles`/`setStyle`, sin remount — conserva centro/zoom como el tema); marcador de ubicación del usuario (punto azul con ping) visible **junto a los puntos de encuentro** (zoom ≥ `EVACUATION_MEETING_POINTS_MIN_ZOOM`)
+- `lib/evacuacion-layers.ts` — tsunami / volcán / incendio; polígonos pesados = PMTiles only; flechas de rutas al **extremo final** de cada LineString
+- `components/evacuacion/*` — leyenda (chips + lista scrollable; checkboxes custom), puntos cercanos (acciones **En mapa** / **Google Maps**); columna desktop reparte altura entre ambos paneles; popup de capa (`EvacuationPopupShell` / `EvacuationPopupContent`) sigue el patrón territorio/sismo (`MapPopup` `md+`, `Sheet` móvil); sección **Detalle** muestra descripción de qué es / qué hacer por capa (`getEvacuationPopupDescription`, sin fila de ubicación); auto-locate silencioso si `permissions.geolocation === "granted"`; sin modal de ubicación al entrar
+- Assets: `public/data/evacuacion/` vía `make evacuacion-data` (GDAL + tippecanoe). Polígonos pesados = **solo PMTiles**; líneas/puntos = GeoJSON. **Cota 30 m fuera de v1.**
+- API: `GET /api/v1/meeting-points/nearest` vía `useNearestMeetingPoints`; deep-link `?hazard=tsunami|volcanic&lat=&lon=`
+- Defaults capas: peligros volcánicos ON, radios OFF; incendio off hasta toggle
+
+## Guías de desastres (`/desastres`)
+
+Contenido vendoreado de senapred.cl (25 guías: 22 "Prepárate con SENAPRED" + 3 "Preparación inclusiva"). 100% estático: sin backend ni TanStack Query.
+
+- `scripts/sync-senapred-guides.mjs` (`bun run sync:senapred`) — scraper one-shot: parsea Elementor HTML → `data/senapred/<slug>.json` + imágenes a `public/data/senapred/img/<slug>/`. Captura también los fondos de sección/columna (`elementor-frontend-inline-css` → bloque `background`) y las 25 imágenes de tarjetas de `/recomendaciones/` → `public/data/senapred/img/catalog/` + `cardImage` en cada JSON + `index.json`. Commit del snapshot; re-run para refrescar.
+- `lib/senapred-guides.ts` — tipos (`GuideBlock`: text/links/step/figure/subheading), `listGuideSummaries` / `getGuide` (require context sobre JSON vendoreado), iconos lucide por slug (`GUIDE_ICONS` record + `getGuideIcon`), `GUIDE_GROUPS`, `FEATURED_GUIDE_SLUGS` / `isFeaturedGuideSlug` (amenazas prioritarias del catálogo).
+- `app/(citizen)/desastres/page.tsx` — catálogo con hero de marca (`DisastersCatalogHero`: full-bleed con asset `public/data/senapred/img/catalog/hero.png` (1672×941) + scrim institucional Chile + stats mono), bloque **Amenazas prioritarias** (6 featured `FEATURED_GUIDE_SLUGS`, sismos en span 2 cols `md+`), resto de grupos en cards imagen-first (`GuideCard` variants featured/standard/inclusive, headers de sección con count mono y `border-b`), aside atribución con link a SENAPRED. Scroll-reveal con `ScrollRoot` + `Reveal`.
+- `app/(citizen)/desastres/[tipo]/page.tsx` — SSG vía `generateStaticParams`; slug desconocido → `notFound()`. Cuerpo: `components/disasters/guide-content.tsx` (back-link "Todas las guías" al catálogo; hero alto `h-72 sm:h-[28rem]` con gradiente profundo y título/blurb/contador de secciones cuando `intro[0]` es `background`; columna de lectura `max-w-3xl`; secciones numeradas `01…NN` con reveals; pasos con pictogramas SENAPRED y peso visual propio; fondos de sección full-bleed; botones Descargables/NNA).
+- `components/disasters/scroll-reveal.tsx` — `ScrollRoot` (main scroller como root del `IntersectionObserver` de Motion) + `Reveal` (fade+rise one-shot, `once: true`, estático si `prefers-reduced-motion`). Uso obligatorio en páginas scrollables del shell citizen (`h-dvh overflow-hidden`).
+- Atribución por guía ("Fuente: SENAPRED · <título>" + link al original).
+
+## Citizen navbar
+
+- `components/layout/citizen-navbar.tsx` — top bar fija (`SURFACE_PANEL_SHELL_CLASS`) + Sheet móvil; compacto `md`–`xl` (iconos + label activo + Tooltip). Marca móvil `text-sm` (igual que links del Sheet); pill del Sheet sin spring.
+- `lib/citizen-nav.ts` — ítems IA (rutas ES) + `isNavActive`.
+- `lib/citizen-layout.ts` — `CITIZEN_NAVBAR_CLEARANCE_PX` / `CITIZEN_NAVBAR_PAD_TOP_CLASS` para contenido y paneles futuros.
+- `components/layout/page-stub.tsx` — placeholder compartido (`h-dvh overflow-y-auto`).
+- Layout: `app/(citizen)/layout.tsx` (`h-dvh overflow-hidden`). Detalle visual: [DESIGN.md](DESIGN.md) §7.3.
+
+## Sistema de mapa (`/monitor`)
+
+Migrado desde `old_frontend/`: cartografía + detalle de territorio + **panel Alertas** + **panel Fecha** + capa sismos, cableados al backend vía `lib/api.ts` y React Query. Sin leyenda de riesgo ni Controles.
+
+- `app/(citizen)/monitor/page.tsx` — `MonitorLiveDataProvider` + `ChileMap` vía `next/dynamic` (`ssr: false`) + `MapAlertsOverlay` bajo la navbar fija.
+- `app/api/backend/[...path]/route.ts` — proxy JWT guest (`sub: "guest"`) hacia `BACKEND_INTERNAL_URL`.
+- `lib/api.ts` / `lib/types.ts` / `lib/queries.ts` / `lib/query-cache.ts` — cliente HTTP + keys TQ + TTL hoy/histórico.
+- `hooks/use-map-data.ts` — GeoJSON estático + enriquecimiento regional `/risk/national` (props de popup); comunas sin scores de mapa; `refreshMapRisk` al cambiar fecha.
+- `components/map/monitor-live-data.tsx` — un suscriptor `useActiveAlerts` + `useAirQuality`; hijos leen context; prefetch al cambiar fecha.
+- `hooks/use-active-alerts.ts`, `use-air-quality.ts`, `use-recent-events.ts`, `use-comuna-risk.ts`, `use-region-risk.ts`, `use-national-risk.ts`, `use-meteochile-zones.ts`, `use-simulacros.ts` (lista/next/slug; página stub aún).
+- `components/map/chile-map.tsx` — `ChileMap` + `ChileLayers` (capas imperativas vía `useMap()`). Coropleta real; click región/comuna → `TerritoryDetailShell`; click marker sismo → `SeismicEventShell`; markers filtrados por alertas `hazard_type=sismo`. Controles `MapControls` bottom-right. Zoom 3–10. Auto-centrado en la ubicación del usuario al entrar **solo si** el permiso de geolocalización ya está concedido (sin prompt; misma política que `/evacuacion`, `isWithinChileMapBounds`).
+- `components/map/map-alerts-overlay.tsx` — host izquierda: Alertas + Fecha (desktop); FABs bottom-left (móvil) → Sheets.
+- `components/map/active-alerts-panel.tsx` — filtros por fuente; datos vía `useMonitorLiveData`.
+- `components/map/query-date-control.tsx` — selector de día; estado `useQueryDate` → `ui-store`; dispara reconsulta API.
+- `stores/ui-store.ts` — preferencias monitor: `selectedDate`, `alertsExpanded`, `dateExpanded`, `alertsFilter` (zustand + persist).
+- `hooks/use-query-date.ts` — `{ selectedDate, setSelectedDate }` sobre el store.
+- `components/ui/calendar.tsx` + `popover.tsx` — calendario ops (mono, `rounded-none`) usado por Fecha.
+- `components/map/alert-ui.tsx` — `ActiveAlertCard` / `AirQualityAlertCard` + badges.
+- `components/map/territory-detail-shell.tsx` — shell por breakpoint; riesgo + alertas filtradas del territorio (alerts/air desde `MonitorLiveData`).
+- `components/map/territory-detail-content.tsx` — cuerpo compartido: badge por alerta más grave, lista de alertas, estados `loading` / `empty` / `ready`.
+- `components/map/seismic-event-shell.tsx` / `seismic-event-detail.tsx` — popup/sheet al click del marker sismo (CSN).
+- `components/ui/skeleton.tsx` — placeholder de carga (Alertas / popups).
+- `lib/seismic.ts` — accent por magnitud, URLs CSN/intensidad, copy de ubicación.
+- `components/map/map-config.ts` — URLs GeoJSON, zoom, paleta, tipos props.
+- `lib/citizen-layout.ts` — navbar clearance + insets/width paneles mapa.
+- `lib/alert-types.ts` — reexport de tipos alerta/aire desde `lib/types.ts`.
+- `lib/alerts-display.ts` / `lib/air-quality-display.ts` — meta de badges, sort, copy de cards.
+- `lib/alerts-mock.ts` / `lib/territory-risk-mock.ts` — mocks apagados (`USE_*_MOCK = false`); conservar solo como referencia.
+- `lib/comunas-geojson.ts` — `prepareComunasGeojson`.
+- `lib/risk-scale.ts` — alertas ChileRisk; CSS vars `--alert-*`; hex MapLibre.
+- Datos estáticos: `regional.geojson` + `comunas_medium.geojson` (default, ~2.3 MB) + `comunas_labels.geojson` (puntos precalculados); alternativa A/B: `comunas_simplified.geojson` (~0.3 MB, fallback). El full raw (~18 MB) **vive fuera del repo** en `~/data/chilerisk/comunas_full.geojson` (override `COMUNAS_FULL_SRC=...`); no se sirve por defecto. Regenerar medium: `make comunas-data` (`scripts/build-comunas-geojson.sh`, Docker GDAL ogr2ogr `-simplify` sobre full). Risk scores inyectados desde API vía `setData` (solo regiones, 16 features). Niveles de alerta/aire se aplican con `setFeatureState` — sin re-tile.
+
+### Capas (orden z, ids = los del viejo)
+
+`region-fill` (maxzoom 7) → `comuna-fill`/`comuna-line`/`comuna-label` (minzoom 7) → `region-line` → `region-label-custom` (5–7) → `meteochile-zone-fill`/`meteochile-zone-line` (franjas DMC; **solo filtro Meteo**) → `earthquake-layer`. **Filtro Alertas ≠ Aire/Meteo:** `mapAlertFillColorExpression()` según `alert_level` leído de `feature-state` (`coalesce` feature-state → prop → `""`; `source=meteochile` excluido de la coropleta CUT). **Filtro Aire:** `mapAirFillColorExpression()` (mismo patrón `air_level`). **Meteo:** polígonos oficiales vía `/alerts/meteochile/zones` (no se pintan en “Todas”). `composite_score` no pinta el mapa. Geometría: `setData` **una vez** por source tras cargar; cambios de nivel = `applySourceLevelState` (feature-state por id, con cache de estados). Opacidad: pulso rest→hover (`fillOpacityPaint`, `ALERT_PULSE_FPS` 10 Hz + `fill-opacity-transition`) **solo sobre la capa visible** según zoom (región < 7, comuna ≥ 7); se pausa con tab oculto, `prefers-reduced-motion` o sin niveles activos. Pulsing-dots sísmicos: canvas 64 px, estáticos (sin `triggerRepaint`) cuando no hay sismos linkeados.
+
+### Detalle región/comuna
+
+Click sobre una región (zoom < 7) o comuna (zoom ≥ 7) abre el detalle compartido:
+
+| Viewport | Shell |
+|----------|--------|
+| `md+` | `MapPopup` anclado (`max-w-[310px]`) |
+| `<md` | `Sheet` `side="bottom"` (`SURFACE_PANEL_SHELL_CLASS`, max-h ~55dvh) |
+
+Cuerpo: header con color/label de la **alerta más grave** del territorio (`ALERT_LEVEL_META`, o peor GEC si solo hay Aire Chile). Sección **Alertas · N** + listado full-bleed (`ActiveAlertCard` + `AirQualityAlertCard`, mismo formato rail/tint/badge; Aire Chile linkea a la ficha externa, sin “Ver detalle”). Respeta `alertsFilter`. Datos live (risk + `/alerts/active` + `/air-quality`).
+
+### Popup sismo (marker)
+
+Click en el centro del pulsing-dot (`earthquake-layer`, hitbox ≤20px) abre detalle CSN:
+
+| Viewport | Shell |
+|----------|--------|
+| `md+` | `MapPopup` (`SeismicEventShell`, `max-w-[310px]`) |
+| `<md` | `Sheet` bottom (`SURFACE_PANEL_SHELL_CLASS`) |
+
+Header con accent por magnitud (`getSeismicAccentColor`: ≥5.5 roja / ≥5 naranja / resto ámbar) + badge `M x.x`. Stats (profundidad, hora, Mercalli) + links CSN / intensidades / SENAPRED relacionados. Datos desde `useRecentEvents` (lookup por `event_id` del feature).
+
+### Panel Alertas
 
 | Viewport | UI |
 |----------|-----|
-| `md+` | Floating glass columns + DnD (`MapLeftPanelsColumn` / `MapRightPanelsColumn` or `EvacuationLeftPanelsColumn`) |
-| `<md` | Columns hidden; persistent **bottom sheet** (collapsed bar always visible; expand for tab content) |
+| `lg+` | Columna fija izquierda (`MAP_PANEL_*`, 320px) con `ActiveAlertsPanel flow` |
+| `md`–`lg` | Rail angosto pegado a la izquierda; al expandir → 320px |
+| `<md` | FAB “Alertas” bottom-left → `Sheet` bottom con `ActiveAlertsPanel embedded` |
 
-- Breakpoint helpers: `MAP_MOBILE_BREAKPOINT`, `MAP_DESKTOP_ONLY_CLASS`, `MAP_DESKTOP_ONLY_CONTENTS_CLASS`, `MAP_MOBILE_ONLY_CLASS` in `lib/citizen-layout.ts`
-- Primitive: `components/map/map-mobile-bottom-sheet.tsx` — portal a `body`, handle + status + tabs, expanded/collapsed
-- Monitor: `components/map/monitor-mobile-drawer.tsx` — tabs **Alertas** \| **Fecha** \| **Vistas** (sin Controles/`MapActionsPanel` en móvil)
-- Evacuation: `components/evacuation/evacuation-mobile-drawer.tsx` — tabs **Puntos** \| **Capas**; sheet oculto mientras el prompt de ubicación está activo
-- Evacuation map (`EvacuationMap`): al aceptar geolocalización (o si el permiso ya está `granted`), dibuja un marcador DOM “Tu ubicación” (punto azul + pulso; respeta `prefers-reduced-motion`) y hace `flyTo` a esas coords
-- Deep-link emergencia: `/evacuation?hazard=tsunami|volcanic&lat=&lon=` — `EvacuationPageShell` llama `getNearestMeetingPoints` y hace `flyTo` al punto más cercano (fallback KMZ client-side)
+Datos reales (`/alerts/active?date=` + `/air-quality?date=` + `/alerts/meteochile/zones` con filtro Meteo). Al cambiar fecha, mientras `isPending` → **Skeleton** (nunca EmptyState). Cards en `alert-ui.tsx`: rail + tint ~12% + badge (mismo patrón ActiveAlert / Aire Chile; Aire sin expand “Ver detalle”). El filtro por fuente (`alertsFilter`) controla lista, coropleta y markers sismo (`senapred` / `chilerisk` / `sernageomin`); **Meteo** pinta franjas DMC oficiales solo con ese chip activo. En “Todas”, Meteo aparece en la lista sin franjas. Alcance por comuna vía PIP centroides + overrides (`ip`→5201). Niveles DMC: Aviso→amarilla, Alerta→naranja, Alarma→roja.
 
-### `<MapOverlays />`
+### Loading / Skeleton (obligatorio)
 
-**Path:** `components/map/map-overlays.tsx`
+`components/ui/skeleton.tsx` — pulso `bg-muted` (`rounded-none` por defecto del tema).
 
-- Desktop (`md+`): `DndContext` with `PointerSensor` (`distance: 4`), `KeyboardSensor`, `restrictToWindowEdges` → left/right columns
-- Mobile: `MonitorMobileDrawer` (persistent bottom sheet)
-- ID contexto: `ALERTS_DND_CONTEXT_ID` (`"chilerisk-active-alerts"`)
+**Regla:** cualquier lista o panel alimentado por React Query que dependa de `selectedDate` / `?date=` **debe** ramificar `isPending` (o `isLoading`) **antes** de decidir EmptyState. Con `data ?? []`, un fetch pendiente se ve como “sin datos”.
 
-Overlays draggables deben vivir **dentro** del `DndContext` desktop.
+| Superficie | Comportamiento |
+|------------|----------------|
+| Panel Alertas | `AlertsListSkeleton` si `isPending` del context `MonitorLiveData` |
+| Popup territorio (alertas) | Skeleton de cards si `alertsLoading && alerts.length === 0` |
+| Popup territorio (riesgo) | `LoadingSkeleton` con `Skeleton` si status `loading` |
 
----
+No uses `animate-pulse` ad-hoc en paneles nuevos: reutiliza `Skeleton`.
 
-## Map components
+### Panel Fecha
 
-### `<ChileMap />`
+| Viewport | UI |
+|----------|-----|
+| `lg+` | Columna izquierda bajo Alertas — `QueryDateControl` (320px) |
+| `md`–`lg` | Mismo rail/expand que Alertas |
+| `<md` | FAB “Fecha” (sobre Alertas) → `Sheet` bottom con `embedded` |
 
-**Path:** `components/map/chile-map.tsx`
+Estado en `stores/ui-store` vía `useQueryDate` (hoy por defecto; clamp 30 días; persist localStorage). Al cambiar fecha se reconsulta risk/alerts/air/events (prefetch en `MonitorLiveDataProvider`).
 
-MapLibre — 16 regiones, 346 comunas (zoom ≥ 7), popups React (alertas SERNAPRED/ChileRisk/SERNAGEOMIN + GEC Aire Chile por zona), marcadores sísmicos M≥4.5, coloreado por `useMapData()` (respeta `selectedDate`). Zoom/brújula: `MapNavigationControl` (glass, no `NavigationControl` nativo).
+## Datos del backend (TanStack Query)
 
-**Props:** ninguna (autocontenido).
+Norma del proyecto: **todo GET al backend desde el cliente** pasa por TanStack Query (`useQuery` / `fetchQuery` / `prefetchQuery`). Prohibido `useEffect` + `fetch` ad hoc en componentes UI.
 
-**Data:** `/data/regional.geojson`, `/data/comunas.geojson` — ver `map-config.ts`.
+| Pieza | Rol |
+|-------|-----|
+| `app/providers.tsx` | `QueryClientProvider` — defaults: `staleTime: STALE.risk`, `refetchOnWindowFocus: false`, `refetchOnReconnect: false` |
+| `lib/queries.ts` | `queryKeys` canónicos |
+| `lib/query-cache.ts` | `STALE.*` + `staleTimeForLive(date, liveMs)` — **hoy** TTL corto; **`?date=` pasado** → 60 min |
+| `lib/api.ts` | Cliente HTTP (sin cache propio) |
+| `hooks/use-*.ts` | Suscriptores TQ |
 
-### Capas GIS: fuente vs runtime
+### TTL por recurso
 
-| Carpeta | Rol |
-|---------|-----|
-| `frontend/public/data/` | Runtime MapLibre (`/data/...` en `map-config.ts`). **Commitear.** |
-| `frontend/data/*.ts` | Contenido TS (`disasters.ts`, `simulacros.ts`) importado por la app. **Commitear.** |
-| `frontend/data/{tsunami,volcanos,wildfire}/` | Fuentes GIS (shapefile, KMZ, TIF) para regenerar GeoJSON/KMZ en `public/data/`. **Commitear** (pipeline). |
-| No poner GeoJSON duplicados en `frontend/data/` | `comunas.geojson` / `regional.geojson` viven solo en `public/data/` (y seed backend). |
+| Recurso | Hook | staleTime (hoy) | Histórico |
+|---------|------|-----------------|-----------|
+| alerts / meteo zones | `useActiveAlerts`, `useMeteoChileZones` | 5 min (`STALE.alerts`) | 60 min |
+| air-quality | `useAirQuality` (+ zone/comuna) | 15 min (`STALE.air`) | 60 min |
+| risk (national/region/comuna) | `useNationalRisk` / `useRegionRisk` / `useComunaRisk` / `use-map-data` | 10 min (`STALE.risk`) | 60 min |
+| recent events | `useRecentEvents` | 3 min (`STALE.events`) | 60 min |
+| simulacros lista / slug | `useSimulacros`, `useSimulacro` | 60 min (`STALE.simulacros`) | n/a |
+| next simulacro | `useNextSimulacro` | 15 min (`STALE.simulacroNext`) | n/a |
 
-**Regenerar wildfire:** `python3 scripts/convert-wildfire.py` (input `frontend/data/wildfire/ocurr_1km_2025.shp` → `public/data/wildfire/wildfire-occurrence.geojson`). Tsunami/volcanos: fuentes en `frontend/data/`; conversión a `public/data/` aún no tiene script en repo.
+Monitor: `MonitorLiveDataProvider` es el **único** suscriptor de alerts+air; panel, badge móvil, mapa y popup territorio leen `useMonitorLiveData()`. Prefetch al cambiar `selectedDate`.
 
-**A11y:** `role="application"`, `aria-label` mapa Chile.
+### Excepciones
 
----
+- Chat / streaming → `useMutation` o SSE; no cache GET.
+- Assets estáticos (`public/data`, CDN, worker MapLibre) → fuera de TQ.
 
-### `<MapNavigationControl />`
+### Notas de integración (importante)
 
-**Path:** `components/map/map-navigation-control.tsx`
+- **Worker de MapLibre**: maplibre v6 es ESM-only y en bundlers `import.meta.url` no resuelve al worker → `setWorkerUrl("/vendor/maplibre/maplibre-gl-worker.mjs")` en `components/ui/map.tsx`. Los archivos `maplibre-gl-worker.mjs` + `maplibre-gl-shared.mjs` viven copiados en `public/vendor/maplibre/` (el worker importa su sibling por ruta relativa). Sin esto el mapa nunca dispara `load` (ni tiles ni capas).
+- **Tema**: el layout fuerza `dark`, pero `next-themes` (`ThemeProvider` con `defaultTheme="system"`) lo sobreescribe con la preferencia del sistema (`ThemeHotkey`: tecla `d`). El mapa ya **no** fuerza tema: el basemap sigue el tema de la app (positron en claro, CARTO dark-matter en oscuro) y las capas se recalibran con `MAP_THEME_COLORS` (slates con halos blancos en claro; los valores oscuros del mapa viejo en oscuro). El effect de `ChileLayers` depende de `resolvedTheme` y se re-ejecuta tras el style swap de mapcn.
+- **Comunas detail (A/B):** `COMUNAS_DETAIL` en `map-config.ts` — tres tiers: `"full"` (raw fuera del repo, `~/data/chilerisk/comunas_full.geojson`, ~18 MB; solo debug/A-B, copiar localmente), `"medium"` (**default runtime**, ~2.3 MB, `make comunas-data` desde full), `"simplified"` (~0.3 MB fallback/A-B). Hard refresh al cambiar. Geometría: `setData` **una vez** por source; niveles de alerta/aire via `setFeatureState` (ver `applySourceLevelState` en `chile-map.tsx`) — no re-tile en filtros ni ticks live. Vista regional primero (`mapReady`); comunas cargan en paralelo. Labels de comuna: `comunas_labels.geojson` precalculado (`scripts/build-comunas-labels.mjs`, sourced de simplified), capa adjunta al zoom ≥ `COMUNAS_MIN_ZOOM`. Fecha cambia solo props de riesgo regionales (`setData` de 16 features) + re-aplica feature-state.
+- **JWT guest:** hasta NextAuth, el proxy firma `sub: "guest"` con `AUTH_SECRET` (mismo valor que el backend en compose).
 
-Zoom + / − y brújula (restablecer norte). Glass + Mica (`MAP_NAV_CONTROL_CLASS` / `MAP_NAV_BUTTON_CLASS` en `lib/map-panel-styles.ts`), posición top-right bajo navbar (`CITIZEN_NAVBAR_CLEARANCE_PX` + `MAP_PANEL_RIGHT_INSET_PX`). Sustituye `maplibregl.NavigationControl` en `ChileMap` y `EvacuationMap`.
-
----
-
-### `<ActiveAlertsPanel />`
-
-**Path:** `components/map/active-alerts-panel.tsx`  
-**Alias deprecado:** `SenapredAlertsPanel` desde `senapred-alerts-panel.tsx`
-
-Lista unificada: SERNAPRED + ChileRisk + SERNAGEOMIN (`useActiveAlerts`) + condiciones GEC Aire Chile (`useAirQuality`). Orden por severidad (GEC y alertas en la misma lista).
-
-- Posición default: top-left bajo navbar
-- Draggable: `useDraggablePanel({ id: "active-alerts-panel" })` (modo overlay)
-- **`embedded`:** sin shell/drag (tab móvil **Alertas**)
-- Badge en header: conteo del filtro activo (todas = alertas + zonas)
-- **Filtro por fuente (chips visibles** bajo el header, grilla 3 cols):
-  - `Todas` · `Chile Risk` · `Sernapred` · `Volcán` · `Aire`
-  - Cada chip muestra conteo; filtrado client-side
-  - `EmptyState` adapta el copy por filtro
-- Cards: `ActiveAlertCard` + `AirQualityAlertCard` en `alert-ui.tsx` (GEC: badge nivel + expandible medidas / CTA Aire Chile; SERNAGEOMIN: badge + link `external_url`)
-- Modo mapa `air` sigue en **Vistas** (no en este panel)
-
----
-
-### `<QueryDateControl />`
-
-**Path:** `components/map/query-date-control.tsx`
-
-Selector de día para mapa y hooks (`useQueryDate` → `ui-store.selectedDate`).
-
-- Ancla: `corner: "bottom-left"` + drag
-- Prev/next día, calendario (`Calendar` + `Popover` shadcn), “Hoy”
-- Ventana: 30 días — `lib/query-date.ts`
-- API: pasa `date` en risk/events/alerts vía hooks
-
-Ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
-
----
-
-### `<RiskLegendPanel />`
-
-**Path:** `components/map/risk-legend-panel.tsx`
-
-Leyenda de buckets de riesgo (`MAP_RISK_BUCKETS`), glosario SERNAPRED (`ALERT_LEVEL_META`) y glosario GEC (`AIR_QUALITY_LEVEL_META`). Ancla `bottom-right`, collapsible, draggable (`id: "risk-legend-panel"`).
-
-Filas de color usan `LegendRow` (grid `0.75rem` + texto) para alinear el swatch con la primera línea del label.
-
-**Selector de modo Riesgo / Alertas / Aire:** tabs controladas por `useUIStore.mapColorMode` + `setMapColorMode`. Cambiar la tab actualiza el color del mapa en `ChileMap`:
-
-- **`risk`** → `mapRiskFillColorExpression()` (color por `composite_score`).
-- **`alerts`** → `mapAlertFillColorExpression()` (match por `alert_level`). Relleno oscilante según severidad. Sin alerta → verde `#085e08`.
-- **`air`** → `mapAirFillColorExpression()` (match por `air_level`). Sin cobertura GEC → gris neutro `#3a3f4a`.
-
-Bordes siempre blancos (`#ffffff`) — no codifican severidad.
-
-**Estado:** `useUIStore.mapColorMode: "risk" | "alerts" | "air"` (session-only, no `persist`).
-
----
-
-### `map-config.ts` / `map-popup.tsx`
-
-Sin cambios de rol: constantes MapLibre; popups con `createPopupContent()` + glass `.cr-popup` en `globals.css`. Sección sísmica usa `popup-seismic-section.tsx` y mensajes según fecha (`formatSeismicEmptyForDate`).
-
-**Vista inicial:** `getMapFitBoundsPadding()` / `getMapPopupOptions()` en `map-popup-options.ts` — desktop reserva paneles (~296px L/R); móvil (`≤767px`) padding simétrico para centrar Chile y dejar hueco al bottom sheet.
-
----
-
-## Layout helpers
-
-### `lib/citizen-layout.ts`
-
-| Export | Uso |
-|--------|-----|
-| `MAP_PANEL_DEFAULT_TOP_PX` | Top bajo `CitizenNavbar` |
-| `MAP_PANEL_WIDTH_CLASS` | `w-[260px] max-w-[calc(100vw-2rem)]` compartido por paneles |
-| `MAP_MOBILE_BREAKPOINT` | `"md"` — cutoff paneles flotantes vs Drawer |
-| `MAP_DESKTOP_ONLY_CLASS` | `hidden md:flex` — columnas de paneles |
-| `MAP_DESKTOP_ONLY_CONTENTS_CLASS` | `hidden md:contents` — wrapper DnD desktop |
-| `MAP_MOBILE_ONLY_CLASS` | `md:hidden` — FAB / drawer host |
-
-### `hooks/use-draggable-panel.ts`
-
-| Opción | Comportamiento |
-|--------|----------------|
-| `defaultPosition` | Fixed x/y (alertas) |
-| `corner` + `cornerInset` | bottom-left / bottom-right; re-ancla en resize |
-
-Retorna: `ref`, `handleProps`, `style`, `isDragging`, `isMoved`, `resetPosition`.
-
----
-
-## Data hooks
-
-### `useQueryDate()`
-
-**Path:** `hooks/use-query-date.ts` — `{ selectedDate, setSelectedDate }` desde zustand.
-
-### `useActiveAlerts(params?)`
-
-**Path:** `hooks/use-active-alerts.ts`
-
-```ts
-useActiveAlerts(params?: {
-  region?: number
-  level?: AlertLevel
-  date?: string  // default: selectedDate del store
-})
-```
-
-**Tipo:** `ActiveAlert` (`lib/types.ts`):
-
-- `source`: `"senapred" | "chilerisk" | "sernageomin"`
-- `record_kind`: `"alerta" | "evento"`
-- `external_url`, `hazard_type`, `affected_scope`, `comuna_codes`, `thread_root_id`, …
-
-**API:** `getActiveAlerts()` → `GET /api/v1/alerts/active?date=…` — hoy: SERNAPRED vigentes hasta desactivación (lookback); histórico: emitidas ese día. Ver [QUERY-DATE.md](../../docs/QUERY-DATE.md).
-
-**staleTime:** 2 min.
-
-### `useAirQuality()` / `useAirQualityZone(slug)`
-
-**Path:** `hooks/use-air-quality.ts`
-
-```ts
-useAirQuality(opts?: { date?: string; region?: number; episodeOnly?: boolean })
-useAirQualityZone(slug: string | null, date?: string)
-```
-
-**Tipo:** `AirQualityZone` (`lib/types.ts`) — niveles GEC `bueno|regular|alerta|preemergencia|emergencia`.
-
-**API:** `getAirQuality()` → `GET /api/v1/air-quality?date=…`
-
-**staleTime:** 5 min.
-
-### `useSimulacros(params?)` / `useNextSimulacro()` / `useSimulacro(slug)`
-
-**Path:** `hooks/use-simulacros.ts`
-
-```ts
-useSimulacros(params?: {
-  from?: string         // YYYY-MM-DD
-  to?: string
-  region?: number       // 1-16
-  type?: DrillType
-  source?: "future" | "recent" | "archive"
-  upcoming_only?: boolean
-  past_only?: boolean
-  limit?: number
-  offset?: number
-})
-useNextSimulacro()              // GET /api/v1/simulacros/next
-useSimulacro(slug)              // GET /api/v1/simulacros/{slug}
-```
-
-**Tipo:** `Simulacro` (`lib/types.ts`):
-
-- `slug`, `title`, `drill_date` (YYYY-MM-DD), `region_code`, `region_name`
-- `drill_type`: `"sismo_tsunami_borde_costero" | "sismo_tsunami_educacion" | "erupcion_volcanica" | "remocion_en_masa" | "otro"`
-- `participating_comunas: string[]`, `summary`, `detail_url`, `mensaje_sae`
-- `source`: `"future"` (calendario próximo) | `"recent"` (pasado reciente) | `"archive"`
-
-**API:** `listSimulacros` → `GET /api/v1/simulacros?…`. Helper `buildSimulacroDrillHref(sim)` (`lib/simulacros-to-drill.ts`) construye el link al step 8 del Plan Familia con `?source=senapred&date=&emergency_type=&outcome=` para pre-rellenar el form de registro de simulacros.
-
-**staleTime:** 30 min (calendario cambia con poca frecuencia).
-
-### Otros hooks con fecha
-
-| Hook | Endpoint |
-|------|----------|
-| `useNationalRisk` | `/api/v1/risk/national?date=` |
-| `useMapData` | national + `/risk/comunas?date=` + GeoJSON |
-| `useRecentEvents` | `/api/v1/events?date=` |
-| `useComunaRisk` | `/api/v1/comunas/{id}/risk?date=` |
-| `useFamilyPlan` | `GET/PUT /api/v1/family-plan` (autosave debounced) |
-
-Claves: `lib/queries.ts`. Cliente HTTP único: `lib/api.ts`.
-
-### `/drills` — Calendario SERNAPRED
-
-**Path:** `app/(citizen)/drills/page.tsx` (redirect permanente `/simulacros` → `/drills`)
-
-Lista los simulacros oficiales de SERNAPRED scrapeados del sitio público. (Sin datos mock/sintéticos). Si el backend no puede sincronizar, el endpoint queda vacío hasta el próximo ciclo del scheduler (24h por defecto).
-
-Shell: `PREPARATION_PAGE_*` (`lib/preparation-ui.ts`) + `PreparationContextBanner` (CTA al paso 8 del plan). Sin breadcrumb encima del hero.
-
-**Composición (top → bottom):**
-
-1. `<SimulacrosPageHero upcomingTotal={…} />` — `CitizenPageHero` (stats próximos/tipos + barra de 4 tipos SENAPRED).
-2. `<SimulacrosNextDrillPanel next={…} />` — countdown del próximo simulacro (panel glass bajo el hero).
-3. `<PreparationContextBanner>` — “Registra en tu plan” → `/preparation/family-plan/step/8?from=drills`.
-4. `<SimulacrosImportanceAccordion>` — colapsable: importancia de los simulacros SERNAPRED.
-5. `<SimulacrosTypesSection>` — panel glass con los 4 tipos SENAPRED (legible sobre el globo).
-6. `<SimulacrosCalendarSection>` — header + filtros **sticky** (`PREPARATION_STICKY_SUBNAV_CLASS`: chips de tipo + `<SimulacrosFilterBar>` tabs Próximos/Pasados + región + rango) + `<SimulacrosTimeline>` agrupado por mes (rail alineado: línea + markers comparten centro; headers + filas). Sin React Chrono / rejilla.
-7. `<SimulacrosFooter>` — referencia oficial + `next_synced_at` + “Actualizar”.
-
-**Componentes:** `components/preparation/simulacros/{simulacros-page-hero, simulacros-next-drill-panel, simulacros-types-section, simulacros-types-chips, simulacros-importance-accordion, simulacros-filter-bar, simulacros-calendar-section, simulacros-timeline, simulacros-month-header, simulacro-list-row, simulacros-empty-state, simulacros-skeleton, simulacros-footer, simulacros-countdown}.tsx`. Helpers: `lib/simulacros-format.ts`, `lib/simulacros-labels.ts`, `lib/simulacros-visual.ts`. Tokens compartidos: `lib/preparation-ui.ts` + `components/layout/citizen-page-hero.tsx`.
-
-**Estados:** skeleton mientras `isLoading`, error state con botón "Reintentar", empty state (`PREPARATION_EMPTY_STATE_CLASS`) separado para upcoming vs past.
-
-### Plan Familia Preparada
-
-Rutas: `/preparation` (hub), `/preparation/emergency-kit` (guía del kit), `/preparation/family-plan/step/[1-8]`, `/preparation/family-plan/summary`.
-
-**Tokens UI:** `lib/preparation-ui.ts` (page shell `py-24`, sticky subnav, hero shell, save pill). Banners cruzados: `PreparationContextBanner`. Breadcrumbs: `PreparationBreadcrumb`.
-
-Componentes: `components/preparation/family-plan/*`, `components/preparation/emergency-kit/*`, `components/preparation/preparation-{page-hero,topic-grid,context-banner,breadcrumb}.tsx`. Tipos: `FamilyPlan`, `FamilyPlanData` en `lib/types.ts`. Mapa de vivienda (paso 4): módulo `components/preparation/family-plan/floor-map/` (chrome + tip “Cómo editar”; canvas sin rediseño profundo). Summary: checklist de pasos incompletos con deep-link al step + CTA PDF.
-
-**Wizard chrome:** `FamilyPlanStepNav` — desktop pills; móvil sticky (paso + pct + prev/next) + expand “Ver todos los pasos”. `FamilyPlanWizardShell` — breadcrumb Preparación → Plan → Paso N; save pill semántica; footer sticky móvil (Anterior | Guardado | Siguiente) que se oculta al focus de input.
-
-**Step content layout:** primitivas en `family-plan-layout.tsx` (`FamilyPlanStepRoot`, `StatusBanner`, `CategoryShell`, `ItemCard`, `FormGrid`, `EmptyState`/`AddPanel`, `StatusChip`) + `FamilyPlanField`/`FamilyPlanSection`. Todos los pasos 1–8 (y chrome exterior del floor-map) usan el mismo ritmo `gap-4` y grids `sm:grid-cols-2`.
-
-**Conexión bidireccional Kit ↔ Plan:** `/preparation/emergency-kit` usa `PreparationContextBanner` (desktop) + CTA sticky móvil → `/preparation/family-plan/step/7?from=emergency-kit`. Categorías y necesidades especiales usan `FamilyPlanCategoryShell`. Kits especiales siempre visibles; chip “En tu hogar” si el plan los marca. El wizard muestra el mismo patrón de banner de contexto cuando viene del kit.
-
-**Conexión Calendario SERNAPRED ↔ Plan:** `/drills` → banner + CTA “Agregar a mi plan” por card hacia step 8 (`?source=senapred&…`). `StepDrills` pre-rellena y muestra banner de retorno. Hub apunta topic “Comunicación y simulacros” a `/drills`.
-
-**Hub `/preparation` — bloques (orden top → bottom):**
-
-1. `PreparationPageHero` — `CitizenPageHero`: identidad + stats (pasos/guías) + franja Plan/Kit/Simulacros. **Sin progreso del plan** (evita duplicar el dashboard).
-2. `FamilyPlanDashboard` — dueño único del progreso: `FamilyPlanStatusBanner` (anillo + chip + CTA Continuar/Resumen) + grilla de 8 steps (todos links, también completados).
-3. `PreparationTopicGrid` — 4 recursos complementarios (`FamilyPlanCategoryShell`): kit / evacuación / hogar / simulacros. No incluye “Plan familiar” (ya cubierto arriba).
-4. Aside desastres → `/disasters`.
-
-**Hooks compartidos:** `lib/use-plan-stats.ts` (`usePlanStats`) — read-only sobre `["familyPlan"]` query (`completionPct`, `pendingCount`, `steps[]`). Reutiliza cache de `useFamilyPlan`.
-
----
-
-## Inicio / home ciudadano (`/dashboard`)
-
-**Route:** `app/(citizen)/dashboard/page.tsx` — briefing del día (sin mapa). Navbar label: **Inicio**. Shell: `PREPARATION_PAGE_*` + `FamilyPlanProvider`.
-
-**Layout (desktop):** strip hero + grilla `lg:grid-cols-12` — columna principal `col-span-8` (comuna → resumen del día → alertas nacionales); rail derecho sticky `col-span-4` (plan familiar → sismos recientes). **Móvil:** comuna → resumen → plan → sismos → alertas.
-
-- **Hero** — `dashboard-page-hero.tsx`: strip identidad (título “ChileRisk hoy”, línea corta) + footer atajos (Monitor · Preparación · Asistente). **Sin** eyebrow/chip ni resumen IA ni `CitizenPageHero` min-height de catálogo.
-- **Resumen IA** — `dashboard-summary-panel.tsx` (glass): `useDashboardSummary()` → `GET /api/v1/dashboard/summary`. Debajo de la card de comuna. Link “Asistente →”.
-- **Chrome** — `DashboardSection`: glass + mica, eyebrow meta, título + ícono, link “Ver más”.
-- `DashboardComunaCard` — `useComunaToday` + `ComunaTodayCard` + acciones en **grid 2×2 a ancho completo** (Compartir / PNG / Ver mapa / Mi plan).
-- `DashboardFamilyPlanCard` — anillo de progreso + barra + CTA en rail.
-- `DashboardEventsCard` — sismos recientes en el rail (debajo del plan): ubicación CSN, magnitud (+ tipo), profundidad etiquetada, tiempo relativo, chip Percibido/Instrumental, Mercalli si hay, link al informe; orden por relevancia (percibido → magnitud → hora).
-- `DashboardAlertsCard` — top 5 alertas nacionales bajo el resumen. → `/monitor`.
-
-Query keys: `dashboardSummary()`, `airQualityByComuna(cod, date)`, `nearestComuna`, alertas/simulacro vía `useComunaToday`. Tipo `DashboardSummary` en `lib/types.ts`.
-
----
-
-## Guided tour (citizen)
-
-Tour multi-ruta con **driver.js**: Dashboard → Navbar → Monitor → Preparación (hub).
-
-| Pieza | Ruta |
-|-------|------|
-| Host | `components/tour/citizen-tour-host.tsx` — montado en `app/(citizen)/layout.tsx` |
-| Steps | `lib/tour/tour-steps.ts` (`buildTourSteps`, anclas `data-tour`) |
-| Runner | `lib/tour/run-tour.ts` — navega con `router.push`, espera anclas |
-| Storage | `lib/tour/tour-storage.ts` — key `chilerisk-tour-seen:v1` |
-| Estilos | `globals.css` — `.chilerisk-tour-popover` (glass dark) |
-
-**Disparo:** auto en la primera visita a `/dashboard` si no hay flag; botón **Tour** (`CircleHelp`) en `CitizenNavbar` emite `chilerisk:start-tour`. Al cerrar/completar emite `chilerisk:tour-completed`. Monitor móvil: evento `chilerisk:tour-monitor` expande el bottom sheet y cambia tab (`MonitorMobileDrawer`).
-
-**CTA entre páginas:** el botón siguiente pasa a `Ir a Monitor` / `Ir a Preparación` cuando el próximo step cambia de ruta; el último step usa `Listo`. Intro de Monitor es centrada (sin spotlight del mapa oscuro).
-
-**Modo Emergencia:** `EmergencyModeHost` no monta takeover/banner hasta que el tour esté visto (`hasSeenTour`) y no haya tour activo — evita que el SAE tape el walkthrough de primera visita.
-
-**Anclas:** `dashboard-hero|comuna|summary|shortcuts`, `citizen-navbar`, `nav-inicio|monitor|preparacion|asistente|simulacros|evacuacion|desastres|cuenta`, `monitor-map|alerts|date|vistas|mobile-sheet`, `prep-hero|family-plan|topics`.
-
----
-
-## Modo Emergencia
-
-Reactivo global en `app/(citizen)/layout.tsx` vía `EmergencyModeHost`. Fases: **takeover SAE** (1.ª activación, 12s) → **banner** → **chip reabrible** (post-dismiss). Visuales por severidad en `lib/emergency-ui.ts` (`EMERGENCY_VISUALS`, CTAs).
-
-- Hook: `hooks/use-emergency-mode.ts` — matching multi-objetivo (`matchEmergencyAlert`, puro + tests): la alerta naranja/roja dispara si aplica al **hogar** (`home_comuna_code` + región vía `useComunaRisk`, misma fuente que `useComunaToday`) **o** al GPS (`useNearestComuna`); el objetivo que matchea alimenta `comunaCode/comunaName/regionCode` (geo gana si la alerta también aplica ahí). Dismiss por `sessionStorage` keyed por `alert.id`; `reactivate()` lo revierte (chip)
-- UI: `components/emergency/`
-  - `emergency-takeover.tsx` — full-screen SAE `z-[85]` (anillos + campana + countdown 12s); ack en `sessionStorage` `chilerisk:emergency-ack:<id>`; colapsa a banner con Escape/CTA/timeout
-  - `emergency-banner.tsx` — fixed bajo navbar; cinta de peligro animada + fondo saturado + título `font-black` + chip "ACTIVA · hace Xm" (tick 30s) + **`getActiveAlertMainText`** + detail SERNAPRED vía **`sanitizeAlertHtml`** o **`htmlToPlainText`**; CTAs ¿Qué hago? (sólido) / Evacuar (outline, solo tsunami/volcán) / Compartir; ✕ minimiza al chip
-  - `emergency-reopen-chip.tsx` — pill pulsante bajo navbar; click → `reactivate()`
-  - `emergency-page-frame.tsx` — marco fijo `inset-0` `z-30` (vignette elíptica + pulse; período/color por severidad vía CSS vars; `calm` al minimizar); CSS en `globals.css`
-  - `emergency-sheet.tsx` — bottom sheet portal (`z-[90]`) para compartir
-  - `emergency-share-card.tsx` — preview de tarjeta visual (gradiente por severidad + cinta de peligro + “Estoy seguro/a”) capturada con `toPng` (pixelRatio 2, mismo patrón que `comuna-today-share-bar`) → Web Share con archivo / descarga PNG / copiar texto enriquecido
-  - `emergency-action-sheet.tsx` — drawer vaul legacy (disponible; el host usa CTAs del banner)
-
-**¿Qué hago?** → minimiza a chip (`dismiss()`) + `emergencyAssistantPath()` (`lib/emergency-ui.ts`) navega a `/assistant?q=<prompt de emergencia>`; `AssistantChat` auto-envía `?q=` al montar (una vez, limpia la URL con `history.replaceState`). Sin sheet de guía.
-
----
-
-## Mi comuna hoy (en dashboard)
-
-Sin ruta propia. La tarjeta vive en `/dashboard` vía `DashboardComunaCard`.
-
-- Hook: `hooks/use-comuna-today.ts` — hogar → GPS; agrega risk + aire + alertas de comuna + simulacro **solo si región/comuna aplica** + sismo
-- UI: `components/comuna-today/comuna-today-card.tsx` (glass), `comuna-today-share-bar.tsx` (acciones glass+mica; Compartir genera PNG y usa Web Share `files`, fallback descarga)
-- Alertas en la card: lista desglosada (máx. 5) con badge nivel + fuente + texto principal
-
----
-
-## Deprecations (compat)
-
-| Antiguo | Actual |
-|---------|--------|
-| `/evacuacion`, `EvacuacionMap` | `/evacuation`, `EvacuationMap` |
-| `/preparacion`, `PreparacionPageHero` | `/preparation`, `PreparationPageHero` |
-| `SenapredAlertsPanel` | `ActiveAlertsPanel` |
-| `SenapredAlert` (type) | `ActiveAlert` |
-| `senapred_url` | `external_url` |
-| `SENAPRED_DND_CONTEXT_ID` | `ALERTS_DND_CONTEXT_ID` |
-
----
-
-## Globe page background (non-map citizen)
-
-**Layout:** `app/(citizen)/layout.tsx` mounts `GlobePageBackground` (`components/globe/globe-page-background.tsx`).
-
-- Fixed `RotatingEarth` with `skipIntro` + `autoRotate` (no Chile zoom; continuous rotation).
-- Hidden on `/monitor` and `/evacuation` (MapLibre routes).
-- Landing `/` keeps its own globe + intro via `app/page.tsx`. Footer: alojado en [CubePath](https://cubepath.com/) (`/cubepath.png` con fondo transparente) + crédito a [TrueRisk](https://truerisk.cloud/).
-- Props: `skipIntro`, `autoRotate` on `components/globe/rotating-earth.tsx`.
-- Surfaces: content panels use `GLASS_PANEL_CLASS` (same as map overlays); page heroes use gradient shell without glass — see [DESIGN.md](./DESIGN.md) §5.1.
-
----
-
-## Asistente ciudadano (`/assistant`)
-
-Chat agentico (DeepSeek en backend) con tools de lectura: plan familia, alertas, simulacros, riesgo, aire, puntos de encuentro, guías de desastre.
-
-- Página: `app/(citizen)/assistant/page.tsx` — `h-dvh`; banner compacto + chat `max-w-7xl`
-- Flujo UI: encabezado compacto → conversación → composer → disclaimer mínimo
-- UI:
-  - `components/assistant/assistant-chat.tsx` — shell glass, SSE, GPS auto → comuna, composer
-  - `components/assistant/assistant-message.tsx` — burbujas con avatar integrado (usuario / asistente)
-  - `components/assistant/assistant-history.tsx` — sidebar desktop; drawer absoluto dentro del shell del chat en móvil
-  - `components/assistant/assistant-markdown.tsx` — GFM; links internos con `next/link` (acento sky/primary)
-- Ubicación: GPS al cargar → `GET /api/v1/comunas/nearest`; chip «Ubicación» solo en `lg+` (texto, no botón). El system prompt del agente recibe comuna/lat/lon resueltos y no debe pedir Cuenta. Fallback: comuna de hogar.
-- Shell del chat: glass translúcido (`bg-black/20–30`) para ver el globo de fondo
-- Transcript: shadcn `MessageScroller` (auto-scroll); scroll solo en el panel de conversación
-- Cliente: `postChat` / `streamChat` / threads / `getNearestComuna` / `getUserProfile` en `lib/api.ts`
-- Hooks: `hooks/use-assistant.ts` (`useNearestComuna`, threads, profile)
-- Navbar: entrada «Asistente»; middleware protege `/assistant`
-- Preferencia de comuna de hogar (opcional): `PATCH /api/v1/users/me` desde `/account`
-
----
-
-## Cuenta (`/account`)
-
-**Route:** `app/(citizen)/account/page.tsx` — perfil de sesión + comuna de hogar. Shell `PREPARATION_PAGE_*` + `CitizenPageHero`.
-
-**Layout:** grilla `lg:grid-cols-2` — Perfil | Comuna; fila completa Sesión (cerrar sesión).
-
-| Pieza | Archivo |
-|-------|---------|
-| Perfil (nombre/email, solo lectura) | `components/account/account-profile-card.tsx` |
-| Comuna de hogar | `components/account/account-home-comuna-card.tsx` |
-| Combobox searchable | `components/account/comuna-combobox.tsx` |
-| Cerrar sesión | `components/account/account-session-card.tsx` |
-| Catálogo | `lib/comuna-catalog.ts` + `hooks/use-comuna-catalog.ts` ← `/data/comunas.geojson` |
-
-**Picker:** busca por nombre o región (sin código CUT). **Usar mi ubicación** → `navigator.geolocation` + `GET /api/v1/comunas/nearest`, luego **Guardar** / **Quitar** vía `useUpdateUserProfile` → `PATCH /users/me`. Query key: `comunaCatalog()`.
-
----
-
-## Autenticación (Auth.js)
-
-| Ruta | Acceso |
-|------|--------|
-| `/` | Pública (landing) |
-| `/login`, `/register`, `/forgot-password`, `/reset-password` | Públicas (`/login` y `/register` redirigen a `/dashboard` si ya hay sesión) |
-| Prefijos en `middleware.ts` (`/monitor`, `/dashboard`, …) | Requieren sesión |
-
-Post-login / post-registro por defecto: `/dashboard` (Inicio). `callbackUrl` de middleware se respeta si venía de una ruta protegida.
-
-- Config: `auth.ts`, `auth.config.ts`
-- Handlers: `app/api/auth/[...nextauth]/route.ts`
-- Registro / reset: `app/api/auth/register|forgot-password|reset-password`
-- Proxy API autenticado: `app/api/backend/[...path]` → FastAPI con JWT HS256
-- Cliente HTTP: `lib/api.ts` usa base `/api/backend` (same-origin)
-- UI: `components/auth/*`; cuenta: `components/account/*` + `app/(citizen)/account/page.tsx`
-- **Demo hackathon:** `/login` → `DemoLoginCard` (credenciales + copiar + “Entrar con cuenta demo”). Credenciales en `lib/demo-login.ts`; seed backend `SEED_DEMO_USER`.
-
-Variables: `frontend/.env.example` (`AUTH_SECRET`, Google OAuth, `BACKEND_INTERNAL_URL`).
-
----
-
-*Last updated: 2026-07-26*
+*Last updated: 2026-08-05 (desastres: hero full-bleed `catalog/hero.png` + headers ops con counts; detalle con back-link chip; scroll-reveal ScrollRoot/Reveal)*

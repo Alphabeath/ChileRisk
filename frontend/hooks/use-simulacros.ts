@@ -1,35 +1,31 @@
-"use client"
-
 import { useQuery } from "@tanstack/react-query"
-import {
-  getNextSimulacro,
-  getSimulacro,
-  listSimulacros,
-} from "@/lib/api"
+
+import { getNextSimulacro, getSimulacro, getSimulacros } from "@/lib/api"
+import { STALE } from "@/lib/query-cache"
 import { queryKeys } from "@/lib/queries"
 import type { SimulacrosParams } from "@/lib/types"
 
 export function useSimulacros(params: SimulacrosParams = {}) {
   return useQuery({
-    queryKey: queryKeys.simulacros(params as Record<string, unknown>),
-    queryFn: () => listSimulacros(params),
-    staleTime: 30 * 60 * 1000,
+    queryKey: queryKeys.simulacros({ ...params }),
+    queryFn: () => getSimulacros(params),
+    staleTime: STALE.simulacros,
   })
 }
 
 export function useNextSimulacro() {
   return useQuery({
-    queryKey: queryKeys.nextSimulacro(),
+    queryKey: queryKeys.simulacroNext(),
     queryFn: () => getNextSimulacro(),
-    staleTime: 30 * 60 * 1000,
+    staleTime: STALE.simulacroNext,
   })
 }
 
 export function useSimulacro(slug: string | null) {
   return useQuery({
-    queryKey: slug ? queryKeys.simulacro(slug) : ["simulacro", "none"],
-    queryFn: () => (slug ? getSimulacro(slug) : Promise.resolve(null)),
+    queryKey: queryKeys.simulacro(slug ?? ""),
+    queryFn: () => getSimulacro(slug!),
+    staleTime: STALE.simulacros,
     enabled: Boolean(slug),
-    staleTime: 30 * 60 * 1000,
   })
 }

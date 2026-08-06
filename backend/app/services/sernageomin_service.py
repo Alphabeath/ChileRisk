@@ -132,9 +132,6 @@ async def _deactivate_missing(session: AsyncSession, active_keys: set[str]) -> i
 
 async def sync_sernageomin_alerts(session: AsyncSession) -> int:
     """Scrape vigentes page; upsert elevated alerts; deactivate missing keys."""
-    if not settings.use_real_sernageomin:
-        return 0
-
     page_url = settings.sernageomin_alerts_url
     timeout = settings.sernageomin_request_timeout_seconds
     now = datetime.now(timezone.utc)

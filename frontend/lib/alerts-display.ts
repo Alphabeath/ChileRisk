@@ -1,8 +1,20 @@
-import type { ActiveAlert, AffectedScope, AlertLevel, AlertSource } from "@/lib/types"
+import { ALERT_CSS_VAR, ALERT_HEX } from "@/lib/risk-scale"
+import type {
+  ActiveAlert,
+  AffectedScope,
+  AlertFilter,
+  AlertLevel,
+  AlertSource,
+  UnifiedAlertLevel,
+} from "@/lib/types"
 
-const ALERT_SOURCES: AlertSource[] = ["senapred", "chilerisk", "sernageomin"]
+const ALERT_SOURCES: AlertSource[] = [
+  "senapred",
+  "chilerisk",
+  "sernageomin",
+  "meteochile",
+]
 const AFFECTED_SCOPES: AffectedScope[] = ["region", "comuna", "unknown"]
-
 const ALERT_LEVELS: AlertLevel[] = [
   "preventiva",
   "amarilla",
@@ -11,7 +23,7 @@ const ALERT_LEVELS: AlertLevel[] = [
   "informativa",
 ]
 
-/** Maps legacy API payloads (sin `source`, con `senapred_url`) al contrato unificado. */
+/** Maps legacy API payloads to the unified ActiveAlert contract. */
 export function normalizeActiveAlert(raw: unknown): ActiveAlert {
   const r = (raw ?? {}) as Record<string, unknown>
   const id = String(r.id ?? "")
@@ -23,6 +35,8 @@ export function normalizeActiveAlert(raw: unknown): ActiveAlert {
     source = "chilerisk"
   } else if (id.startsWith("sernageomin:")) {
     source = "sernageomin"
+  } else if (id.startsWith("meteochile:")) {
+    source = "meteochile"
   }
 
   const level = ALERT_LEVELS.includes(r.level as AlertLevel)
@@ -42,8 +56,10 @@ export function normalizeActiveAlert(raw: unknown): ActiveAlert {
     content: typeof r.content === "string" ? r.content : null,
     url_access: typeof r.url_access === "string" ? r.url_access : null,
     external_url: external,
-    issued_at: typeof r.issued_at === "string" ? r.issued_at : new Date().toISOString(),
-    synced_at: typeof r.synced_at === "string" ? r.synced_at : new Date().toISOString(),
+    issued_at:
+      typeof r.issued_at === "string" ? r.issued_at : new Date().toISOString(),
+    synced_at:
+      typeof r.synced_at === "string" ? r.synced_at : new Date().toISOString(),
     region_code: typeof r.region_code === "number" ? r.region_code : null,
     region_name: typeof r.region_name === "string" ? r.region_name : null,
     affected_scope: AFFECTED_SCOPES.includes(r.affected_scope as AffectedScope)
@@ -56,16 +72,17 @@ export function normalizeActiveAlert(raw: unknown): ActiveAlert {
     parent_id: typeof r.parent_id === "string" ? r.parent_id : null,
     thread_root_id:
       typeof r.thread_root_id === "string" ? r.thread_root_id : null,
-    composite_score: typeof r.composite_score === "number" ? r.composite_score : null,
-    dominant_hazard: typeof r.dominant_hazard === "string" ? r.dominant_hazard : null,
+    composite_score:
+      typeof r.composite_score === "number" ? r.composite_score : null,
+    dominant_hazard:
+      typeof r.dominant_hazard === "string" ? r.dominant_hazard : null,
     severity: typeof r.severity === "string" ? r.severity : null,
     risk_detail: typeof r.risk_detail === "string" ? r.risk_detail : null,
     record_kind:
       r.record_kind === "evento" || r.record_kind === "alerta"
         ? r.record_kind
         : "alerta",
-    hazard_type:
-      typeof r.hazard_type === "string" ? r.hazard_type : null,
+    hazard_type: typeof r.hazard_type === "string" ? r.hazard_type : null,
   }
 }
 
@@ -75,52 +92,62 @@ export function normalizeActiveAlerts(raw: unknown): ActiveAlert[] {
 }
 
 export const ALERT_LEVEL_META: Record<
-  AlertLevel,
-  { label: string; hex: string; badge: string }
+  UnifiedAlertLevel,
+  { label: string; hex: string; cssVar: string }
 > = {
   preventiva: {
     label: "Preventiva",
-    hex: "#38bdf8",
-    badge: "bg-sky-500/10 text-sky-300 border-sky-400/40",
+    hex: ALERT_HEX.preventiva,
+    cssVar: ALERT_CSS_VAR.preventiva,
   },
   amarilla: {
     label: "Amarilla",
-    hex: "#fbbf24",
-    badge: "bg-amber-500/10 text-amber-300 border-amber-400/40",
+    hex: ALERT_HEX.amarilla,
+    cssVar: ALERT_CSS_VAR.amarilla,
   },
   naranja: {
     label: "Naranja",
     hex: "#fb923c",
-    badge: "bg-orange-500/10 text-orange-300 border-orange-400/40",
+    cssVar: "#fb923c",
   },
   roja: {
     label: "Roja",
-    hex: "#DA291C",
-    badge: "bg-[#DA291C]/15 text-[#ff9a9a] border-[#DA291C]/45",
+    hex: ALERT_HEX.roja,
+    cssVar: ALERT_CSS_VAR.roja,
   },
   informativa: {
-    label: "Informativo",
+    label: "Informativa",
     hex: "#a78bfa",
-    badge: "bg-violet-500/10 text-violet-300 border-violet-400/40",
+    cssVar: "#a78bfa",
   },
 }
 
-export const ALERT_SOURCE_META: Record<
-  AlertSource,
-  { label: string; badge: string }
-> = {
-  senapred: {
-    label: "SERNAPRED",
-    badge: "bg-white/[0.06] text-white/70 border-white/15",
-  },
-  chilerisk: {
-    label: "ChileRisk",
-    badge: "bg-[#0032A0]/25 text-blue-200/90 border-[#0032A0]/40",
-  },
-  sernageomin: {
-    label: "SERNAGEOMIN",
-    badge: "bg-amber-500/15 text-amber-200/90 border-amber-400/35",
-  },
+export const ALERT_SOURCE_META: Record<AlertSource, { label: string }> = {
+  senapred: { label: "SENAPRED" },
+  chilerisk: { label: "ChileRisk" },
+  sernageomin: { label: "SERNAGEOMIN" },
+  meteochile: { label: "MeteoChile" },
+}
+
+const ALERT_LEVEL_PRIORITY: Record<UnifiedAlertLevel, number> = {
+  roja: 0,
+  naranja: 1,
+  amarilla: 2,
+  preventiva: 3,
+  informativa: 4,
+}
+
+export const HAZARD_LABELS: Record<string, string> = {
+  sismo: "Sismo",
+  ola_calor: "Ola de calor",
+  ola_frio: "Ola de frío",
+  viento: "Viento",
+  inundacion: "Inundación",
+}
+
+/** Dark ink on preventiva / amarilla / naranja / informativa; white on roja. */
+export function alertLevelUsesDarkInk(level: UnifiedAlertLevel): boolean {
+  return level !== "roja"
 }
 
 export function timeAgo(iso: string): string {
@@ -133,70 +160,28 @@ export function timeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d`
 }
 
-export const HAZARD_LABELS: Record<string, string> = {
-  sismo: "Sismo",
-  ola_calor: "Ola de calor",
-  ola_frio: "Ola de frío",
-  viento: "Viento",
-}
-
-export type ChileRiskSeverity = "critico" | "alto" | "moderado"
-
-export const CHILERISK_SEVERITY_META: Record<
-  ChileRiskSeverity,
-  { label: string; hex: string; badge: string }
-> = {
-  critico: {
-    label: "Crítico",
-    hex: "#DA291C",
-    badge: "bg-[#DA291C]/15 text-[#ff9a9a] border-[#DA291C]/45",
-  },
-  alto: {
-    label: "Alto",
-    hex: "#e07020",
-    badge: "bg-orange-500/10 text-orange-300 border-orange-400/40",
-  },
-  moderado: {
-    label: "Moderado",
-    hex: "#cc9e23",
-    badge: "bg-amber-500/10 text-amber-300 border-amber-400/40",
-  },
-}
-
-const LEVEL_TO_SEVERITY: Record<AlertLevel, ChileRiskSeverity> = {
-  roja: "critico",
-  naranja: "alto",
-  amarilla: "moderado",
-  preventiva: "moderado",
-  informativa: "moderado",
+export function shortenRegionName(name: string | null): string | null {
+  if (!name) return null
+  return name.replace(/^Regi[oó]n de( la| las| el| los)?\s+/i, "")
 }
 
 export function senapredSourceLabel(alert: ActiveAlert): string {
   if (alert.source !== "senapred") return ALERT_SOURCE_META.chilerisk.label
   return alert.record_kind === "evento"
-    ? "SERNAPRED · Evento"
-    : "SERNAPRED · Alerta"
+    ? "SENAPRED · Evento"
+    : "SENAPRED · Alerta"
 }
 
 export function formatHazardLabel(
   hazard: string | null | undefined,
-  category?: string | null
+  category?: string | null,
 ): string {
   const key = hazard ?? category
   if (!key) return "Riesgo"
-  return HAZARD_LABELS[key] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-export function resolveChileRiskSeverity(alert: ActiveAlert): ChileRiskSeverity {
-  const s = alert.severity
-  if (s === "critico" || s === "alto" || s === "moderado") return s
-  return LEVEL_TO_SEVERITY[alert.level] ?? "moderado"
-}
-
-/** Título sin prefijo legacy «Riesgo {grado} —». */
-export function getChileRiskAlertTitle(alert: ActiveAlert): string {
-  const stripped = alert.title.replace(/^Riesgo\s+[\wáéíóúñ]+\s*[—–-]\s*/i, "").trim()
-  return stripped || shortenRegionName(alert.region_name) || "Región"
+  return (
+    HAZARD_LABELS[key] ??
+    key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  )
 }
 
 export function getChileRiskRiskDetail(alert: ActiveAlert): string | null {
@@ -204,9 +189,7 @@ export function getChileRiskRiskDetail(alert: ActiveAlert): string | null {
 
   const hazard = alert.dominant_hazard ?? alert.category
   const score = alert.composite_score
-  if (hazard === "sismo") {
-    return null
-  }
+  if (hazard === "sismo") return null
   if (hazard === "ola_calor" && score != null) {
     return `índice calor ${score.toFixed(0)}/100`
   }
@@ -220,11 +203,13 @@ export function getChileRiskRiskDetail(alert: ActiveAlert): string | null {
 }
 
 export function formatChileRiskAlertHeadline(alert: ActiveAlert): string {
-  const hazard = formatHazardLabel(alert.dominant_hazard, alert.category).toLowerCase()
+  const hazard = formatHazardLabel(
+    alert.dominant_hazard,
+    alert.category,
+  ).toLowerCase()
   return `Alerta por ${hazard}`
 }
 
-/** Texto principal unificado para tarjetas ChileRisk (una sola línea de contenido). */
 export function formatChileRiskAlertMainText(alert: ActiveAlert): string {
   const title = alert.title?.trim() ?? ""
   if (title.startsWith("Alerta por")) return title
@@ -234,191 +219,11 @@ export function formatChileRiskAlertMainText(alert: ActiveAlert): string {
   return detail ? `${headline}: ${detail}` : headline
 }
 
-/** Texto principal de la tarjeta (SERNAPRED y ChileRisk). */
 export function getActiveAlertMainText(alert: ActiveAlert): string {
   if (alert.source === "chilerisk") return formatChileRiskAlertMainText(alert)
   return alert.title?.trim() || "Alerta"
 }
 
-const HTML_ENTITY_MAP: Record<string, string> = {
-  nbsp: " ",
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  apos: "'",
-}
-
-const ALERT_HTML_ALLOWED = new Set([
-  "P",
-  "BR",
-  "STRONG",
-  "B",
-  "EM",
-  "I",
-  "U",
-  "TABLE",
-  "THEAD",
-  "TBODY",
-  "TR",
-  "TH",
-  "TD",
-  "UL",
-  "OL",
-  "LI",
-  "SPAN",
-  "DIV",
-])
-
-export function isLikelyHtml(input: string): boolean {
-  return /<[a-z][\s\S]*>/i.test(input.trim())
-}
-
-function decodeHtmlEntities(text: string): string {
-  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, ent: string) => {
-    const key = ent.toLowerCase()
-    if (key in HTML_ENTITY_MAP) return HTML_ENTITY_MAP[key]
-    if (key.startsWith("#x")) {
-      const code = Number.parseInt(key.slice(2), 16)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match
-    }
-    if (key.startsWith("#")) {
-      const code = Number.parseInt(key.slice(1), 10)
-      return Number.isFinite(code) ? String.fromCodePoint(code) : match
-    }
-    return match
-  })
-}
-
-function escapeHtmlText(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-}
-
-/**
- * Allowlist sanitizer for SERNAPRED `content` HTML.
- * Drops scripts/styles/event handlers and inline `style=` (e.g. color:black).
- */
-export function sanitizeAlertHtml(input: string): string {
-  const raw = input.trim()
-  if (!raw) return ""
-
-  if (typeof DOMParser === "undefined") {
-    return raw
-      .replace(/<(script|style|iframe|object|embed|link)[\s\S]*?<\/\1>/gi, "")
-      .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-      .replace(/\sstyle\s*=\s*("[^"]*"|'[^']*')/gi, "")
-  }
-
-  try {
-    const doc = new DOMParser().parseFromString(raw, "text/html")
-    doc
-      .querySelectorAll("script,style,iframe,object,embed,link")
-      .forEach((el) => el.remove())
-
-    const serialize = (node: Node): string => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        return escapeHtmlText(node.textContent ?? "")
-      }
-      if (node.nodeType !== Node.ELEMENT_NODE) return ""
-      const el = node as Element
-      const tag = el.tagName
-      const kids = Array.from(el.childNodes).map(serialize).join("")
-      if (!ALERT_HTML_ALLOWED.has(tag)) return kids
-      const t = tag.toLowerCase()
-      if (t === "br") return "<br>"
-      const attrs: string[] = []
-      if (t === "td" || t === "th") {
-        const colspan = el.getAttribute("colspan")
-        const rowspan = el.getAttribute("rowspan")
-        if (colspan && /^\d+$/.test(colspan)) attrs.push(`colspan="${colspan}"`)
-        if (rowspan && /^\d+$/.test(rowspan)) attrs.push(`rowspan="${rowspan}"`)
-      }
-      const attr = attrs.length ? ` ${attrs.join(" ")}` : ""
-      return `<${t}${attr}>${kids}</${t}>`
-    }
-
-    return Array.from(doc.body.childNodes).map(serialize).join("").trim()
-  } catch {
-    return ""
-  }
-}
-
-/**
- * Strip HTML from SERNAPRED `content` (and similar) for plain-text UI.
- * Inserts breaks between blocks/cells so tables don't smash words together.
- */
-export function htmlToPlainText(input: string): string {
-  const raw = input.trim()
-  if (!raw) return ""
-
-  let text: string
-  if (typeof DOMParser !== "undefined") {
-    try {
-      const doc = new DOMParser().parseFromString(raw, "text/html")
-      doc.querySelectorAll("br").forEach((br) => {
-        br.replaceWith(doc.createTextNode("\n"))
-      })
-      doc.querySelectorAll("p,div,li,tr,h1,h2,h3,h4,h5,h6").forEach((el) => {
-        el.appendChild(doc.createTextNode("\n"))
-      })
-      doc.querySelectorAll("td,th").forEach((el) => {
-        el.appendChild(doc.createTextNode(" | "))
-      })
-      text = doc.body.textContent ?? ""
-    } catch {
-      text = raw.replace(/<[^>]+>/g, " ")
-    }
-  } else {
-    text = raw
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, "\n")
-      .replace(/<\/(td|th)>/gi, " | ")
-      .replace(/<[^>]+>/g, " ")
-  }
-
-  text = decodeHtmlEntities(text)
-
-  return text
-    .replace(/[ \t]+\n/g, "\n")
-    .replace(/\n[ \t]+/g, "\n")
-    .replace(/[ \t]{2,}/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .replace(/\s+\|/g, " |")
-    .replace(/\|\s+/g, "| ")
-    .replace(/(?:\|\s*){2,}/g, "| ")
-    .replace(/\s+([,.;:!?…])/g, "$1")
-    .trim()
-}
-
-/** @deprecated Use formatChileRiskAlertMainText */
-export function formatChileRiskAlertSummary(alert: ActiveAlert): string {
-  return formatChileRiskAlertMainText(alert)
-}
-
-export function formatAlertCategory(cat: string | null): string {
-  if (!cat) return "—"
-  return formatHazardLabel(null, cat)
-}
-
-export function shortenRegionName(name: string | null): string | null {
-  if (!name) return null
-  return name.replace(/^Regi[oó]n de( la| las| el| los)?\s+/i, "")
-}
-
-export function sortActiveAlerts(alerts: ActiveAlert[]): ActiveAlert[] {
-  return [...alerts].sort(
-    (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime()
-  )
-}
-
-/**
- * Sort by severity (gravedad): roja > naranja > amarilla > preventiva > informativa.
- * Ties broken by `issued_at` DESC (most recent first).
- */
 export function sortActiveAlertsBySeverity(alerts: ActiveAlert[]): ActiveAlert[] {
   return [...alerts].sort((a, b) => {
     const pa = ALERT_LEVEL_PRIORITY[a.level] ?? 9
@@ -428,22 +233,22 @@ export function sortActiveAlertsBySeverity(alerts: ActiveAlert[]): ActiveAlert[]
   })
 }
 
-export const POPUP_MAX_ALERTS = 3
-export const POPUP_MAX_SEISMIC = 3
+/** Cap for territory popup alert list (scroll if more). */
+export const POPUP_MAX_ALERTS = 8
 
 export function filterAlertsForRegion(
   alerts: ActiveAlert[],
-  codregion: number
+  codregion: number,
 ): ActiveAlert[] {
   return alerts.filter(
-    (a) => a.region_code == null || a.region_code === codregion
+    (a) => a.region_code == null || a.region_code === codregion,
   )
 }
 
 export function alertAppliesToComuna(
   alert: ActiveAlert,
   codregion: number,
-  codComuna: number
+  codComuna: number,
 ): boolean {
   if (alert.region_code != null && alert.region_code !== codregion) return false
   if (alert.source === "chilerisk") {
@@ -466,52 +271,80 @@ export function alertAppliesToComuna(
 export function filterAlertsForComuna(
   alerts: ActiveAlert[],
   codregion: number,
-  codComuna: number
+  codComuna: number,
 ): ActiveAlert[] {
   return alerts.filter((a) => alertAppliesToComuna(a, codregion, codComuna))
 }
 
-const ALERT_LEVEL_PRIORITY: Record<AlertLevel, number> = {
-  roja: 0,
-  naranja: 1,
-  amarilla: 2,
-  preventiva: 3,
-  informativa: 4,
+/**
+ * Panel / map source filter. `airechile` has no ActiveAlert rows → empty list
+ * (air zones are filtered separately in the panel).
+ */
+export function filterActiveAlertsBySource(
+  alerts: ActiveAlert[],
+  filter: AlertFilter,
+): ActiveAlert[] {
+  if (filter === "all") return alerts
+  if (filter === "airechile") return []
+  return alerts.filter((a) => a.source === filter)
 }
 
-/** Returns the highest-priority alert level per region code. */
+/** Most severe level among alerts, or null if empty. */
+export function mostSevereAlertLevel(
+  alerts: ActiveAlert[],
+): UnifiedAlertLevel | null {
+  if (alerts.length === 0) return null
+  return sortActiveAlertsBySeverity(alerts)[0]!.level
+}
+
+/** Highest-priority alert level per `region_code` (roja wins). */
 export function computeRegionAlertLevels(
-  alerts: ActiveAlert[]
-): Map<number, AlertLevel> {
-  const result = new Map<number, AlertLevel>()
+  alerts: ActiveAlert[],
+): Map<number, UnifiedAlertLevel> {
+  const result = new Map<number, UnifiedAlertLevel>()
   for (const a of alerts) {
     if (a.region_code == null) continue
     const prev = result.get(a.region_code)
-    if (!prev || ALERT_LEVEL_PRIORITY[a.level] < ALERT_LEVEL_PRIORITY[prev]) {
+    if (
+      !prev ||
+      ALERT_LEVEL_PRIORITY[a.level] < ALERT_LEVEL_PRIORITY[prev]
+    ) {
       result.set(a.region_code, a.level)
     }
   }
   return result
 }
 
+/** Builds `codregion → cod_comuna[]` from comunas GeoJSON. */
+export function buildComunasByRegionIndex(
+  geojson: {
+    features: Array<{ properties?: Record<string, unknown> | null }>
+  } | null,
+): Map<number, number[]> {
+  const index = new Map<number, number[]>()
+  if (!geojson?.features) return index
+  for (const f of geojson.features) {
+    const cod = f.properties?.cod_comuna
+    const codregion = f.properties?.codregion
+    if (typeof cod !== "number" || typeof codregion !== "number") continue
+    const list = index.get(codregion) ?? []
+    list.push(cod)
+    index.set(codregion, list)
+  }
+  return index
+}
+
 /**
- * Returns the highest-priority alert level per comuna code.
- *
- * Hybrid resolution (max priority between region-scope and comuna-scope):
- *   - If an alert has `affected_scope === "region"` it applies to ALL comunas
- *     of that region (uses the `comunasByRegion` index built from the GeoJSON).
- *   - If an alert has `affected_scope === "comuna"` it applies only to the
- *     comunas in `comuna_codes`.
- *   - If multiple alerts apply, the one with the highest priority (roja >
- *     naranja > amarilla > preventiva > informativa) wins.
- *   - Alerts with `affected_scope === "unknown"` are ignored (no geo info).
+ * Highest-priority alert level per comuna.
+ * Scope rules match `alertAppliesToComuna` (ChileRisk: missing/unknown → region;
+ * other sources: region/comuna only; unknown → skip).
  */
 export function computeComunaAlertLevels(
   alerts: ActiveAlert[],
-  comunasByRegion: Map<number, readonly number[]>
-): Map<number, AlertLevel> {
-  const result = new Map<number, AlertLevel>()
-  const upgrade = (codComuna: number, level: AlertLevel) => {
+  comunasByRegion: Map<number, readonly number[]>,
+): Map<number, UnifiedAlertLevel> {
+  const result = new Map<number, UnifiedAlertLevel>()
+  const upgrade = (codComuna: number, level: UnifiedAlertLevel) => {
     const prev = result.get(codComuna)
     if (!prev || ALERT_LEVEL_PRIORITY[level] < ALERT_LEVEL_PRIORITY[prev]) {
       result.set(codComuna, level)
@@ -521,37 +354,19 @@ export function computeComunaAlertLevels(
   for (const a of alerts) {
     if (a.region_code == null) continue
     const scope = a.affected_scope ?? "unknown"
+    const treatAsRegion =
+      scope === "region" ||
+      (a.source === "chilerisk" && scope !== "comuna")
+
     if (scope === "comuna") {
       for (const cod of a.comuna_codes ?? []) {
         upgrade(cod, a.level)
       }
-    } else if (scope === "region") {
-      const comunasInRegion = comunasByRegion.get(a.region_code) ?? []
-      for (const cod of comunasInRegion) {
+    } else if (treatAsRegion) {
+      for (const cod of comunasByRegion.get(a.region_code) ?? []) {
         upgrade(cod, a.level)
       }
     }
-    // scope === "unknown": no geo info, skip
   }
   return result
 }
-
-/** Builds a `region_code → cod_comuna[]` index from a comunas GeoJSON. */
-export function buildComunasByRegionIndex(
-  geojson: { features: Array<{ properties?: Record<string, unknown> }> } | null
-): Map<number, number[]> {
-  const index = new Map<number, number[]>()
-  if (!geojson?.features) return index
-  for (const f of geojson.features) {
-    const cod = f.properties?.cod_comuna as number | undefined
-    const codregion = f.properties?.codregion as number | undefined
-    if (cod == null || codregion == null) continue
-    const list = index.get(codregion) ?? []
-    list.push(cod)
-    index.set(codregion, list)
-  }
-  return index
-}
-
-/** @deprecated Use sortActiveAlerts */
-export const sortSenapredAlerts = sortActiveAlerts

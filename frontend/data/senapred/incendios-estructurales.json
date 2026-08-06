@@ -1,0 +1,167 @@
+{
+  "slug": "incendios-estructurales",
+  "group": "preparate",
+  "title": "Incendios Estructurales",
+  "sourceUrl": "https://senapred.cl/incendios-estructurales",
+  "blurb": "Un incendio estructural corresponde a aquel tipo de incendio que se produce en casas, edificios, locales comerciales, etc. La gran mayoría de los incendios…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/incendios-estructurales/BG_incendio_estruc_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es un incendio estructural?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Un incendio estructural corresponde a aquel tipo de incendio que se produce en casas, edificios, locales comerciales, etc. La gran mayoría de los incendios estructurales son provocados por el hombre, ya sea por negligencias, descuidos en el uso del fuego o por falta de mantención del sistema eléctrico y gas. Entre las principales causas de estos incendios se encuentran los accidentes domésticos, fallas eléctricas, manipulación inadecuada de líquidos inflamables, fugas de gases combustibles, acumulación de basura, velas y cigarros mal apagados, artefactos de calefacción en mal estado y niños jugando con fósforos, entre otros."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/incendios-estructurales/BG_incendio_estruc_02.png"
+        }
+      ]
+    },
+    {
+      "heading": "¿Cómo prevenir un incendio?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa el estado de las instalaciones eléctricas de tu casa."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No acumules basura ni desperdicios, porque pueden ser focos de posibles incendios."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita sobrecargar un enchufe con muchos artefactos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Cuando cocines o planches, no descuides los artefactos que estás utilizando."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si sientes olor a gas, cierra las llaves de paso, no enciendas fósforos ni prendas aparatos eléctricos y ventila el lugar. En caso de que el olor persista, llama a bomberos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si eres testigo de un incendio, llama a bomberos."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_09.png",
+          "text": "En caso de emergencia llama a bomberos 132"
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/incendios-estructurales/BG_incendio_estruc_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si no puedes evacuar",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_01-150x150.png",
+          "text": "LLama a bomberos solicitando que te rescaten, indicando en que situación y dónde te encuentras."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_02-150x150.png",
+          "text": "Remueve cortinas y otros artículos combustibles que estén cerca del fuego."
+        }
+      ]
+    },
+    {
+      "heading": "Frente a un incendio",
+      "blocks": [
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_03-150x150.png",
+          "text": "Debes salir de tu casa inmediatamente. Para hacerlo, agáchate, gatea y busca una salida."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_04-150x150.png",
+          "text": "No utilices ascensores."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_05-150x150.png",
+          "text": "Antes de abrir una puerta, debes palparla con el dorso de la mano. Si está caliente, no la abras y sal por otro camino."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_06-150x150.png",
+          "text": "Si vas abrir una puerta, hazlo con cuidado, con tu hombro contra la puerta y empujándola lentamente. Si al hacerlo entra humo y calor, ciérrala y busca una vía de escape alternativa."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_07-150x150.png",
+          "text": "Al salir de una pieza, asegúrate de que no quede nadie en su interior y cierra bien las puertas."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/incendios-estructurales/icon_incendio_estruc_08.png",
+          "text": "Una vez que estés afuera, llama a bomberos (132) o solicita que alguien los llame. No regreses a tu hogar hasta que las autoridades te indiquen que es seguro hacerlo."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8873/08_preparate_con_senapred_incendios_estructurales_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8874/08_get_ready_with_senaped_structural_fires_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8875/08_preparez_vous_a_laide_du_senapred_incendies_%20structurels_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/incendios-estructurales.png"
+}

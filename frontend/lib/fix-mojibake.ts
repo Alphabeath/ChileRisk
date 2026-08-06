@@ -1,4 +1,4 @@
-/** Re-decode UTF-8 strings that were misread as Latin-1 (e.g. AraucanÃ­a → Araucanía). */
+/** Re-decode UTF-8 strings that were misread as Latin-1. */
 export function fixMojibake(value: unknown): string {
   if (value == null) return "—"
   if (typeof value !== "string") return String(value)

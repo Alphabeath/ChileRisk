@@ -1,0 +1,78 @@
+{
+  "slug": "dimension-animal",
+  "group": "inclusiva",
+  "title": "Protección Animal",
+  "sourceUrl": "https://senapred.cl/dimension-animal/",
+  "blurb": "SENAPRED conformó la Mesa Temática de Gestión del Riesgo de Desastres Dimensión Animal , instancia integrada por 14 organizaciones, tanto del ámbito público,…",
+  "intro": [
+    {
+      "kind": "figure",
+      "src": "/data/senapred/img/dimension-animal/recomendaciones-animal_web_texto2-1024x177.png",
+      "alt": ""
+    },
+    {
+      "kind": "text",
+      "paragraphs": [
+        {
+          "text": "SENAPRED conformó la Mesa Temática de Gestión del Riesgo de Desastres Dimensión Animal , instancia integrada por 14 organizaciones, tanto del ámbito público, privado, Universidades, ONG’s y Organismos Internacionales. El objetivo de este grupo de trabajo es establecer y formalizar un sistema de Gestión del Riesgo de Desastres Público-Privado para situaciones de emergencia y desastres socio naturales que impacten animales, desde una perspectiva de la salud animal, de las personas y el medio ambiente. El alcance de trabajo de esta mesa son: mascotas y animales de compañía, animales de traspatio, animales de producción y fauna silvestre marina y terrestre."
+        },
+        {
+          "text": "La Mesa Temática de Gestión del Riesgo de Desastres Dimensión Animal , está compuesta por las siguientes organizaciones:"
+        },
+        {
+          "bullets": [
+            "Ministerio del Medio Ambiente",
+            "Ministerio de Salud",
+            "Departamento de Bienestar Animal del SAG",
+            "Unidad Rescate, Rehabilitación y Conservación de Especies Protegidas de SERNAPESCA",
+            "Departamento de Conservación de la Diversidad Biológica de CONAF",
+            "Programa de Tenencia Responsable de Animales de Compañía de SUBDERE",
+            "Colegio Médico Veterinario",
+            "Centro de Gestión Ambiental y Biodiversidad de la Universidad de Chile",
+            "Academia Nacional de Bomberos",
+            "Grupo Profesionalización Veterinaria para el Trabajo y Asistencia Social",
+            "Asociación de Médicos Veterinarios de Fauna Silvestre",
+            "Comité Pro Defensa de la Fauna y Flora",
+            "World Animal Protection",
+            "Global Alliance for Animals and People."
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "subheading",
+      "text": "Gracias al trabajo de esta instancia, ponemos a disposición de la ciudadanía para ser consultados y descargados los siguientes productos:"
+    },
+    {
+      "kind": "links",
+      "items": [
+        {
+          "label": "Recomendaciones Tenencia Responsable de Mascotas en Emergencia",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/3345/recomendaciones_tenencia_responsable_mascotas.pdf?sequence=5&isAllowed=y"
+        },
+        {
+          "label": "Recomendaciones para voluntarios y ONG's de trabajo con animales de compañía",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/3344/recomendaciones_mascotas_voluntarios.pdf?sequence=5&isAllowed=y"
+        },
+        {
+          "label": "Kit de Emergencias para Mascotas",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/3342/01_kit_emergencia_mascotas_SENAPRED%202023.pdf?sequence=5&isAllowed=y"
+        },
+        {
+          "label": "Recomendaciones para la Comunidad sobre Fauna Nativa en Emergencia",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/3343/recomendaciones_fauna_nativa.pdf?sequence=5&isAllowed=y"
+        },
+        {
+          "label": "Recomendaciones para la Comunidad sobre Animales de Traspatio",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/5381/Recomendaciones%20Animales%20de%20Traspatio.pdf?sequence=1&isAllowed=y"
+        },
+        {
+          "label": "Recomendaciones para la Comunidad sobre Animales de Producción",
+          "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/123456789/5380/Recomendaciones%20Animales%20de%20Producci%c3%b3n.pdf?sequence=1&isAllowed=y"
+        }
+      ]
+    }
+  ],
+  "sections": [],
+  "cardImage": "/data/senapred/img/catalog/dimension-animal.png"
+}

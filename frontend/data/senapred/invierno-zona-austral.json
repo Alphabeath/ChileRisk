@@ -1,0 +1,391 @@
+{
+  "slug": "invierno-zona-austral",
+  "group": "preparate",
+  "title": "Invierno – Zona Austral",
+  "sourceUrl": "https://senapred.cl/invierno-zona-austral/",
+  "blurb": "Durante el invierno en la zona austral de Chile, entre las regiones de Los Lagos, Aysén y Magallanes, se presentan diversas situaciones de riesgo para la…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/invierno-zona-austral/bg_invierno-zona-austral_01.png"
+    },
+    {
+      "kind": "text",
+      "paragraphs": [
+        {
+          "text": "Durante el invierno en la zona austral de Chile, entre las regiones de Los Lagos, Aysén y Magallanes, se presentan diversas situaciones de riesgo para la población debido a las condiciones climáticas extremas, como fuertes vientos, nevadas intensas y bajas temperaturas. Estos fenómenos pueden provocar el aislamiento de comunidades por acumulación de nieve o interrupción de caminos. Estas amenazas afectan tanto a personas como a viviendas, infraestructura y actividades productivas, impactando tanto en sectores urbanos como rurales."
+        }
+      ]
+    },
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/invierno-zona-austral/bg_invierno-zona-austral_02.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "Prepara tu vivienda y entorno",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa y realiza el debido mantenimiento del techo y canaletas de tu vivienda, bodega y/o invernadero. Recuerda limpiarlos y asegurarlos antes que comience el invierno y para evitar voladuras y filtraciones."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Protege el medidor del agua, con un nicho con tapa y material aislante (por ejemplo plumavit). Nunca descongeles el medidor arrojándole agua caliente. En caso de congelamiento, cúbrelo con paños empapados en agua tibia."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén un suministro adecuado de leña para posibles situaciones de escasez, así estarás preparado para cualquier eventualidad y podrás mantener el calor en tu hogar."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Realiza las mantenciones correspondientes a tus sistemas de calefacción, como por ejemplo la limpieza a ductos de evacuación de gases de los artefactos a leña, con el fin de evitar acumulación de monóxido de carbono y eventuales incendios estructurales."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita el contacto directo de cualquier elemento combustible con los equipos de calefacción. Procura no secar ropa cerca de calefactores, cocinas o estufas."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén ventilado tu hogar. Si utilizas calefacción a parafina, gas natural o gas licuado procura que exista ventilación que permita producir circulación de aire y mejorar la calidad del aire interior."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén un adecuado aislamiento térmico en tu vivienda, a través del uso de materiales aislantes en techos y paredes para evitar la pérdida de calor en el interior."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Identifica un punto de encuentro en caso de evacuación. Si vives en una zona cercana o adyacente a un río o zona cordillerana, puedes estar en riesgo ante un eventual aumento del caudal o riesgo aluvional."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén el frontis, los accesos y salidas de tu casa despejados de nieve, a fin de facilitar el tránsito y evitar accidentes."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno-zona-austral/icon_telefono.png",
+          "text": "Mantén los números de emergencia en un lugar visible. Es importante que todos conozcan los números de Bomberos (132), Carabineros (133), PDI (134), ambulancia (131), autoridad marítima (137) y el número de emergencia correspondiente a tu municipio, para contactarlos inmediatamente ante una situación de emergencia."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/invierno-zona-austral/bg_invierno-zona-austral_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Si vas a conducir un vehículo",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa el vehículo, principalmente la dirección, luces, batería, neumáticos, limpiaparabrisas, sistemas de encendido, frenos, calefacción y combustible."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Usa líquido anticongelante en el radiador y verifica siempre que se encuentre en los niveles indicados por el fabricante."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa el sistema de lubricación de tu vehículo, usando aceites especiales para la condición de bajas temperaturas, de acuerdo con las indicaciones del fabricante o servicio técnico especializado."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Elimina el hielo o escarcha de los vidrios, espejos y luces, nunca con agua caliente, ya que puedes trisarlos o quebrarlos."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Verifica que los neumáticos estén en buen estado y con la presión de aire adecuada. Ante la presencia de nieve o escarcha, recuerda utilizar neumáticos antideslizantes, con clavos o con cadenas, según las condiciones lo ameriten, para enfrentar de forma segura la conducción."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Infórmate del estado de las rutas a través de los medios de comunicación y redes sociales de Carabineros, Dirección de Vialidad y/o SENAPRED."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "No manejes a demasiada velocidad y mantén una distancia prudente con el vehículo que te antecede. El hielo y la escarcha podrían generar descontrol del vehículo, por lo que se deben aumentar las precauciones al conducir."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Transporta artefactos electrónicos y pilas protegidos, puesto que estos fallan a bajas temperaturas. Puedes llevarlos en un estuche térmico o mantenerlos cerca del cuerpo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Arma un Kit de Emergencia. Si te trasladas en vehículo hacia lugares rurales este debe contener:"
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "bullets": [
+                "Agua.",
+                "Líquido y alimentos no perecibles.",
+                "Botiquín de primeros auxilios.",
+                "Medicamentos de uso esencial.",
+                "Ropa de abrigo.",
+                "Números de emergencia (retenes de carabineros, bomberos, salud).",
+                "Linternas con pilas en buen estado y pilas adicionales.",
+                "Equipos de comunicación."
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "bullets": [
+                "Guantes.",
+                "Chaleco reflectante.",
+                "Cadenas.",
+                "Pala.",
+                "Cable para hacer puente eléctrico con otro vehículo.",
+                "Elementos para ser remolcado (por ejemplo cinta de tiro, grillete).",
+                "Todo elemento que le permita enfrentar una emergencia al quedar aislado con nieve."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "En caso de quedar el vehículo inmobilizado por nieve en la ruta durante un temporal",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén la calma y llama a los servicios de emergencia."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Permanece dentro del vehículo, encendiendo el motor a intervalos regulares que permitan mantener la temperatura interior."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantén el vehículo cerrado, pero con ventilación suficiente para permitir la renovación del aire. Mantén el techo limpio de nieve para que sea visible desde algún medio aéreo."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita el sobreesfuerzo. Bajo condiciones meteorológicas extremas, las actividades de gran impacto físico como intentar empujar el auto y palear grandes acumulaciones de nieve, pueden causar problemas de salud, aún en personas con buen estado físico."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "En caso de ventisca, permanece dentro del vehículo. No intentes caminar para alejarte en busca de ayuda, podrías desorientarte. Perderse en campo abierto implica un grave riesgo. Es más probable que seas encontrado y estarás más protegido si permaneces en tu auto."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Realiza actividad física moviendo vigorosamente las manos y los pies a intervalos regulares, así como también los brazos y las piernas. Evita permanecer en una misma posición por mucho tiempo. Esto mejora la circulación sanguínea y previene la rigidez muscular."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Mantente alerta y atento. No permitas que todos los ocupantes del auto duerman al mismo tiempo."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno-zona-austral/icon_alu_07.png",
+          "text": "Mantente informado sobre las condiciones meteorológicas terrestres y marítimas. Puedes revisar en www.meteochile.gob.cl y meteoarmada.directemar.cl."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/invierno-zona-austral/BG_nevadas_03.png"
+        }
+      ]
+    },
+    {
+      "heading": "Prepárate tú",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Revisa las redes sociales de SENAPRED para saber sobre las alertas vigentes, o en www.senapred.cl. En situaciones de emergencia, permanece atento a las instrucciones de las autoridades."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Procura permanecer a resguardo (al interior de tu vivienda o lugar de trabajo entre otros) ante la eventualidad de que se produzcan fuertes nevazones."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Evita los cambios bruscos de temperatura. Vístete con ropa adecuada y en capas para bajas temperaturas, que permita mantener el calor corporal por un tiempo más prolongado."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Al caminar, ten precaución y permanece atento al estado de las veredas y aceras, ya que producto de la escarcha podrías caer y lesionarte. Para caminar por terreno escarchado o con hielo, prefiere calzado con suela antideslizante o incorpora accesorios que faciliten la tracción."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Si tú o tu familia padecen de afecciones crónicas (hipertensión, diabetes, asma, enfermedades respiratorias, cardiocirculatorias, neurológicas, entre otros), recuerda llevar tus medicamentos y procura tener el stock suficiente. Ten presente que, por las condiciones extremas de nieve y escarcha, hay ocasiones en que no es posible salir de casa."
+            }
+          ]
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/invierno-zona-austral/icon_mochila.png",
+          "text": "Arma un Kit de Emergencia y prepárate si necesitas ir hacia zonas rurales."
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/invierno-zona-austral/bg_invierno-zona-austral_04.png"
+        }
+      ]
+    },
+    {
+      "heading": "Prevención con el ganado ovino y bovino",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Traslada el ganado a áreas guarecidas, especialmente el más joven. Las zonas de resguardo, orientadas y dispuestas en formas adecuadas, proveen una mejor protección para el ganado suelto (especialmente el vacuno) que aquellos de tipo barraca, en los que se aglomera un gran número, favoreciendo desordenes respiratorios y de sobrecalentamiento. El Ganado suelto es fuerte y puede sobrevivir a los rigores de tiempo si cuenta con protección contra el viento y con alimento a intervalos frecuentes."
+            }
+          ]
+        },
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "Transporta alimento adicional antes del temporal a las áreas establecidas para esos fines. La falta de alimento, cuando el temporal se extiende por mas de 48 horas, es una causa importante de las mayores pérdidas del ganado. Se recomienda planificar y adoptar medidas especiales para esas situaciones, sin realizar acciones temerarias y resguardando siempre tu integridad física."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8883/11_preparate_con_senapred_invierno_zona_austral_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8884/11_get_ready_with_senapred_winter_southernmost_zonel_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8885/11_preparez_vous_a_laide_du_senapred_hiver_zone_austral_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/invierno-zona-austral.png"
+}

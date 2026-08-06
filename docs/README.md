@@ -15,8 +15,7 @@ Docs **cross-cutting** (ambas áreas). Referencia por stack:
 
 | Documento | Contenido |
 |-----------|-----------|
-| [HARNESS-QUICK.md](./HARNESS-QUICK.md) | **Flujo compacto** (pocos tokens — leer primero) |
-| [HARNESS.md](./HARNESS.md) | Playbooks detallados + `make verify` |
+| [HARNESS.md](./HARNESS.md) | **Playbooks + flujo compacto** (pocos tokens — leer primero) |
 | [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Cuándo actualizar docs (obligatorio en cambios importantes) |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Sistema, flujo de datos, Docker, monorepo |
 | [QUERY-DATE.md](./QUERY-DATE.md) | Parámetro `?date=` (backend + frontend) |
@@ -31,10 +30,10 @@ Docs **cross-cutting** (ambas áreas). Referencia por stack:
 | Nuevo endpoint | `backend/AGENTS.md` → `backend/docs/BACKEND.md` |
 | Nuevo panel mapa | `frontend/AGENTS.md` → `frontend/docs/DESIGN.md` → `FRONTEND.md` |
 | Cambio contrato alertas | `backend/docs/BACKEND.md` + `frontend/docs/FRONTEND.md` + `lib/types.ts` |
-| Modo híbrido | `backend/docs/BACKEND.md` + `ARCHITECTURE.md` |
+| Fuentes de datos reales | `backend/docs/BACKEND.md` + `ARCHITECTURE.md` |
 | Levantar stack | root `AGENTS.md` + `ARCHITECTURE.md` |
 | Cerrar task agente | `make verify` + [HARNESS.md](./HARNESS.md) |
 
 ---
 
-*Last updated: 2026-06-05*
+*Last updated: 2026-07-31*

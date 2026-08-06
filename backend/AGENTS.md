@@ -2,9 +2,7 @@
 
 **Índice y reglas de scope** en `backend/`. Referencia: [docs/BACKEND.md](docs/BACKEND.md). Mantenimiento: [../docs/DOC-MAINTENANCE.md](../docs/DOC-MAINTENANCE.md).
 
-**Quick:** [../docs/HARNESS-QUICK.md](../docs/HARNESS-QUICK.md) · endpoint §1 · JSON §2 · bugfix §6 · `make verify`
-
-**Memoria:** `engram_mem_context` + `engram_mem_search "contrato|riesgo|date"` antes de editar. Ver [../docs/ENGRAM-PROTOCOL.md](../docs/ENGRAM-PROTOCOL.md). Summary solo si `engram_mem_save`.
+**Quick:** [../docs/HARNESS.md](../docs/HARNESS.md) · endpoint §4 · JSON §5 · bugfix §9 · `make verify`
 
 ---
 
@@ -23,7 +21,6 @@
 | API, env, modelos, scheduler | [docs/BACKEND.md](docs/BACKEND.md) |
 | `?date=` y `DailyRiskScore` | [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) |
 | Arquitectura / Docker | [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) |
-| ML futuro | [docs/ML-INTEGRATION.md](docs/ML-INTEGRATION.md) |
 | Catálogo backend | [docs/README.md](docs/README.md) |
 | Monorepo | [../AGENTS.md](../AGENTS.md) |
 
@@ -44,7 +41,7 @@ backend/app/
 ├── schemas/       # contrato → make sync-contract → frontend/lib/api-schema.d.ts (+ types.ts)
 ├── services/      # daily_risk, chat_agent, meeting_point, …
 └── scheduler/jobs.py
-backend/docs/      # BACKEND.md, ML-INTEGRATION.md
+backend/docs/      # BACKEND.md
 ```
 
 Detalle: [docs/BACKEND.md](docs/BACKEND.md).
@@ -107,4 +104,4 @@ make psql
 
 ---
 
-*Last updated: 2026-07-25*
+*Last updated: 2026-07-31*

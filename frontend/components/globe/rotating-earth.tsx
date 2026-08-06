@@ -165,6 +165,18 @@ export function RotatingEarth({
       d += 'Z';
       return d;
     };
+    const computeChileStarPath = (feature: Feature<GeometryObject, GeoJsonProperties>) => {
+      const centroid = path.centroid(feature as GeoPermissibleObjects);
+      const bounds = path.bounds(feature as GeoPermissibleObjects);
+      const bw = Math.max(6, bounds[1][0] - bounds[0][0]);
+      const bh = Math.max(6, bounds[1][1] - bounds[0][1]);
+      const outerR = Math.min(bw, bh) * 0.28;
+      const innerR = outerR * 0.45;
+      const starX = centroid[0] + bw * 0.24;
+      const starY = bounds[0][1] + bh * 0.18;
+      return createStarPath(starX, starY, outerR, innerR, 5);
+    };
+
 
     // Recalcula los atributos 'd' de todos los paths y actualiza el radio del globo
     // Actualiza las rutas geográficas, el clip de Chile y la estrella según la proyección
@@ -172,7 +184,6 @@ export function RotatingEarth({
     const updatePaths = () => {
       // paths de entidades geográficas (países)
       svgSel.selectAll<SVGPathElement, GeoPermissibleObjects>('path.geo').attr('d', (d) => path(d) ?? '');
-
       // graticule
       svgSel.selectAll<SVGPathElement, GeoPermissibleObjects>('path.graticule').attr('d', (d) => path(d as GeoPermissibleObjects) ?? '');
 
@@ -182,15 +193,7 @@ export function RotatingEarth({
         .attr('r', projection.scale());
 
       if (chileFeatureRef && showChileStar) {
-        const centroid = path.centroid(chileFeatureRef as GeoPermissibleObjects);
-        const bounds = path.bounds(chileFeatureRef as GeoPermissibleObjects);
-        const bw = Math.max(6, bounds[1][0] - bounds[0][0]);
-        const bh = Math.max(6, bounds[1][1] - bounds[0][1]);
-        const outerR = Math.min(bw, bh) * 0.28;
-        const innerR = outerR * 0.45;
-        const starX = centroid[0] + bw * 0.24;
-        const starY = bounds[0][1] + bh * 0.18;
-        const starPath = createStarPath(starX, starY, outerR, innerR, 5);
+        const starPath = computeChileStarPath(chileFeatureRef);
         svgSel.selectAll<SVGPathElement, unknown>('path.chile-star').attr('d', starPath);
       }
     };
@@ -322,20 +325,11 @@ export function RotatingEarth({
       if (chileFeature && showChileStar) {
         chileFeatureRef = chileFeature;
 
-        const centroid = path.centroid(chileFeature as GeoPermissibleObjects);
-        const bounds = path.bounds(chileFeature as GeoPermissibleObjects);
-        const bw = Math.max(6, bounds[1][0] - bounds[0][0]);
-        const bh = Math.max(6, bounds[1][1] - bounds[0][1]);
-        const outerR = Math.min(bw, bh) * 0.22;
-        const innerR = outerR * 0.45;
-        const starX = centroid[0] + bw * 1.2;
-        const starY = bounds[0][1] + bh * 0.18;
-        const starPath = createStarPath(starX, starY, outerR, innerR, 5);
+        const starPath = computeChileStarPath(chileFeature);
 
         svgSel.append('path')
           .attr('class', 'chile-star')
           .attr('d', starPath)
-          .attr('fill', '#fff')
           .style('opacity', 0)
           .style('pointer-events', 'none');
       } else if (chileFeature) {

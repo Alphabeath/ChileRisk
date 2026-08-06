@@ -1,0 +1,121 @@
+{
+  "slug": "humo-de-incendio-forestal",
+  "group": "preparate",
+  "title": "Humo de Incendios Forestales",
+  "sourceUrl": "https://senapred.cl/humo-de-incendio-forestal/",
+  "blurb": "El humo generado por los incendios forestales es una mezcla de aire caliente, material particulado en suspensión y gases de diferentes categorías que varían…",
+  "intro": [
+    {
+      "kind": "background",
+      "src": "/data/senapred/img/humo-de-incendio-forestal/bg_humo_01.png"
+    }
+  ],
+  "sections": [
+    {
+      "heading": "¿Qué es el humo de los incendios forestales?",
+      "blocks": [
+        {
+          "kind": "text",
+          "paragraphs": [
+            {
+              "text": "El humo generado por los incendios forestales es una mezcla de aire caliente, material particulado en suspensión y gases de diferentes categorías que varían según el tipo de material en combustión. El color y la forma del humo indican la naturaleza del incendio y ayudan a detectar y evaluar el foco del fuego."
+            },
+            {
+              "text": "Los gases tóxicos liberados en un incendio forestal pueden clasificarse en dos categorías: agentes irritantes respiratorios y agentes tóxicos."
+            },
+            {
+              "text": "– Agentes irritantes respiratorios: se encuentran compuestos como el ácido clorhídrico, los óxidos de nitrógeno, el dióxido de carbono y el amoníaco."
+            },
+            {
+              "text": "– Agentes tóxicos: incluyen sustancias como el monóxido de carbono, el cianuro y el sulfuro de hidrógeno."
+            },
+            {
+              "text": "El riesgo en la salud humana no solo depende de los componentes del humo, sino también la concentración de estos y el tiempo de exposición."
+            }
+          ]
+        },
+        {
+          "kind": "background",
+          "src": "/data/senapred/img/humo-de-incendio-forestal/bg_humo_02.png"
+        },
+        {
+          "kind": "subheading",
+          "text": "¿Qué hacer en caso de una inundación?"
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_01-150x150.png",
+          "text": "Protege tus vías respiratorias (boca y nariz), usa mascarillas N95 o KN95. Si no tienes, opta por mascarillas quirúrgicas desechables o, en última instancia, usa un paño húmedo."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_02-150x150.png",
+          "text": "Si es posible, protege tus ojos con gafas protectoras/antiparras."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_03-150x150.png",
+          "text": "En caso de que no haya un riesgo de incendio forestal inmediato o una indicación de evacuación, cierra puertas y ventanas y permanece al interior del inmueble en el que estés."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_04-150x150.png",
+          "text": "Mientras estés al interior del inmueble con puertas y ventanas cerradas, evita generar fuentes de combustión (fumar, prender inciensos, velas, otros)."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_05-150x150.png",
+          "text": "En lo posible, intenta trasladarse a otras zonas sin la presencia de humo."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_06-150x150.png",
+          "text": "Si presentas una enfermedad respiratoria crónica, sigue las recomendaciones de tu médico o consulta a un médico."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_07-150x150.png",
+          "text": "Evalúa establecer pausas, disminuir o suspender actividades con esfuerzo físico alto."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_08-150x150.png",
+          "text": "Si presentas dificultad para respirar tras haberte expuesto al humo del incendio, concurre a un servicio de urgencias."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_09-150x150.png",
+          "text": "Actúa con calma y mantente atento a las indicaciones de las autoridades."
+        },
+        {
+          "kind": "step",
+          "icon": "/data/senapred/img/humo-de-incendio-forestal/icon_humo_10-150x150.png",
+          "text": "Protege a tus mascotas y animales de traspatio. Mantén su alimento limpio de la contaminación y cuida su pelaje de residuos carbonizados."
+        }
+      ]
+    },
+    {
+      "heading": "Descargables",
+      "blocks": [
+        {
+          "kind": "links",
+          "items": [
+            {
+              "label": "Documento en PDF",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8869/07_preparate_con_senapred_humo_incendios_forestales_esp.pdf"
+            },
+            {
+              "label": "English version",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8871/07_get_ready_with_senapred_wildfire_smoke_eng.pdf"
+            },
+            {
+              "label": "Version française",
+              "href": "https://bibliogrd.senapred.gob.cl/bitstream/handle/1671/8872/07_preparez_vous_a_laide_du_senapred_fumee_des_feux_de_foretss_fra.pdf"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cardImage": "/data/senapred/img/catalog/humo-de-incendio-forestal.png"
+}

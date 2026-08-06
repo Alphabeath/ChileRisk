@@ -14,13 +14,15 @@
 #
 # Prerequisites: docker, docker compose, make, bun (for native frontend dev), and python3 (for native backend dev).
 
-.PHONY: help up down logs build build-frontend build-backend clean \
+.PHONY: help up down logs build build-frontend build-backend clean clean-deps \
         dev-frontend dev-backend \
         backend-sh psql adminer \
         check-ignores \
         verify verify-docs verify-contract verify-frontend verify-backend \
         export-openapi sync-contract \
-        db-migrate db-revision db-stamp
+        db-migrate db-revision db-stamp \
+        evacuacion-data \
+        comunas-data
 
 .DEFAULT_GOAL := help
 
@@ -31,7 +33,8 @@ help: ## Show this help
 	@echo ""
 	@echo "Examples:"
 	@echo "  make up                  # full stack (build + run)"
-	@echo "  make clean               # remove host-side Python caches"
+	@echo "  make clean               # remove regenerable caches (Python + Next build)"
+	@echo "  make clean-deps          # remove node_modules + backend/.venv (reinstall required)"
 	@echo "  make dev-frontend        # native Next.js dev (cd frontend + bun)"
 
 # --- Full stack (Docker blessed path) ---
@@ -54,19 +57,26 @@ logs-backend: ## Follow backend logs only
 build: ## Build images without starting
 	docker compose build
 
-build-frontend: ## Rebuild only the frontend image (no deps)
-	docker compose build --no-deps frontend
+build-frontend: ## Rebuild only the frontend image (no deps; Compose v5+ default)
+	docker compose build frontend
 
-build-backend: ## Rebuild only the backend image (no deps)
-	docker compose build --no-deps backend
+build-backend: ## Rebuild only the backend image (no deps; Compose v5+ default)
+	docker compose build backend
 
 # --- Hygiene / caches (directly addresses original .pyc / __pycache__ issue) ---
 
-clean: ## Remove __pycache__ and .pyc from the host tree (defense in depth)
+clean: ## Remove regenerable caches (Python + Next build + pytest/ruff/egg-info)
 	@echo "Cleaning Python caches..."
 	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@find . -name '*.pyc' -o -name '*.pyo' -delete 2>/dev/null || true
-	@echo "Done. (backend/.gitignore + backend/.dockerignore + root .gitignore now protect the rest)"
+	@rm -rf frontend/.next frontend/tsconfig.tsbuildinfo \
+	       backend/.pytest_cache backend/chilerisk_backend.egg-info \
+	       backend/.ruff_cache .tmp
+	@echo "Done. Regenerable caches removed (deps: use 'make clean-deps')."
+
+clean-deps: ## Remove node_modules + backend/.venv (reinstall required)
+	@rm -rf frontend/node_modules node_modules .opencode/node_modules backend/.venv
+	@echo "Done. Reinstall: cd frontend && bun install; cd backend && python3 -m venv .venv && .venv/bin/pip install -e \".[dev]\"."
 
 clean-docker: ## Prune dangling images / build cache (use with care)
 	docker system prune -f
@@ -154,3 +164,14 @@ export-openapi: ## Write backend/docs/openapi.json from FastAPI app (needs backe
 
 sync-contract: ## Export OpenAPI + write frontend/lib/api-schema.d.ts
 	@SYNC_CONTRACT_WRITE=1 bash docs/scripts/sync-contract.sh
+
+# --- Static geospatial assets ---
+
+tippecanoe-image: ## Build local tippecanoe 2.x image (used by evacuacion-data if not on PATH)
+	docker build -t chilerisk-tippecanoe:2.79.0 -f scripts/Dockerfile.tippecanoe scripts/
+
+evacuacion-data: ## SHP → public/data/evacuacion GeoJSON + PMTiles (Docker GDAL + tippecanoe)
+	@bash scripts/build-evacuacion-data.sh
+
+comunas-data: ## Build comunas_medium.geojson from comunas_full (Docker GDAL)
+	@bash scripts/build-comunas-geojson.sh

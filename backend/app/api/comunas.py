@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +13,7 @@ from app.models.comuna import Comuna
 from app.models.seismic_event import SeismicEvent
 from app.models.seismic_impact import SeismicImpact
 from app.schemas.comuna_geo import NearestComunaOut
+from app.schemas.risk import ComunaRiskDetail
 from app.services.query_date_window import clamp_query_date, day_bounds_utc, today_chile
 from app.services.risk_service import get_latest_risk_for_comuna
 from app.services.seismic_alert_match import nearest_comuna
@@ -43,21 +44,25 @@ async def get_nearest_comuna(
     )
 
 
-@router.get("/{cod_comuna}/risk")
+@router.get("/{cod_comuna}/risk", response_model=ComunaRiskDetail)
+@limiter.limit("60/minute")
 async def get_comuna_risk(
-    cod_comuna: int,
+    request: Request,
+    cod_comuna: int = Path(ge=1),
     date: date | None = Query(
         default=None,
         description="Día calendario Chile para impacto sísmico en popup (YYYY-MM-DD).",
     ),
     db: AsyncSession = Depends(get_db),
-):
+) -> ComunaRiskDetail:
     score = await get_latest_risk_for_comuna(db, cod_comuna)
     if not score:
         raise HTTPException(status_code=404, detail="No risk data for this comuna")
 
     comuna = await db.get(Comuna, cod_comuna)
-    name = comuna.name if comuna else "Desconocida"
+    if comuna is None:
+        raise HTTPException(status_code=404, detail="Comuna not found")
+    name = comuna.name
 
     reading = (
         await db.execute(
