@@ -1,160 +1,125 @@
 <!-- BEGIN:nextjs-agent-rules -->
-# Next.js 16 — read this before writing code
+# Next.js 16 — leer antes de escribir código
 
-App Router difiere de 14/15. Antes de `app/` o `next.config.ts`, lee `node_modules/next/dist/docs/`.
+App Router difiere de versiones anteriores. Antes de tocar `app/` o `next.config.ts`, lee `node_modules/next/dist/docs/`.
 <!-- END:nextjs-agent-rules -->
 
 ---
 
 # AGENTS.md — ChileRisk Frontend
 
-**Índice y reglas de scope** en `frontend/`. Componentes: [docs/FRONTEND.md](docs/FRONTEND.md). UI: [docs/DESIGN.md](docs/DESIGN.md). Mantenimiento: [../docs/DOC-MAINTENANCE.md](../docs/DOC-MAINTENANCE.md).
+**Índice y reglas de scope** en `frontend/`. Referencia de estado, componentes y datos: [docs/FRONTEND.md](docs/FRONTEND.md). Guía visual canónica: [docs/UI-GUIDELINES.md](docs/UI-GUIDELINES.md). Contexto portable para Impeccable: [DESIGN.md](DESIGN.md). Mantenimiento: [../docs/DOC-MAINTENANCE.md](../docs/DOC-MAINTENANCE.md).
 
-**Quick:** [../docs/HARNESS.md](../docs/HARNESS.md) · UI §6 · map §7 · contract §5 · `make verify`
+**Quick:** [../docs/HARNESS.md#frontend-y-ui](../docs/HARNESS.md#frontend-y-ui) · [contrato FE↔BE](../docs/HARNESS.md#contrato-febe) · `make verify-frontend`
 
 ---
 
 ## Scope
 
 - Solo `frontend/` (incluye `frontend/docs/`).
-- `old_frontend/` es **referencia de migración** — no editar salvo pedido explícito.
-- No `backend/`, `TrueRisk/`, `misc/`, raíz salvo `docs/` cross-cutting en el mismo task.
+- La aplicación activa vive en `frontend/`; no se mantiene una segunda implementación.
+- No tocar `backend/`, `TrueRisk/` ni `misc/`; la raíz solo se toca para `docs/` cross-cutting en el mismo task.
 - Monorepo: [../AGENTS.md](../AGENTS.md).
 
----
+## Estado y documentación
 
-## Índice documentación
+La matriz canónica de rutas y sus etiquetas `disponible` / `stub` / `ausente` está en [docs/FRONTEND.md#estado-de-rutas](docs/FRONTEND.md#estado-de-rutas). No copies otra tabla de rutas aquí.
 
 | Tema | Documento |
 |------|-----------|
-| Componentes, mapa, surface/Mica | [docs/FRONTEND.md](docs/FRONTEND.md) |
-| Identidad, tokens, paletas | [docs/DESIGN.md](docs/DESIGN.md) |
-| `?date=` | [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) |
+| Estado, componentes, mapa, datos y rendimiento | [docs/FRONTEND.md](docs/FRONTEND.md) |
+| Implementación visual detallada y canónica | [docs/UI-GUIDELINES.md](docs/UI-GUIDELINES.md) |
+| Contexto visual portable de Impeccable | [DESIGN.md](DESIGN.md) |
+| `?date=` cross-stack | [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) |
 | Arquitectura | [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) |
-| Catálogo frontend | [docs/README.md](docs/README.md) |
 | API backend | [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md) |
 
----
+`UI-GUIDELINES.md` se lee primero para UI/mapa. `DESIGN.md` solo aporta contexto portable para Impeccable; no reemplaza tokens, cookbooks ni reglas operativas.
 
-## Rutas
+## Naming y stack
 
-URLs en **español**. Código (`components/`, hooks, exports, tipos) en **inglés**. Copy UI en **español**.
+- URLs en español; nombres de código, exports y tipos en inglés; copy visible en español.
+- next@16 · react@19 · Tailwind v4 · Bun · `maplibre-gl@6` + mapcn · `@base-ui/react` · shadcn · Motion · next-themes · Zustand · `@tanstack/react-query` · d3 para landing.
+- Usa `motion`, no `framer-motion`.
+- No añadas dependencias o patrones de UI no documentados sin aprobación del área.
 
-| Ruta | Propósito | Estado |
-|------|-----------|--------|
-| `/` | Landing + globo | migrado |
-| `/monitor` | Mapa multi-amenaza | migrado (API real + Alertas + Fecha) |
-| `/iniciar-sesion` | Login | pendiente |
-| `/registro` | Registro | pendiente |
-| `/olvide-contrasena` | Forgot password | pendiente |
-| `/restablecer-contrasena` | Reset password | pendiente |
-| `/inicio` | Home ciudadano (Mi comuna hoy) | pendiente |
-| `/preparacion` | Hub preparación + Plan Familia | pendiente |
-| `/preparacion/kit-emergencia` | Guía kit de emergencia | pendiente |
-| `/preparacion/plan-familia/paso/[n]` | Wizard Plan Familia (8 pasos) | pendiente |
-| `/simulacros` | Calendario SERNAPRED | pendiente |
-| `/evacuacion` | Mapa evacuación | migrado (GeoJSON/PMTiles + meeting-points) |
-| `/desastres`, `/desastres/[tipo]` | Guías SENAPRED (25 temas) | migrado (vendored + SSG) |
-| `/asistente` | Chat ciudadano | pendiente |
-| `/cuenta` | Cuenta + comuna de hogar | pendiente |
+## Árbol relevante
 
-No reintroducir redirects ES→EN del viejo (`/evacuacion` → `/evacuation`).
-
----
-
-## Stack
-
-next@16 · react@19 · Tailwind v4 · bun · maplibre-gl@6 + mapcn · `@base-ui/react` · shadcn (base-sera) · motion · next-themes · zustand · `@tanstack/react-query` · d3 (landing).
-
-**Aún no:** auth (NextAuth), @dnd-kit, driver.js.
-
-**No:** `sonner` (pedir antes). `framer-motion` → usar `motion`.
-
----
-
-## Estructura
-
-```
+```text
 frontend/
-├── app/                    # rutas ES: page.tsx, monitor/, …
+├── app/                    # rutas ES y route groups
 ├── components/
 │   ├── ui/                 # shadcn + mapcn (map.tsx)
 │   ├── layout/             # citizen-navbar, page-stub
-│   ├── map/                # chile-map, map-config
-│   ├── globe/              # landing earth
+│   ├── map/                # chile-map, overlays, monitor context
+│   ├── evacuacion/         # leyenda, puntos y popups de evacuación
+│   ├── globe/              # landing
 │   ├── mica-light-provider.tsx
 │   └── theme-provider.tsx
-├── hooks/                  # use-query-date, use-map-data, risk/alerts/air/events
-├── stores/                 # ui-store (fecha + prefs paneles, persist)
-├── lib/                    # api.ts, types.ts, queries.ts, surface, risk-scale, …
-├── data/evacuacion-source/ # SHP fuente (gitignored; `make evacuacion-data`)
-├── data/senapred/          # guías vendored (JSON; sync:senapred)
-├── public/data/            # GeoJSON/PMTiles runtime + senapred/img/
-└── docs/                   # FRONTEND.md, DESIGN.md
+├── hooks/                  # fecha, mapa, riesgo, alertas, aire y eventos
+├── stores/                 # ui-store (fecha y preferencias)
+├── lib/                    # api.ts, types.ts, queries.ts, query-cache.ts
+├── data/evacuacion-source/ # fuente SHP externa, gitignored
+├── data/senapred/          # guías vendoreadas
+├── public/data/            # GeoJSON, PMTiles, snapshots e imágenes runtime
+├── DESIGN.md               # contexto portable para Impeccable
+└── docs/                   # FRONTEND.md y UI-GUIDELINES.md
 ```
-
-Detalle: [docs/FRONTEND.md](docs/FRONTEND.md).
-
----
 
 ## Dónde poner código
 
 | Añades… | Ubicación |
 |---------|-----------|
-| Página | `app/<ruta-es>/page.tsx` o `app/(citizen)/…` si lleva navbar |
-| shadcn | `components/ui/` |
+| Página | `app/<ruta-es>/page.tsx` o `app/(citizen)/…` si usa navbar |
+| Primitiva UI | `components/ui/` |
 | Feature | `components/<area>/` (nombre EN) |
 | Layout chrome | `components/layout/` |
-| Superficie / Mica | `lib/surface.ts` + clases CSS |
-| Hook API / fecha | `hooks/` + `lib/queries.ts` + `lib/query-cache.ts` (`staleTimeForLive`) |
+| Superficie/Mica | `lib/surface.ts` + clases CSS |
+| Hook API/fecha | `hooks/` + `lib/queries.ts` + `lib/query-cache.ts` |
 | Preferencias UI | `stores/ui-store.ts` |
-| HTTP | `lib/api.ts` → `/api/backend` (JWT guest) |
-| Tipo contrato | `lib/types.ts` + `make sync-contract` |
-| Capa / overlay mapa | `components/map/` |
-| Doc UI | [docs/FRONTEND.md](docs/FRONTEND.md) / [DESIGN.md](docs/DESIGN.md) |
+| HTTP | `lib/api.ts` → `/api/backend` |
+| Tipo de contrato | `lib/types.ts` + `make sync-contract` |
+| Capa u overlay de mapa | `components/map/` |
+| Evacuación | `components/evacuacion/` |
+| Documento frontend | `docs/FRONTEND.md` / `docs/UI-GUIDELINES.md` |
 
-UI mapa/citizen: [docs/DESIGN.md](docs/DESIGN.md) primero.
+Hot paths del monitor: `components/map/map-alerts-overlay.tsx`, `components/map/monitor-live-data.tsx`, `components/map/chile-map.tsx`, `lib/query-cache.ts` y hooks TQ. Reutiliza esos puntos antes de crear otra capa de estado.
 
----
+## Contrato FE↔BE
 
-## Recurso backend (checklist)
+1. Revisa [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md) y `GET /openapi.json`.
+2. Ejecuta `make sync-contract` desde la raíz.
+3. Revisa `lib/api-schema.d.ts`, `lib/types.ts` y `lib/api.ts` en el mismo task.
+4. Añade hook TanStack Query y consumidor; no uses GET con `fetch` suelto en la UI.
+5. Actualiza [docs/FRONTEND.md](docs/FRONTEND.md) y [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) si aplica.
 
-1. [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md)
-2. `make sync-contract` → `lib/api-schema.d.ts` (+ futuro `lib/types.ts` + `lib/api.ts`)
-3. Hook + consumidor
-4. [docs/FRONTEND.md](docs/FRONTEND.md) si es superficie pública
-5. [QUERY-DATE](../docs/QUERY-DATE.md) si usa `date`
+Datos operacionales solo vía HTTP; nunca PostgreSQL desde el frontend. La política de hoy/histórico está en `lib/query-cache.ts` y [docs/FRONTEND.md](docs/FRONTEND.md#reglas-tanstack-query-e-integración).
 
-Datos operacionales solo del backend real vía HTTP — nunca Postgres desde el FE. **Datos BE →** hook en `hooks/` con TanStack Query + `queryKeys` + `staleTimeForLive`; no `fetch` suelto en UI ([FRONTEND.md § TanStack Query](docs/FRONTEND.md#datos-del-backend-tanstack-query)).
+## Pitfalls y invariantes
 
----
+- Worker MapLibre: `public/vendor/maplibre/` debe contener los módulos configurados por `components/ui/map.tsx`.
+- El basemap sigue el tema de la app; no hardcodear una capa dark-only.
+- Colores de riesgo, alerta y aire salen de `lib/risk-scale.ts` y la guía canónica.
+- Mica solo vía `lib/surface.ts`; no inventar otra implementación de glass.
+- No crear monolitos de mapa; reutilizar `components/map/` y `components/evacuacion/`.
+- GeoJSON/PMTiles runtime salen de `public/data/`; el origen SHP no se sirve.
+- Todo GET de backend pasa por hooks TanStack Query con `queryKeys` y TTL documentados.
 
-## Pitfalls
-
-- **Naming:** rutas ES · código EN · UI ES.
-- `from "motion"` no `framer-motion`.
-- Worker MapLibre: `public/vendor/maplibre/` (sin esto el mapa no carga).
-- Basemap sigue el tema de la app — no hardcodear dark-matter.
-- Colores de riesgo/alerta/aire: canónicos en DESIGN + `lib/risk-scale.ts` — no inventar.
-- Mica solo vía `lib/surface.ts` (`.surface-mica`) — no portar `glass-mica` del viejo.
-- No copiar monolitos de `old_frontend/components/map/chile-map.tsx`.
-- GeoJSON runtime: `public/data/*.geojson`.
-- **Datos BE:** solo vía hooks TQ (`useQuery` / `fetchQuery`); ver [FRONTEND.md § TanStack Query](docs/FRONTEND.md#datos-del-backend-tanstack-query).
-
----
-
-## Entregables
-
-1. Carpeta correcta
-2. Contrato → `make sync-contract` + tipos/cliente cuando aplique
-3. [docs/FRONTEND.md](docs/FRONTEND.md) / DESIGN si cambia UI pública
-4. **Siempre rebuild:** `bun run lint` + `bun run typecheck` + `bun run build` + `bun test` (no cerrar task sin build).
+## Comandos y entregables
 
 ```bash
+# Frontend nativo
 cd frontend && bun run dev
+
+# Desde la raíz
 make verify-frontend
+
+# Artefacto Next (make verify no lo ejecuta)
+cd frontend && bun run build
 ```
+
+`make verify-frontend` no sustituye `bun run build`. Un cambio de contrato además requiere `make sync-contract`; un cambio de UI pública requiere actualizar la referencia correspondiente.
 
 ---
 
-*Last updated: 2026-08-04*
+*Last updated: 2026-08-07*

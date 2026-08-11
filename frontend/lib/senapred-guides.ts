@@ -82,6 +82,12 @@ export interface SenapredGuide extends GuideSummary {
   sections: { heading: string; blocks: GuideBlock[] }[]
 }
 
+export function formatGuideTitle(title: string): string {
+  const normalized = title.trim().toLocaleLowerCase("es-CL")
+  if (normalized.length === 0) return ""
+  return normalized[0].toLocaleUpperCase("es-CL") + normalized.slice(1)
+}
+
 export const GUIDE_GROUPS: { key: GuideGroup; label: string }[] = [
   { key: "preparate", label: "Prepárate con SENAPRED" },
   { key: "inclusiva", label: "Preparación inclusiva para emergencias" },

@@ -1,10 +1,9 @@
-import { PageStub } from "@/components/layout/page-stub"
+import type { Metadata } from "next"
 
-export default function SimulacrosPage() {
-  return (
-    <PageStub
-      title="Simulacros"
-      description="Calendario de simulacros SERNAPRED y actividades de preparación."
-    />
-  )
+import { SimulacrosPage } from "@/components/simulacros/simulacros-page"
+
+export const metadata: Metadata = { title: "Simulacros" }
+
+export default function SimulacrosRoute() {
+  return <SimulacrosPage />
 }

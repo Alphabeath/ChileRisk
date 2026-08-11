@@ -21,6 +21,7 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet"
 import {
   Tooltip,
@@ -187,7 +188,7 @@ export function CitizenNavbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const closeMenu = useCallback(() => setOpen(false), [])
-  useCloseOnDesktopMd(closeMenu)
+  const sheetEpoch = useCloseOnDesktopMd(closeMenu)
   const reduceMotion = useReducedMotion()
   const desktopNavRef = useRef<HTMLElement>(null)
   const sheetNavRef = useRef<HTMLElement>(null)
@@ -244,23 +245,25 @@ export function CitizenNavbar() {
           ChileRisk
         </Link>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="absolute top-1/2 right-2 size-11 -translate-y-1/2 md:hidden sm:right-3"
-            aria-expanded={open}
-            aria-controls="citizen-nav-sheet"
-            aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            onClick={() => setOpen((prev) => !prev)}
+        <Sheet key={sheetEpoch} open={open} onOpenChange={setOpen}>
+          <SheetTrigger
+            render={
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute top-1/2 right-2 size-11 -translate-y-1/2 md:hidden sm:right-3"
+                aria-controls="citizen-nav-sheet"
+                aria-label={open ? "Cerrar menú" : "Abrir menú"}
+              />
+            }
           >
             {open ? (
               <X className="size-5" aria-hidden />
             ) : (
               <Menu className="size-5" aria-hidden />
             )}
-          </Button>
+          </SheetTrigger>
 
           <SheetContent
             id="citizen-nav-sheet"

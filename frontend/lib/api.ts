@@ -12,6 +12,7 @@ import type {
   RegionRisk,
   SeismicEvent,
   Simulacro,
+  SimulacroDetail,
   SimulacroListResponse,
   SimulacrosParams,
 } from "@/lib/types"
@@ -162,8 +163,8 @@ export async function getNextSimulacro(): Promise<Simulacro | null> {
   return fetchJson<Simulacro | null>("/api/v1/simulacros/next")
 }
 
-export async function getSimulacro(slug: string): Promise<Simulacro> {
-  return fetchJson<Simulacro>(
+export async function getSimulacro(slug: string): Promise<SimulacroDetail> {
+  return fetchJson<SimulacroDetail>(
     `/api/v1/simulacros/${encodeURIComponent(slug)}`,
   )
 }

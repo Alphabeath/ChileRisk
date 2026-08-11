@@ -7,16 +7,17 @@ from datetime import date, datetime, timezone
 from typing import Any, Iterable
 
 import httpx
+from sqlalchemy import update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.simulacro import Simulacro
 from app.services.simulacro_parsers import (
+    _has_simulacro_detail_root,
     absolute_detail_url,
     parse_calendar_section,
-    parse_detail_summary,
+    parse_detail_page,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,31 +50,52 @@ async def _collect_calendar_records(
 async def _enrich_with_details(
     records: list[dict],
     client: httpx.AsyncClient,
-) -> None:
+) -> tuple[set[str], set[str]]:
+    enriched_slugs: set[str] = set()
+    unavailable_slugs: set[str] = set()
     for rec in records:
-        if not rec.get("has_detail_page", True):
+        slug = rec.get("slug")
+        if not slug:
             continue
-        if rec.get("summary"):
-            continue
-        detail_url = rec.get("detail_href")
-        if not detail_url:
-            detail_url = absolute_detail_url(f"/simulacros_t/{rec['slug']}/")
+        detail_url = rec.get("detail_href") or absolute_detail_url(
+            f"/simulacros_t/{slug}/"
+        )
         if not detail_url:
             continue
         html = await _fetch_html(detail_url, client=client)
         if not html:
             continue
         try:
-            summary, comunas, sae = parse_detail_summary(html)
+            parsed = parse_detail_page(html)
         except Exception as e:
-            logger.debug("detail parse failed for %s: %s", rec["slug"], e)
+            logger.debug("detail parse failed for %s: %s", slug, e)
             continue
+        if not parsed.get("headline") and not parsed.get("body_blocks"):
+            if not _has_simulacro_detail_root(html):
+                rec["has_detail_page"] = False
+                rec.pop("detail_href", None)
+                unavailable_slugs.add(slug)
+                logger.info("detail page unavailable for %s", slug)
+            else:
+                logger.warning("detail parse yielded no structure for %s", slug)
+            continue
+
+        rec["has_detail_page"] = True
+        rec["detail_href"] = detail_url
+        summary = parsed.get("summary")
         if summary:
             rec["summary"] = summary
-        if comunas and not rec.get("participating_comunas"):
+        comunas = parsed.get("participating_comunas") or []
+        if comunas:
             rec["participating_comunas"] = comunas
-        if sae:
+        if parsed.get("mensaje_sae"):
             rec["mensaje_sae"] = True
+        rec["headline"] = parsed.get("headline")
+        rec["schedule_note"] = parsed.get("schedule_note")
+        rec["hero_image_url"] = parsed.get("hero_image_url")
+        rec["detail_body"] = parsed.get("body_blocks") or []
+        enriched_slugs.add(slug)
+    return enriched_slugs, unavailable_slugs
 
 
 def _to_row(rec: dict) -> dict[str, Any] | None:
@@ -95,14 +117,24 @@ def _to_row(rec: dict) -> dict[str, Any] | None:
         "region_name": rec.get("region_name"),
         "drill_type": rec.get("drill_type", "otro"),
         "participating_comunas": rec.get("participating_comunas", []),
-        "summary": rec.get("summary"),
+        "summary": rec.get("summary") or rec.get("calendar_summary"),
         "detail_url": detail_url,
         "mensaje_sae": bool(rec.get("mensaje_sae", False)),
         "source": rec.get("source", "future"),
+        "headline": rec.get("headline"),
+        "schedule_note": rec.get("schedule_note"),
+        "hero_image_url": rec.get("hero_image_url"),
+        "detail_body": rec.get("detail_body") or [],
     }
 
 
-async def _upsert_simulacros(session: AsyncSession, records: Iterable[dict]) -> int:
+async def _upsert_simulacros(
+    session: AsyncSession,
+    records: Iterable[dict],
+    *,
+    enriched_slugs: set[str],
+    unavailable_slugs: set[str],
+) -> int:
     rows: list[dict] = []
     seen: set[str] = set()
     for rec in records:
@@ -120,10 +152,11 @@ async def _upsert_simulacros(session: AsyncSession, records: Iterable[dict]) -> 
         pg_insert(Simulacro) if dialect == "postgresql" else sqlite_insert(Simulacro)
     )
     insert_stmt = insert_stmt.values(rows)
+    detail_columns = {"headline", "schedule_note", "hero_image_url", "detail_body"}
     update_cols = {
         c.name: insert_stmt.excluded[c.name]
         for c in Simulacro.__table__.columns
-        if c.name not in ("id", "slug", "synced_at")
+        if c.name not in {"id", "slug", "synced_at"} | detail_columns
     }
     update_cols["synced_at"] = datetime.now(timezone.utc)
     upsert = insert_stmt.on_conflict_do_update(
@@ -131,6 +164,29 @@ async def _upsert_simulacros(session: AsyncSession, records: Iterable[dict]) -> 
         set_=update_cols,
     )
     await session.execute(upsert)
+    for row in rows:
+        slug = row["slug"]
+        if slug in unavailable_slugs:
+            detail_values = {
+                "headline": None,
+                "schedule_note": None,
+                "hero_image_url": None,
+                "detail_body": [],
+            }
+        elif slug in enriched_slugs:
+            detail_values = {
+                "headline": row["headline"],
+                "schedule_note": row["schedule_note"],
+                "hero_image_url": row["hero_image_url"],
+                "detail_body": row["detail_body"],
+            }
+        else:
+            continue
+        await session.execute(
+            update(Simulacro)
+            .where(Simulacro.slug == slug)
+            .values(**detail_values)
+        )
     await session.commit()
     logger.info("Upserted %d simulacros", len(rows))
     return len(rows)
@@ -150,6 +206,8 @@ async def sync_simulacros(session: AsyncSession) -> int:
         "Accept": "text/html,application/xhtml+xml",
     }
 
+    enriched_slugs: set[str] = set()
+    unavailable_slugs: set[str] = set()
     async with httpx.AsyncClient(timeout=timeout, headers=headers, follow_redirects=True) as client:
         try:
             records = await _collect_calendar_records(client, base, today=today)
@@ -160,8 +218,15 @@ async def sync_simulacros(session: AsyncSession) -> int:
             logger.warning("simulacros: no records collected from %s", base)
             return 0
         try:
-            await _enrich_with_details(records, client)
+            enriched_slugs, unavailable_slugs = await _enrich_with_details(
+                records, client
+            )
         except Exception as e:
             logger.exception("simulacros detail enrichment failed: %s", e)
 
-    return await _upsert_simulacros(session, records)
+    return await _upsert_simulacros(
+        session,
+        records,
+        enriched_slugs=enriched_slugs,
+        unavailable_slugs=unavailable_slugs,
+    )

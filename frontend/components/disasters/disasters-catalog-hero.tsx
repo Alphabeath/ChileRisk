@@ -1,83 +1,60 @@
 /**
  * Hero de marca del catálogo `/desastres` (Server Component).
  * Full-bleed con la ilustración multi-amenaza `catalog/hero.png` bajo la
- * navbar; scrim institucional Chile (izquierda) + degradado oscuro (abajo)
- * para legibilidad en light y dark; stats en mono.
+ * navbar; en modo oscuro se usa la variante nocturna `catalog/hero noche.png`
+ * (swap 100% CSS vía variante `dark:`). Hero compacto para mantener visible
+ * la primera banda; título centrado verticalmente, rail institucional y metadata mono al pie. El azul `--primary-chile` detrás es el fallback si
+ * un asset no carga.
  */
-export function DisastersCatalogHero({
-  guideCount,
-  preparateCount,
-  inclusivaCount,
-}: {
-  guideCount: number
-  preparateCount: number
-  inclusivaCount: number
-}) {
+export function DisastersCatalogHero({ guideCount }: { guideCount: number }) {
+  const meta = guideCount > 0 ? `${guideCount} guías` : "Biblioteca temática"
   return (
-    <section
+    <header
       aria-labelledby="desastres-hero-title"
-      className="relative isolate min-h-[22rem] overflow-hidden border-b border-border sm:min-h-[26rem] lg:min-h-[28rem]"
+      className="relative flex min-h-[32rem] flex-col justify-between overflow-hidden border-b border-border bg-[var(--primary-chile)] lg:max-h-[56rem]"
     >
-      {/* background image — plain <img>, no next/image (repo has zero next/image imports) */}
+      {/* background images — plain <img>, no next/image (repo has zero next/image imports) */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/data/senapred/img/catalog/hero.png"
         alt=""
         aria-hidden
-        className="absolute inset-0 size-full object-cover object-center"
+        className="absolute inset-0 size-full object-cover object-center dark:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/data/senapred/img/catalog/hero noche.png"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 hidden size-full object-cover object-center dark:block"
       />
 
-      {/* legibility scrim: institutional blue left + dark bottom; NOT pure black/60 glass */}
+      {/* legibility scrim: same overlay as the detail hero */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-[var(--primary-chile)]/92 via-[var(--primary-chile)]/70 to-[var(--primary-chile)]/25"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10"
-      />
-      {/* thin Chile accent bar at bottom edge */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[var(--primary-chile)] via-[var(--secondary-chile)] to-[var(--primary-chile)]"
+        className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/15 to-black/35"
       />
 
-      <div className="relative z-10 mx-auto flex h-full min-h-[22rem] max-w-6xl flex-col justify-end gap-6 px-4 py-10 sm:min-h-[26rem] sm:py-14 lg:min-h-[28rem]">
-        <div className="max-w-2xl">
-          <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/75">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+        <div className="flex max-w-4xl flex-col items-center gap-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/80">
             Guías de preparación · SENAPRED
           </p>
+          <div className="h-1 w-16 bg-[var(--primary-chile)]" />
           <h1
             id="desastres-hero-title"
-            className="mt-2 text-4xl font-extrabold tracking-tighter text-white drop-shadow-sm sm:text-5xl lg:text-6xl"
+            className="max-w-4xl text-5xl font-extrabold tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.45)] sm:text-7xl lg:text-8xl"
           >
             Desastres
           </h1>
-          <p className="mt-3 max-w-xl text-base text-white/90 sm:text-lg">
-            Recomendaciones oficiales de SENAPRED para prepararte ante cada
-            tipo de amenaza.
-          </p>
         </div>
-
-        <dl className="grid max-w-lg grid-cols-3 gap-2 sm:gap-3">
-          <HeroStat value={guideCount} label="Guías" />
-          <HeroStat value={preparateCount} label="Prepárate" />
-          <HeroStat value={inclusivaCount} label="Inclusivas" />
-        </dl>
       </div>
-    </section>
-  )
-}
 
-function HeroStat({ value, label }: { value: number; label: string }) {
-  return (
-    <div className="flex flex-col-reverse gap-1 border border-white/20 bg-black/35 px-3 py-2.5 backdrop-blur-sm supports-[backdrop-filter]:bg-black/25">
-      <dt className="text-[10px] font-semibold uppercase tracking-[1.2px] text-white/65">
-        {label}
-      </dt>
-      <dd className="font-mono text-2xl font-bold tabular-nums tracking-wider text-white">
-        {value}
-      </dd>
-    </div>
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-10 sm:px-6 sm:pb-14 lg:px-8">
+        <p className="border-t border-white/20 pt-4 font-mono text-[11px] uppercase tracking-wider text-white/70">
+          {meta}
+        </p>
+      </div>
+    </header>
   )
 }

@@ -7,318 +7,161 @@
 [![React 19](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev)
 [![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1.svg)](https://postgresql.org)
 
-**Plataforma de inteligencia de riesgo multi-amenaza para Chile:** monitoreo en tiempo real, puntajes 0–100 por comuna, alertas oficiales unificadas y guía ciudadana de preparación — 16 regiones, 346 comunas.
+# ChileRisk
 
-[Plataforma](https://chilerisk.cl) · [API Docs](http://localhost:8000/docs) · [Arquitectura](docs/ARCHITECTURE.md) · [Inspirado en TrueRisk](https://truerisk.cloud/)
+**Monitor ciudadano multi-amenaza para Chile:** ayuda a consultar riesgo, alertas oficiales y preparación para las 16 regiones y 346 comunas. El producto usa únicamente datos reales; si una fuente no responde, no inventa valores de reemplazo.
+
+[Destino configurado](https://chilerisk.cl) · [API local](http://localhost:8000/docs) · [Arquitectura](docs/ARCHITECTURE.md)
 
 </div>
 
 ---
 
-## Features
+## Disponible hoy en la web
 
-- **5 hazards con score 0–100** — Sismo, inundación, ola de calor, viento y ola de frío, por cada una de las 346 comunas
-- **Fusión de datos reales** — CSN (sismologia.cl), Open-Meteo (clima + Flood/GloFAS), SERNAPRED (AppSync), SERNAGEOMIN (OVDAS) y Aire Chile (GEC / MMA)
-- **Mapa interactivo** — MapLibre GL con coropleta de riesgo, modos Riesgo / Alertas / Aire, marcadores sísmicos y consulta histórica `?date=` (30 días)
-- **Alertas unificadas** — SERNAPRED + umbrales ChileRisk + volcanes SERNAGEOMIN en un solo feed filtrable
-- **Dashboard ciudadano** — Resumen IA del día (DeepSeek), tarjeta “Mi comuna hoy”, sismos relevantes y atajos a mapa / plan
-- **Asistente de emergencia** — Chat con tools (DeepSeek) contextualizado a ubicación, alertas y riesgo
-- **Preparación familiar** — Plan Familia (8 pasos), kit de emergencia, guías por tipo de desastre y calendario de simulacros SERNAPRED
-- **Evacuación tsunami** — Capas oficiales, geolocalización y puntos de encuentro cercanos
-- **Modo emergencia** — Banner reactivo ante alertas naranja/roja aplicables a la comuna del usuario
-- **Auth** — NextAuth v5 + JWT FastAPI (email/contraseña; Google OAuth opcional)
-- **Datos reales solamente** — Si una fuente no responde, no se generan datos de reemplazo
+Estas superficies están implementadas y pueden comprobarse en el frontend:
+
+| Ruta | Qué ofrece |
+|------|------------|
+| `/` | Landing del producto |
+| `/monitor` | Mapa multi-amenaza con riesgo, alertas, fecha, sismos y calidad del aire |
+| `/evacuacion` | Capas oficiales de evacuación y puntos de encuentro cercanos |
+| `/desastres` | Catálogo vendoreado de 25 guías SENAPRED |
+| `/desastres/[tipo]` | Detalle estático de cada guía de desastre |
+| `/simulacros` | Calendario de simulacros SENAPRED |
+
+El monitor usa una fecha civil de Chile dentro de una ventana de 30 días. En una fecha pasada, las franjas oficiales de MeteoChile no se dibujan: el endpoint de zonas devuelve una `FeatureCollection` vacía.
+
+## Backend implementado, UI pendiente
+
+El backend ya expone capacidades que todavía no tienen una superficie web completa: autenticación, resumen IA del dashboard, Plan Familia, chat ciudadano y perfil de usuario. La ausencia de UI no implica que el API esté terminado como producto ciudadano.
+
+### `stub`: rutas visibles con “Próximamente”
+
+- `/inicio`
+- `/preparacion`
+- `/asistente`
+- `/cuenta`
+
+### `ausente`: rutas todavía no implementadas
+
+- `/iniciar-sesion`
+- `/registro`
+- `/olvide-contrasena`
+- `/restablecer-contrasena`
+- `/preparacion/kit-emergencia`
+- `/preparacion/plan-familia/paso/[n]`
+
+El CTA de la landing apunta a `/iniciar-sesion`, pero esa ruta está clasificada como `ausente`; no se presenta como una pantalla disponible.
 
 ---
 
-## Architecture
+## Arquitectura y fuentes
+
+Los dos flujos operativos son deliberadamente separados: el navegador nunca conecta directamente con PostgreSQL.
 
 ```mermaid
 graph LR
-    subgraph Seismic
-        A1[CSN / sismologia.cl]
-    end
-    subgraph Climate
-        B1[Open-Meteo]
-        B2[Open-Meteo Flood]
-    end
-    subgraph Official
-        C1[SERNAPRED AppSync]
-        C2[SERNAGEOMIN OVDAS]
-        C3[Aire Chile GEC]
-    end
-    A1 --> BE[FastAPI + APScheduler]
-    B1 --> BE
-    B2 --> BE
-    C1 --> BE
-    C2 --> BE
-    C3 --> BE
-    BE --> D[Feature / impact layer]
-    D --> E1[Sismo score]
-    D --> E2[Inundación score]
-    D --> E3[Ola de calor]
-    D --> E4[Viento]
-    D --> E5[Ola de frío]
-    E1 --> F[Composite Risk Engine]
-    E2 --> F
-    E3 --> F
-    E4 --> F
-    E5 --> F
-    F --> G[Scores 0–100 + severity]
-    G --> H[Next.js / MapLibre]
-    BE --> H
+    P[Proveedores reales] --> B[FastAPI + scheduler]
+    B <--> DB[(PostgreSQL)]
+    W[Browser / MapLibre] --> N[Proxy Next.js]
+    N --> B
 ```
 
----
+- **Proveedores → FastAPI/scheduler ↔ PostgreSQL:** CSN, Open-Meteo y GloFAS, SERNAPRED, SERNAGEOMIN, Aire Chile y MeteoChile AAA alimentan ingestas, snapshots y alertas.
+- **Browser/MapLibre → proxy Next → FastAPI:** la UI consume HTTP mediante `frontend/lib/api.ts`; nunca accede a la base de datos.
+- **Datos estáticos del frontend:** GeoJSON y PMTiles vendoreados viven en `frontend/public/data/`; no son ingestas del backend. Las guías SENAPRED también usan snapshots comprometidos en el frontend.
 
-## Risk Engine
+El detalle de topología, scheduler, puertos y despliegue está en [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). La especificación visual detallada y canónica es [frontend/docs/UI-GUIDELINES.md](frontend/docs/UI-GUIDELINES.md); [frontend/DESIGN.md](frontend/DESIGN.md) es su proyección portable para Impeccable y no reemplaza la guía operativa.
 
-Motor **determinístico** (reglas + pesos).
+### Fuentes verificadas
 
-| Hazard | Fuente principal | Método |
-|--------|------------------|--------|
-| Sismo | CSN → impactos por comuna | Distancia + intensidad estimada → score |
-| Inundación | Open-Meteo Flood (GloFAS) | Descarga fluvial / batch comunas |
-| Ola de calor | Open-Meteo | Umbrales de temperatura |
-| Viento | Open-Meteo | Umbrales de viento |
-| Ola de frío | Open-Meteo | Umbrales de temperatura |
+| Fuente | Uso |
+|--------|-----|
+| [CSN](https://www.sismologia.cl) | Eventos sísmicos e impactos territoriales |
+| [Open-Meteo](https://open-meteo.com) / [GloFAS](https://www.globalfloods.eu/) | Clima e inundación fluvial |
+| [SERNAPRED](https://senapred.cl) | Alertas, eventos, simulacros y contenido oficial |
+| [SERNAGEOMIN](https://www.sernageomin.cl/alertas-volcanicas/) | Alertas volcánicas OVDAS |
+| [Aire Chile](https://airechile.mma.gob.cl/) | Condiciones GEC en zonas PPDA |
+| [MeteoChile AAA](https://archivos.meteochile.gob.cl/portaldmc/AAA/datos_AAA.json) | Avisos, Alertas y Alarmas DMC |
 
-### Pipeline
+## Optimizaciones implementadas
 
-1. **Ingesta** — Scheduler (CSN, meteo, flood, SERNAPRED, Aire Chile, SERNAGEOMIN)
-2. **Impacto sísmico** — Evento → `seismic_impacts` (hasta 50 comunas)
-3. **Scores live** — `risk_service.recompute_all_scores` cada N minutos
-4. **Histórico** — `daily_risk_scores` materializados bajo demanda por `?date=`
-5. **Alertas** — Evaluador ChileRisk + sync oficiales → `GET /api/v1/alerts/active`
-6. **Frontend** — React Query + proxy `/api/backend` → FastAPI (nunca Postgres desde el FE)
+Estas son decisiones comprobables de código o configuración, no promesas de latencia:
 
-### Composite (0–100)
+- Mapas pesados se cargan con `next/dynamic({ ssr: false })` en `/monitor`.
+- Los polígonos grandes de evacuación se sirven como PMTiles; líneas y puntos permanecen en GeoJSON.
+- `setData` carga la geometría y `feature-state` cambia niveles de alerta o aire sin recargarla.
+- TanStack Query usa TTL corto para hoy y TTL histórico diferenciado mediante `staleTimeForLive`.
+- Los impactos sísmicos se precalculan al ingresar el evento y se reutilizan al recalcular riesgo.
+- Las consultas Open-Meteo usan lotes; GloFAS usa lotes de 20 con corte ante HTTP 429.
+- El riesgo histórico usa snapshots diarios serializados y protegidos por caché/lock por fecha.
+- Los cuerpos pesados de alertas son opt-in: `/alerts/active` mantiene `include_content=false` por defecto.
 
-Pesos base en `risk_utils.HAZARD_WEIGHTS` (el hazard dominante recibe bonus según severidad):
-
-| Peso | Hazard |
-|------|--------|
-| 1.5 | Sismo |
-| 1.2 | Inundación |
-| 1.0 | Ola de calor |
-| 0.8 | Viento |
-| 0.6 | Ola de frío |
-
-Severidad: `bajo` &lt; 35 · `moderado` &lt; 55 · `alto` &lt; 75 · `critico` ≥ 75.
+Anclas de implementación: [frontend/docs/FRONTEND.md](frontend/docs/FRONTEND.md), [backend/docs/BACKEND.md](backend/docs/BACKEND.md), `frontend/components/map/chile-map.tsx` y `backend/app/services/impact_service.py`.
 
 ---
 
-## Tech Stack
+## Inicio rápido
 
-### Frontend
-
-| Technology | Version |
-|------------|---------|
-| [Next.js](https://nextjs.org) | 16 |
-| [React](https://react.dev) | 19 |
-| [TypeScript](https://typescriptlang.org) | 5 |
-| [Tailwind CSS](https://tailwindcss.com) | 4 |
-| [MapLibre GL](https://maplibre.org) | 5 |
-| [Motion](https://motion.dev) | 12 |
-| [Zustand](https://zustand.docs.pmnd.rs) | 5 |
-| [TanStack Query](https://tanstack.com/query) | 5 |
-| [NextAuth](https://authjs.dev) | 5 (beta) |
-| [Three.js / R3F](https://docs.pmnd.rs/react-three-fiber) | Globo landing |
-
-### Backend
-
-| Technology | Version |
-|------------|---------|
-| [Python](https://python.org) | 3.12 |
-| [FastAPI](https://fastapi.tiangolo.com) | 0.115+ |
-| [SQLAlchemy](https://sqlalchemy.org) | 2.0+ (async) |
-| [Alembic](https://alembic.sqlalchemy.org) | 1.14+ |
-| [APScheduler](https://apscheduler.readthedocs.io) | 3.10 |
-| [httpx](https://www.python-httpx.org) | 0.28+ |
-| [DeepSeek](https://www.deepseek.com) (OpenAI-compatible) | Chat + resumen dashboard |
-
-### Infrastructure
-
-| Technology | Purpose |
-|------------|---------|
-| PostgreSQL 16 | Geo, scores live/históricos, eventos, alertas, usuarios |
-| Docker Compose | Stack local y deploy (Dokploy / CubePath) |
-| `make verify` | Harness: links + contrato OpenAPI + lint/tsc + compileall |
-
-### Data Sources
-
-| Source | Data | Notes |
-|--------|------|-------|
-| [CSN / sismologia.cl](https://www.sismologia.cl) | Catálogo sísmico reciente | Scrape |
-| [Open-Meteo](https://open-meteo.com) | Clima por comuna | Batch REST |
-| [Open-Meteo Flood](https://open-meteo.com/en/docs/flood-api) | Riesgo de inundación (GloFAS) | Background sync |
-| [SERNAPRED](https://senapred.cl) | Alertas ATP + eventos + simulacros | Cognito anónimo + AppSync / scrape |
-| [SERNAGEOMIN](https://www.sernageomin.cl/alertas-volcanicas/) | Alertas volcánicas OVDAS | Scrape HTML |
-| [Aire Chile](https://airechile.mma.gob.cl/) | Condiciones GEC (zonas PPDA) | Scrape; cobertura parcial |
-
----
-
-## Prerequisites
-
-- **Docker** + Docker Compose (camino recomendado)
-- **Bun** (frontend nativo) y **Python 3.12+** (backend nativo)
-- **PostgreSQL 16+** (incluido en Compose)
-- **API keys (opcionales):**
-  - `DEEPSEEK_API_KEY` — asistente + resumen del dashboard
-  - `RESEND_API_KEY` — reset de contraseña por email
-  - `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — OAuth Google
-
----
-
-## Getting Started
-
-### 1. Clone
+Requisitos: Docker con Compose para el camino recomendado; Bun para frontend nativo; Python 3.12 para backend nativo.
 
 ```bash
-git clone git@github.com:Alphabeath/ChileRisk.git
-cd ChileRisk
-```
-
-### 2. Environment
-
-```bash
+# Desde la raíz
 cp .env.example .env
-# Opcional nativo:
+
+# Solo si ejecutarás el backend de forma nativa
 cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env.local   # si existe
-```
 
-Genera un `AUTH_SECRET` ≥ 32 bytes:
-
-```bash
-openssl rand -base64 48
-```
-
-### 3. Full stack (Docker)
-
-```bash
+# Stack completo: docker compose --profile tools up --build
 make up
-# equivale a: docker compose --profile tools up --build
 ```
 
-| Service | URL |
-|---------|-----|
-| Frontend | [http://localhost:3000](http://localhost:3000) |
-| Backend / Swagger | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| OpenAPI | [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) |
-| Adminer (profile `tools`) | [http://localhost:8080](http://localhost:8080) |
-| Postgres (host) | `127.0.0.1:5434` |
+`make up` inicia frontend en [http://localhost:3000](http://localhost:3000), backend en [http://localhost:8000/docs](http://localhost:8000/docs), OpenAPI en [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) y Adminer en [http://localhost:8080](http://localhost:8080). El puerto host de PostgreSQL es `127.0.0.1:5434`.
 
-### 4. Native (opcional)
+Para desarrollo nativo:
 
 ```bash
-# Terminal A — API (requiere DATABASE_URL)
-make dev-backend
-
-# Terminal B — Next.js
-make dev-frontend
+make dev-backend   # requiere DB disponible
+make dev-frontend  # equivale a cd frontend && bun run dev
 ```
 
-### Deploy
+El destino de despliegue configurado es [chilerisk.cl](https://chilerisk.cl) mediante Docker Compose. La disponibilidad se comprueba con el stack local, no con el enlace externo.
 
-Producción en **[chilerisk.cl](https://chilerisk.cl)** vía Docker Compose (Dokploy / CubePath). Detalle DNS, env y healthchecks: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
----
-
-## Testing / verify
+## Verificación
 
 ```bash
-# Gate completo del monorepo
-make verify
-
-# Por área
-make verify-frontend   # eslint + tsc + bun test
-make verify-backend    # compileall (+ pytest si aplica)
-make verify-contract   # OpenAPI ↔ frontend/lib/api-schema.d.ts
-make verify-docs       # links de documentación
+make verify          # enlaces, contrato, lint/tsc/tests y compileall; no ejecuta el build de Next
+make verify-docs     # enlaces Markdown locales
+make verify-contract # OpenAPI → frontend/lib/api-schema.d.ts
+make verify-frontend # lint + tsc + bun test
+make verify-backend  # compileall + pytest si está instalado
+cd frontend && bun run build
 ```
 
 ---
 
-## API Endpoints
+## Navegación por lector
 
-Prefijo `/api/v1`. Contrato canónico: OpenAPI en runtime. Resumen humano: [backend/docs/BACKEND.md](backend/docs/BACKEND.md).
-
-| Route | Description |
-|-------|-------------|
-| `/health` | Health + resumen de syncs (público) |
-| `/api/v1/auth/*` | Registro, credentials, OAuth Google, reset password |
-| `/api/v1/risk/national` · `/risk/comunas` | Riesgo agregado / scores por comuna (`?date=`; mapa pinta por alertas) |
-| `/api/v1/comunas/{cod}/risk` · `/nearest` | Vector de hazards / comuna GPS |
-| `/api/v1/events` · `/events/{id}/impact` | Sismos del día + impacto territorial |
-| `/api/v1/alerts/active` | SERNAPRED + ChileRisk + SERNAGEOMIN |
-| `/api/v1/air-quality` · `/by-comuna/{cod}` | GEC Aire Chile |
-| `/api/v1/stats/*` | Nacional, regional, compare |
-| `/api/v1/dashboard/summary` | Resumen IA del día |
-| `/api/v1/chat` · `/chat/stream` | Asistente (JSON / SSE) |
-| `/api/v1/family-plan` | Plan Familia Preparada |
-| `/api/v1/simulacros` | Calendario SERNAPRED |
-| `/api/v1/meeting-points/nearest` | Puntos de encuentro |
-| `/api/v1/disaster-guides` | Guías estáticas de preparación |
-| `/api/v1/users/me` | Perfil + comuna de hogar |
-| `/api/v1/system/sync-status` | Estado de jobs del scheduler |
-
-Parámetro `date`: día civil Chile (`YYYY-MM-DD`), ventana 30 días — [QUERY-DATE.md](docs/QUERY-DATE.md).
-
----
-
-## Project Structure
-
-```
-├── frontend/                 # Next.js 16 (App Router) + MapLibre
-│   ├── app/
-│   │   ├── (auth)/           # Login, registro, reset
-│   │   ├── (citizen)/        # Dashboard, monitor, preparación, evacuación…
-│   │   └── api/              # NextAuth + proxy /api/backend
-│   ├── components/           # UI mapa, dashboard, preparación, auth
-│   ├── hooks/                # React Query + dominio
-│   ├── lib/                  # api.ts, types, glass/mica, query-date
-│   └── docs/                 # FRONTEND.md, DESIGN.md
-├── backend/
-│   ├── app/
-│   │   ├── api/              # Routers FastAPI
-│   │   ├── models/           # SQLAlchemy ORM
-│   │   ├── schemas/          # Pydantic (contrato FE↔BE)
-│   │   ├── services/         # Riesgo, syncs, chat, dashboard
-│   │   ├── scheduler/        # APScheduler jobs
-│   │   └── data/             # Geografía y catálogos oficiales
-│   ├── alembic/              # Migraciones
-│   └── docs/                 # BACKEND.md
-├── docs/                     # Arquitectura, harness, query-date
-├── docker-compose.yml
-├── Makefile                  # up, verify, sync-contract, …
-└── AGENTS.md                 # Bootstrap para agentes / contributors
-```
-
----
-
-## Documentation
-
-| Doc | Role |
-|-----|------|
-| [AGENTS.md](AGENTS.md) | Scope monorepo + contrato FE↔BE |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Sistema, puertos, Dokploy |
-| [docs/HARNESS.md](docs/HARNESS.md) | Playbooks + `make verify` |
-| [docs/QUERY-DATE.md](docs/QUERY-DATE.md) | Semántica de `?date=` |
-| [backend/docs/BACKEND.md](backend/docs/BACKEND.md) | API, modelos, env |
-| [frontend/docs/FRONTEND.md](frontend/docs/FRONTEND.md) | Componentes, mapa, hooks |
-| [frontend/docs/DESIGN.md](frontend/docs/DESIGN.md) | Glass, mica, tokens citizen |
+| Necesitas… | Lee solo esto |
+|------------|---------------|
+| Entender el estado del producto y sus rutas | Este README |
+| Entrar al monorepo como agente | [AGENTS.md](AGENTS.md) |
+| Ver arquitectura, puertos, scheduler y despliegue | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Seguir un playbook de implementación | [docs/HARNESS.md](docs/HARNESS.md) |
+| Mantener documentación y evidencia | [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) |
+| Entender `?date=` de extremo a extremo | [docs/QUERY-DATE.md](docs/QUERY-DATE.md) |
+| Trabajar en frontend | [frontend/README.md](frontend/README.md) |
+| Implementar UI visual | [frontend/docs/UI-GUIDELINES.md](frontend/docs/UI-GUIDELINES.md) |
+| Consultar el contexto portable de Impeccable | [frontend/DESIGN.md](frontend/DESIGN.md) |
+| Trabajar en backend o revisar OpenAPI | [backend/docs/BACKEND.md](backend/docs/BACKEND.md) |
 
 ---
 
 ## Acknowledgments
 
-- Inspirado en **[TrueRisk](https://truerisk.cloud/)** ([repo](https://github.com/javierdejesusda/TrueRisk)) — plataforma hermana de riesgo multi-amenaza para España.
-- Alojamiento / infra: **[CubePath](https://cubepath.com)**.
-- Fuentes oficiales: CSN, SERNAPRED, SERNAGEOMIN, MMA Aire Chile, Open-Meteo.
+- Inspirado en **[TrueRisk](https://truerisk.cloud/)** ([repo](https://github.com/javierdejesusda/TrueRisk)), plataforma hermana de riesgo multi-amenaza para España.
+- Alojamiento e infraestructura: **[CubePath](https://cubepath.com)**.
+- Fuentes oficiales y operativas: CSN, SERNAPRED, SERNAGEOMIN, MMA Aire Chile, Open-Meteo/GloFAS y MeteoChile.
 
----
-
-## License
-
-Uso y distribución sujetos a los términos del repositorio del equipo. Si publicas el código bajo una licencia abierta, añade un `LICENSE` en la raíz y actualiza este apartado.
+*Last updated: 2026-08-07*

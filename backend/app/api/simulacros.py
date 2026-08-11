@@ -10,6 +10,8 @@ from app.core.limiter import limiter
 from app.schemas.simulacro import (
     DrillSource,
     DrillType,
+    SimulacroBodyBlock,
+    SimulacroDetailOut,
     SimulacroListResponse,
     SimulacroOut,
 )
@@ -24,6 +26,24 @@ router = APIRouter()
 
 def _to_out(row) -> SimulacroOut:
     return SimulacroOut.model_validate(row)
+
+
+def _to_detail(row) -> SimulacroDetailOut:
+    raw_blocks = row.detail_body or []
+    blocks: list[SimulacroBodyBlock] = []
+    for block in raw_blocks:
+        if isinstance(block, dict):
+            try:
+                blocks.append(SimulacroBodyBlock.model_validate(block))
+            except Exception:
+                continue
+    return SimulacroDetailOut(
+        **_to_out(row).model_dump(),
+        headline=row.headline,
+        schedule_note=row.schedule_note,
+        hero_image_url=row.hero_image_url,
+        body_blocks=blocks,
+    )
 
 
 @router.get("", response_model=SimulacroListResponse)
@@ -76,14 +96,14 @@ async def next_simulacro_endpoint(
     return _to_out(row)
 
 
-@router.get("/{slug}", response_model=SimulacroOut)
+@router.get("/{slug}", response_model=SimulacroDetailOut)
 @limiter.limit("60/minute")
 async def simulacro_detail_endpoint(
     request: Request,
     slug: str,
     session: AsyncSession = Depends(get_db),
-) -> SimulacroOut:
+) -> SimulacroDetailOut:
     row = await get_simulacro_by_slug(session, slug)
     if row is None:
         raise HTTPException(status_code=404, detail="Simulacro not found")
-    return _to_out(row)
+    return _to_detail(row)

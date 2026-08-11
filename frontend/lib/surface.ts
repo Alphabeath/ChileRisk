@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Theme-aware map/citizen overlay shell — see docs/DESIGN.md */
+/** Theme-aware map/citizen overlay shell — see docs/UI-GUIDELINES.md */
 export const SURFACE_PANEL_CLASS =
   "rounded-none border border-border bg-background/80 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/70"
 

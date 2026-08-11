@@ -1,6 +1,6 @@
 # Evacuación — datos estáticos (runtime)
 
-Generados desde la fuente SHP [`frontend/data/evacuacion-source/`](../../data/evacuacion-source/) con:
+Generados desde la fuente SHP [`frontend/data/evacuacion-source/`](../../../data/evacuacion-source/) con:
 
 ```bash
 make tippecanoe-image   # una vez (si tippecanoe no está en PATH)
@@ -23,3 +23,5 @@ Requiere Docker:
 Los GeoJSON intermedios de las capas PMTiles se borran al final del build (no van a `public/`).
 
 La carpeta fuente `evacuacion-source/` (~218 MB, incluye cota 30 m) **no se sirve** y está en `.gitignore`. Cota 30 m nacional queda fuera de v1.
+
+*Last updated: 2026-08-07*

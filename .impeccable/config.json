@@ -1,0 +1,20 @@
+{
+  "projectRoots": [
+    "frontend"
+  ],
+  "detector": {
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "Inter",
+        "reason": "Tipografía canónica de ChileRisk; ver frontend/DESIGN.md y frontend/docs/UI-GUIDELINES.md."
+      }
+    ],
+    "designSystem": {
+      "enabled": false
+    }
+  },
+  "hook": {
+    "enabled": false
+  }
+}

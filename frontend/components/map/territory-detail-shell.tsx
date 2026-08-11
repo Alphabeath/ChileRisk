@@ -33,8 +33,7 @@ import {
   sortZonesBySeverity,
 } from "@/lib/air-quality-display"
 import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
-import type { ActiveAlert, AirQualityZone } from "@/lib/types"
-import type { TerritoryRiskFields } from "@/lib/territory-risk-mock"
+import type { ActiveAlert, AirQualityZone, TerritoryRiskFields } from "@/lib/types"
 import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 

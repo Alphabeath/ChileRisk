@@ -11,7 +11,7 @@ Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS.md
 | UI, mapa, hooks, Next.js | [frontend/AGENTS.md](frontend/AGENTS.md) |
 | API, DB, scheduler, integraciones | [backend/AGENTS.md](backend/AGENTS.md) |
 | Contrato FE↔BE o `?date=` | [docs/HARNESS.md](docs/HARNESS.md) contract/cross + área |
-
+| Documentación, README o estado del producto | [docs/README.md](docs/README.md) + [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) |
 | Tocas… | Editar |
 |--------|--------|
 | `frontend/**` | Sí (+ `frontend/docs/`) |
@@ -54,10 +54,10 @@ Puertos y stack: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | Modo breve | `caveman` |
 | Review diff | `caveman-review` o `/review` |
 | Implement loop | Grok `/implement` |
-| UI pulida | `frontend-design` |
+| UI pulida / auditoría | `impeccable` |
 | Next perf | `vercel-react-best-practices` |
 
-Skills detalle: [docs/HARNESS.md](docs/HARNESS.md) §8.
+Skills detalle: [docs/HARNESS.md](docs/HARNESS.md#skills-del-repo).
 
 ---
 
@@ -69,4 +69,4 @@ Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verif
 
 ---
 
-*Last updated: 2026-07-31*
+*Last updated: 2026-08-07*

@@ -13,4 +13,6 @@ Input crudo para `make evacuacion-data`. **No** se sirve al navegador.
 | `Volcan/` | Peligros, radios, volcanes activos, vías, puntos |
 | `Incendio/` | Ocurrencia 1 km (vector; el `.tif` no se convierte) |
 
-Salida runtime: [`../public/data/evacuacion/`](../public/data/evacuacion/) (`make evacuacion-data`; PMTiles vía tippecanoe local o `make tippecanoe-image`).
+Salida runtime: [`../../public/data/evacuacion/`](../../public/data/evacuacion/) (`make evacuacion-data`; PMTiles vía tippecanoe local o `make tippecanoe-image`).
+
+*Last updated: 2026-08-07*

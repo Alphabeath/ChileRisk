@@ -59,6 +59,13 @@
       "skillPath": "fastapi-python/SKILL.md",
       "computedHash": "1d7346210a6690d2faeb089f074c0dc20a7056c2c83ac1062a11c1b73158be72"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "ref": "skill-v4.0.4",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "58a1cd4c19a29be6555626887497f7645d6bc0b43f8549017c3a0e2bbf95f7c3"
+    },
     "nodejs-backend-patterns": {
       "source": "wshobson/agents",
       "sourceType": "autoskills-registry",

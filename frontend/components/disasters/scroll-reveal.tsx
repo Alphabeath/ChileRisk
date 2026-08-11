@@ -18,7 +18,9 @@ import {
  * needs that scroller as its root or reveals never fire / fire against the
  * wrong element.
  */
-const ScrollRootContext = createContext<RefObject<HTMLElement | null> | null>(null)
+const ScrollRootContext = createContext<RefObject<HTMLElement | null> | null>(
+  null
+)
 
 /** Renders the scrollable `<main>` and provides it as the reveal root. */
 export function ScrollRoot({
@@ -38,23 +40,29 @@ export function ScrollRoot({
   )
 }
 
-const REVEAL_TAGS = ["div", "section", "article", "li"] as const
-type RevealTag = (typeof REVEAL_TAGS)[number]
+/** Returns the citizen shell scroller used by reveals and scrollspy. */
+export function useScrollRootRef(): RefObject<HTMLElement | null> | null {
+  return useContext(ScrollRootContext)
+}
+
+type RevealTag = "div" | "section" | "article" | "li"
 
 /**
- * One-shot fade + rise when the block enters the page scroller viewport.
+ * One-shot fade + slide when the block enters the page scroller viewport.
  * Renders statically (no motion) when `prefers-reduced-motion` is set.
  */
 export function Reveal({
   children,
   className,
   delay = 0,
+  x = 0,
   y = 28,
   as = "div",
 }: {
   children: ReactNode
   className?: string
   delay?: number
+  x?: number
   y?: number
   as?: RevealTag
 }) {
@@ -69,7 +77,7 @@ export function Reveal({
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false,
+    () => false
   )
 
   if (reduceMotion === true && mounted) {
@@ -81,8 +89,8 @@ export function Reveal({
   return (
     <MotionTag
       className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, x, y }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{
         root: rootRef ?? undefined,
         once: true,

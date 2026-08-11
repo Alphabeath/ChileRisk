@@ -1,17 +1,18 @@
-# Backend — documentación
+# Backend — índice task-first
 
-Todo lo específico del API y servicios Python vive aquí. Cross-stack: [../../docs/README.md](../../docs/README.md).
+Documentación del API y los servicios Python. El backend consume datos reales de CSN, Open-Meteo/GloFAS, SERNAPRED, SERNAGEOMIN, Aire Chile y MeteoChile AAA; si una fuente falla, no fabrica valores de reemplazo.
 
-El backend consume únicamente datos reales de CSN, Open-Meteo, SERNAPRED,
-Aire Chile y SERNAGEOMIN. Si una fuente no responde, no se generan valores de reemplazo.
+## Qué necesitas → lee solo esto
 
-| Documento | Contenido |
-|-----------|-----------|
-| [BACKEND.md](./BACKEND.md) | Endpoints, env, scheduler, modelos, servicios |
-| OpenAPI (runtime) | `GET /openapi.json` — ver [BACKEND.md](./BACKEND.md) § Contrato |
+| Necesitas… | Lee solo esto |
+|------------|---------------|
+| Contrato OpenAPI, endpoints, fuentes y optimizaciones | [BACKEND.md](BACKEND.md) |
+| `?date=` y snapshots diarios cross-stack | [../../docs/QUERY-DATE.md](../../docs/QUERY-DATE.md) |
+| Routing, scope y dónde poner código | [../AGENTS.md](../AGENTS.md) |
+| Arquitectura, scheduler, Docker y puertos | [../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) |
+| Playbooks para cambios de API o datos | [../../docs/HARNESS.md](../../docs/HARNESS.md) |
+| Política de evidencia y mantenimiento | [../../docs/DOC-MAINTENANCE.md](../../docs/DOC-MAINTENANCE.md) |
 
-**Índice agente:** [../AGENTS.md](../AGENTS.md) · **Playbooks:** [../../docs/HARNESS.md](../../docs/HARNESS.md)
+El contrato canónico es `GET /openapi.json` con el backend en marcha. `BACKEND.md` resume ese contrato para lectura humana; si divergen, gana OpenAPI.
 
----
-
-*Last updated: 2026-07-31*
+*Last updated: 2026-08-07*

@@ -1,39 +1,25 @@
-# ChileRisk — documentación (monorepo)
+# ChileRisk — documentación cross-stack
 
-Docs **cross-cutting** (ambas áreas). Referencia por stack:
+Esta carpeta contiene la documentación que cruza frontend y backend. Los índices de cada área son [frontend/docs/README.md](../frontend/docs/README.md) y [backend/docs/README.md](../backend/docs/README.md).
 
-| Área | Carpeta |
-|------|---------|
-| Backend | [backend/docs/README.md](../backend/docs/README.md) |
-| Frontend | [frontend/docs/README.md](../frontend/docs/README.md) |
+## Qué necesitas → lee solo esto
 
-**Agentes:** [../AGENTS.md](../AGENTS.md) (bootstrap corto) → `frontend/AGENTS.md` / `backend/AGENTS.md`.
+| Necesitas… | Lee solo esto |
+|------------|---------------|
+| Entrar al monorepo y elegir área | [../AGENTS.md](../AGENTS.md) |
+| Seguir un playbook de implementación | [HARNESS.md](HARNESS.md) |
+| Ver sistema, puertos, scheduler, Docker y despliegue | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Entender o cambiar `?date=` en ambos lados | [QUERY-DATE.md](QUERY-DATE.md) |
+| Saber cuándo y dónde actualizar documentación | [DOC-MAINTENANCE.md](DOC-MAINTENANCE.md) |
+| Verificar enlaces y contrato | [scripts/](scripts/) y `make verify` |
+| Routing y estado de frontend | [../frontend/AGENTS.md](../frontend/AGENTS.md) |
+| API, fuentes y scheduler backend | [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md) |
 
----
+## Propiedad de la guía visual
 
-## En esta carpeta (`docs/`)
+- [frontend/docs/UI-GUIDELINES.md](../frontend/docs/UI-GUIDELINES.md) es el contrato detallado y canónico de implementación visual.
+- [frontend/DESIGN.md](../frontend/DESIGN.md) es el contexto portable de Impeccable; no reemplaza ni duplica la guía operativa.
 
-| Documento | Contenido |
-|-----------|-----------|
-| [HARNESS.md](./HARNESS.md) | **Playbooks + flujo compacto** (pocos tokens — leer primero) |
-| [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Cuándo actualizar docs (obligatorio en cambios importantes) |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Sistema, flujo de datos, Docker, monorepo |
-| [QUERY-DATE.md](./QUERY-DATE.md) | Parámetro `?date=` (backend + frontend) |
-| [scripts/](./scripts/) | `verify-doc-links.sh`, `sync-contract.sh`, `export-openapi.py` |
+Los `AGENTS.md` son índices de routing y reglas de scope. Las referencias largas viven en los documentos enlazados arriba.
 
----
-
-## Mapa rápido
-
-| Tarea | Empieza en |
-|-------|------------|
-| Nuevo endpoint | `backend/AGENTS.md` → `backend/docs/BACKEND.md` |
-| Nuevo panel mapa | `frontend/AGENTS.md` → `frontend/docs/DESIGN.md` → `FRONTEND.md` |
-| Cambio contrato alertas | `backend/docs/BACKEND.md` + `frontend/docs/FRONTEND.md` + `lib/types.ts` |
-| Fuentes de datos reales | `backend/docs/BACKEND.md` + `ARCHITECTURE.md` |
-| Levantar stack | root `AGENTS.md` + `ARCHITECTURE.md` |
-| Cerrar task agente | `make verify` + [HARNESS.md](./HARNESS.md) |
-
----
-
-*Last updated: 2026-07-31*
+*Last updated: 2026-08-07*

@@ -25,8 +25,7 @@ import {
   sortZonesBySeverity,
 } from "@/lib/air-quality-display"
 import { bucketForAlert } from "@/lib/risk-scale"
-import type { ActiveAlert, AirQualityZone } from "@/lib/types"
-import type { TerritoryRiskFields } from "@/lib/territory-risk-mock"
+import type { ActiveAlert, AirQualityZone, TerritoryRiskFields } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export type TerritoryDetailStatus = "loading" | "empty" | "ready"

@@ -1,5 +1,8 @@
 {
-  "dependencies": {
-    "impeccable": "^3.5.0"
+  "devDependencies": {
+    "impeccable": "3.5.0"
+  },
+  "scripts": {
+    "impeccable:detect": "bunx --bun impeccable@3.5.0 detect frontend"
   }
 }

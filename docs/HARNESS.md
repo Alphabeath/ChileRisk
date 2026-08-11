@@ -1,164 +1,103 @@
 # Harness — playbooks para agentes
 
-Índice: [README.md](./README.md) · Mantenimiento: [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) · `make verify`
+Índice cross-stack: [README.md](./README.md) · mantenimiento: [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) · gate: `make verify`.
 
----
+## Entrada por tarea
 
-## 0. Antes de cualquier task
+Este archivo es un router de trabajo, no una segunda referencia de endpoints o rutas. Abre primero el índice del área y después solo el documento que corresponde:
 
-1. Identifica área: `frontend/`, `backend/`, o ambos.
-2. Abre el `AGENTS.md` de esa área (no leas el índice completo de la raíz salvo duda de scope).
-3. `Grep`/`Glob` un archivo vecino al cambio.
-4. Al cerrar: `make verify` + checklist en [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
+| Tocas… | Entrada |
+|--------|---------|
+| UI, mapa, hooks o Next.js | [frontend/AGENTS.md](../frontend/AGENTS.md) |
+| API, DB, scheduler o integraciones | [backend/AGENTS.md](../backend/AGENTS.md) |
+| Contrato FE↔BE o `?date=` | [Contrato FE↔BE](#contrato-febe) + ambos índices |
+| Documentación o estado de feature | [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) |
 
----
+Al cerrar cualquier cambio, ejecuta el gate aplicable y revisa el checklist de mantenimiento. Los datos operacionales deben seguir siendo reales; no agregues fallbacks sintéticos para ocultar una fuente vacía.
 
-## 1. Pick area
+## Frontend y UI
 
-| Touch | Open |
-|-------|------|
-| UI/map/hooks | `frontend/AGENTS.md` |
-| API/DB/jobs | `backend/AGENTS.md` |
-| `?date=` / FE↔BE | `QUERY-DATE.md` + both areas |
+Playbook completo para páginas, componentes, hooks, mapas y superficies visuales:
 
----
+1. Lee [frontend/AGENTS.md](../frontend/AGENTS.md) para scope, naming, ubicación y hot paths.
+2. Lee [frontend/docs/UI-GUIDELINES.md](../frontend/docs/UI-GUIDELINES.md) antes de implementar UI de mapa o citizen. Es el contrato visual detallado y canónico.
+3. Usa [frontend/DESIGN.md](../frontend/DESIGN.md) solo como contexto portable para Impeccable; no copies sus tokens o principios en otro índice.
+4. Implementa en `frontend/app/`, `frontend/components/`, `frontend/hooks/`, `frontend/lib/` o `frontend/stores/` según el tipo de cambio.
+5. Para `/monitor`, reutiliza `components/map/map-alerts-overlay.tsx`, `components/map/monitor-live-data.tsx`, `lib/query-cache.ts` y los hooks TanStack Query existentes. La geometría del mapa vive en `components/map/chile-map.tsx`.
+6. Para `/evacuacion`, reutiliza `components/evacuacion/`; los polígonos pesados son PMTiles y las líneas/puntos son GeoJSON vendoreado.
+7. Si la superficie es pública, actualiza [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md). Si cambia una decisión visual detallada, actualiza `UI-GUIDELINES.md`; sincroniza `DESIGN.md` solo si cambia una decisión portable.
+8. Verifica desde la raíz con `make verify-frontend` y, cuando el cambio afecta el artefacto Next, con `cd frontend && bun run build`.
 
-## 2. Flows compactos
+## Backend, API y datos
 
-**FE UI/component**
-`frontend/AGENTS` → `docs/DESIGN` (map/citizen) → code `components/` `hooks/` → `docs/FRONTEND` if public → `make verify`
+Playbook completo para endpoints, schemas, modelos, servicios, scheduler e integraciones:
 
-**FE map overlay**
-+ `map-overlays.tsx` · `useDraggablePanel` · `citizen-layout.ts`
+1. Lee [backend/AGENTS.md](../backend/AGENTS.md) para scope, invariantes y tabla de ubicación.
+2. Comprueba el contrato actual en [backend/docs/BACKEND.md](../backend/docs/BACKEND.md) y en `GET /openapi.json` con el backend en marcha.
+3. Coloca el cambio en `backend/app/api/`, `backend/app/schemas/`, `backend/app/models/`, `backend/app/services/` o `backend/app/scheduler/jobs.py` según su responsabilidad.
+4. Mantén la política de datos reales: CSN, Open-Meteo/GloFAS, SERNAPRED, SERNAGEOMIN, Aire Chile y MeteoChile AAA. Una fuente vacía no autoriza valores sintéticos.
+5. Para impactos sísmicos, conserva el cálculo en `impact_service`; para fecha histórica, `query_date_window` + `daily_risk_service`; para alertas, conserva el contrato de contenido opt-in y las semánticas de hoy/histórico.
+6. Añade o corrige la tabla humana en `BACKEND.md`. Si la respuesta se consume en la web, sigue el playbook [Contrato FE↔BE](#contrato-febe).
+7. Verifica desde la raíz con `make verify-backend`; no sustituyas ese target por un `py_compile` aislado.
 
-**BE endpoint**
-`backend/AGENTS` → `schemas/` → `api/` + `main.py` → `services/` → `backend/docs/BACKEND` → FE? see contract → `make verify`
+## Contrato FE↔BE
 
-**Contract change**
-`schemas/*` → `make sync-contract` (OpenAPI → `frontend/lib/api-schema.d.ts`) · update `lib/types.ts` / `lib/api.ts` · `BACKEND.md` + `FRONTEND.md` · OpenAPI wins · `make verify-contract`
+Playbook completo para una respuesta JSON, endpoint o parámetro compartido:
 
-**Cross-stack**
-`QUERY-DATE.md` → BE `query_date_window` · FE `query-date.ts` `ui-store` hooks `api.ts` · data fetch: [FRONTEND.md § TanStack Query](../frontend/docs/FRONTEND.md#datos-del-backend-tanstack-query)
+1. Define o cambia el schema en `backend/app/schemas/`.
+2. Arranca el backend o usa el entorno disponible y confirma el contrato en `http://localhost:8000/openapi.json`.
+3. Ejecuta `make sync-contract` para regenerar `frontend/lib/api-schema.d.ts`.
+4. Actualiza `frontend/lib/types.ts` y `frontend/lib/api.ts` si el frontend consume el recurso; añade o ajusta el hook TanStack Query correspondiente.
+5. Si usa `date`, actualiza [QUERY-DATE.md](./QUERY-DATE.md), `backend/docs/BACKEND.md` y `frontend/docs/FRONTEND.md`.
+6. Comprueba que la UI no lee PostgreSQL ni usa `fetch` GET suelto fuera de la capa de consultas.
+7. Ejecuta `make verify-contract` y luego el gate del área. OpenAPI runtime gana cualquier resumen manual.
 
-**Bugfix only**
-code (+tests) · docs optional · `make verify` anyway
+Flujo de referencia:
 
----
-
-## 3. Docs map (no read all)
-
-| Need | File |
-|------|------|
-| API tables | `backend/docs/BACKEND.md` |
-| Components | `frontend/docs/FRONTEND.md` |
-| Glass/UI | `frontend/docs/DESIGN.md` |
-| Docker/monorepo | `docs/ARCHITECTURE.md` |
-
----
-
-## 4. Nuevo endpoint HTTP (backend)
-
-| Paso | Acción |
-|------|--------|
-| 1 | [backend/AGENTS.md](../backend/AGENTS.md) — scope |
-| 2 | [backend/docs/BACKEND.md](../backend/docs/BACKEND.md) — patrón de rutas |
-| 3 | `app/schemas/<recurso>.py` — modelo respuesta |
-| 4 | `app/api/<recurso>.py` + `main.py` router |
-| 5 | `app/services/` si hay lógica |
-| 6 | Actualizar tabla endpoints en `BACKEND.md` |
-| 7 | Si el frontend consume → playbook **contract** |
-| 8 | `make verify` |
-
-**Contrato canónico (runtime):** `GET http://localhost:8000/openapi.json` (FastAPI). Resumen humano en `BACKEND.md`.
-
----
-
-## 5. Cambio de contrato (respuesta JSON existente)
-
-| Paso | Acción |
-|------|--------|
-| 1 | `backend/app/schemas/` — campo Pydantic |
-| 2 | `frontend/lib/types.ts` — mismo nombre semántico |
-| 3 | `frontend/lib/api.ts` — query/body si aplica |
-| 4 | `frontend/lib/alerts-display.ts` u otros normalizadores |
-| 5 | `backend/docs/BACKEND.md` + `frontend/docs/FRONTEND.md` |
-| 6 | `make verify` (incluye `verify-contract` / OpenAPI→TS) |
-
----
-
-## 6. Nuevo componente / hook UI (frontend)
-
-| Paso | Acción |
-|------|--------|
-| 1 | [frontend/AGENTS.md](../frontend/AGENTS.md) |
-| 2 | [frontend/docs/DESIGN.md](../frontend/docs/DESIGN.md) si mapa/citizen/glass |
-| 3 | Implementar en `components/` o `hooks/` |
-| 4 | [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md) si es API pública del componente |
-| 5 | `cd frontend && bun run lint` + `npx tsc --noEmit` (o `make verify`) |
-
----
-
-## 7. Panel u overlay en el mapa
-
-| Paso | Acción |
-|------|--------|
-| 1 | DESIGN.md + [FRONTEND.md](../frontend/docs/FRONTEND.md) § Map |
-| 2 | Componente en `components/map/` |
-| 3 | Montar en `map-overlays.tsx` (dentro de `DndContext`) |
-| 4 | Drag → `useDraggablePanel`; layout → `lib/citizen-layout.ts` |
-| 5 | FRONTEND.md + `make verify` |
-
----
-
-## 8. Feature cross-stack (`?date=`, alertas unificadas, etc.)
-
-| Paso | Acción |
-|------|--------|
-| 1 | [QUERY-DATE.md](./QUERY-DATE.md) o doc cross-cutting relevante |
-| 2 | Backend: `query_date_window`, schemas, API |
-| 3 | Frontend: `lib/query-date.ts`, store, hooks, `api.ts` |
-| 4 | Ambos `BACKEND.md` y `FRONTEND.md` |
-| 5 | `make verify` |
-
----
-
-## 9. Solo bugfix interno
-
-- Sin cambio de contrato ni UX documentada → código + tests si existen; docs opcionales.
-- Igual recomendado: `make verify` (barra mínima de calidad).
-
----
-
-## 10. Comandos de verificación
-
-```bash
-make verify          # docs links + OpenAPI contract + lint/tsc/tests FE + compileall BE
-make verify-docs     # solo enlaces markdown
-make verify-contract # OpenAPI → api-schema.d.ts drift check
-make sync-contract   # regenera api-schema.d.ts tras cambiar schemas
-make verify-frontend
-make verify-backend
+```text
+backend/app/schemas/ → /openapi.json → make sync-contract
+    → frontend/lib/api-schema.d.ts → types.ts / api.ts → hooks TQ
 ```
 
-`make verify` = links + OpenAPI contract + `bun lint` + `tsc` + `bun test` + `compileall` (+ pytest si está en host). `verify-backend` ejecuta `pytest` solo si está instalado en el host; en Docker: `docker compose exec backend python -m pytest tests/ -q`.
+## Documentación
 
----
+Playbook completo para mantener índices, referencias y afirmaciones verificables:
 
-## 11. Skills del repo (`.agents/skills/`)
+1. Decide el nivel de ownership: `AGENTS.md` para routing/scope, `backend/docs/` o `frontend/docs/` para referencia de stack, `docs/` para cross-stack, `UI-GUIDELINES.md` para contrato visual canónico y `DESIGN.md` para contexto portable.
+2. Etiqueta el estado de cada feature como `disponible`, `backend-only`, `stub` o `ausente`.
+3. Verifica versiones en manifests, rutas en archivos reales y optimizaciones en símbolos o configuración; no inventes métricas ni conviertas un endpoint sin consumidor en UI terminada.
+4. Mantén un único índice canónico para rutas, endpoints y estado. Los READMEs de entrada enlazan; no duplican referencias largas.
+5. Añade `Last updated: YYYY-MM-DD` a cada Markdown modificado y conserva los enlaces locales comprobables.
+6. Para cambios visuales, sigue el flujo `UI-GUIDELINES.md` canónico → sincroniza `DESIGN.md` solo si cambian paleta, tipografía, forma, elevación o doctrina visual portable.
+7. Ejecuta `make verify-docs` después de editar enlaces o índices y completa el checklist de [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md).
 
-| Invocación / necesidad | Skill |
-|------------------------|--------|
-| Respuestas ultra-cortas | `caveman` |
-| Commit message | `caveman-commit` |
-| Review diff | `caveman-review` o Grok `/review` |
-| Implementar con loop review | Grok `/implement` |
-| UI distintiva | `frontend-design` |
-| React/Next perf | `vercel-react-best-practices` |
-| shadcn en frontend | `frontend/.agents/skills/shadcn` |
-| Delegar subagentes comprimidos | `cavecrew` |
+## Verificación
 
-No sustituyen leer `AGENTS.md` del área; complementan tareas largas o formato.
+Comandos definidos por el `Makefile`:
 
----
+```bash
+make verify          # verify-docs + verify-contract + verify-frontend + verify-backend; no ejecuta build de Next
+make verify-docs     # enlaces Markdown locales mantenidos
+make verify-contract # drift OpenAPI → frontend/lib/api-schema.d.ts
+make sync-contract   # regenera api-schema.d.ts desde OpenAPI
+make verify-frontend # bun run lint + bunx tsc --noEmit + bun test
+make verify-backend  # python3 -m compileall -q app + pytest condicional
+cd frontend && bun run build  # artefacto Next; no está incluido en make verify
+```
 
-*Last updated: 2026-08-02*
+`verify-backend` ejecuta pytest solo si está instalado en el host. En Docker, usa `docker compose exec backend python -m pytest tests/ -q`. El gate no reemplaza la prueba observable: levanta el stack con `make up` y comprueba `/health`, `/openapi.json` y las superficies afectadas.
+
+## Skills del repo
+
+| Necesidad | Skill / comando |
+|-----------|-----------------|
+| Respuestas breves | `caveman` |
+| Mensaje de commit | `caveman-commit` |
+| Review de cambios | `caveman-review` o `/review` |
+| Diseño y auditoría UI | `impeccable` |
+| Rendimiento React/Next | `vercel-react-best-practices` |
+| Delegación comprimida | `cavecrew` |
+
+La instalación de Impeccable está fijada en `package.json` como `impeccable: 3.5.0`. El comando raíz es `bun run impeccable:detect` y carga `frontend/DESIGN.md`; para implementar UI se lee además `frontend/docs/UI-GUIDELINES.md`. No eliminar ni renombrar `.agents/skills/impeccable/`.
+
+*Last updated: 2026-08-07*

@@ -1,7 +1,7 @@
 from datetime import date as date_cls, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 DrillType = Literal[
@@ -13,6 +13,28 @@ DrillType = Literal[
 ]
 
 DrillSource = Literal["future", "recent", "archive"]
+
+SimulacroBodyBlockKind = Literal[
+    "heading",
+    "paragraph",
+    "steps",
+    "link_list",
+    "sae_notice",
+    "callout",
+]
+
+
+class SimulacroBodyLink(BaseModel):
+    label: str
+    url: str
+
+
+class SimulacroBodyBlock(BaseModel):
+    kind: SimulacroBodyBlockKind
+    title: str | None = None
+    text: str | None = None
+    items: list[str] = Field(default_factory=list)
+    links: list[SimulacroBodyLink] = Field(default_factory=list)
 
 
 class SimulacroOut(BaseModel):
@@ -30,6 +52,13 @@ class SimulacroOut(BaseModel):
     mensaje_sae: bool = False
     source: DrillSource = "future"
     synced_at: datetime
+
+
+class SimulacroDetailOut(SimulacroOut):
+    headline: str | None = None
+    schedule_note: str | None = None
+    hero_image_url: str | None = None
+    body_blocks: list[SimulacroBodyBlock] = Field(default_factory=list)
 
 
 class SimulacroListResponse(BaseModel):

@@ -24,7 +24,7 @@ import {
   type CSSProperties,
 } from "react";
 import { createPortal } from "react-dom";
-import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
+import { Info, X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { SURFACE_MICA_INTERACTIVE_CLASS } from "@/lib/surface";
@@ -261,6 +261,7 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<MapLibreGL.Map | null>(null);
+  const [attributionButton, setAttributionButton] = useState<HTMLElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isStyleLoaded, setIsStyleLoaded] = useState(false);
   const [pendingStyle, setPendingStyle] = useState<MapStyleOption | null>(null);
@@ -341,6 +342,24 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  useEffect(() => {
+    if (!mapInstance) return;
+
+    const syncAttributionButton = () => {
+      setAttributionButton(
+        mapInstance
+          .getContainer()
+          .querySelector<HTMLElement>(".maplibregl-ctrl-attrib-button"),
+      );
+    };
+
+    syncAttributionButton();
+    mapInstance.on("load", syncAttributionButton);
+    return () => {
+      mapInstance.off("load", syncAttributionButton);
+      setAttributionButton(null);
+    };
+  }, [mapInstance]);
 
   // Sync controlled viewport to map
   useEffect(() => {
@@ -413,10 +432,16 @@ const Map = forwardRef<MapRef, MapProps>(function Map(
 
   return (
     <MapContext.Provider value={contextValue}>
-      <div className={cn("relative h-full w-full", className)}>
+      <div className={cn("map-shell relative h-full w-full", className)}>
         {/* MapLibre sets overflow:hidden on its container — keep canvas separate
             so overlay children (controls, popups) are not clipped at the edges. */}
         <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+        {attributionButton
+          ? createPortal(
+              <Info className="pointer-events-none size-3.5" aria-hidden />,
+              attributionButton,
+            )
+          : null}
         {(!isLoaded || loading) && <DefaultLoader />}
         {mapInstance && children}
       </div>
@@ -938,10 +963,15 @@ function MapControls({
     }
   }, [map]);
 
+  const controlPosition =
+    position === "bottom-right"
+      ? { ...positionStyles[position], bottom: 58 }
+      : positionStyles[position];
+
   return (
     <div
       className={cn("fixed z-30 flex flex-col items-end gap-1.5", className)}
-      style={positionStyles[position]}
+      style={controlPosition}
     >
       {showZoom && (
         <ControlGroup>

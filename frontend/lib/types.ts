@@ -58,6 +58,19 @@ export interface RegionRisk {
     wind_speed_kmh?: number | null
   }>
 }
+/** Risk fields normalized for region and comuna detail views. */
+export interface TerritoryRiskFields {
+  composite_score: number
+  severity: string
+  dominant_hazard: string
+  sismo_score: number
+  ola_calor_score: number
+  ola_frio_score: number
+  viento_score: number
+  inundacion_score: number
+  temperature_c: number | null
+  wind_speed_kmh: number | null
+}
 
 export type AlertLevel =
   | "preventiva"
@@ -234,6 +247,34 @@ export interface Simulacro {
   mensaje_sae: boolean
   source: DrillSource
   synced_at: string
+}
+
+export type SimulacroBodyBlockKind =
+  | "heading"
+  | "paragraph"
+  | "steps"
+  | "link_list"
+  | "sae_notice"
+  | "callout"
+
+export interface SimulacroBodyLink {
+  label: string
+  url: string
+}
+
+export interface SimulacroBodyBlock {
+  kind: SimulacroBodyBlockKind
+  title?: string | null
+  text?: string | null
+  items?: string[]
+  links?: SimulacroBodyLink[]
+}
+
+export interface SimulacroDetail extends Simulacro {
+  headline: string | null
+  schedule_note: string | null
+  hero_image_url: string | null
+  body_blocks: SimulacroBodyBlock[]
 }
 
 export interface SimulacroListResponse {

@@ -27,6 +27,10 @@ class Simulacro(Base):
     detail_url: Mapped[str] = mapped_column(String(512), nullable=False)
     mensaje_sae: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     source: Mapped[str] = mapped_column(String(16), nullable=False, default="future")
+    headline: Mapped[str | None] = mapped_column(String(512))
+    schedule_note: Mapped[str | None] = mapped_column(String(256))
+    hero_image_url: Mapped[str | None] = mapped_column(String(768))
+    detail_body: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     synced_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

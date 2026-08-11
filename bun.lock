@@ -3,8 +3,8 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "dependencies": {
-        "impeccable": "^3.5.0",
+      "devDependencies": {
+        "impeccable": "3.5.0",
       },
     },
   },

@@ -1710,6 +1710,84 @@ export interface components {
             /** Critico */
             critico: number;
         };
+        /** SimulacroBodyBlock */
+        SimulacroBodyBlock: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "heading" | "paragraph" | "steps" | "link_list" | "sae_notice" | "callout";
+            /** Title */
+            title?: string | null;
+            /** Text */
+            text?: string | null;
+            /** Items */
+            items?: string[];
+            /** Links */
+            links?: components["schemas"]["SimulacroBodyLink"][];
+        };
+        /** SimulacroBodyLink */
+        SimulacroBodyLink: {
+            /** Label */
+            label: string;
+            /** Url */
+            url: string;
+        };
+        /** SimulacroDetailOut */
+        SimulacroDetailOut: {
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /**
+             * Drill Date
+             * Format: date
+             */
+            drill_date: string;
+            /** Region Code */
+            region_code?: number | null;
+            /** Region Name */
+            region_name?: string | null;
+            /**
+             * Drill Type
+             * @default otro
+             * @enum {string}
+             */
+            drill_type: "sismo_tsunami_borde_costero" | "sismo_tsunami_educacion" | "erupcion_volcanica" | "remocion_en_masa" | "otro";
+            /**
+             * Participating Comunas
+             * @default []
+             */
+            participating_comunas: string[];
+            /** Summary */
+            summary?: string | null;
+            /** Detail Url */
+            detail_url: string;
+            /**
+             * Mensaje Sae
+             * @default false
+             */
+            mensaje_sae: boolean;
+            /**
+             * Source
+             * @default future
+             * @enum {string}
+             */
+            source: "future" | "recent" | "archive";
+            /**
+             * Synced At
+             * Format: date-time
+             */
+            synced_at: string;
+            /** Headline */
+            headline?: string | null;
+            /** Schedule Note */
+            schedule_note?: string | null;
+            /** Hero Image Url */
+            hero_image_url?: string | null;
+            /** Body Blocks */
+            body_blocks?: components["schemas"]["SimulacroBodyBlock"][];
+        };
         /** SimulacroListResponse */
         SimulacroListResponse: {
             /** Items */
@@ -2636,7 +2714,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SimulacroOut"];
+                    "application/json": components["schemas"]["SimulacroDetailOut"];
                 };
             };
             /** @description Validation Error */
