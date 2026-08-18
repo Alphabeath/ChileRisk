@@ -2,7 +2,6 @@
 
 import {
   Activity,
-  ChevronRight,
   MapPin,
   Snowflake,
   Thermometer,
@@ -60,8 +59,6 @@ const HAZARD_ROWS: {
   { key: "inundacion_score", label: "Inundación", Icon: Waves },
 ]
 
-const ACTION_CLASS =
-  "flex w-full items-center justify-between border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10px] font-semibold uppercase tracking-[1.2px] text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30 disabled:pointer-events-none disabled:opacity-50"
 
 type HeaderAlert = {
   level: string
@@ -482,12 +479,6 @@ export function TerritoryDetailContent({
         )}
       </div>
 
-      <div className="flex shrink-0 flex-col gap-1.5 border-t border-border px-3 py-2">
-        <button type="button" disabled className={ACTION_CLASS}>
-          <span>Ver detalle</span>
-          <ChevronRight className="size-3" aria-hidden />
-        </button>
-      </div>
     </div>
   )
 }

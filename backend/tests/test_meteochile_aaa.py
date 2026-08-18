@@ -8,7 +8,7 @@ from pathlib import Path
 
 from app.models.meteochile_aaa_alert import MeteoChileAaaAlert
 from app.schemas.alert import ActiveAlertOut
-from app.schemas.meteochile_aaa import MeteoChileAaaFeed
+from app.schemas.meteochile_aaa import MeteoChileAaaFeed, MeteoChileAaaItem
 from app.services.alert_service import _meteochile_row_to_out
 from app.services.meteochile_aaa_parsers import (
     geometries_for_item,
@@ -23,6 +23,7 @@ from app.services.meteochile_aaa_service import (
     normalize_feed,
 )
 from app.services.meteochile_aaa_zones import (
+    comunas_for_dmc_geometry,
     cut_comunas_for_zone_ids,
     region_cut_for_dmc_id,
     resolve_comuna_codes,
@@ -64,6 +65,27 @@ def test_parse_zone_coordinate_js_to_geojson():
     assert -40 < ring[0][1] < -30
 
 
+def test_parse_numbered_zone_parts_as_multipolygon():
+    source = """
+    var coordenadas_02_Pampa2 = [
+      { lat: -24.0, lng: -70.0 },
+      { lat: -24.1, lng: -70.0 },
+      { lat: -24.0, lng: -70.1 }
+    ];
+    var coordenadas_02_Pampa1 = [
+      { lat: -23.0, lng: -70.0 },
+      { lat: -23.1, lng: -70.0 },
+      { lat: -23.0, lng: -70.1 }
+    ];
+    """
+    geoms = parse_aaa_coordinate_js(source)
+
+    assert set(geoms) == {"02_Pampa"}
+    assert geoms["02_Pampa"]["type"] == "MultiPolygon"
+    assert len(geoms["02_Pampa"]["coordinates"]) == 2
+    assert geoms["02_Pampa"]["coordinates"][0][0][0] == [-70.0, -23.0]
+
+
 def test_parse_region_js_polygon_and_point():
     src = (FIXTURES / "coordenadas_regiones_sample.js").read_text(encoding="utf-8")
     geoms = parse_aaa_coordinate_js(src)
@@ -102,6 +124,28 @@ def test_inline_area_polygon():
     assert poly is not None
     assert poly["type"] == "Polygon"
     assert poly["coordinates"][0][0] == [-70.5, -33.0]
+
+
+def test_area_polygon_resolves_intersecting_comunas_not_only_centroids():
+    polygon = parse_inline_area_polygon(
+        "-21.65012446648312,-70.13793949037792|"
+        "-21.675650427127096,-69.6984863653779|"
+        "-25.94603957501323,-70.0280762091279|"
+        "-26.000361410490758,-70.61584476381542|"
+        "-25.81754291492785,-70.72021488100292|"
+        "-25.540307481984954,-70.6213379278779|"
+        "-25.31706319555787,-70.44555667787792|"
+        "-24.973955530106384,-70.4840088263154|"
+        "-24.68480343613935,-70.58288577944042|"
+        "-24.269848905540012,-70.53344730287792|"
+        "-24.28987803288437,-70.38513187319042|"
+        "-22.708141074366,-70.18188480287792|"
+        "-22.72334228572469,-70.2917480841279"
+    )
+    assert polygon is not None
+
+    comuna_codes = set(comunas_for_dmc_geometry(polygon))
+    assert {2104, 2301} <= comuna_codes  # Taltal and Tocopilla
 
 
 def test_cut_mapping_spike_zones():
@@ -163,6 +207,74 @@ def test_rows_from_item_fans_out_per_region():
     assert None not in codes
     # At least Biobío / Ñuble fringe prefixes map to CUT 8 or 16
     assert codes & {8, 16}
+
+
+def test_rows_from_multipart_zone_use_spatial_comunas():
+    zone_geoms = parse_aaa_coordinate_js(
+        """
+        var coordenadas_02_Pampa1 = [
+          { lat: -23.0, lng: -70.5 },
+          { lat: -23.0, lng: -70.3 },
+          { lat: -23.2, lng: -70.3 },
+          { lat: -23.2, lng: -70.5 }
+        ];
+        var coordenadas_02_Pampa2 = [
+          { lat: -24.0, lng: -69.5 },
+          { lat: -24.0, lng: -69.4 },
+          { lat: -24.1, lng: -69.4 },
+          { lat: -24.1, lng: -69.5 }
+        ];
+        """
+    )
+    item = MeteoChileAaaItem.model_validate(
+        {
+            "id": "multipart",
+            "tipo": "Aviso",
+            "codigoMeteo": "A-MULTIPART",
+            "fenomeno": "Precipitaciones",
+            "titulo": "Precipitaciones en la pampa",
+            "tipoZonaAfecta": "zonas",
+            "dataZonaAfecta": "02_Pampa",
+            "textoZonaAfecta": "Antofagasta (Pampa)",
+        }
+    )
+
+    rows = _rows_from_item(
+        item,
+        now=datetime.now(timezone.utc),
+        zone_geoms=zone_geoms,
+        region_geoms={},
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["region_code"] == 2
+    assert rows[0]["affected_scope"] == "comuna"
+    assert 2102 in rows[0]["comuna_codes"]  # Mejillones
+
+
+def test_rows_from_area_fan_out_to_intersecting_region():
+    item = MeteoChileAaaItem.model_validate(
+        {
+            "id": "area",
+            "tipo": "Alarma",
+            "codigoMeteo": "AAA-AREA",
+            "fenomeno": "Precipitaciones",
+            "titulo": "Precipitaciones intensas",
+            "tipoZonaAfecta": "area",
+            "dataZonaAfecta": (
+                "-33.46,-70.67|-33.46,-70.65|"
+                "-33.44,-70.65|-33.44,-70.67"
+            ),
+            "textoZonaAfecta": "Santiago",
+        }
+    )
+
+    rows = _rows_from_item(item, now=datetime.now(timezone.utc))
+
+    assert len(rows) == 1
+    assert rows[0]["region_code"] == 13
+    assert rows[0]["affected_scope"] == "comuna"
+    assert rows[0]["comuna_codes"] == [13101]
 
 
 def test_ip_override_only_isla_de_pascua():

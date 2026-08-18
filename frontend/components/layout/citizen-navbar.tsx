@@ -34,8 +34,9 @@ import {
   isNavActive,
   type CitizenNavItem,
 } from "@/lib/citizen-nav"
+import { MAP_DESKTOP_MIN_QUERY } from "@/lib/citizen-layout"
 import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
-import { useCloseOnDesktopMd } from "@/lib/use-close-on-desktop-md"
+import { useCloseOnMediaQuery } from "@/lib/use-close-on-media-query"
 import { cn } from "@/lib/utils"
 
 const NAV_LINK_CLASS =
@@ -188,7 +189,10 @@ export function CitizenNavbar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const closeMenu = useCallback(() => setOpen(false), [])
-  const sheetEpoch = useCloseOnDesktopMd(closeMenu)
+  const sheetEpoch = useCloseOnMediaQuery(
+    closeMenu,
+    MAP_DESKTOP_MIN_QUERY,
+  )
   const reduceMotion = useReducedMotion()
   const desktopNavRef = useRef<HTMLElement>(null)
   const sheetNavRef = useRef<HTMLElement>(null)

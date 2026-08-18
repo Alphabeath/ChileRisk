@@ -24,4 +24,6 @@ export const queryKeys = {
     hazard?: string
     limit?: number
   }) => ["nearestMeetingPoints", params] as const,
+  me: () => ["me"] as const,
+  comunasCatalog: () => ["comunasCatalog"] as const,
 }

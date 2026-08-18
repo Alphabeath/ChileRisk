@@ -14,7 +14,7 @@ const ChileMap = dynamic(
 export default function MonitorPage() {
   return (
     <MonitorLiveDataProvider>
-      <main className="relative h-full w-full overflow-hidden overscroll-none">
+      <main className="map-bottom-drawer-layout relative h-full w-full overflow-hidden overscroll-none">
         <ChileMap />
         <MapAlertsOverlay />
       </main>

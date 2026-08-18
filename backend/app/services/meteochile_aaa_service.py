@@ -29,10 +29,10 @@ from app.services.meteochile_aaa_parsers import (
     zone_ids_from_data_zona,
 )
 from app.services.meteochile_aaa_zones import (
+    comuna_codes_by_region,
     comunas_for_dmc_geometry,
-    cut_comunas_for_zone_ids,
     region_cuts_for_zone_ids,
-    resolve_comuna_codes_in_region,
+    resolve_comuna_codes,
 )
 
 logger = logging.getLogger(__name__)
@@ -107,14 +107,33 @@ def normalize_aaa_item(
 ) -> dict[str, Any]:
     """Normalize one AAA feed item (debug / spike helpers)."""
     zone_ids = zone_ids_from_data_zona(item.data_zona_afecta)
-    geoms: list[dict[str, Any]] = []
-    if zone_geoms is not None and region_geoms is not None:
-        geoms = geometries_for_item(
-            tipo_zona_afecta=str(item.tipo_zona_afecta),
-            data_zona_afecta=item.data_zona_afecta,
+    tipo_zona = str(item.tipo_zona_afecta or "").strip().lower()
+    geoms = geometries_for_item(
+        tipo_zona_afecta=tipo_zona,
+        data_zona_afecta=item.data_zona_afecta,
+        zone_geoms=zone_geoms or {},
+        region_geoms=region_geoms or {},
+    )
+    if tipo_zona == "area":
+        resolved_comunas = [
+            comuna_code
+            for geometry in geoms
+            for comuna_code in comunas_for_dmc_geometry(geometry)
+        ]
+    else:
+        resolved_comunas = resolve_comuna_codes(
+            zone_ids,
             zone_geoms=zone_geoms,
             region_geoms=region_geoms,
         )
+    comunas_by_region = comuna_codes_by_region(resolved_comunas)
+    declared_region_codes = region_cuts_for_zone_ids(zone_ids)
+    region_codes = declared_region_codes or list(comunas_by_region)
+    comuna_codes = [
+        comuna_code
+        for region_code in region_codes
+        for comuna_code in comunas_by_region.get(region_code, [])
+    ]
 
     return {
         "external_id": f"meteochile:{item.id}",
@@ -131,8 +150,8 @@ def normalize_aaa_item(
         "texto_zona_afecta": item.texto_zona_afecta,
         "tipo_zona_afecta": item.tipo_zona_afecta,
         "zone_ids": zone_ids,
-        "region_codes": region_cuts_for_zone_ids(zone_ids),
-        "comuna_codes": cut_comunas_for_zone_ids(zone_ids),
+        "region_codes": region_codes,
+        "comuna_codes": comuna_codes,
         "geometries": geoms,
         "external_url": AAA_MAP_URL,
         "tabla_titulo": item.tabla_titulo,
@@ -186,14 +205,27 @@ def _rows_from_item(
     content = _content_for(item)
     tipo_zona = str(item.tipo_zona_afecta or "").strip().lower()
 
+    if tipo_zona == "area":
+        polygon = parse_inline_area_polygon(item.data_zona_afecta)
+        resolved_comunas = (
+            comunas_for_dmc_geometry(polygon) if polygon is not None else []
+        )
+    else:
+        resolved_comunas = resolve_comuna_codes(
+            zone_ids,
+            zone_geoms=zone_geoms,
+            region_geoms=region_geoms,
+        )
+    comunas_by_region = comuna_codes_by_region(resolved_comunas)
+    if tipo_zona == "area":
+        region_codes = list(comunas_by_region)
+
     if not region_codes:
-        # area polygons or unknown ids — keep a single nationwide-ish row
-        comunas: list[int] = []
-        if tipo_zona == "area" and item.data_zona_afecta:
-            poly = parse_inline_area_polygon(item.data_zona_afecta)
-            if poly:
-                comunas = comunas_for_dmc_geometry(poly)
-        scope = "comuna" if comunas else ("unknown" if tipo_zona == "area" else "region")
+        # Malformed areas or unknown ids stay visible without invented coverage.
+        comunas = resolved_comunas
+        scope = "comuna" if comunas else (
+            "unknown" if tipo_zona == "area" else "region"
+        )
         return [
             {
                 "row_key": f"{item.id}:na",
@@ -221,16 +253,8 @@ def _rows_from_item(
 
     rows: list[dict[str, Any]] = []
     for code in region_codes:
-        comunas = resolve_comuna_codes_in_region(
-            zone_ids,
-            code,
-            zone_geoms=zone_geoms,
-            region_geoms=region_geoms,
-        )
-        if comunas:
-            scope = "comuna"
-        else:
-            scope = "region"
+        comunas = comunas_by_region.get(code, [])
+        scope = "comuna" if comunas else "region"
         rows.append(
             {
                 "row_key": f"{item.id}:{code}",

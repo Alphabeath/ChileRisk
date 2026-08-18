@@ -10,8 +10,6 @@ App Router difiere de versiones anteriores. Antes de tocar `app/` o `next.config
 
 **Índice y reglas de scope** en `frontend/`. Referencia de estado, componentes y datos: [docs/FRONTEND.md](docs/FRONTEND.md). Guía visual canónica: [docs/UI-GUIDELINES.md](docs/UI-GUIDELINES.md). Contexto portable para Impeccable: [DESIGN.md](DESIGN.md). Mantenimiento: [../docs/DOC-MAINTENANCE.md](../docs/DOC-MAINTENANCE.md).
 
-**Quick:** [../docs/HARNESS.md#frontend-y-ui](../docs/HARNESS.md#frontend-y-ui) · [contrato FE↔BE](../docs/HARNESS.md#contrato-febe) · `make verify-frontend`
-
 ---
 
 ## Scope
@@ -30,6 +28,7 @@ La matriz canónica de rutas y sus etiquetas `disponible` / `stub` / `ausente` e
 | Estado, componentes, mapa, datos y rendimiento | [docs/FRONTEND.md](docs/FRONTEND.md) |
 | Implementación visual detallada y canónica | [docs/UI-GUIDELINES.md](docs/UI-GUIDELINES.md) |
 | Contexto visual portable de Impeccable | [DESIGN.md](DESIGN.md) |
+| Propósito, posicionamiento, marca y accesibilidad | [PRODUCT.md](PRODUCT.md) |
 | `?date=` cross-stack | [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) |
 | Arquitectura | [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) |
 | API backend | [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md) |
@@ -39,7 +38,7 @@ La matriz canónica de rutas y sus etiquetas `disponible` / `stub` / `ausente` e
 ## Naming y stack
 
 - URLs en español; nombres de código, exports y tipos en inglés; copy visible en español.
-- next@16 · react@19 · Tailwind v4 · Bun · `maplibre-gl@6` + mapcn · `@base-ui/react` · shadcn · Motion · next-themes · Zustand · `@tanstack/react-query` · d3 para landing.
+- next@16 · react@19 · Tailwind v4 · Bun · `maplibre-gl@6` + mapcn · `@base-ui/react` · shadcn · Motion · next-themes · Auth.js (`next-auth@5` Credentials) · Zustand · `@tanstack/react-query` · d3 para landing.
 - Usa `motion`, no `framer-motion`.
 - No añadas dependencias o patrones de UI no documentados sin aprobación del área.
 
@@ -53,6 +52,10 @@ frontend/
 │   ├── layout/             # citizen-navbar, page-stub
 │   ├── map/                # chile-map, overlays, monitor context
 │   ├── evacuacion/         # leyenda, puntos y popups de evacuación
+│   ├── preparacion/        # Plan Familia Preparada
+│   ├── inicio/             # hub ciudadano invitado
+│   ├── auth/               # formularios de cuenta
+│   ├── cuenta/             # perfil y preferencias
 │   ├── globe/              # landing
 │   ├── mica-light-provider.tsx
 │   └── theme-provider.tsx
@@ -81,17 +84,19 @@ frontend/
 | Tipo de contrato | `lib/types.ts` + `make sync-contract` |
 | Capa u overlay de mapa | `components/map/` |
 | Evacuación | `components/evacuacion/` |
+| Preparación | `components/preparacion/` |
+| Hub `/inicio` | `components/inicio/` |
+| Auth / cuenta | `app/(auth)/`, `components/auth/`, `components/cuenta/`, `auth.ts` |
 | Documento frontend | `docs/FRONTEND.md` / `docs/UI-GUIDELINES.md` |
 
 Hot paths del monitor: `components/map/map-alerts-overlay.tsx`, `components/map/monitor-live-data.tsx`, `components/map/chile-map.tsx`, `lib/query-cache.ts` y hooks TQ. Reutiliza esos puntos antes de crear otra capa de estado.
 
 ## Contrato FE↔BE
 
-1. Revisa [../backend/docs/BACKEND.md](../backend/docs/BACKEND.md) y `GET /openapi.json`.
-2. Ejecuta `make sync-contract` desde la raíz.
-3. Revisa `lib/api-schema.d.ts`, `lib/types.ts` y `lib/api.ts` en el mismo task.
-4. Añade hook TanStack Query y consumidor; no uses GET con `fetch` suelto en la UI.
-5. Actualiza [docs/FRONTEND.md](docs/FRONTEND.md) y [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) si aplica.
+Los cambios de endpoint, parámetro o JSON compartidos siguen el [flujo canónico](../docs/CONTRACT.md#flujo-obligatorio). En este área:
+
+- Ejecuta `make sync-contract` y revisa `lib/api-schema.d.ts`, `lib/types.ts` y `lib/api.ts` en el mismo task.
+- Añade o ajusta el hook TanStack Query y su consumidor; no uses GET con `fetch` suelto en la UI.
 
 Datos operacionales solo vía HTTP; nunca PostgreSQL desde el frontend. La política de hoy/histórico está en `lib/query-cache.ts` y [docs/FRONTEND.md](docs/FRONTEND.md#reglas-tanstack-query-e-integración).
 
@@ -122,4 +127,4 @@ cd frontend && bun run build
 
 ---
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

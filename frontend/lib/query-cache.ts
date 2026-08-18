@@ -18,6 +18,10 @@ export const STALE = {
   simulacros: 60 * 60 * 1000,
   /** Next upcoming drill */
   simulacroNext: 15 * 60 * 1000,
+  /** Signed-in profile */
+  profile: 5 * 60 * 1000,
+  /** CUT catalog — reference geography */
+  comunas: 24 * 60 * 60 * 1000,
 } as const
 
 export function isQueryDateToday(

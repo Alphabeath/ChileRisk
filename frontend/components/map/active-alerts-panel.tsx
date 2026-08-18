@@ -10,10 +10,9 @@ import type { ActiveAlert, AirQualityZone, AlertFilter } from "@/lib/alert-types
 import { sortActiveAlertsBySeverity, filterActiveAlertsBySource } from "@/lib/alerts-display"
 import {
   MAP_PANEL_TITLE_CLASS,
-  mapPanelWidthClass,
+  MAP_PANEL_WIDTH_CLASS,
 } from "@/lib/citizen-layout"
 import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
-import { useMapDesktopCompact } from "@/lib/use-map-desktop-compact"
 import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
@@ -217,7 +216,7 @@ function AlertsFilterChips({
             aria-checked={active}
             onClick={() => setFilter(opt.value)}
             className={cn(
-              "inline-flex min-w-0 items-center justify-between gap-1 border px-1.5 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[1.1px] transition-colors",
+              "inline-flex min-h-11 min-w-0 items-center justify-between gap-1 border px-1.5 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[1.1px] transition-colors lg:min-h-0",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30",
               active
                 ? "border-primary bg-primary text-primary-foreground"
@@ -321,7 +320,7 @@ function ActiveAlertsPanelEmbedded() {
 
   return (
     <aside
-      className="flex min-h-0 w-full flex-col"
+      className="flex min-h-0 w-full flex-1 flex-col"
       aria-label="Alertas activas SENAPRED, ChileRisk y Aire Chile"
     >
       <div className="shrink-0 border-b border-border">
@@ -333,7 +332,7 @@ function ActiveAlertsPanelEmbedded() {
       </div>
       <AlertsListBody
         open
-        className="max-h-[min(60dvh,480px)]"
+        className="min-h-0 flex-1"
         filtered={model.filtered}
         filter={model.filter}
         isLoading={model.isLoading}
@@ -345,84 +344,47 @@ function ActiveAlertsPanelEmbedded() {
 function ActiveAlertsPanelOverlay() {
   const open = useUIStore((s) => s.alertsExpanded)
   const setOpen = useUIStore((s) => s.setAlertsExpanded)
-  const compact = useMapDesktopCompact()
   const model = useAlertsPanelModel()
-  const rail = compact === true && !open
 
   return (
     <aside
       className={cn(
         SURFACE_PANEL_SHELL_CLASS,
-        "flex max-h-[min(520px,calc(100dvh-5.5rem))] flex-col overflow-hidden transition-[width] duration-200 ease-out",
-        mapPanelWidthClass(open || compact === false),
+        "flex max-h-[min(520px,calc(100dvh-5.5rem))] w-full flex-col overflow-hidden",
+        MAP_PANEL_WIDTH_CLASS,
       )}
       aria-label="Alertas activas SENAPRED, ChileRisk y Aire Chile"
     >
-      {/* Chrome — match territory detail mono header */}
-      <div
-        className={cn(
-          "relative z-10 flex w-full shrink-0 items-center border-b border-border",
-          rail ? "justify-center px-2 py-1" : "justify-between gap-2 px-2.5 py-1",
-        )}
-      >
-        {rail ? (
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            aria-expanded={open}
-            aria-controls="active-alerts-list"
-            aria-label="Expandir alertas"
-            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+      <div className="relative z-10 flex w-full shrink-0 items-center justify-between gap-2 border-b border-border px-2.5 py-1">
+        <p className={cn("min-w-0 truncate", MAP_PANEL_TITLE_CLASS)}>
+          Alertas
+        </p>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls="active-alerts-list"
+          aria-label={open ? "Colapsar alertas" : "Expandir alertas"}
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:min-h-0 lg:min-w-0 lg:px-1 lg:py-1"
+        >
+          <span
+            className={cn(
+              "inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
+              model.hasItems
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground",
+            )}
           >
-            <span className={MAP_PANEL_TITLE_CLASS}>Alertas</span>
-            <span
-              className={cn(
-                "inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
-                model.hasItems
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {model.displayCount}
-            </span>
-            <ChevronDown
-              className="size-3.5 -rotate-90 transition-transform duration-200"
-              aria-hidden
-            />
-          </button>
-        ) : (
-          <>
-            <p className={cn("min-w-0 truncate", MAP_PANEL_TITLE_CLASS)}>
-              Alertas
-            </p>
-            <button
-              type="button"
-              onClick={() => setOpen(!open)}
-              aria-expanded={open}
-              aria-controls="active-alerts-list"
-              aria-label={open ? "Colapsar alertas" : "Expandir alertas"}
-              className="inline-flex shrink-0 items-center gap-1.5 px-1 py-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
-            >
-              <span
-                className={cn(
-                  "inline-flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-bold tabular-nums",
-                  model.hasItems
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {model.displayCount}
-              </span>
-              <ChevronDown
-                className={cn(
-                  "size-3.5 transition-transform duration-200",
-                  !open && "-rotate-90",
-                )}
-                aria-hidden
-              />
-            </button>
-          </>
-        )}
+            {model.displayCount}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-3.5 transition-transform duration-200",
+              !open && "-rotate-90",
+            )}
+            aria-hidden
+          />
+        </button>
       </div>
 
       <div
@@ -452,9 +414,6 @@ function ActiveAlertsPanelOverlay() {
 export function ActiveAlertsPanel({
   embedded = false,
 }: {
-  /** Kept for call-site compatibility (desktop column). */
-  flow?: boolean
-  /** Inside mobile Sheet: no shell, list always open. */
   embedded?: boolean
 }) {
   if (embedded) return <ActiveAlertsPanelEmbedded />

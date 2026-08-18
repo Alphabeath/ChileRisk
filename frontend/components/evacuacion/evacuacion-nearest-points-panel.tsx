@@ -77,7 +77,18 @@ export function EvacuationNearestPointsPanel({
     />
   )
 
-  if (embedded) return <div className="flex flex-col">{body}</div>
+  if (embedded) {
+    return (
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain",
+          className,
+        )}
+      >
+        {body}
+      </div>
+    )
+  }
 
   const header = (
     <button
@@ -208,7 +219,7 @@ function NearestBody({
           <Button
             type="button"
             size="sm"
-            className="h-8 gap-1.5"
+            className="h-11 gap-1.5 lg:h-8"
             onClick={onRequestLocate}
           >
             <MapPin className="size-3.5" aria-hidden />
@@ -241,7 +252,7 @@ function NearestBody({
           <Button
             type="button"
             size="sm"
-            className="h-8 gap-1.5"
+            className="h-11 gap-1.5 lg:h-8"
             onClick={onRequestLocate}
           >
             <MapPin className="size-3.5" aria-hidden />
@@ -287,7 +298,7 @@ function NearestBody({
             <div className="mt-2 grid grid-cols-2 gap-1.5">
               <button
                 type="button"
-                className="inline-flex h-8 items-center justify-center gap-1.5 border border-border bg-transparent px-2 font-mono text-[9px] font-semibold uppercase tracking-[1px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+                className="inline-flex h-11 items-center justify-center gap-1.5 border border-border bg-transparent px-2 font-mono text-[9px] font-semibold uppercase tracking-[1px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:h-8"
                 onClick={() =>
                   onFocusPoint({ lng: point.lng, lat: point.lat })
                 }
@@ -299,7 +310,7 @@ function NearestBody({
                 href={buildGoogleMapsPlaceUrl(point.lat, point.lng)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-8 items-center justify-center gap-1.5 border border-border bg-transparent px-2 font-mono text-[9px] font-semibold uppercase tracking-[1px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+                className="inline-flex h-11 items-center justify-center gap-1.5 border border-border bg-transparent px-2 font-mono text-[9px] font-semibold uppercase tracking-[1px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:h-8"
               >
                 <ExternalLink className="size-3" aria-hidden />
                 Google Maps

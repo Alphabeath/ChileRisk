@@ -297,3 +297,8 @@ export interface SimulacrosParams {
 
 export type MeetingPointOut = Schemas["MeetingPointOut"]
 export type MeetingPointNearestResponse = Schemas["MeetingPointNearestResponse"]
+
+export type AuthUser = Schemas["AuthUserOut"]
+export type UserProfile = Schemas["UserProfileOut"]
+export type UserProfileUpdate = Schemas["UserProfileUpdate"]
+export type ComunaCatalogItem = Schemas["ComunaCatalogItem"]

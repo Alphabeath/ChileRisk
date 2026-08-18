@@ -32,15 +32,15 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Examples:"
-	@echo "  make up                  # full stack (build + run)"
+	@echo "  make up                  # full stack (build + detached run)"
 	@echo "  make clean               # remove regenerable caches (Python + Next build)"
 	@echo "  make clean-deps          # remove node_modules + backend/.venv (reinstall required)"
 	@echo "  make dev-frontend        # native Next.js dev (cd frontend + bun)"
 
 # --- Full stack (Docker blessed path) ---
 
-up: ## docker compose --profile tools up --build (incl. Adminer local)
-	docker compose --profile tools up --build
+up: ## docker compose --profile tools up --build --detach (incl. Adminer local)
+	docker compose --profile tools up --build --detach
 
 down: ## docker compose down (keeps volumes unless -v)
 	docker compose --profile tools down

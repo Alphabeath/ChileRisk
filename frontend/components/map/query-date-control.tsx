@@ -17,18 +17,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { useQueryDate } from "@/hooks/use-query-date"
-import { mapPanelWidthClass, MAP_PANEL_TITLE_CLASS } from "@/lib/citizen-layout"
+import {
+  MAP_PANEL_TITLE_CLASS,
+  MAP_PANEL_WIDTH_CLASS,
+} from "@/lib/citizen-layout"
 import {
   addDaysIso,
   formatIsoDate,
-  formatQueryDateCompactLabel,
   formatQueryDateLabel,
   minQueryDateIso,
   parseIsoDate,
   todayIsoDate,
 } from "@/lib/query-date"
 import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
-import { useMapDesktopCompact } from "@/lib/use-map-desktop-compact"
 import { useUIStore } from "@/stores/ui-store"
 import { cn } from "@/lib/utils"
 
@@ -65,7 +66,7 @@ function QueryDateBody({
               type="button"
               variant="outline"
               size="xs"
-              className="h-8 w-full justify-start gap-2 font-mono text-[11px] font-semibold tracking-normal normal-case tabular-nums"
+              className="h-11 w-full justify-start gap-2 font-mono text-[11px] font-semibold tracking-normal normal-case tabular-nums lg:h-8"
             />
           }
         >
@@ -93,7 +94,7 @@ function QueryDateBody({
           type="button"
           disabled={!canAdvance}
           onClick={() => setSelectedDate(addDaysIso(selectedDate, 1))}
-          className="flex size-6 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+          className="flex size-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:size-6"
           aria-label="Avanzar un día"
         >
           <ChevronLeft className="size-3" aria-hidden />
@@ -103,7 +104,7 @@ function QueryDateBody({
           variant={selectedDate === today ? "secondary" : "ghost"}
           size="xs"
           onClick={() => setSelectedDate(today)}
-          className="h-6 flex-1 px-2 text-[10px] tracking-[1px]"
+          className="h-11 flex-1 px-2 text-[10px] tracking-[1px] lg:h-6"
         >
           Hoy
         </Button>
@@ -114,7 +115,7 @@ function QueryDateBody({
           }
           size="xs"
           onClick={() => setSelectedDate(addDaysIso(today, -1))}
-          className="h-6 flex-1 px-2 text-[10px] tracking-[1px]"
+          className="h-11 flex-1 px-2 text-[10px] tracking-[1px] lg:h-6"
         >
           Ayer
         </Button>
@@ -122,7 +123,7 @@ function QueryDateBody({
           type="button"
           disabled={!canRetreat}
           onClick={() => setSelectedDate(addDaysIso(selectedDate, -1))}
-          className="flex size-6 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+          className="flex size-11 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:size-6"
           aria-label="Retroceder un día"
         >
           <ChevronRight className="size-3" aria-hidden />
@@ -165,88 +166,52 @@ function QueryDateControlEmbedded() {
 
 function QueryDateControlOverlay() {
   const model = useQueryDateModel()
-  const compact = useMapDesktopCompact()
   const expanded = useUIStore((s) => s.dateExpanded)
   const setExpanded = useUIStore((s) => s.setDateExpanded)
   const dateLabel = formatQueryDateLabel(model.selectedDate, model.today)
-  const compactLabel = formatQueryDateCompactLabel(
-    model.selectedDate,
-    model.today,
-  )
-  const rail = compact === true && !expanded
 
   return (
     <div
       className={cn(
         SURFACE_PANEL_SHELL_CLASS,
-        "flex flex-col transition-[width] duration-200 ease-out",
-        mapPanelWidthClass(expanded || compact === false),
+        "flex w-full flex-col",
+        MAP_PANEL_WIDTH_CLASS,
       )}
       role="group"
       aria-label="Fecha de consulta"
     >
-      <div
-        className={cn(
-          "relative z-10 flex w-full items-center",
-          rail
-            ? "justify-center px-2 py-1"
-            : "justify-between gap-2 border-b border-border px-2.5 py-1",
-          !expanded && !rail && "border-b-0",
-        )}
-      >
-        {rail ? (
+      <div className="relative z-10 flex w-full items-center justify-between gap-2 border-b border-border px-2.5 py-1">
+        <p className={cn("min-w-0 truncate", MAP_PANEL_TITLE_CLASS)}>
+          Fecha
+        </p>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-primary px-2 font-mono text-[11px] font-bold tabular-nums text-primary-foreground">
+            {dateLabel}
+          </span>
           <button
             type="button"
-            onClick={() => setExpanded(true)}
-            aria-expanded={false}
+            onClick={() => {
+              setExpanded(!expanded)
+              if (expanded) model.setCalendarOpen(false)
+            }}
+            aria-expanded={expanded}
             aria-controls="query-date-panel-body"
-            aria-label="Expandir selector de fecha"
-            className="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
+            aria-label={
+              expanded
+                ? "Colapsar selector de fecha"
+                : "Expandir selector de fecha"
+            }
+            className="inline-flex min-h-11 min-w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30 lg:size-7 lg:min-h-0 lg:min-w-0"
           >
-            <span className={MAP_PANEL_TITLE_CLASS}>Fecha</span>
-            <span className="inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-primary px-2 font-mono text-[11px] font-bold tabular-nums text-primary-foreground">
-              {compactLabel}
-            </span>
             <ChevronDown
-              className="size-3.5 -rotate-90 transition-transform duration-200"
+              className={cn(
+                "size-3.5 transition-transform duration-200",
+                !expanded && "-rotate-90",
+              )}
               aria-hidden
             />
           </button>
-        ) : (
-          <>
-            <p className={cn("min-w-0 truncate", MAP_PANEL_TITLE_CLASS)}>
-              Fecha
-            </p>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <span className="inline-flex h-6 shrink-0 items-center justify-center rounded-full bg-primary px-2 font-mono text-[11px] font-bold tabular-nums text-primary-foreground">
-                {dateLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setExpanded(!expanded)
-                  if (expanded) model.setCalendarOpen(false)
-                }}
-                aria-expanded={expanded}
-                aria-controls="query-date-panel-body"
-                aria-label={
-                  expanded
-                    ? "Colapsar selector de fecha"
-                    : "Expandir selector de fecha"
-                }
-                className="inline-flex size-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30"
-              >
-                <ChevronDown
-                  className={cn(
-                    "size-3.5 transition-transform duration-200",
-                    !expanded && "-rotate-90",
-                  )}
-                  aria-hidden
-                />
-              </button>
-            </div>
-          </>
-        )}
+        </div>
       </div>
 
       {expanded ? (
@@ -261,10 +226,7 @@ function QueryDateControlOverlay() {
 export function QueryDateControl({
   embedded = false,
 }: {
-  /** Inside mobile Sheet: no shell, body always open. */
   embedded?: boolean
-  /** @deprecated Desktop is always in-flow under Alertas; kept for API parity. */
-  flow?: boolean
 }) {
   if (embedded) return <QueryDateControlEmbedded />
   return <QueryDateControlOverlay />

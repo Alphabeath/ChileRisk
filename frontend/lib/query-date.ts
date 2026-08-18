@@ -26,7 +26,10 @@ export function minQueryDateIso(reference = todayIsoDate()): string {
   return formatIsoDate(lo)
 }
 
-export function clampQueryDate(iso: string, reference = todayIsoDate()): string {
+export function clampQueryDate(
+  iso: string,
+  reference = todayIsoDate()
+): string {
   const value = parseIsoDate(iso)
   const lo = parseIsoDate(minQueryDateIso(reference))
   const hi = parseIsoDate(reference)
@@ -41,10 +44,14 @@ export function addDaysIso(iso: string, delta: number): string {
   return clampQueryDate(formatIsoDate(d))
 }
 
-export function formatQueryDateLabel(iso: string, reference = todayIsoDate()): string {
+export function formatQueryDateLabel(
+  iso: string,
+  reference = todayIsoDate()
+): string {
   if (iso === reference) return "Hoy"
-  const yesterday = addDaysIso(reference, -1)
-  if (iso === yesterday) return "Ayer"
+  const yesterdayDate = parseIsoDate(reference)
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+  if (iso === formatIsoDate(yesterdayDate)) return "Ayer"
   const [y, m, day] = iso.split("-")
   return `${day}/${m}/${y}`
 }
@@ -52,7 +59,7 @@ export function formatQueryDateLabel(iso: string, reference = todayIsoDate()): s
 /** Short label for narrow map rails (`Hoy` / `Ayer` / `dd/mm`). */
 export function formatQueryDateCompactLabel(
   iso: string,
-  reference = todayIsoDate(),
+  reference = todayIsoDate()
 ): string {
   const label = formatQueryDateLabel(iso, reference)
   if (label === "Hoy" || label === "Ayer") return label

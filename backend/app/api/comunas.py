@@ -10,15 +10,46 @@ from app.api.deps import get_db
 from app.core.limiter import limiter
 from app.models.climate_reading import ClimateReading
 from app.models.comuna import Comuna
+from app.models.region import Region
 from app.models.seismic_event import SeismicEvent
 from app.models.seismic_impact import SeismicImpact
-from app.schemas.comuna_geo import NearestComunaOut
+from app.schemas.comuna_geo import ComunaCatalogItem, NearestComunaOut
 from app.schemas.risk import ComunaRiskDetail
 from app.services.query_date_window import clamp_query_date, day_bounds_utc, today_chile
 from app.services.risk_service import get_latest_risk_for_comuna
 from app.services.seismic_alert_match import nearest_comuna
 
 router = APIRouter()
+
+
+@router.get("", response_model=list[ComunaCatalogItem])
+@limiter.limit("30/minute")
+async def list_comunas(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> list[ComunaCatalogItem]:
+    """Light catalog of 346 comunas for account/home selectors."""
+    rows = (
+        await db.execute(
+            select(
+                Comuna.cod_comuna,
+                Comuna.name,
+                Comuna.codregion,
+                Region.name.label("region_name"),
+            )
+            .join(Region, Region.codregion == Comuna.codregion)
+            .order_by(Comuna.codregion, Comuna.name)
+        )
+    ).all()
+    return [
+        ComunaCatalogItem(
+            cod_comuna=row.cod_comuna,
+            name=row.name,
+            codregion=row.codregion,
+            region_name=row.region_name,
+        )
+        for row in rows
+    ]
 
 
 @router.get("/nearest", response_model=NearestComunaOut)

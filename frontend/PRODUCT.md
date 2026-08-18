@@ -21,19 +21,18 @@ Su mecanismo distintivo es unificar y territorializar datos reales de múltiples
 ## Operating Context
 
 - Es una aplicación web con rutas y copy visible en español. El destino configurado es [chilerisk.cl](https://chilerisk.cl); el stack local se ejecuta con Docker Compose o con el frontend Next.js de forma nativa.
-- El flujo operativo principal es escanear el monitor, filtrar por alertas, aire o avisos meteorológicos, consultar una región o comuna, revisar sismos y cambiar la fecha civil de Chile dentro de una ventana de 30 días.
-- `/evacuacion` se usa para revisar capas oficiales de tsunami, volcán e incendio y buscar puntos de encuentro cercanos. `/desastres` y sus detalles presentan guías SENAPRED; `/simulacros` presenta el calendario y contenido editorial relacionado.
+- El flujo operativo principal es escanear el monitor, filtrar por alertas, aire o avisos meteorológicos, consultar una región o comuna, revisar sismos y cambiar la fecha civil de Chile dentro de una ventana de 30 días. El monitor es público; una cuenta opcional guarda nombre, comuna de hogar y preferencias de aviso.
+- `/evacuacion` se usa para revisar capas oficiales de tsunami, volcán e incendio y buscar puntos de encuentro cercanos. `/desastres` y sus detalles presentan guías SENAPRED; `/preparacion` presenta el Plan Familia Preparada y `/preparacion/kit-emergencia` el kit oficial; `/simulacros` presenta el calendario y contenido editorial relacionado.
 - Los usuarios evalúan y actúan con datos observados. Si una fuente no responde, el producto no inventa valores de reemplazo. Las franjas oficiales de MeteoChile no se dibujan para una fecha pasada cuando el endpoint devuelve una colección vacía.
 
 ## Capabilities and Constraints
 
-- **disponible:** landing (`/`), monitor multi-amenaza (`/monitor`), evacuación (`/evacuacion`), catálogo y detalle de guías (`/desastres`, `/desastres/[tipo]`) y simulacros (`/simulacros`). La matriz canónica y la evidencia de rutas están en `frontend/docs/FRONTEND.md`.
-- **backend-only:** el backend expone capacidades de autenticación, resumen IA del dashboard, Plan Familia, chat ciudadano y perfil de usuario sin una superficie web ciudadana completa.
-- **stub:** `/inicio`, `/preparacion`, `/asistente` y `/cuenta` son rutas visibles que muestran “Próximamente”.
-- **ausente:** las rutas de inicio de sesión, registro, recuperación de contraseña y los pasos de kit de emergencia/Plan Familia todavía no tienen página.
-- El frontend usa Next.js 16, React 19, TypeScript, Tailwind CSS 4, Bun, MapLibre y TanStack Query. El navegador consume HTTP mediante `frontend/lib/api.ts` y el proxy same-origin; nunca conecta directamente con PostgreSQL.
-- Las ingestas y el contrato de datos pertenecen al backend. GeoJSON, PMTiles y snapshots de guías vendoreados en `frontend/public/data/` y `frontend/data/senapred/` son assets estáticos del frontend, no una conexión directa a la base de datos.
-- Las URLs son españolas, los nombres de código y exports son ingleses, y el copy de la interfaz es español. Los estados `disponible`, `backend-only`, `stub` y `ausente` deben mantenerse explícitos; una capacidad de backend no se presenta como UI terminada.
+- El monitor territorial combina riesgo, alertas oficiales, sismos, calidad del aire y avisos meteorológicos con datos observados; la matriz comprobable está en [docs/FRONTEND.md#estado-de-rutas](docs/FRONTEND.md#estado-de-rutas).
+- Las superficies de evacuación, guías SENAPRED, Plan Familia Preparada, kit de emergencia y simulacros convierten el monitoreo en preparación y acción; sus rutas y estados pertenecen a `FRONTEND.md`, no a este contexto de producto.
+- El backend expone capacidades adicionales sin consumidor web completo; la separación canónica está en [backend/docs/BACKEND.md#api-consumida-por-la-web--api-backend-only](../backend/docs/BACKEND.md#api-consumida-por-la-web--api-backend-only).
+- El navegador consume HTTP mediante `frontend/lib/api.ts` y el proxy same-origin; nunca conecta directamente con PostgreSQL.
+- Las ingestas y el contrato de datos pertenecen al backend. GeoJSON, PMTiles y snapshots de guías vendoreados son assets estáticos del frontend, no una conexión directa a la base de datos.
+- Las URLs son españolas, los nombres de código y exports son ingleses, y el copy de la interfaz es español. Los estados de capacidad se mantienen únicamente en sus owners de evidencia.
 
 ## Brand Commitments
 
@@ -61,4 +60,4 @@ Su mecanismo distintivo es unificar y territorializar datos reales de múltiples
 
 Requisito confirmado para las superficies ciudadanas: conservar contraste suficiente, foco visible y etiquetas/texto además del color para comunicar severidad; mantener objetivos táctiles de al menos 44 px en controles touch-first; y respetar `prefers-reduced-motion`. El contenido y los controles deben seguir siendo comprensibles cuando Mica, pulsos del mapa o animaciones están desactivados.
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

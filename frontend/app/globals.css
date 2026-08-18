@@ -246,6 +246,17 @@
       display: none;
     }
   }
+  .map-bottom-drawer-layout {
+    --map-bottom-drawer-offset: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    --map-controls-attribution-gap: 1.5rem;
+  }
+
+  @media (min-width: 64rem) {
+    .map-bottom-drawer-layout {
+      --map-bottom-drawer-offset: 0px;
+      --map-controls-attribution-gap: 0px;
+    }
+  }
 }
 @layer base {
   * {
@@ -304,7 +315,7 @@
   }
   .map-shell .maplibregl-ctrl-bottom-right {
     right: 1rem !important;
-    bottom: 1rem !important;
+    bottom: calc(1rem + var(--map-bottom-drawer-offset, 0px)) !important;
   }
   .map-shell .maplibregl-ctrl-attrib {
     @apply m-0! rounded-none! border! border-border! bg-background/90! text-muted-foreground! shadow-sm! backdrop-blur-xl! supports-[backdrop-filter]:bg-background/75!;
@@ -316,7 +327,7 @@
     @apply text-foreground!;
   }
   .map-shell .maplibregl-ctrl-attrib-button {
-    @apply flex! size-8! items-center! justify-center! bg-transparent! text-muted-foreground!;
+    @apply flex! size-11! items-center! justify-center! bg-transparent! text-muted-foreground!;
     background-image: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -325,10 +336,32 @@
   .map-shell .maplibregl-ctrl-attrib-button:hover {
     @apply text-foreground!;
   }
-  .map-shell .maplibregl-ctrl-attrib:not([open]) {
-    width: 2rem !important;
-    height: 2rem !important;
+  .map-shell
+    .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) {
+    width: 2.75rem !important;
+    height: 2.75rem !important;
     padding: 0 !important;
+  }
+  .map-shell .maplibregl-ctrl-attrib.maplibregl-compact-show {
+    display: flex !important;
+    min-height: 2.75rem !important;
+    align-items: center;
+    padding: 2px 2.75rem 2px 0.5rem !important;
+  }
+  @media (min-width: 64rem) {
+    .map-shell .maplibregl-ctrl-attrib-button {
+      @apply size-8!;
+    }
+    .map-shell
+      .maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) {
+      width: 2rem !important;
+      height: 2rem !important;
+    }
+    .map-shell .maplibregl-ctrl-attrib.maplibregl-compact-show {
+      display: block !important;
+      min-height: 20px !important;
+      padding: 2px 28px 2px 8px !important;
+    }
   }
   .map-shell .maplibregl-ctrl-attrib-button:focus-visible {
     outline: 2px solid var(--foreground) !important;

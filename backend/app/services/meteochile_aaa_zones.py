@@ -1,8 +1,8 @@
 """DMC AAA zone/region id → Chile CUT mapping + spatial comuna resolve.
 
-Region prefixes cover fringe ids for fan-out. Comuna membership uses
-comuna centroids from ``comunas.geojson`` + point-in-polygon against DMC
-geometries (no shapely). Remote overrides: ``ip`` / ``jf``.
+Region prefixes cover fringe ids for fan-out. Comuna membership uses polygon
+intersection between ``comunas.geojson`` and DMC geometries (no shapely).
+Remote overrides: ``ip`` / ``jf``.
 """
 
 from __future__ import annotations
@@ -54,8 +54,10 @@ DMC_ID_COMUNA_OVERRIDES: dict[str, tuple[int, ...]] = {
 
 _COMUNAS_GEOJSON = Path(__file__).resolve().parent.parent / "data" / "comunas.geojson"
 
-# (cod_comuna, codregion, lng, lat)
-_comuna_centroids: list[tuple[int, int, float, float]] | None = None
+_BBox = tuple[float, float, float, float]
+# (cod_comuna, codregion, geometry, bbox)
+_comuna_geometries: list[tuple[int, int, dict[str, Any], _BBox]] | None = None
+_comuna_region_by_code: dict[int, int] | None = None
 
 
 def region_cut_for_dmc_id(dmc_id: str) -> int | None:
@@ -138,49 +140,87 @@ def region_cuts_for_zone_ids(zone_ids: list[str]) -> list[int]:
     return ordered
 
 
-def _ring_centroid(ring: list[list[float]]) -> tuple[float, float] | None:
-    if len(ring) < 3:
-        return None
-    # Drop closing vertex if present
-    pts = ring[:-1] if ring[0] == ring[-1] else ring
-    if not pts:
-        return None
-    lng = sum(p[0] for p in pts) / len(pts)
-    lat = sum(p[1] for p in pts) / len(pts)
-    return lng, lat
-
-
-def _geom_centroid(geom: dict[str, Any]) -> tuple[float, float] | None:
-    gtype = geom.get("type")
+def _polygons_for_geometry(geom: dict[str, Any]) -> list[list]:
     coords = geom.get("coordinates")
-    if gtype == "Polygon" and coords:
-        return _ring_centroid(coords[0])
-    if gtype == "MultiPolygon" and coords:
-        return _ring_centroid(coords[0][0])
-    if gtype == "Point" and isinstance(coords, (list, tuple)) and len(coords) >= 2:
-        return float(coords[0]), float(coords[1])
+    if geom.get("type") == "Polygon" and coords:
+        return [coords]
+    if geom.get("type") == "MultiPolygon" and coords:
+        return list(coords)
+    return []
+
+
+def _geometry_bbox(geom: dict[str, Any]) -> _BBox | None:
+    polygons = _polygons_for_geometry(geom)
+    points = [
+        point
+        for polygon in polygons
+        for ring in polygon
+        for point in ring
+        if isinstance(point, (list, tuple)) and len(point) >= 2
+    ]
+    if points:
+        return (
+            min(float(point[0]) for point in points),
+            min(float(point[1]) for point in points),
+            max(float(point[0]) for point in points),
+            max(float(point[1]) for point in points),
+        )
+
+    coords = geom.get("coordinates")
+    if (
+        geom.get("type") == "Point"
+        and isinstance(coords, (list, tuple))
+        and len(coords) >= 2
+    ):
+        lng = float(coords[0])
+        lat = float(coords[1])
+        radius_m = float(geom.get("radius_m") or 25_000)
+        dlat = radius_m / 111_320.0
+        dlng = radius_m / (111_320.0 * max(0.2, math.cos(math.radians(lat))))
+        return lng - dlng, lat - dlat, lng + dlng, lat + dlat
     return None
 
 
-def _load_comuna_centroids() -> list[tuple[int, int, float, float]]:
-    global _comuna_centroids
-    if _comuna_centroids is not None:
-        return _comuna_centroids
+def _load_comuna_geometries() -> list[tuple[int, int, dict[str, Any], _BBox]]:
+    global _comuna_geometries, _comuna_region_by_code
+    if _comuna_geometries is not None:
+        return _comuna_geometries
+
     raw = json.loads(_COMUNAS_GEOJSON.read_text(encoding="utf-8"))
-    out: list[tuple[int, int, float, float]] = []
-    for feat in raw.get("features") or []:
-        props = feat.get("properties") or {}
-        cod = props.get("cod_comuna")
-        region = props.get("codregion")
-        geom = feat.get("geometry") or {}
-        if not isinstance(cod, int) or not isinstance(region, int):
+    out: list[tuple[int, int, dict[str, Any], _BBox]] = []
+    region_by_code: dict[int, int] = {}
+    for feature in raw.get("features") or []:
+        properties = feature.get("properties") or {}
+        comuna_code = properties.get("cod_comuna")
+        region_code = properties.get("codregion")
+        geometry = feature.get("geometry") or {}
+        if not isinstance(comuna_code, int) or not isinstance(region_code, int):
             continue
-        c = _geom_centroid(geom)
-        if c is None:
+        bbox = _geometry_bbox(geometry)
+        if bbox is None:
             continue
-        out.append((cod, region, c[0], c[1]))
-    _comuna_centroids = out
+        out.append((comuna_code, region_code, geometry, bbox))
+        region_by_code[comuna_code] = region_code
+
+    _comuna_geometries = out
+    _comuna_region_by_code = region_by_code
     return out
+
+
+def comuna_codes_by_region(comuna_codes: list[int]) -> dict[int, list[int]]:
+    """Group CUT comuna codes by their official CUT region."""
+    _load_comuna_geometries()
+    region_by_code = _comuna_region_by_code or {}
+    grouped: dict[int, list[int]] = {}
+    seen: set[int] = set()
+    for comuna_code in comuna_codes:
+        if comuna_code in seen:
+            continue
+        seen.add(comuna_code)
+        region_code = region_by_code.get(comuna_code)
+        if region_code is not None:
+            grouped.setdefault(region_code, []).append(comuna_code)
+    return grouped
 
 
 def _point_in_ring(lng: float, lat: float, ring: list[list[float]]) -> bool:
@@ -241,12 +281,214 @@ def point_in_dmc_geometry(lng: float, lat: float, geom: dict[str, Any]) -> bool:
     return False
 
 
+def _bboxes_intersect(first: _BBox, second: _BBox) -> bool:
+    return (
+        first[0] <= second[2]
+        and second[0] <= first[2]
+        and first[1] <= second[3]
+        and second[1] <= first[3]
+    )
+
+
+def _orientation(first: list[float], second: list[float], third: list[float]) -> float:
+    return (second[0] - first[0]) * (third[1] - first[1]) - (
+        second[1] - first[1]
+    ) * (third[0] - first[0])
+
+
+def _point_on_segment(
+    first: list[float],
+    second: list[float],
+    point: list[float],
+    *,
+    epsilon: float = 1e-12,
+) -> bool:
+    return (
+        abs(_orientation(first, second, point)) <= epsilon
+        and min(first[0], second[0]) - epsilon
+        <= point[0]
+        <= max(first[0], second[0]) + epsilon
+        and min(first[1], second[1]) - epsilon
+        <= point[1]
+        <= max(first[1], second[1]) + epsilon
+    )
+
+
+def _segments_intersect(
+    first_start: list[float],
+    first_end: list[float],
+    second_start: list[float],
+    second_end: list[float],
+) -> bool:
+    if (
+        max(first_start[0], first_end[0]) < min(second_start[0], second_end[0])
+        or max(second_start[0], second_end[0]) < min(first_start[0], first_end[0])
+        or max(first_start[1], first_end[1]) < min(second_start[1], second_end[1])
+        or max(second_start[1], second_end[1]) < min(first_start[1], first_end[1])
+    ):
+        return False
+
+    first_orientation_start = _orientation(
+        first_start, first_end, second_start
+    )
+    first_orientation_end = _orientation(first_start, first_end, second_end)
+    second_orientation_start = _orientation(
+        second_start, second_end, first_start
+    )
+    second_orientation_end = _orientation(second_start, second_end, first_end)
+    if (
+        (first_orientation_start > 0 > first_orientation_end)
+        or (first_orientation_start < 0 < first_orientation_end)
+    ) and (
+        (second_orientation_start > 0 > second_orientation_end)
+        or (second_orientation_start < 0 < second_orientation_end)
+    ):
+        return True
+    return (
+        _point_on_segment(first_start, first_end, second_start)
+        or _point_on_segment(first_start, first_end, second_end)
+        or _point_on_segment(second_start, second_end, first_start)
+        or _point_on_segment(second_start, second_end, first_end)
+    )
+
+
+def _ring_segments(ring: list[list[float]]) -> list[tuple[list[float], list[float]]]:
+    if len(ring) < 2:
+        return []
+    segments = [
+        (ring[index], ring[index + 1]) for index in range(len(ring) - 1)
+    ]
+    if ring[0] != ring[-1]:
+        segments.append((ring[-1], ring[0]))
+    return segments
+
+
+def _polygon_coords_intersect(first: list, second: list) -> bool:
+    if not first or not second:
+        return False
+    first_point = first[0][0]
+    if _point_in_polygon_coords(
+        float(first_point[0]), float(first_point[1]), second
+    ):
+        return True
+    second_point = second[0][0]
+    if _point_in_polygon_coords(
+        float(second_point[0]), float(second_point[1]), first
+    ):
+        return True
+
+    first_segments = [
+        segment for ring in first for segment in _ring_segments(ring)
+    ]
+    second_segments = [
+        segment for ring in second for segment in _ring_segments(ring)
+    ]
+    return any(
+        _segments_intersect(first_start, first_end, second_start, second_end)
+        for first_start, first_end in first_segments
+        for second_start, second_end in second_segments
+    )
+
+
+def _distance_to_segment_m(
+    lng: float,
+    lat: float,
+    start: list[float],
+    end: list[float],
+) -> float:
+    metres_per_degree = 111_320.0
+    lng_scale = metres_per_degree * max(0.2, math.cos(math.radians(lat)))
+    start_x = (float(start[0]) - lng) * lng_scale
+    start_y = (float(start[1]) - lat) * metres_per_degree
+    end_x = (float(end[0]) - lng) * lng_scale
+    end_y = (float(end[1]) - lat) * metres_per_degree
+    delta_x = end_x - start_x
+    delta_y = end_y - start_y
+    squared_length = delta_x * delta_x + delta_y * delta_y
+    if squared_length == 0:
+        return math.hypot(start_x, start_y)
+    projection = max(
+        0.0,
+        min(
+            1.0,
+            -(start_x * delta_x + start_y * delta_y) / squared_length,
+        ),
+    )
+    return math.hypot(
+        start_x + projection * delta_x,
+        start_y + projection * delta_y,
+    )
+
+
+def _polygon_geometry_intersects_circle(
+    polygon_geometry: dict[str, Any],
+    circle_geometry: dict[str, Any],
+) -> bool:
+    coords = circle_geometry.get("coordinates")
+    if not isinstance(coords, (list, tuple)) or len(coords) < 2:
+        return False
+    lng = float(coords[0])
+    lat = float(coords[1])
+    radius_m = float(circle_geometry.get("radius_m") or 25_000)
+    if point_in_dmc_geometry(lng, lat, polygon_geometry):
+        return True
+    return any(
+        _distance_to_segment_m(lng, lat, start, end) <= radius_m
+        for polygon in _polygons_for_geometry(polygon_geometry)
+        for ring in polygon
+        for start, end in _ring_segments(ring)
+    )
+
+
+def _geometries_intersect(
+    first: dict[str, Any],
+    second: dict[str, Any],
+) -> bool:
+    first_bbox = _geometry_bbox(first)
+    second_bbox = _geometry_bbox(second)
+    if (
+        first_bbox is None
+        or second_bbox is None
+        or not _bboxes_intersect(first_bbox, second_bbox)
+    ):
+        return False
+    if second.get("type") == "Point":
+        return _polygon_geometry_intersects_circle(first, second)
+    if first.get("type") == "Point":
+        return _polygon_geometry_intersects_circle(second, first)
+
+    for first_polygon in _polygons_for_geometry(first):
+        first_polygon_bbox = _geometry_bbox(
+            {"type": "Polygon", "coordinates": first_polygon}
+        )
+        if first_polygon_bbox is None:
+            continue
+        for second_polygon in _polygons_for_geometry(second):
+            second_polygon_bbox = _geometry_bbox(
+                {"type": "Polygon", "coordinates": second_polygon}
+            )
+            if (
+                second_polygon_bbox is not None
+                and _bboxes_intersect(first_polygon_bbox, second_polygon_bbox)
+                and _polygon_coords_intersect(first_polygon, second_polygon)
+            ):
+                return True
+    return False
+
+
 def comunas_for_dmc_geometry(geom: dict[str, Any]) -> list[int]:
-    """CUT comunas whose centroid intersects ``geom``."""
+    """CUT comunas whose polygon intersects ``geom``."""
+    geometry_bbox = _geometry_bbox(geom)
+    if geometry_bbox is None:
+        return []
     hits: list[int] = []
-    for cod, _region, lng, lat in _load_comuna_centroids():
-        if point_in_dmc_geometry(lng, lat, geom):
-            hits.append(cod)
+    for comuna_code, _region_code, comuna_geometry, comuna_bbox in (
+        _load_comuna_geometries()
+    ):
+        if _bboxes_intersect(comuna_bbox, geometry_bbox) and _geometries_intersect(
+            comuna_geometry, geom
+        ):
+            hits.append(comuna_code)
     return hits
 
 
@@ -290,46 +532,5 @@ def resolve_comuna_codes_in_region(
     region_geoms: dict[str, Any] | None = None,
 ) -> list[int]:
     """Comunas for ``zone_ids`` restricted to ``region_code``."""
-    zone_geoms = zone_geoms or {}
-    region_geoms = region_geoms or {}
-    hit_set: set[int] = set()
-
-    for zid in zone_ids:
-        override = DMC_ID_COMUNA_OVERRIDES.get(zid)
-        if override:
-            for cod in override:
-                row = next(
-                    (c for c in _load_comuna_centroids() if c[0] == cod),
-                    None,
-                )
-                if row is not None:
-                    if row[1] == region_code:
-                        hit_set.add(cod)
-                elif region_code == 5:
-                    hit_set.add(cod)
-            continue
-
-        geom = zone_geoms.get(zid) or region_geoms.get(zid)
-        if geom:
-            for cod, reg, lng, lat in _load_comuna_centroids():
-                if reg != region_code:
-                    continue
-                if point_in_dmc_geometry(lng, lat, geom):
-                    hit_set.add(cod)
-            continue
-
-        seed = DMC_ZONE_CUT_SEEDS.get(zid)
-        if seed and seed.region_code == region_code:
-            hit_set.update(seed.comuna_codes)
-
-    ordered: list[int] = []
-    seen: set[int] = set()
-    for cod, reg, _lng, _lat in _load_comuna_centroids():
-        if cod in hit_set and reg == region_code and cod not in seen:
-            seen.add(cod)
-            ordered.append(cod)
-    for cod in sorted(hit_set):
-        if cod not in seen:
-            seen.add(cod)
-            ordered.append(cod)
-    return ordered
+    comuna_codes = resolve_comuna_codes(zone_ids, zone_geoms, region_geoms)
+    return comuna_codes_by_region(comuna_codes).get(region_code, [])

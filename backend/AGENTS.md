@@ -2,8 +2,6 @@
 
 **Índice y reglas de scope** en `backend/`. Referencia de API, fuentes y servicios: [docs/BACKEND.md](docs/BACKEND.md). Mantenimiento: [../docs/DOC-MAINTENANCE.md](../docs/DOC-MAINTENANCE.md).
 
-**Quick:** [playbook backend](../docs/HARNESS.md#backend-api-y-datos) · [contrato FE↔BE](../docs/HARNESS.md#contrato-febe) · `make verify-backend`
-
 ---
 
 ## Scope
@@ -19,7 +17,6 @@
 | API, OpenAPI, env, fuentes, scheduler, modelos y optimizaciones | [docs/BACKEND.md](docs/BACKEND.md) |
 | `?date=` y `DailyRiskScore` | [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md) |
 | Arquitectura y Docker | [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) |
-| Catálogo backend | [docs/README.md](docs/README.md) |
 | Monorepo | [../AGENTS.md](../AGENTS.md) |
 
 La semántica detallada de SERNAPRED, Aire Chile, SERNAGEOMIN y MeteoChile AAA vive en `docs/BACKEND.md`, no se duplica aquí.
@@ -59,17 +56,11 @@ Routing de fuentes: `csn_service`, `openmeteo_service`, `flood_service`, `senapr
 
 ## Contrato frontend
 
-Flujo obligatorio:
+Los cambios de endpoint, parámetro o JSON consumidos por la web siguen el [flujo canónico](../docs/CONTRACT.md#flujo-obligatorio).
 
-```text
-app/schemas/* → /openapi.json → make sync-contract
-    → frontend/lib/api-schema.d.ts → frontend/lib/types.ts / frontend/lib/api.ts
-```
-
-- El contrato canónico es `GET http://localhost:8000/openapi.json`.
-- Si el JSON es consumido por la web, actualiza también [../frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md).
-- Tipo canónico de alertas: `ActiveAlertOut`.
-- Un cambio de fecha también actualiza [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md).
+- El tipo canónico de alertas es `ActiveAlertOut`.
+- Si el cambio usa `?date=`, actualiza también [../docs/QUERY-DATE.md](../docs/QUERY-DATE.md).
+- Si el JSON tiene consumidor web, actualiza [../frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md).
 
 ## Invariantes de datos
 
@@ -98,4 +89,4 @@ make up
 
 ---
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

@@ -202,7 +202,7 @@ export function EvacuationLayersLegend({
               aria-checked={active}
               onClick={() => setTab(key)}
               className={cn(
-                "inline-flex min-w-0 items-center justify-center gap-1 border px-1.5 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[1.1px] transition-colors",
+                "inline-flex min-h-11 min-w-0 items-center justify-center gap-1 border px-1.5 py-1.5 font-mono text-[8px] font-semibold uppercase tracking-[1.1px] transition-colors lg:min-h-0",
                 "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30",
                 active
                   ? "border-primary bg-primary text-primary-foreground"
@@ -228,7 +228,7 @@ export function EvacuationLayersLegend({
                 <label
                   htmlFor={inputId}
                   className={cn(
-                    "flex w-full cursor-pointer items-stretch gap-0 transition-colors",
+                    "flex min-h-11 w-full cursor-pointer items-stretch gap-0 transition-colors lg:min-h-0",
                     active
                       ? "bg-muted/30"
                       : "opacity-70 hover:bg-muted/25 hover:opacity-100",
@@ -353,7 +353,7 @@ export function EvacuationLayersLegend({
 
   if (embedded) {
     return (
-      <div className="flex max-h-[min(60dvh,28rem)] flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 max-h-[min(60dvh,28rem)] flex-col overflow-hidden">
         {body}
       </div>
     )

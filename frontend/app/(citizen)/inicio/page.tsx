@@ -1,10 +1,11 @@
-import { PageStub } from "@/components/layout/page-stub"
+import type { Metadata } from "next"
 
-export default function InicioPage() {
-  return (
-    <PageStub
-      title="Inicio"
-      description="Tu comuna hoy: resumen de riesgos y alertas cerca de ti."
-    />
-  )
+import { auth } from "@/auth"
+import { InicioPage } from "@/components/inicio/inicio-page"
+
+export const metadata: Metadata = { title: "Inicio" }
+
+export default async function InicioRoute() {
+  const session = await auth()
+  return <InicioPage authenticated={Boolean(session?.user)} />
 }

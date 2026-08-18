@@ -1,10 +1,5 @@
-import { PageStub } from "@/components/layout/page-stub"
+import { CuentaPage } from "@/components/cuenta/cuenta-page"
 
-export default function CuentaPage() {
-  return (
-    <PageStub
-      title="Cuenta"
-      description="Perfil y comuna de hogar para personalizar alertas y el monitor."
-    />
-  )
+export default function Page() {
+  return <CuentaPage />
 }

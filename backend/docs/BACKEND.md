@@ -4,7 +4,7 @@
 **Base URL:** `http://localhost:8000`  
 **Índice operativo:** [AGENTS.md](../AGENTS.md)  
 **Mantenimiento:** [../../docs/DOC-MAINTENANCE.md](../../docs/DOC-MAINTENANCE.md)  
-**Playbooks:** [../../docs/HARNESS.md](../../docs/HARNESS.md)
+**Flujo de contrato FE↔BE:** [../../docs/CONTRACT.md](../../docs/CONTRACT.md)
 
 ## Contrato OpenAPI y quick start
 
@@ -22,8 +22,8 @@ Si OpenAPI y esta página divergen, **OpenAPI gana**; actualiza las tablas en el
 # Desde la raíz del monorepo
 make up
 
-# `make up` equivale a docker compose --profile tools up --build.
-# El arranque sincroniza fuentes reales y deja flood en background.
+# `make up` equivale a `docker compose --profile tools up --build --detach`.
+# El stack se ejecuta en segundo plano y devuelve el control a la terminal.
 
 # Reset destructivo de la base local
 make down-v && make up
@@ -33,7 +33,7 @@ Desarrollo nativo: `make dev-backend` (requiere DB y [backend/.env.example](../.
 
 ## Endpoints
 
-Prefijo común: `/api/v1`. Las rutas protegidas reciben el JWT HS256 que emite el proxy Next; `/health` y `/api/v1/auth/*` son públicas.
+Prefijo común: `/api/v1`. Las rutas protegidas reciben el JWT HS256 que emite el proxy Next (`sub: "guest"` o el `id` de la cuenta). `/health` y `/api/v1/auth/*` son públicas. `GET/PATCH /users/me` y `GET/PUT /family-plan` exigen cuenta (401 si el JWT es guest).
 
 ### Sistema
 
@@ -46,11 +46,10 @@ Prefijo común: `/api/v1`. Las rutas protegidas reciben el JWT HS256 que emite e
 
 | Método | Path | Descripción |
 |--------|------|-------------|
-| POST | `/api/v1/auth/register` | Registro email/contraseña |
-| POST | `/api/v1/auth/verify-credentials` | Validación de credenciales para servidor Next |
-| POST | `/api/v1/auth/oauth/google` | Upsert Google; valida `google_id_token` si hay `GOOGLE_CLIENT_ID` |
-| POST | `/api/v1/auth/forgot-password` | Solicitud de reset mediante Resend |
-| POST | `/api/v1/auth/reset-password` | Cambio de contraseña |
+| POST | `/api/v1/auth/register` | Crea cuenta email/contraseña; 409 si el email existe |
+| POST | `/api/v1/auth/login` | Valida credenciales para Auth.js; 401 si fallan |
+| POST | `/api/v1/auth/forgot-password` | Solicitud de reset (siempre 204; envía Resend si hay key) |
+| POST | `/api/v1/auth/reset-password` | Cambia la contraseña con token de una hora |
 
 ### Riesgo y geografía
 
@@ -59,6 +58,7 @@ Prefijo común: `/api/v1`. Las rutas protegidas reciben el JWT HS256 que emite e
 | GET | `/api/v1/risk/national?date=` | Riesgo agregado por región; JWT |
 | GET | `/api/v1/risk/comunas?date=` | `composite_score` por comuna para gating/tooling; JWT |
 | GET | `/api/v1/regiones/{codregion}/risk` | Detalle regional y comunas, score live; JWT |
+| GET | `/api/v1/comunas` | Catálogo liviano 346 comunas (`cod_comuna`, nombre, región); JWT |
 | GET | `/api/v1/comunas/nearest?lat=&lon=` | Comuna más cercana al GPS; JWT |
 | GET | `/api/v1/comunas/{cod_comuna}/risk?date=` | Vector de hazards de la comuna; JWT |
 
@@ -85,7 +85,7 @@ Prefijo común: `/api/v1`. Las rutas protegidas reciben el JWT HS256 que emite e
 
 Filtros opcionales: `region` (1–16), `comuna`, `level`, `kind` y `hazard`. `include_content=true` incluye el HTML/texto pesado; el default es `false` y el monitor usa título, nivel y geografía.
 
-MeteoChile AAA usa el feed público [datos_AAA.json](https://archivos.meteochile.gob.cl/portaldmc/AAA/datos_AAA.json). Mapea Aviso→`amarilla`, Alerta→`naranja`, Alarma→`roja`; resuelve CUT mediante intersección de centroides con geometría DMC y overrides `ip`→5201, `jf`→5104. Las franjas GeoJSON de `/alerts/meteochile/zones` se dibujan solo con el filtro Meteo del frontend.
+MeteoChile AAA usa el feed público [datos_AAA.json](https://archivos.meteochile.gob.cl/portaldmc/AAA/datos_AAA.json). Mapea Aviso→`amarilla`, Alerta→`naranja`, Alarma→`roja`; agrupa como `MultiPolygon` las zonas multipartes numeradas del catálogo oficial y resuelve CUT mediante intersección polígono-comuna. Las áreas libres hacen fan-out por las regiones CUT intersectadas; `ip`→5201 y `jf`→5104 son overrides exactos. Las franjas GeoJSON de `/alerts/meteochile/zones` se dibujan solo con el filtro Meteo del frontend.
 
 ### Estadísticas
 
@@ -153,8 +153,8 @@ MeteoChile AAA usa el feed público [datos_AAA.json](https://archivos.meteochile
 
 | Método | Path | Descripción |
 |--------|------|-------------|
-| GET | `/api/v1/users/me` | Perfil y `home_comuna_code`; JWT |
-| PATCH | `/api/v1/users/me` | Actualiza comuna de hogar; JWT |
+| GET | `/api/v1/users/me` | Perfil, comuna de hogar y preferencias de aviso; JWT de cuenta (no guest) |
+| PATCH | `/api/v1/users/me` | Nombre, comuna de hogar y flags `notify_email_*`; JWT de cuenta |
 
 `date` usa formato `YYYY-MM-DD`, día civil Chile y ventana de 30 días. Contrato completo: [../../docs/QUERY-DATE.md](../../docs/QUERY-DATE.md). Rate limits: lectura 100/min, events 60, impact 30, stats 50 y alerts 60.
 
@@ -171,14 +171,15 @@ La columna web se limita a las funciones que aparecen en `frontend/lib/api.ts`. 
 
 | API consumida por la web | API backend-only |
 |--------------------------|-------------------|
-| **Riesgo:** `/api/v1/risk/national?date=`, `/api/v1/regiones/{codregion}/risk`, `/api/v1/comunas/{cod}/risk?date=` | **Auth:** `/api/v1/auth/*` |
-| **Sismos:** `/api/v1/events?date=` | **Dashboard:** `/api/v1/dashboard/*` |
-| **Alertas:** `/api/v1/alerts/active`, `/api/v1/alerts/meteochile/zones` | **Plan Familia:** `/api/v1/family-plan` |
-| **Aire:** `/api/v1/air-quality`, `/air-quality/{slug}`, `/air-quality/by-comuna/{cod}` | **Chat:** `/api/v1/chat/*` |
-| **Simulacros:** `/api/v1/simulacros`, `/simulacros/next`, `/simulacros/{slug}` | **Usuarios:** `/api/v1/users/me` |
-| **Puntos de encuentro:** `/api/v1/meeting-points/nearest` | **Stats:** `/api/v1/stats/*` (**trends** placeholder) |
-| | **Sistema:** `/api/v1/system/*` |
-| | **Riesgo/geografía no consumidos:** `/api/v1/risk/comunas`, `/api/v1/comunas/nearest` |
+| **Riesgo:** `/api/v1/risk/national?date=`, `/api/v1/regiones/{codregion}/risk`, `/api/v1/comunas/{cod}/risk?date=` | **Dashboard:** `/api/v1/dashboard/*` |
+| **Sismos:** `/api/v1/events?date=` | **Plan Familia:** `/api/v1/family-plan` (cuenta; sin wizard web) |
+| **Alertas:** `/api/v1/alerts/active`, `/api/v1/alerts/meteochile/zones` | **Chat:** `/api/v1/chat/*` |
+| **Aire:** `/api/v1/air-quality`, `/air-quality/{slug}`, `/air-quality/by-comuna/{cod}` | **Stats:** `/api/v1/stats/*` (**trends** placeholder) |
+| **Simulacros:** `/api/v1/simulacros`, `/simulacros/next`, `/simulacros/{slug}` | **Sistema:** `/api/v1/system/*` |
+| **Puntos de encuentro:** `/api/v1/meeting-points/nearest` | **Riesgo/geografía no consumidos:** `/api/v1/risk/comunas`, `/api/v1/comunas/nearest` |
+| **Auth:** `/api/v1/auth/register`, `/login`, `/forgot-password`, `/reset-password` | |
+| **Usuarios:** `/api/v1/users/me` | |
+| **Comunas catálogo:** `/api/v1/comunas` | |
 | | **Impacto de evento:** `/api/v1/events/{id}/impact` |
 | | **Guías API:** `/api/v1/disaster-guides/*`; la web usa su snapshot SENAPRED vendoreado |
 
@@ -222,9 +223,8 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: [backend/.env.example]
 | `METEOCHILE_REQUEST_TIMEOUT_SECONDS` | `30` | Timeout httpx |
 | `CACHE_TTL_SECONDS` | `300` | Cache general |
 | `CACHE_METEO_TTL_SECONDS` | `21600` | Cache meteorológico |
-| `AUTH_SECRET` | requerido en prod | JWT HS256; mínimo 32 bytes |
-| `AUTH_URL` | http://localhost:3000 | Enlaces de reset |
-| `GOOGLE_CLIENT_ID` | vacío | Validación opcional de token Google |
+| `AUTH_SECRET` | requerido en prod | JWT HS256 compartido con Auth.js; mínimo 32 bytes |
+| `AUTH_URL` | http://localhost:3000 | Enlaces de reset (`/restablecer-contrasena`) |
 | `RESEND_API_KEY` | vacío | Recuperación de contraseña |
 | `POSTGRES_PASSWORD` | chilerisk local | Cambiar en VPS |
 | `AUTH_EMAIL_FROM` | noreply@… | Remitente Resend |
@@ -238,14 +238,15 @@ Root `.env` (Docker) o `backend/.env` (local). Plantilla: [backend/.env.example]
 
 | Job | Intervalo | Condición |
 |-----|-----------|-----------|
-| `risk_refresh` | `RISK_REFRESH_MINUTES` | Scheduler activo |
-| `csn_sync` | 5 min | Scheduler activo |
-| `meteo_update` | 60 min | Scheduler activo |
-| `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | Scheduler activo |
-| `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | Siempre |
-| `airechile_sync` | `AIRECHILE_REFRESH_MINUTES` | Scheduler activo |
-| `sernageomin_sync` | `SERNAGEOMIN_REFRESH_MINUTES` | Scheduler activo |
-| `meteochile_aaa_sync` | `METEOCHILE_REFRESH_MINUTES` | Scheduler activo |
+| `risk_refresh` | `RISK_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `csn_sync` | 5 min | `ENABLE_SCHEDULER=true` |
+| `meteo_update` | 60 min | `ENABLE_SCHEDULER=true` |
+| `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `simulacros_sync` | `SIMULACROS_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `airechile_sync` | `AIRECHILE_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `sernageomin_sync` | `SERNAGEOMIN_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `meteochile_aaa_sync` | `METEOCHILE_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
+| `flood_sync` | `FLOOD_REFRESH_MINUTES` | `ENABLE_SCHEDULER=true` |
 
 `backend/app/main.py` ejecuta seed y sincronización inicial, llama `recompute_all_scores`, inicia APScheduler y agenda el flood startup sin bloquear el healthcheck.
 
@@ -294,7 +295,7 @@ No se prometen latencias ni porcentajes: la tabla solo enumera mecanismos presen
 | `AireChileDaily` | `models/airechile_daily.py` | GEC diaria por zona |
 | `SernageominVolcanicAlert` | `models/sernageomin_volcanic_alert.py` | Alertas volcánicas vigentes |
 | `MeteoChileAaaAlert` | `models/meteochile_aaa_alert.py` | AAA DMC por ítem×región |
-| `User`, `OAuthAccount`, `PasswordResetToken` | `models/user.py`, etc. | Auth |
+| `User`, `PasswordResetToken` | `models/user.py`, `models/password_reset_token.py` | Cuentas email/contraseña |
 | `FamilyPlan` | `models/family_plan.py` | Plan Familia JSON |
 | `SyncRun` | `models/sync_run.py` | Últimas corridas |
 | `MeetingPoint` | `models/meeting_point.py` | Puntos oficiales |
@@ -353,4 +354,4 @@ backend/app/
 
 Referencias: [../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md), [../../docs/QUERY-DATE.md](../../docs/QUERY-DATE.md) y `frontend/lib/api.ts`.
 
-*Last updated: 2026-08-10*
+*Last updated: 2026-08-17*

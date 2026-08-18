@@ -50,9 +50,6 @@ class Settings(BaseSettings):
 
     auth_secret: str = ""
     auth_url: str = "http://localhost:3000"
-    # Client ID del OAuth Google del frontend (Auth.js). Si se define, el backend
-    # valida el ID token vía tokeninfo y las claims reemplazan lo enviado por el cliente.
-    google_client_id: str = ""
     resend_api_key: str = ""
     auth_email_from: str = "noreply@chilerisk.local"
 

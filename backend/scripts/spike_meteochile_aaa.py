@@ -51,7 +51,7 @@ async def main() -> None:
             f"- [{row['tipo']}] {row['codigo_meteo']}: {row['title'][:70]}"
             f" | zones={len(row['zone_ids'])}"
             f" regions_cut={row['region_codes']}"
-            f" comunas_seed={len(row['comuna_codes'])}"
+            f" comunas={len(row['comuna_codes'])}"
             f" geoms={len(row['geometries'])}"
         )
 

@@ -2,7 +2,6 @@ import type { CSSProperties } from "react"
 import { ExternalLink } from "lucide-react"
 
 import { Reveal } from "@/components/disasters/scroll-reveal"
-import { DRILL_TYPE_LABELS } from "@/lib/simulacros"
 import {
   SENAPRED_SIMULACROS_URL,
   SIMULACRO_CLOSING_PARAGRAPHS,
@@ -178,13 +177,13 @@ export function SimulacrosScenarios() {
             <Reveal
               className="w-full"
               x={index % 2 === 0 ? -96 : 96}
-              y={18}
+              y={0}
               delay={index * 0.05}
             >
               <div
                 className={cn(
                   INNER_WRAPPER_CLASS,
-                  "grid items-center gap-8 py-10 text-center md:grid-cols-[minmax(12rem,18rem)_minmax(0,1fr)] md:gap-12 md:py-12 md:text-left lg:grid-cols-[minmax(14rem,20rem)_minmax(0,1fr)] lg:gap-16"
+                  "grid items-center gap-5 py-5 text-center md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] md:gap-8 md:py-6 md:text-left lg:grid-cols-[minmax(10rem,14rem)_minmax(0,1fr)]"
                 )}
               >
                 <div className="flex items-center justify-center md:justify-start">
@@ -192,18 +191,15 @@ export function SimulacrosScenarios() {
                   <img
                     src={scenario.image}
                     alt={scenario.alt}
-                    className="h-auto w-full max-w-[14rem] drop-shadow-[0_14px_28px_rgba(0,0,0,0.18)] sm:max-w-[16rem] lg:max-w-[18rem]"
+                    className="h-auto w-full max-w-[9rem] drop-shadow-[0_10px_20px_rgba(0,0,0,0.16)] sm:max-w-[11rem] lg:max-w-[13rem]"
                   />
                 </div>
 
                 <div className="flex min-w-0 flex-col items-center justify-center md:items-start">
-                  <p className="font-mono text-[10px] font-semibold tracking-[1.4px] uppercase opacity-80">
-                    {DRILL_TYPE_LABELS[scenario.type]}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-extrabold tracking-tight text-balance sm:text-3xl lg:text-4xl">
+                  <h3 className="text-xl font-extrabold tracking-tight text-balance sm:text-2xl">
                     {content.title}
                   </h3>
-                  <div className="mx-auto mt-4 max-w-[68ch] space-y-3 text-sm leading-6 sm:text-base sm:leading-7 md:mx-0">
+                  <div className="mx-auto mt-2 max-w-[68ch] space-y-2 text-sm leading-6 sm:text-[0.95rem] sm:leading-6 md:mx-0">
                     {content.paragraphs.map((paragraph) => (
                       <p key={paragraph}>{paragraph}</p>
                     ))}

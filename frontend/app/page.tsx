@@ -73,9 +73,17 @@ export default function Home() {
               <Button
                 size="lg"
                 className="h-14 px-10 text-base font-semibold normal-case tracking-normal bg-[var(--primary-chile)] text-white shadow-lg shadow-black/40 transition-all hover:scale-[1.03] hover:bg-[var(--primary-chile)]/90 active:scale-[0.97] focus-visible:ring-white/40"
-                onClick={() => router.push("/iniciar-sesion")}
+                onClick={() => router.push("/inicio")}
               >
                 Entrar a la plataforma
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-14 px-10 text-base font-semibold normal-case tracking-normal shadow-lg shadow-black/20"
+                onClick={() => router.push("/iniciar-sesion")}
+              >
+                Iniciar sesión
               </Button>
             </motion.div>
           </motion.div>

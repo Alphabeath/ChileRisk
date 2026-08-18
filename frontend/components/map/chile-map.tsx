@@ -57,6 +57,29 @@ import { useUIStore } from "@/stores/ui-store"
 import type { ActiveAlert, AirQualityZone, SeismicEvent } from "@/lib/types"
 
 type Position = [number, number]
+type UserLocation = {
+  longitude: number
+  latitude: number
+}
+
+type PendingUserCommune = UserLocation & {
+  flyFinished: boolean
+}
+
+function renderedComunaAt(
+  map: maplibregl.Map,
+  location: UserLocation
+): ComunaProperties | null {
+  if (!map.getLayer("comuna-fill")) return null
+  const feature = map
+    .queryRenderedFeatures(
+      map.project([location.longitude, location.latitude]),
+      { layers: ["comuna-fill"] }
+    )
+    .find((candidate) => candidate.properties?.Comuna)
+  const properties = feature?.properties as ComunaProperties | undefined
+  return properties?.Comuna ? properties : null
+}
 type LinearRing = Position[]
 type Polygon = LinearRing[]
 type MultiPolygon = Polygon[]
@@ -173,7 +196,7 @@ function applySourceLevelState(
   levels: Map<number, string>,
   allIds: number[],
   clearKey: "alert_level" | "air_level",
-  cache: LevelStateCache,
+  cache: LevelStateCache
 ): void {
   const prevBySource = cache[source]
   for (const id of allIds) {
@@ -202,7 +225,7 @@ let earthquakeDotsActive = false
 
 function createPulsingDot(
   map: maplibregl.Map,
-  color: { r: number; g: number; b: number },
+  color: { r: number; g: number; b: number }
 ): maplibregl.StyleImageInterface {
   // Size 64 (@2x → 128 canvas) — getImageData cost ~4× cheaper than the old 120.
   const size = 64
@@ -288,7 +311,6 @@ export function ChileMap() {
       maxZoom={MAP_MAX_ZOOM}
     >
       <ChileLayers />
-      <MapControls position="bottom-right" showCompass showLocate />
     </Map>
   )
 }
@@ -308,12 +330,12 @@ function ChileLayers() {
   })
   const mapAlerts = useMemo(
     () => filterActiveAlertsBySource(allAlerts, alertsFilter),
-    [allAlerts, alertsFilter],
+    [allAlerts, alertsFilter]
   )
   /** MeteoChile paints DMC fringe polygons — exclude from region/comuna fill. */
   const choroplethAlerts = useMemo(
     () => mapAlerts.filter((a) => a.source !== "meteochile"),
-    [mapAlerts],
+    [mapAlerts]
   )
   const recentEvents = recentEventsData ?? EMPTY_EVENTS
 
@@ -333,7 +355,7 @@ function ChileLayers() {
   const allRegionIdsRef = useRef<number[]>([])
   const allComunaIdsRef = useRef<number[]>([])
   const comunasByRegionRef = useRef<Map<number, readonly number[]>>(
-    new globalThis.Map(),
+    new globalThis.Map()
   )
   /** Last-applied feature-state per id (skip unchanged ids on ticks). */
   const levelStateRef = useRef<LevelStateCache>(emptyLevelStateCache())
@@ -350,9 +372,9 @@ function ChileLayers() {
     useState<SeismicEventSelection | null>(null)
   const [popupSeq, setPopupSeq] = useState(0)
   const recentEventsRef = useRef<SeismicEvent[]>(recentEvents)
-  const openSeismicRef = useRef<(next: SeismicEventSelection) => void>(
-    () => {},
-  )
+  const openSeismicRef = useRef<(next: SeismicEventSelection) => void>(() => {})
+  const pendingUserCommuneRef = useRef<PendingUserCommune | null>(null)
+  const autoLocateMoveEndRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     selectedDateRef.current = selectedDate
@@ -386,17 +408,74 @@ function ChileLayers() {
     recentEventsRef.current = recentEvents
   }, [recentEvents])
 
-  const openSelection = (next: TerritorySelection) => {
+  const openSelection = useCallback((next: TerritorySelection) => {
     setSeismicSelection(null)
     setPopupSeq((s) => s + 1)
     setSelection(next)
-  }
+  }, [])
 
   const openSeismic = (next: SeismicEventSelection) => {
     setSelection(null)
     setPopupSeq((s) => s + 1)
     setSeismicSelection(next)
   }
+  const tryOpenUserCommune = useCallback(() => {
+    const pending = pendingUserCommuneRef.current
+    if (!map || !pending?.flyFinished) return
+    const properties = renderedComunaAt(map, pending)
+    if (!properties) return
+    pendingUserCommuneRef.current = null
+    openSelection({
+      lng: pending.longitude,
+      lat: pending.latitude,
+      kind: "comuna",
+      properties,
+    })
+  }, [map, openSelection])
+
+  const tryOpenUserCommuneRef = useRef(tryOpenUserCommune)
+  useEffect(() => {
+    tryOpenUserCommuneRef.current = tryOpenUserCommune
+  }, [tryOpenUserCommune])
+
+  const queueUserCommunePopup = useCallback((location: UserLocation) => {
+    if (!isWithinChileMapBounds(location.longitude, location.latitude)) {
+      pendingUserCommuneRef.current = null
+      return
+    }
+    pendingUserCommuneRef.current = { ...location, flyFinished: false }
+    setSelection(null)
+    setSeismicSelection(null)
+  }, [])
+
+  const finishUserLocationFly = useCallback(
+    (location: UserLocation) => {
+      if (
+        !map ||
+        !isWithinChileMapBounds(location.longitude, location.latitude)
+      ) {
+        pendingUserCommuneRef.current = null
+        return
+      }
+      const center = map.getCenter()
+      if (
+        Math.abs(center.lng - location.longitude) > 0.001 ||
+        Math.abs(center.lat - location.latitude) > 0.001
+      ) {
+        pendingUserCommuneRef.current = null
+        return
+      }
+      const pending = pendingUserCommuneRef.current
+      pendingUserCommuneRef.current =
+        pending &&
+        pending.longitude === location.longitude &&
+        pending.latitude === location.latitude
+          ? { ...pending, flyFinished: true }
+          : { ...location, flyFinished: true }
+      tryOpenUserCommuneRef.current()
+    },
+    [map]
+  )
 
   useEffect(() => {
     openSeismicRef.current = openSeismic
@@ -436,16 +515,19 @@ function ChileLayers() {
 
     const setFillOpacity = (
       layer: "region-fill" | "comuna-fill",
-      pulsed?: number,
+      pulsed?: number
     ) => {
       if (!m.getLayer(layer)) return
-      const theme = layer === "region-fill" ? t.regionFillOpacity : t.comunaFillOpacity
+      const theme =
+        layer === "region-fill" ? t.regionFillOpacity : t.comunaFillOpacity
       const hover =
-        layer === "region-fill" ? t.regionFillOpacityHover : t.comunaFillOpacityHover
+        layer === "region-fill"
+          ? t.regionFillOpacityHover
+          : t.comunaFillOpacityHover
       m.setPaintProperty(
         layer,
         "fill-opacity",
-        fillOpacityPaint(theme, hover, pulsed),
+        fillOpacityPaint(theme, hover, pulsed)
       )
     }
 
@@ -469,7 +551,7 @@ function ChileLayers() {
           m.setPaintProperty(
             "meteochile-zone-fill",
             "fill-opacity",
-            t.regionFillOpacity,
+            t.regionFillOpacity
           )
           lastMeteoRestOpacity = t.regionFillOpacity
         }
@@ -485,11 +567,7 @@ function ChileLayers() {
 
     const ensureAlertPulse = () => {
       if (cancelled) return
-      if (
-        prefersReducedMotion ||
-        showMeteoZonesRef.current ||
-        !pulseNeeded
-      ) {
+      if (prefersReducedMotion || showMeteoZonesRef.current || !pulseNeeded) {
         stopAlertPulse()
         lastPulsed = 0
         applyFillOpacity(0)
@@ -573,7 +651,7 @@ function ChileLayers() {
         "fill-color": alertFill,
         "fill-opacity": fillOpacityPaint(
           t.regionFillOpacity,
-          t.regionFillOpacityHover,
+          t.regionFillOpacityHover
         ),
         "fill-opacity-transition": opacityTransition,
       },
@@ -644,7 +722,7 @@ function ChileLayers() {
         "fill-color": alertFill,
         "fill-opacity": fillOpacityPaint(
           t.comunaFillOpacity,
-          t.comunaFillOpacityHover,
+          t.comunaFillOpacityHover
         ),
         "fill-opacity-transition": opacityTransition,
       },
@@ -681,17 +759,17 @@ function ChileLayers() {
       m.addImage(
         "pulsing-dot-red",
         createPulsingDot(m, { r: 218, g: 41, b: 28 }),
-        { pixelRatio: 2 },
+        { pixelRatio: 2 }
       )
       m.addImage(
         "pulsing-dot-orange",
         createPulsingDot(m, { r: 224, g: 112, b: 32 }),
-        { pixelRatio: 2 },
+        { pixelRatio: 2 }
       )
       m.addImage(
         "pulsing-dot-yellow",
         createPulsingDot(m, { r: 204, g: 158, b: 35 }),
-        { pixelRatio: 2 },
+        { pixelRatio: 2 }
       )
     }
 
@@ -730,11 +808,10 @@ function ChileLayers() {
 
         const airMode = isAirModeRef.current
         // Geometry setData once per load; level changes use feature-state.
-        const regionsSource = m.getSource(
-          "regions",
-        ) as maplibregl.GeoJSONSource | undefined
+        const regionsSource = m.getSource("regions") as
+          maplibregl.GeoJSONSource | undefined
         regionsSource?.setData(
-          regionsJson as Parameters<maplibregl.GeoJSONSource["setData"]>[0],
+          regionsJson as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
         )
 
         const fillExpr = airMode
@@ -767,7 +844,7 @@ function ChileLayers() {
           regionLevels,
           regionIds,
           airMode ? "alert_level" : "air_level",
-          levelStateRef.current,
+          levelStateRef.current
         )
         pulseUpdateRef.current?.(airMode)
 
@@ -776,7 +853,7 @@ function ChileLayers() {
             regionsJson.features as unknown as RegionFeature[]
           )
             .filter(
-              (f) => f.properties?.codregion && f.properties.codregion !== 0,
+              (f) => f.properties?.codregion && f.properties.codregion !== 0
             )
             .map((f) => ({
               type: "Feature" as const,
@@ -824,7 +901,8 @@ function ChileLayers() {
           })
         }
 
-        if (m.getLayer("region-label-custom")) m.moveLayer("region-label-custom")
+        if (m.getLayer("region-label-custom"))
+          m.moveLayer("region-label-custom")
         if (m.getLayer("region-line")) m.moveLayer("region-line")
         if (m.getLayer("earthquake-layer")) m.moveLayer("earthquake-layer")
 
@@ -840,11 +918,10 @@ function ChileLayers() {
         if (cancelled) return
 
         const airMode = isAirModeRef.current
-        const comunasSource = m.getSource(
-          "comunas",
-        ) as maplibregl.GeoJSONSource | undefined
+        const comunasSource = m.getSource("comunas") as
+          maplibregl.GeoJSONSource | undefined
         comunasSource?.setData(
-          comunasJson as Parameters<maplibregl.GeoJSONSource["setData"]>[0],
+          comunasJson as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
         )
 
         const comunaIds = (
@@ -861,7 +938,7 @@ function ChileLayers() {
           ? computeComunaAirLevels(airZonesRef.current)
           : computeComunaAlertLevels(
               choroplethAlertsRef.current,
-              comunasByRegionRef.current,
+              comunasByRegionRef.current
             )
         lastLevelMapsRef.current.comuna = comunaLevels
         applySourceLevelState(
@@ -871,7 +948,7 @@ function ChileLayers() {
           comunaLevels,
           comunaIds,
           airMode ? "alert_level" : "air_level",
-          levelStateRef.current,
+          levelStateRef.current
         )
         pulseUpdateRef.current?.(airMode)
 
@@ -879,7 +956,10 @@ function ChileLayers() {
         ensureComunaLabelsFn = () => {
           if (cancelled || m.getSource("comuna-labels")) return
           if (m.getZoom() < COMUNAS_MIN_ZOOM) return
-          if (!cachedComunaLabels || cachedComunaLabelsUrl !== COMUNAS_LABELS_DATA_URL) {
+          if (
+            !cachedComunaLabels ||
+            cachedComunaLabelsUrl !== COMUNAS_LABELS_DATA_URL
+          ) {
             return
           }
 
@@ -916,13 +996,24 @@ function ChileLayers() {
           if (!cancelled) ensureComunaLabelsFn?.()
         })
 
-        if (m.getLayer("region-label-custom")) m.moveLayer("region-label-custom")
+        if (m.getLayer("region-label-custom"))
+          m.moveLayer("region-label-custom")
         if (m.getLayer("region-line")) m.moveLayer("region-line")
         if (m.getLayer("earthquake-layer")) m.moveLayer("earthquake-layer")
       } catch (err) {
         console.warn("No se pudieron cargar comunas del mapa", err)
       }
     }
+    let userCommuneFrame = 0
+    const onComunaSourceData = (event: maplibregl.MapSourceDataEvent) => {
+      if (event.sourceId !== "comunas" || !event.isSourceLoaded) return
+      if (userCommuneFrame) window.cancelAnimationFrame(userCommuneFrame)
+      userCommuneFrame = window.requestAnimationFrame(() => {
+        userCommuneFrame = 0
+        tryOpenUserCommuneRef.current()
+      })
+    }
+    m.on("sourcedata", onComunaSourceData)
 
     void initGeojson()
 
@@ -931,7 +1022,7 @@ function ChileLayers() {
         if (hoveredRegionRef.current !== null) {
           m.setFeatureState(
             { source: "regions", id: hoveredRegionRef.current },
-            { hover: false },
+            { hover: false }
           )
           hoveredRegionRef.current = null
         }
@@ -946,7 +1037,7 @@ function ChileLayers() {
       ) {
         m.setFeatureState(
           { source: "regions", id: hoveredRegionRef.current },
-          { hover: false },
+          { hover: false }
         )
       }
       m.setFeatureState({ source: "regions", id }, { hover: true })
@@ -958,7 +1049,7 @@ function ChileLayers() {
       if (hoveredRegionRef.current !== null) {
         m.setFeatureState(
           { source: "regions", id: hoveredRegionRef.current },
-          { hover: false },
+          { hover: false }
         )
       }
       hoveredRegionRef.current = null
@@ -974,7 +1065,7 @@ function ChileLayers() {
       ) {
         m.setFeatureState(
           { source: "comunas", id: hoveredComunaRef.current },
-          { hover: false },
+          { hover: false }
         )
       }
       m.setFeatureState({ source: "comunas", id }, { hover: true })
@@ -986,7 +1077,7 @@ function ChileLayers() {
       if (hoveredComunaRef.current !== null) {
         m.setFeatureState(
           { source: "comunas", id: hoveredComunaRef.current },
-          { hover: false },
+          { hover: false }
         )
       }
       hoveredComunaRef.current = null
@@ -999,7 +1090,7 @@ function ChileLayers() {
       ) {
         m.setFeatureState(
           { source: "regions", id: hoveredRegionRef.current },
-          { hover: false },
+          { hover: false }
         )
         hoveredRegionRef.current = null
       }
@@ -1092,6 +1183,8 @@ function ChileLayers() {
       syncMeteoPulseRef.current = null
       stopAlertPulse()
       document.removeEventListener("visibilitychange", onVisibilityChange)
+      if (userCommuneFrame) window.cancelAnimationFrame(userCommuneFrame)
+      m.off("sourcedata", onComunaSourceData)
       m.off("mousemove", "region-fill", onRegionMouseMove)
       m.off("mouseleave", "region-fill", onRegionMouseLeave)
       m.off("mousemove", "comuna-fill", onComunaMouseMove)
@@ -1150,18 +1243,45 @@ function ChileLayers() {
     if (!map || !navigator.geolocation) return
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { longitude, latitude } = pos.coords
-        if (!isWithinChileMapBounds(longitude, latitude)) return
+        const location = {
+          longitude: pos.coords.longitude,
+          latitude: pos.coords.latitude,
+        }
+        if (!isWithinChileMapBounds(location.longitude, location.latitude))
+          return
+        queueUserCommunePopup(location)
+        if (autoLocateMoveEndRef.current) {
+          map.off("moveend", autoLocateMoveEndRef.current)
+        }
+        map.stop()
+        const handleMoveEnd = () => {
+          map.off("moveend", handleMoveEnd)
+          if (autoLocateMoveEndRef.current === handleMoveEnd) {
+            autoLocateMoveEndRef.current = null
+          }
+          finishUserLocationFly(location)
+        }
+        autoLocateMoveEndRef.current = handleMoveEnd
+        map.on("moveend", handleMoveEnd)
         map.flyTo({
-          center: [longitude, latitude],
+          center: [location.longitude, location.latitude],
           zoom: Math.min(map.getMaxZoom(), 13),
           duration: MAP_FLY_DURATION_MS,
           essential: true,
         })
       },
       () => {},
-      { enableHighAccuracy: true, timeout: 12_000 },
+      { enableHighAccuracy: true, timeout: 12_000 }
     )
+  }, [map, queueUserCommunePopup, finishUserLocationFly])
+
+  useEffect(() => {
+    return () => {
+      if (map && autoLocateMoveEndRef.current) {
+        map.off("moveend", autoLocateMoveEndRef.current)
+        autoLocateMoveEndRef.current = null
+      }
+    }
   }, [map])
 
   const locateUserRef = useRef(locateUser)
@@ -1202,10 +1322,9 @@ function ChileLayers() {
       const regions = await refreshMapRisk(selectedDate)
       if (cancelled || !regions) return
       const src = map.getSource("regions") as
-        | maplibregl.GeoJSONSource
-        | undefined
+        maplibregl.GeoJSONSource | undefined
       src?.setData(
-        regions as Parameters<maplibregl.GeoJSONSource["setData"]>[0],
+        regions as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
       )
       const airMode = isAirModeRef.current
       applySourceLevelState(
@@ -1215,7 +1334,7 @@ function ChileLayers() {
         lastLevelMapsRef.current.region,
         allRegionIdsRef.current,
         airMode ? "alert_level" : "air_level",
-        levelStateRef.current,
+        levelStateRef.current
       )
     })()
     return () => {
@@ -1256,7 +1375,7 @@ function ChileLayers() {
       regionLevels,
       allRegionIdsRef.current,
       clearKey,
-      levelStateRef.current,
+      levelStateRef.current
     )
     applySourceLevelState(
       map,
@@ -1265,7 +1384,7 @@ function ChileLayers() {
       comunaLevels,
       allComunaIdsRef.current,
       clearKey,
-      levelStateRef.current,
+      levelStateRef.current
     )
 
     pulseUpdateRef.current?.(isAirMode)
@@ -1280,7 +1399,7 @@ function ChileLayers() {
       map.setPaintProperty(
         "meteochile-zone-fill",
         "fill-color",
-        mapAlertFillColorExpression(),
+        mapAlertFillColorExpression()
       )
     }
     if (map.getLayer("meteochile-zone-line")) {
@@ -1288,17 +1407,16 @@ function ChileLayers() {
       map.setPaintProperty(
         "meteochile-zone-line",
         "line-color",
-        mapAlertFillColorExpression(),
+        mapAlertFillColorExpression()
       )
     }
     const src = map.getSource("meteochile-zones") as
-      | maplibregl.GeoJSONSource
-      | undefined
+      maplibregl.GeoJSONSource | undefined
     const empty = { type: "FeatureCollection" as const, features: [] }
     src?.setData(
       (showMeteoZones && !isAirMode && meteoZonesGeojson
         ? meteoZonesGeojson
-        : empty) as Parameters<maplibregl.GeoJSONSource["setData"]>[0],
+        : empty) as Parameters<maplibregl.GeoJSONSource["setData"]>[0]
     )
     syncMeteoPulseRef.current?.()
   }, [map, mapReady, showMeteoZones, isAirMode, meteoZonesGeojson])
@@ -1309,7 +1427,7 @@ function ChileLayers() {
     const sismoUrls = new Set(
       mapAlerts
         .filter((a) => a.hazard_type === "sismo" && a.external_url)
-        .map((a) => a.external_url as string),
+        .map((a) => a.external_url as string)
     )
     const features = recentEvents
       .filter((e) => {
@@ -1333,8 +1451,7 @@ function ChileLayers() {
       }))
 
     const source = map.getSource("earthquakes") as
-      | maplibregl.GeoJSONSource
-      | undefined
+      maplibregl.GeoJSONSource | undefined
     source?.setData({ type: "FeatureCollection", features })
     // With zero features the pulsing-dot images render once statically and
     // stop scheduling repaints (no triggerRepaint loop while idle).
@@ -1357,6 +1474,13 @@ function ChileLayers() {
           onClose={() => setSeismicSelection(null)}
         />
       ) : null}
+      <MapControls
+        position="bottom-right"
+        showCompass
+        showLocate
+        onLocate={queueUserCommunePopup}
+        onLocateEnd={finishUserLocationFly}
+      />
     </>
   )
 }

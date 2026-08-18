@@ -1,6 +1,13 @@
 from pydantic import BaseModel, Field
 
 
+class ComunaCatalogItem(BaseModel):
+    cod_comuna: int = Field(ge=1001, le=16305)
+    name: str
+    codregion: int
+    region_name: str
+
+
 class NearestComunaOut(BaseModel):
     cod_comuna: int = Field(ge=1001, le=16305)
     name: str

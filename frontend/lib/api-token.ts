@@ -1,18 +1,8 @@
 import { SignJWT } from "jose"
 
-const GUEST_SUB = "guest"
+import { requireAuthSecret } from "@/lib/auth-secret"
 
-function authSecret(): string {
-  const secret =
-    process.env.AUTH_SECRET ??
-    (process.env.NODE_ENV === "development"
-      ? "dev-change-me-generate-a-long-secret"
-      : undefined)
-  if (!secret) {
-    throw new Error("AUTH_SECRET is not configured")
-  }
-  return secret
-}
+const GUEST_SUB = "guest"
 
 export async function createBackendApiToken(payload: {
   sub: string
@@ -27,10 +17,10 @@ export async function createBackendApiToken(payload: {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("1h")
-    .sign(new TextEncoder().encode(authSecret()))
+    .sign(new TextEncoder().encode(requireAuthSecret()))
 }
 
-/** JWT for unauthenticated monitor reads until NextAuth lands. */
+/** JWT for public monitor reads when there is no Auth.js session. */
 export async function createGuestBackendApiToken() {
   return createBackendApiToken({ sub: GUEST_SUB })
 }

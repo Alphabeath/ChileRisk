@@ -5,69 +5,17 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
-import httpx
 import resend
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.oauth_account import OAuthAccount
 from app.models.password_reset_token import PasswordResetToken
 from app.models.user import User
 
 logger = logging.getLogger("chilerisk.auth")
 
 RESET_TOKEN_TTL_HOURS = 1
-
-_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo"
-
-
-async def _verify_google_id_token(token: str | None) -> dict | None:
-    """Validate a Google ID token server-side (Google verifies signature+exp)."""
-    if not token:
-        return None
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(_TOKENINFO_URL, params={"id_token": token})
-    except httpx.HTTPError:
-        logger.exception("Google tokeninfo request failed")
-        return None
-    if resp.status_code != 200:
-        return None
-    return resp.json()
-
-
-async def resolve_google_identity(
-    *,
-    email: str,
-    provider_account_id: str,
-    google_id_token: str | None,
-) -> tuple[str, str]:
-    """Return (normalized_email, provider_account_id).
-
-    With GOOGLE_CLIENT_ID configured (strict mode), the ID token is validated
-    against Google and the claims override the client-supplied values. Without
-    it, the legacy trust path is kept (Next.js/Auth.js already validated the
-    token server-side).
-    """
-    if not settings.google_client_id:
-        return email.strip().lower(), provider_account_id
-
-    if not google_id_token:
-        raise ValueError("missing_google_token")
-    claims = await _verify_google_id_token(google_id_token)
-    if claims is None:
-        raise ValueError("invalid_google_token")
-    if claims.get("aud") != settings.google_client_id:
-        logger.warning("Google token aud mismatch: %r", claims.get("aud"))
-        raise ValueError("invalid_google_token")
-    if claims.get("email_verified") is not True:
-        raise ValueError("invalid_google_token")
-    claims_email = claims.get("email")
-    claims_sub = claims.get("sub")
-    if not isinstance(claims_email, str) or not isinstance(claims_sub, str):
-        raise ValueError("invalid_google_token")
-    return claims_email.strip().lower(), claims_sub
 
 
 def hash_password(password: str) -> str:
@@ -106,64 +54,13 @@ async def register_user(
     return user
 
 
-async def verify_user_credentials(
+async def login_user(
     session: AsyncSession, *, email: str, password: str
 ) -> User | None:
     normalized_email = email.strip().lower()
     user = await session.scalar(select(User).where(User.email == normalized_email))
     if user is None or not verify_password(password, user.password_hash):
         return None
-    return user
-
-
-async def upsert_google_user(
-    session: AsyncSession,
-    *,
-    email: str,
-    name: str | None,
-    provider_account_id: str,
-) -> User:
-    normalized_email = email.strip().lower()
-    account = await session.scalar(
-        select(OAuthAccount).where(
-            OAuthAccount.provider == "google",
-            OAuthAccount.provider_account_id == provider_account_id,
-        )
-    )
-    if account:
-        user = await session.get(User, account.user_id)
-        if user is None:
-            raise ValueError("oauth_orphan")
-        if name and not user.name:
-            user.name = name.strip()
-            await session.commit()
-            await session.refresh(user)
-        return user
-
-    user = await session.scalar(select(User).where(User.email == normalized_email))
-    if user is None:
-        user = User(email=normalized_email, name=(name or "").strip() or None)
-        session.add(user)
-        await session.flush()
-    else:
-        linked = await session.scalar(
-            select(OAuthAccount).where(
-                OAuthAccount.user_id == user.id,
-                OAuthAccount.provider == "google",
-            )
-        )
-        if linked:
-            return user
-
-    session.add(
-        OAuthAccount(
-            provider="google",
-            provider_account_id=provider_account_id,
-            user_id=user.id,
-        )
-    )
-    await session.commit()
-    await session.refresh(user)
     return user
 
 
@@ -183,7 +80,7 @@ async def request_password_reset(session: AsyncSession, *, email: str) -> None:
     await session.commit()
 
     reset_url = (
-        f"{settings.auth_url.rstrip('/')}/reset-password"
+        f"{settings.auth_url.rstrip('/')}/restablecer-contrasena"
         f"?token={raw_token}&email={normalized_email}"
     )
     await _send_reset_email(normalized_email, reset_url)
@@ -224,7 +121,6 @@ async def _send_reset_email(to_email: str, reset_url: str) -> None:
     resend.api_key = settings.resend_api_key
 
     def _send_sync() -> None:
-        # resend SDK is sync HTTP — offload to the threadpool to keep the loop free.
         resend.Emails.send(
             {
                 "from": settings.auth_email_from,
@@ -241,5 +137,4 @@ async def _send_reset_email(to_email: str, reset_url: str) -> None:
     try:
         await asyncio.to_thread(_send_sync)
     except Exception:
-        # 204 always: never leak whether the email exists.
         logger.exception("Failed to send password reset email to %s", to_email)

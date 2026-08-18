@@ -6,6 +6,8 @@ import type {
   AirQualityListResponse,
   AirQualityParams,
   AirQualityZone,
+  AuthUser,
+  ComunaCatalogItem,
   ComunaRisk,
   MeetingPointNearestResponse,
   NationalRisk,
@@ -15,6 +17,8 @@ import type {
   SimulacroDetail,
   SimulacroListResponse,
   SimulacrosParams,
+  UserProfile,
+  UserProfileUpdate,
 } from "@/lib/types"
 
 const API_BASE = "/api/backend"
@@ -23,7 +27,20 @@ export function getApiBase(): string {
   return API_BASE
 }
 
-async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
+export class ApiError extends Error {
+  status: number
+
+  constructor(status: number, message: string) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+  }
+}
+
+async function request(
+  path: string,
+  options?: RequestInit,
+): Promise<Response> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
@@ -31,12 +48,18 @@ async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
       ...(options?.headers || {}),
     },
   })
-
   if (!res.ok) {
     const text = await res.text().catch(() => "")
-    throw new Error(`API error ${res.status}: ${text || res.statusText}`)
+    throw new ApiError(res.status, text || res.statusText)
   }
+  return res
+}
 
+async function fetchJson<T>(path: string, options?: RequestInit): Promise<T> {
+  const res = await request(path, options)
+  if (res.status === 204) {
+    return undefined as T
+  }
   return res.json() as Promise<T>
 }
 
@@ -183,4 +206,48 @@ export async function getNearestMeetingPoints(params: {
   return fetchJson<MeetingPointNearestResponse>(
     `/api/v1/meeting-points/nearest?${search.toString()}`,
   )
+}
+
+export async function registerAccount(body: {
+  name: string
+  email: string
+  password: string
+}): Promise<AuthUser> {
+  return fetchJson<AuthUser>("/api/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  await fetchJson<void>("/api/v1/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  })
+}
+
+export async function resetPassword(body: {
+  email: string
+  token: string
+  password: string
+}): Promise<void> {
+  await fetchJson<void>("/api/v1/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
+}
+
+export async function getMe(): Promise<UserProfile> {
+  return fetchJson<UserProfile>("/api/v1/users/me")
+}
+
+export async function updateMe(body: UserProfileUpdate): Promise<UserProfile> {
+  return fetchJson<UserProfile>("/api/v1/users/me", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  })
+}
+
+export async function getComunasCatalog(): Promise<ComunaCatalogItem[]> {
+  return fetchJson<ComunaCatalogItem[]>("/api/v1/comunas")
 }

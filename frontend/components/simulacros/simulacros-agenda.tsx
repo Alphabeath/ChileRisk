@@ -64,13 +64,12 @@ function AgendaEntry({
   variant,
 }: {
   item: Simulacro
-  variant: "next" | "upcoming" | "completed"
+  variant: "upcoming" | "completed"
 }) {
   const date = formatSimulacroDate(item.drill_date)
   const typeLabel = DRILL_TYPE_LABELS[item.drill_type]
   const colors = DRILL_TYPE_COLORS[item.drill_type]
   const comunas = item.participating_comunas.filter(Boolean)
-  const isNext = variant === "next"
   const isCompleted = variant === "completed"
   const hasDetailPage = hasSimulacroDetailPage(item.detail_url)
   const accent = isCompleted ? "#da291c" : colors.accent
@@ -91,16 +90,14 @@ function AgendaEntry({
         hasDetailPage
           ? "sm:grid-cols-[6.75rem_minmax(0,1fr)_8.75rem]"
           : "sm:grid-cols-[6.75rem_minmax(0,1fr)]",
-        isNext &&
-          "border-[color-mix(in_oklch,#0167b7_50%,var(--border))] ring-1 ring-[#0167b7]/25",
-        isCompleted && "opacity-[0.96]",
+        isCompleted && "opacity-[0.96]"
       )}
     >
       <div className="flex items-center gap-3 bg-[var(--drill-accent)] px-4 py-4 text-[var(--drill-ink)] sm:flex-col sm:items-start sm:justify-center sm:gap-1 sm:py-5">
         <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
           {date.weekday}
         </p>
-        <p className="font-mono text-4xl leading-none font-bold tabular-nums tracking-tight">
+        <p className="font-mono text-4xl leading-none font-bold tracking-tight tabular-nums">
           {date.day}
         </p>
         <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
@@ -115,13 +112,8 @@ function AgendaEntry({
         />
 
         <div className="flex flex-wrap items-center gap-2">
-          {isNext ? (
-            <span className="bg-[#0167b7] px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] text-white uppercase">
-              Próximo
-            </span>
-          ) : null}
           <span
-            className="px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] uppercase"
+            className="px-2 py-px font-mono text-[10px] font-semibold leading-4 tracking-[1.2px] uppercase"
             style={{ backgroundColor: colors.accent, color: colors.ink }}
           >
             {typeLabel}
@@ -138,12 +130,7 @@ function AgendaEntry({
           ) : null}
         </div>
 
-        <h4
-          className={cn(
-            "mt-3 text-lg font-bold tracking-tight text-balance text-foreground",
-            isNext && "text-xl sm:text-2xl",
-          )}
-        >
+        <h4 className="mt-3 text-lg font-bold tracking-tight text-balance text-foreground">
           {hasDetailPage ? (
             <Link
               href={`/simulacros/${item.slug}`}
@@ -188,16 +175,114 @@ function AgendaEntry({
   )
 }
 
+function NextExercisePanel({ item }: { item: Simulacro }) {
+  const date = formatSimulacroDate(item.drill_date)
+  const colors = DRILL_TYPE_COLORS[item.drill_type]
+  const hasDetailPage = hasSimulacroDetailPage(item.detail_url)
+  const style = {
+    "--next-accent": colors.accent,
+    "--next-ink": colors.ink,
+  } as CSSProperties & {
+    "--next-accent": string
+    "--next-ink": string
+  }
+
+  const comunas = item.participating_comunas.filter(Boolean)
+
+  return (
+    <article
+      style={style}
+      className={cn(
+        "grid overflow-hidden bg-[var(--next-accent)] text-[var(--next-ink)] shadow-[0_10px_28px_color-mix(in_oklch,var(--next-accent)_35%,transparent)]",
+        hasDetailPage
+          ? "sm:grid-cols-[6.75rem_minmax(0,1fr)_8.75rem]"
+          : "sm:grid-cols-[6.75rem_minmax(0,1fr)]"
+      )}
+    >
+      <div className="flex items-center gap-3 bg-[color-mix(in_oklch,var(--next-ink)_9%,transparent)] px-4 py-4 sm:flex-col sm:items-start sm:justify-center sm:gap-1 sm:py-5">
+        <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
+          {date.weekday}
+        </p>
+        <p className="font-mono text-4xl leading-none font-bold tracking-tight tabular-nums">
+          {date.day}
+        </p>
+        <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
+          {date.month} {date.year}
+        </p>
+      </div>
+
+      <div className="min-w-0 border-t border-current/25 px-4 py-4 sm:border-t-0 sm:border-l sm:px-5 sm:py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="bg-[var(--next-ink)] px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] text-[var(--next-accent)] uppercase">
+            Próximo ejercicio
+          </span>
+          <span className="bg-[color-mix(in_oklch,var(--next-ink)_16%,transparent)] px-2 py-px font-mono text-[10px] font-semibold leading-4 tracking-[1.2px] uppercase">
+            {DRILL_TYPE_LABELS[item.drill_type]}
+          </span>
+          {item.mensaje_sae ? (
+            <span className="border border-current/55 px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] uppercase">
+              SAE
+            </span>
+          ) : null}
+          {item.region_name ? (
+            <span className="bg-[color-mix(in_oklch,var(--next-ink)_12%,transparent)] px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] uppercase">
+              {item.region_name}
+            </span>
+          ) : null}
+        </div>
+
+        <h3 className="mt-3 text-xl font-bold tracking-tight text-balance sm:text-2xl">
+          {hasDetailPage ? (
+            <Link
+              href={`/simulacros/${item.slug}`}
+              className="underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-current focus-visible:outline-none"
+            >
+              {item.title}
+            </Link>
+          ) : (
+            item.title
+          )}
+        </h3>
+
+        {item.summary ? (
+          <p className="mt-2 max-w-[70ch] text-sm leading-6 opacity-85">
+            {item.summary}
+          </p>
+        ) : null}
+
+        {comunas.length > 0 ? (
+          <p className="mt-3 border-t border-current/25 pt-3 text-xs leading-5 opacity-85">
+            <span className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-100">
+              Participan
+            </span>
+            <span className="mt-1 block">{comunas.join(", ")}</span>
+          </p>
+        ) : null}
+      </div>
+
+      {hasDetailPage ? (
+        <div className="flex flex-col justify-center border-t border-current/25 bg-[color-mix(in_oklch,var(--next-ink)_7%,transparent)] px-4 py-4 sm:border-t-0 sm:border-l">
+          <Link
+            href={`/simulacros/${item.slug}`}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 border border-current px-4 py-2 text-xs font-semibold tracking-widest uppercase transition-colors hover:bg-[color-mix(in_oklch,var(--next-ink)_12%,transparent)] focus-visible:ring-2 focus-visible:ring-current focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--next-accent)] focus-visible:outline-none"
+          >
+            Detalle
+            <ChevronRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
 function AgendaMonthGroup({
   label,
   items,
   segment,
-  highlightFirst,
 }: {
   label: string
   items: Simulacro[]
   segment: AgendaSegment
-  highlightFirst: boolean
 }) {
   return (
     <div className="space-y-3">
@@ -205,27 +290,23 @@ function AgendaMonthGroup({
         <span
           className={cn(
             "inline-flex h-2 w-2 shrink-0",
-            segment === "upcoming" ? "bg-[#0167b7]" : "bg-[var(--secondary-chile)]",
+            segment === "upcoming"
+              ? "bg-[#0167b7]"
+              : "bg-[var(--secondary-chile)]"
           )}
           aria-hidden
         />
-        <h4 className="font-mono text-[11px] font-bold tracking-[1.4px] text-muted-foreground uppercase">
+        <h3 className="font-mono text-[11px] font-bold tracking-[1.4px] text-muted-foreground uppercase">
           {label}
-        </h4>
+        </h3>
         <div className="h-px flex-1 bg-border" aria-hidden />
       </div>
       <ul className="space-y-3">
-        {items.map((item, index) => (
+        {items.map((item) => (
           <li key={item.slug}>
             <AgendaEntry
               item={item}
-              variant={
-                segment === "completed"
-                  ? "completed"
-                  : highlightFirst && index === 0
-                    ? "next"
-                    : "upcoming"
-              }
+              variant={segment === "completed" ? "completed" : "upcoming"}
             />
           </li>
         ))}
@@ -265,27 +346,23 @@ export function SimulacrosAgenda() {
       selectedType
         ? items.filter((item) => item.drill_type === selectedType)
         : items,
-    [items, selectedType],
+    [items, selectedType]
   )
 
   const { upcoming, past } = useMemo(
     () => partitionSimulacros(filteredItems),
-    [filteredItems],
+    [filteredItems]
   )
   const activeItems = segment === "upcoming" ? upcoming : past
-  const monthGroups = useMemo(() => groupByMonth(activeItems), [activeItems])
-  const nextItem = upcoming[0] ?? null
-  const nextDate = nextItem ? formatSimulacroDate(nextItem.drill_date) : null
-  const nextColors = nextItem ? DRILL_TYPE_COLORS[nextItem.drill_type] : null
-  const nextStyle = nextColors
-    ? ({
-        "--next-accent": nextColors.accent,
-        "--next-ink": nextColors.ink,
-      } as CSSProperties & {
-        "--next-accent": string
-        "--next-ink": string
-      })
-    : undefined
+  const nextItem = segment === "upcoming" ? (upcoming[0] ?? null) : null
+  const calendarItems = useMemo(
+    () => (segment === "upcoming" ? upcoming.slice(1) : past),
+    [past, segment, upcoming]
+  )
+  const monthGroups = useMemo(
+    () => groupByMonth(calendarItems),
+    [calendarItems]
+  )
 
   return (
     <section
@@ -294,89 +371,24 @@ export function SimulacrosAgenda() {
       className="border-b border-border bg-background py-16 sm:py-20 lg:py-24"
     >
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-end gap-6 border-b border-border pb-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(16rem,0.8fr)] lg:gap-12">
-          <div>
-            <p className="font-mono text-[10px] font-semibold tracking-[1.4px] text-[#0167b7] uppercase dark:text-sky-300">
-              Calendario SENAPRED
-            </p>
-            <h2
-              id="simulacros-agenda-title"
-              className="mt-3 text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-5xl"
-            >
-              Calendario de ejercicios
-            </h2>
-            <p className="mt-4 max-w-[62ch] text-base leading-7 text-muted-foreground sm:text-lg">
-              Revisa fechas, territorios y tipos de simulacro publicados por
-              SENAPRED. Los ejercicios con ficha publicada habilitan su detalle.
-            </p>
-          </div>
-
-          <div
-            style={nextStyle}
-            className={cn(
-              "overflow-hidden border border-border p-4 sm:p-5",
-              nextItem
-                ? "bg-[var(--next-accent)] text-[var(--next-ink)] shadow-[0_10px_28px_color-mix(in_oklch,var(--next-accent)_35%,transparent)]"
-                : "bg-card text-card-foreground",
-            )}
+        <div className="border-b border-border pb-8">
+          <p className="font-mono text-[10px] font-semibold tracking-[1.4px] text-[#0167b7] uppercase dark:text-sky-300">
+            Calendario SENAPRED
+          </p>
+          <h2
+            id="simulacros-agenda-title"
+            className="mt-3 text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-5xl"
           >
-            <p
-              className={cn(
-                "font-mono text-[10px] font-semibold tracking-[1.2px] uppercase",
-                nextItem ? "opacity-85" : "text-muted-foreground",
-              )}
-            >
-              Próximo ejercicio
-            </p>
-            {isPending ? (
-              <div className="mt-3 space-y-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-6 w-full" />
-              </div>
-            ) : nextItem && nextDate ? (
-              <>
-                <div className="mt-3 flex flex-wrap items-end gap-x-3 gap-y-1">
-                  <p className="font-mono text-4xl leading-none font-bold tabular-nums tracking-tight">
-                    {nextDate.day}
-                  </p>
-                  <div className="pb-0.5">
-                    <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
-                      {nextDate.weekday}
-                    </p>
-                    <p className="font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-90">
-                      {nextDate.month} {nextDate.year}
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className="mt-4 inline-flex px-2 py-1 font-mono text-[10px] font-semibold tracking-[1.2px] uppercase"
-                  style={{
-                    backgroundColor:
-                      "color-mix(in oklch, var(--next-ink) 16%, transparent)",
-                    color: "var(--next-ink)",
-                  }}
-                >
-                  {DRILL_TYPE_LABELS[nextItem.drill_type]}
-                </span>
-                <p className="mt-3 text-base font-bold text-balance sm:text-lg">
-                  {nextItem.title}
-                </p>
-                {nextItem.region_name ? (
-                  <p className="mt-2 font-mono text-[10px] font-semibold tracking-[1.2px] uppercase opacity-85">
-                    {nextItem.region_name}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Sin próximos ejercicios publicados
-              </p>
-            )}
-          </div>
+            Calendario de ejercicios
+          </h2>
+          <p className="mt-4 max-w-[62ch] text-base leading-7 text-muted-foreground sm:text-lg">
+            Revisa fechas, territorios y tipos de simulacro publicados por
+            SENAPRED. Los ejercicios con ficha publicada habilitan su detalle.
+          </p>
         </div>
 
-        <div className="mt-8 space-y-4">
-          <div className="flex flex-col gap-3 border border-border bg-card p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="mt-8 overflow-hidden border border-border bg-card">
+          <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div>
               <p className="font-mono text-[10px] font-semibold tracking-[1.4px] text-muted-foreground uppercase">
                 Segmento
@@ -398,7 +410,7 @@ export function SimulacrosAgenda() {
                   "min-h-11 flex-1 px-4 font-mono text-[10px] font-bold tracking-[1.2px] uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:flex-none",
                   segment === "upcoming"
                     ? "bg-[#0167b7] text-white"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => setSegment("upcoming")}
               >
@@ -412,7 +424,7 @@ export function SimulacrosAgenda() {
                   "min-h-11 flex-1 px-4 font-mono text-[10px] font-bold tracking-[1.2px] uppercase transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:flex-none",
                   segment === "completed"
                     ? "bg-[var(--secondary-chile)] text-white"
-                    : "text-muted-foreground hover:text-foreground",
+                    : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => setSegment("completed")}
               >
@@ -421,7 +433,7 @@ export function SimulacrosAgenda() {
             </div>
           </div>
 
-          <div className="border border-border bg-card px-4 py-5 sm:px-5">
+          <div className="border-b border-border px-4 py-5 sm:px-5">
             <SimulacrosTypeFilter
               selectedType={selectedType}
               onSelect={setSelectedType}
@@ -429,79 +441,83 @@ export function SimulacrosAgenda() {
               controlsId="simulacros-agenda-results"
             />
           </div>
-        </div>
 
-        <div className="mt-8" id="simulacros-agenda-results">
-          {isError ? (
-            <div
-              className="border border-destructive/40 bg-card p-6"
-              role="alert"
-            >
-              <p className="text-base font-bold text-foreground">
-                No pudimos cargar la agenda
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Revisa tu conexión e inténtalo nuevamente.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-5 min-h-11"
-                onClick={() => void refetch()}
+          <div className="px-4 py-5 sm:px-5" id="simulacros-agenda-results">
+            {isError ? (
+              <div
+                className="border border-destructive/40 bg-card p-6"
+                role="alert"
               >
-                Reintentar
-              </Button>
-            </div>
-          ) : null}
-
-          {isPending ? <AgendaLoadingState /> : null}
-
-          {!isPending && !isError && items.length === 0 ? (
-            <div className="border border-border bg-card p-6" role="status">
-              <p className="text-sm text-muted-foreground">
-                No hay simulacros publicados
-              </p>
-            </div>
-          ) : null}
-
-          {!isPending &&
-          !isError &&
-          items.length > 0 &&
-          activeItems.length === 0 ? (
-            <div className="border border-border bg-card p-6" role="status">
-              <p className="text-sm text-muted-foreground">
-                {selectedType
-                  ? "No hay simulacros de este tipo en este segmento"
-                  : segment === "upcoming"
-                    ? "No hay próximos ejercicios publicados"
-                    : "No hay ejercicios realizados"}
-              </p>
-              {selectedType ? (
+                <p className="text-base font-bold text-foreground">
+                  No pudimos cargar la agenda
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Revisa tu conexión e inténtalo nuevamente.
+                </p>
                 <Button
                   type="button"
                   variant="outline"
                   className="mt-5 min-h-11"
-                  onClick={() => setSelectedType(null)}
+                  onClick={() => void refetch()}
                 >
-                  Mostrar todos
+                  Reintentar
                 </Button>
-              ) : null}
-            </div>
-          ) : null}
+              </div>
+            ) : null}
 
-          {!isPending && !isError && monthGroups.length > 0 ? (
-            <div className="space-y-8">
-              {monthGroups.map((group, groupIndex) => (
-                <AgendaMonthGroup
-                  key={group.key}
-                  label={group.label}
-                  items={group.items}
-                  segment={segment}
-                  highlightFirst={segment === "upcoming" && groupIndex === 0}
-                />
-              ))}
-            </div>
-          ) : null}
+            {isPending ? <AgendaLoadingState /> : null}
+
+            {!isPending && !isError && items.length === 0 ? (
+              <div className="border border-border bg-card p-6" role="status">
+                <p className="text-sm text-muted-foreground">
+                  No hay simulacros publicados
+                </p>
+              </div>
+            ) : null}
+
+            {!isPending &&
+            !isError &&
+            items.length > 0 &&
+            activeItems.length === 0 ? (
+              <div className="border border-border bg-card p-6" role="status">
+                <p className="text-sm text-muted-foreground">
+                  {selectedType
+                    ? "No hay simulacros de este tipo en este segmento"
+                    : segment === "upcoming"
+                      ? "No hay próximos ejercicios publicados"
+                      : "No hay ejercicios realizados"}
+                </p>
+                {selectedType ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-5 min-h-11"
+                    onClick={() => setSelectedType(null)}
+                  >
+                    Mostrar todos
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+
+            {!isPending && !isError && activeItems.length > 0 ? (
+              <div className="space-y-8">
+                {nextItem ? <NextExercisePanel item={nextItem} /> : null}
+                {monthGroups.length > 0 ? (
+                  <div className="space-y-8">
+                    {monthGroups.map((group) => (
+                      <AgendaMonthGroup
+                        key={group.key}
+                        label={group.label}
+                        items={group.items}
+                        segment={segment}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

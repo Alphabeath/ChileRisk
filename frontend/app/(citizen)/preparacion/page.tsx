@@ -1,10 +1,9 @@
-import { PageStub } from "@/components/layout/page-stub"
+import type { Metadata } from "next"
 
-export default function PreparacionPage() {
-  return (
-    <PageStub
-      title="Preparación"
-      description="Kit de emergencia y Plan Familia para estar listos ante una crisis."
-    />
-  )
+import { PreparacionPage } from "@/components/preparacion/preparacion-page"
+
+export const metadata: Metadata = { title: "Preparación" }
+
+export default function PreparacionRoute() {
+  return <PreparacionPage />
 }

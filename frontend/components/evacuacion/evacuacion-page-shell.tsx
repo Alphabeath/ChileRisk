@@ -7,29 +7,29 @@ import { Layers, MapPin } from "lucide-react"
 
 import { EvacuationLayersLegend } from "@/components/evacuacion/evacuacion-layers-legend"
 import { EvacuationNearestPointsPanel } from "@/components/evacuacion/evacuacion-nearest-points-panel"
+import { MapBottomDrawer } from "@/components/map/map-bottom-drawer"
 import type { BasemapMode } from "@/components/map/evacuacion-map"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useNearestMeetingPoints } from "@/hooks/use-nearest-meeting-points"
 import {
   CITIZEN_NAVBAR_CLEARANCE_PX,
-  MAP_DESKTOP_ONLY_CLASS,
-  MAP_MOBILE_ONLY_CLASS,
   MAP_PANEL_LEFT_POSITION_CLASS,
+  MAP_WIDE_ONLY_CLASS,
 } from "@/lib/citizen-layout"
-import type { EvacuationLayerHandles, EvacuationLayerVisibility } from "@/lib/evacuacion-layers"
+import type {
+  EvacuationLayerHandles,
+  EvacuationLayerVisibility,
+} from "@/lib/evacuacion-layers"
 import {
   INITIAL_EVACUATION_USER_LOCATION_STATE,
   type EvacuationUserLocationState,
 } from "@/lib/evacuacion-location-state"
 import { extractMeetingPointsFromGeoJSON } from "@/lib/evacuacion-meeting-points"
 import type { EvacuationMeetingPoint } from "@/lib/evacuacion-meeting-points"
-import { SURFACE_PANEL_SHELL_CLASS } from "@/lib/surface"
 import { cn } from "@/lib/utils"
 
 const EvacuationMap = dynamic(
-  () =>
-    import("@/components/map/evacuacion-map").then((m) => m.EvacuationMap),
-  { ssr: false },
+  () => import("@/components/map/evacuacion-map").then((m) => m.EvacuationMap),
+  { ssr: false }
 )
 
 const initialVisibility: EvacuationLayerVisibility = {
@@ -66,7 +66,9 @@ function EvacuationPageShellInner() {
     useState<EvacuationLayerVisibility>(initialVisibility)
   const [layersReady, setLayersReady] = useState(false)
   const [userLocationState, setUserLocationState] =
-    useState<EvacuationUserLocationState>(INITIAL_EVACUATION_USER_LOCATION_STATE)
+    useState<EvacuationUserLocationState>(
+      INITIAL_EVACUATION_USER_LOCATION_STATE
+    )
   const [userFocusPoint, setUserFocusPoint] = useState<{
     lng: number
     lat: number
@@ -77,7 +79,6 @@ function EvacuationPageShellInner() {
   >([])
   const [basemap, setBasemap] = useState<BasemapMode>("satellite")
   const [requestLocate, setRequestLocate] = useState(0)
-  const [mobileTab, setMobileTab] = useState<"points" | "layers" | null>(null)
   const [deepLinkNonce] = useState(() => Date.now())
 
   const originLat =
@@ -132,12 +133,15 @@ function EvacuationPageShellInner() {
     (handles: EvacuationLayerHandles) => {
       setLayersReady(true)
       const tsunami = handles.tsunamiMeetingPoints
-        ? extractMeetingPointsFromGeoJSON(handles.tsunamiMeetingPoints, "tsunami")
+        ? extractMeetingPointsFromGeoJSON(
+            handles.tsunamiMeetingPoints,
+            "tsunami"
+          )
         : []
       const volcanic = handles.volcanicMeetingPoints
         ? extractMeetingPointsFromGeoJSON(
             handles.volcanicMeetingPoints,
-            "volcanic",
+            "volcanic"
           )
         : []
       const preferred =
@@ -150,7 +154,7 @@ function EvacuationPageShellInner() {
             : volcanic
       setLocalPoints(preferred)
     },
-    [hazard],
+    [hazard]
   )
 
   const toggleLayer = useCallback((key: keyof EvacuationLayerVisibility) => {
@@ -170,13 +174,13 @@ function EvacuationPageShellInner() {
     (state: EvacuationUserLocationState) => {
       setUserLocationState(state)
     },
-    [],
+    []
   )
 
   const panelTop = CITIZEN_NAVBAR_CLEARANCE_PX + 12
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden">
+    <div className="map-bottom-drawer-layout relative h-dvh w-full overflow-hidden">
       <EvacuationMap
         layerVisibility={layerVisibility}
         onLayersReady={handleLayersReady}
@@ -189,9 +193,9 @@ function EvacuationPageShellInner() {
 
       <div
         className={cn(
-          MAP_DESKTOP_ONLY_CLASS,
-          "absolute z-20 flex flex-col gap-2 overflow-hidden",
-          MAP_PANEL_LEFT_POSITION_CLASS,
+          MAP_WIDE_ONLY_CLASS,
+          "absolute z-20 flex-col gap-2 overflow-hidden",
+          MAP_PANEL_LEFT_POSITION_CLASS
         )}
         style={{
           top: panelTop,
@@ -215,91 +219,52 @@ function EvacuationPageShellInner() {
           className="max-h-[calc((100dvh-80px)/2)]"
         />
       </div>
-
-      <div
-        className={cn(
-          MAP_MOBILE_ONLY_CLASS,
-          "absolute bottom-4 left-3 z-20 flex flex-col gap-2",
-        )}
-      >
-        <button
-          type="button"
-          className={cn(
-            SURFACE_PANEL_SHELL_CLASS,
-            "inline-flex h-11 items-center gap-2 px-3",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30",
-          )}
-          onClick={() => setMobileTab("points")}
-        >
-          <MapPin className="size-3.5 text-muted-foreground" aria-hidden />
-          <span className="font-mono text-[9px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
-            Puntos
-          </span>
-        </button>
-        <button
-          type="button"
-          className={cn(
-            SURFACE_PANEL_SHELL_CLASS,
-            "inline-flex h-11 items-center gap-2 px-3",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/30",
-          )}
-          onClick={() => setMobileTab("layers")}
-        >
-          <Layers className="size-3.5 text-muted-foreground" aria-hidden />
-          <span className="font-mono text-[9px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
-            Capas
-          </span>
-        </button>
-      </div>
-
-      <Sheet
-        open={mobileTab != null}
-        onOpenChange={(open) => {
-          if (!open) setMobileTab(null)
-        }}
-      >
-        <SheetContent
-          side="bottom"
-          showCloseButton={false}
-          className={cn(
-            SURFACE_PANEL_SHELL_CLASS,
-            "max-h-[70dvh] gap-0 overflow-hidden rounded-none p-0 sm:max-w-none",
-          )}
-        >
-          <SheetHeader className="relative z-10 border-b border-border px-3 py-2">
-            <SheetTitle className="font-mono text-[9px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
-              {mobileTab === "layers" ? "Capas" : "Puntos cercanos"}
-            </SheetTitle>
-          </SheetHeader>
-          <div className="relative z-10 min-h-0 flex-1 overflow-y-auto">
-            {mobileTab === "layers" ? (
-              <EvacuationLayersLegend
-                visibility={layerVisibility}
-                onToggle={toggleLayer}
-                embedded
-              />
-            ) : (
+      <MapBottomDrawer
+        id="evacuation-map-controls"
+        title="Controles de evacuación"
+        description="Puntos de encuentro y capas oficiales del mapa de evacuación."
+        defaultValue="points"
+        tabs={[
+          {
+            value: "points",
+            label: "Puntos",
+            icon: <MapPin aria-hidden />,
+            meta: localPoints.length,
+            render: (close) => (
               <EvacuationNearestPointsPanel
                 points={localPoints}
                 userLocationState={userLocationState}
                 layersReady={layersReady}
                 onFocusPoint={(p) => {
                   focusNearest(p.lng, p.lat)
-                  setMobileTab(null)
+                  close()
                 }}
                 onRequestLocate={() => {
                   handleRequestLocate()
-                  setMobileTab(null)
+                  close()
                 }}
                 embedded
+                className="min-h-0 flex-1"
                 apiPoints={apiPoints}
                 apiPending={nearestQuery.isPending && originLat != null}
                 apiFailed={nearestQuery.isError}
               />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+            ),
+          },
+          {
+            value: "layers",
+            label: "Capas",
+            icon: <Layers aria-hidden />,
+            render: () => (
+              <EvacuationLayersLegend
+                visibility={layerVisibility}
+                onToggle={toggleLayer}
+                embedded
+              />
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }

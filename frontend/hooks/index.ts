@@ -13,3 +13,4 @@ export {
   useSimulacro,
 } from "./use-simulacros"
 export { useNearestMeetingPoints } from "./use-nearest-meeting-points"
+export { useComunasCatalog, useMe, useUpdateMe } from "./use-account"

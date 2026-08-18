@@ -35,6 +35,10 @@ _RADIUS_ASSIGN_RE = re.compile(
     r"(?:var\s+)?(?P<name>myCoordinates_\w+_radius)\s*=\s*(?P<val>-?\d+(?:\.\d+)?)\s*;",
 )
 
+_MULTIPART_ZONE_RE = re.compile(
+    r"^(?P<base>.+_[A-Za-z][A-Za-z0-9_]*?)(?P<part>\d+)$"
+)
+
 
 def _close_ring(ring: list[list[float]]) -> list[list[float]]:
     if not ring:
@@ -47,13 +51,19 @@ def _close_ring(ring: list[list[float]]) -> list[list[float]]:
 def parse_aaa_coordinate_js(source: str) -> dict[str, Any]:
     """Parse DMC coordinate JS into a dict of features.
 
+    Numbered arrays such as ``coordenadas_02_Pampa1`` and
+    ``coordenadas_02_Pampa2`` are one logical DMC zone and become a
+    ``MultiPolygon`` under the feed id ``02_Pampa``.
+
     Returns keys without the `coordenadas_` / `myCoordinates_` prefix for
     zone/region ids (e.g. `08a_Litoral`, `08a`, `ip`). Values:
 
     - polygon: ``{"type": "Polygon", "coordinates": [[[lng, lat], …]]}``
+    - multipolygon: ``{"type": "MultiPolygon", "coordinates": […]}``
     - point+radius: ``{"type": "Point", "coordinates": [lng, lat], "radius_m": N}``
     """
     out: dict[str, Any] = {}
+    polygon_parts: dict[str, list[tuple[int | None, list[list[list[float]]]]]] = {}
 
     for m in _ARRAY_ASSIGN_RE.finditer(source):
         name = m.group("name")
@@ -78,11 +88,21 @@ def parse_aaa_coordinate_js(source: str) -> dict[str, Any]:
         ]
         if len(ring_latlng) < 3:
             continue
-        key = name.removeprefix("coordenadas_").removeprefix("myCoordinates_")
-        out[key] = {
-            "type": "Polygon",
-            "coordinates": [_close_ring(ring_latlng)],
-        }
+        raw_key = name.removeprefix("coordenadas_").removeprefix(
+            "myCoordinates_"
+        )
+        multipart = _MULTIPART_ZONE_RE.fullmatch(raw_key)
+        key = multipart.group("base") if multipart else raw_key
+        part = int(multipart.group("part")) if multipart else None
+        polygon_parts.setdefault(key, []).append((part, [_close_ring(ring_latlng)]))
+
+    for key, parts in polygon_parts.items():
+        parts.sort(key=lambda part: part[0] if part[0] is not None else -1)
+        polygons = [coordinates for _part, coordinates in parts]
+        if len(polygons) == 1:
+            out[key] = {"type": "Polygon", "coordinates": polygons[0]}
+        else:
+            out[key] = {"type": "MultiPolygon", "coordinates": polygons}
 
     radii: dict[str, float] = {}
     for m in _RADIUS_ASSIGN_RE.finditer(source):

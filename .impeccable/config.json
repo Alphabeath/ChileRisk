@@ -15,6 +15,10 @@
     }
   },
   "hook": {
-    "enabled": false
+    "enabled": false,
+    "limits": {
+      "maxFindings": 5,
+      "maxChars": 8000
+    }
   }
 }

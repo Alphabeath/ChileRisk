@@ -37,7 +37,7 @@ graph LR
 | Capa | Tecnología | Propósito |
 |------|------------|-----------|
 | Browser | Next.js 16, React 19, MapLibre, TanStack Query | Superficies ciudadanas, mapa y consultas por día |
-| Proxy | Route handler Next `/api/backend` | Mantiene el origen del navegador y reenvía a FastAPI con JWT guest |
+| Proxy | Route handler Next `/api/backend` | Mantiene el origen del navegador y reenvía a FastAPI con JWT de cuenta o guest |
 | API | FastAPI + Pydantic + SQLAlchemy async | Contrato HTTP, riesgo, alertas e integraciones |
 | Proveedores | CSN, Open-Meteo/GloFAS, SERNAPRED, SERNAGEOMIN, Aire Chile, MeteoChile AAA | Ingestas reales de clima, inundación, sismos, alertas y calidad del aire |
 | Base de datos | PostgreSQL 16 | Geografía, scores live, snapshots, eventos y caches de fuentes |
@@ -63,16 +63,7 @@ La semántica de la fecha civil de Chile está en [QUERY-DATE.md](./QUERY-DATE.m
 
 ## Scheduler y fuentes
 
-| Job | Intervalo / configuración | Fuente o efecto |
-|-----|---------------------------|-----------------|
-| `risk_refresh` | `RISK_REFRESH_MINUTES` | Recalcula riesgo live |
-| `csn_sync` | 5 min | Eventos sísmicos CSN |
-| `meteo_update` | 60 min | Open-Meteo |
-| `flood_update` | `FLOOD_REFRESH_MINUTES` | GloFAS / Open-Meteo Flood |
-| `senapred_sync` | `SENAPRED_REFRESH_MINUTES` | Alertas, eventos y simulacros SENAPRED |
-| `airechile_sync` | `AIRECHILE_REFRESH_MINUTES` | Condiciones GEC de Aire Chile |
-| `sernageomin_sync` | `SERNAGEOMIN_REFRESH_MINUTES` | Alertas volcánicas OVDAS |
-| `meteochile_aaa_sync` | `METEOCHILE_REFRESH_MINUTES` | Avisos, Alertas y Alarmas DMC |
+`backend/app/scheduler/jobs.py` es la fuente de los nueve jobs, sus intervalos y la condición común `ENABLE_SCHEDULER=true`. La tabla canónica está en [backend/docs/BACKEND.md#scheduler-y-lifespan](../backend/docs/BACKEND.md#scheduler-y-lifespan).
 
 El `lifespan` de `backend/app/main.py` siembra catálogos y ejecuta sincronizaciones iniciales. El flood startup se agenda con `asyncio.create_task` para no bloquear el healthcheck; el scheduler se configura después de la inicialización.
 
@@ -122,7 +113,7 @@ La tabla muestra decisiones de arquitectura; no incluye métricas ni promesas de
 | `db` | 5434 en host | PostgreSQL; no se publica a Internet |
 | `adminer` | 8080 | Solo profile `tools` local |
 
-`make up` equivale a `docker compose --profile tools up --build` e incluye Adminer. Las plantillas de entorno son [`.env.example`](../.env.example) y [`backend/.env.example`](../backend/.env.example).
+`make up` equivale a `docker compose --profile tools up --build --detach` e incluye Adminer. El stack se ejecuta en segundo plano y devuelve el control a la terminal. Las plantillas de entorno son [`.env.example`](../.env.example) y [`backend/.env.example`](../backend/.env.example).
 
 ### Destino configurado: `chilerisk.cl`
 
@@ -148,23 +139,8 @@ Monorepo políglota sin Turborepo:
 - **Frontend runtime:** assets GeoJSON/PMTiles y snapshots JSON vendoreados; no se leen desde PostgreSQL.
 - **Makefile:** `up`, desarrollo nativo, `verify*`, sincronización de contrato y builders de datos.
 
-Al añadir una nueva área, conserva el patrón de `AGENTS.md`, README/índice y una entrada en este mapa.
+Al añadir una nueva área, conserva el patrón de `AGENTS.md` y una referencia estable para su código.
 
 ---
 
-## Mapa documental
-
-| Ubicación | Rol |
-|-----------|-----|
-| [docs/README.md](./README.md) | Índice cross-stack task-first |
-| [backend/docs/README.md](../backend/docs/README.md) | Índice backend task-first |
-| [frontend/docs/README.md](../frontend/docs/README.md) | Índice frontend task-first |
-| [HARNESS.md](./HARNESS.md) | Playbooks y verificación |
-| [DOC-MAINTENANCE.md](./DOC-MAINTENANCE.md) | Política de evidencia y actualización |
-| [QUERY-DATE.md](./QUERY-DATE.md) | Contrato `?date=` |
-| [backend/docs/BACKEND.md](../backend/docs/BACKEND.md) | API, fuentes, servicios y modelos |
-| [frontend/docs/FRONTEND.md](../frontend/docs/FRONTEND.md) | Estado y arquitectura cliente |
-| [frontend/docs/UI-GUIDELINES.md](../frontend/docs/UI-GUIDELINES.md) | Contrato visual detallado y canónico |
-| [frontend/DESIGN.md](../frontend/DESIGN.md) | Proyección visual portable de Impeccable |
-
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

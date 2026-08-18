@@ -21,7 +21,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/verify-credentials": {
+    "/api/v1/auth/login": {
         parameters: {
             query?: never;
             header?: never;
@@ -30,25 +30,8 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Verify Credentials */
-        post: operations["verify_credentials_api_v1_auth_verify_credentials_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/auth/oauth/google": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Oauth Google */
-        post: operations["oauth_google_api_v1_auth_oauth_google_post"];
+        /** Login */
+        post: operations["login_api_v1_auth_login_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -141,6 +124,26 @@ export interface paths {
          * @description Detailed risk for one region + list of its comunas with scores.
          */
         get: operations["get_region_risk_api_v1_regiones__codregion__risk_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/comunas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Comunas
+         * @description Light catalog of 346 comunas for account/home selectors.
+         */
+        get: operations["list_comunas_api_v1_comunas_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -791,8 +794,6 @@ export interface components {
             email: string;
             /** Name */
             name?: string | null;
-            /** Home Comuna Code */
-            home_comuna_code?: number | null;
         };
         /** ChatMessageIn */
         ChatMessageIn: {
@@ -911,6 +912,17 @@ export interface components {
             dominant_hazard: string;
             /** Severity */
             severity: string;
+        };
+        /** ComunaCatalogItem */
+        ComunaCatalogItem: {
+            /** Cod Comuna */
+            cod_comuna: number;
+            /** Name */
+            name: string;
+            /** Codregion */
+            codregion: number;
+            /** Region Name */
+            region_name: string;
         };
         /** ComunaImpact */
         ComunaImpact: {
@@ -1304,24 +1316,20 @@ export interface components {
              */
             email: string;
         };
-        /** GoogleOAuthRequest */
-        GoogleOAuthRequest: {
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** LoginRequest */
+        LoginRequest: {
             /**
              * Email
              * Format: email
              */
             email: string;
-            /** Name */
-            name?: string | null;
-            /** Provider Account Id */
-            provider_account_id: string;
-            /** Google Id Token */
-            google_id_token?: string | null;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
+            /** Password */
+            password: string;
         };
         /** MeetingPointNearestResponse */
         MeetingPointNearestResponse: {
@@ -1948,11 +1956,27 @@ export interface components {
             home_comuna_code?: number | null;
             /** Home Comuna Name */
             home_comuna_name?: string | null;
+            /**
+             * Notify Email Alerts
+             * @default true
+             */
+            notify_email_alerts: boolean;
+            /**
+             * Notify Email Simulacros
+             * @default true
+             */
+            notify_email_simulacros: boolean;
         };
         /** UserProfileUpdate */
         UserProfileUpdate: {
+            /** Name */
+            name?: string | null;
             /** Home Comuna Code */
             home_comuna_code?: number | null;
+            /** Notify Email Alerts */
+            notify_email_alerts?: boolean | null;
+            /** Notify Email Simulacros */
+            notify_email_simulacros?: boolean | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1966,16 +1990,6 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
-        };
-        /** VerifyCredentialsRequest */
-        VerifyCredentialsRequest: {
-            /**
-             * Email
-             * Format: email
-             */
-            email: string;
-            /** Password */
-            password: string;
         };
     };
     responses: never;
@@ -2019,7 +2033,7 @@ export interface operations {
             };
         };
     };
-    verify_credentials_api_v1_auth_verify_credentials_post: {
+    login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2028,40 +2042,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VerifyCredentialsRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthUserOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    oauth_google_api_v1_auth_oauth_google_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GoogleOAuthRequest"];
+                "application/json": components["schemas"]["LoginRequest"];
             };
         };
         responses: {
@@ -2238,6 +2219,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_comunas_api_v1_comunas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComunaCatalogItem"][];
                 };
             };
         };

@@ -377,7 +377,7 @@ function EvacuationLayers({
           <button
             type="button"
             className={cn(
-              "inline-flex h-8 items-center gap-1 border-r border-border px-2 font-mono text-[9px] font-semibold uppercase tracking-[1.1px] transition-colors",
+              "inline-flex h-11 items-center gap-1 border-r border-border px-2 font-mono text-[9px] font-semibold uppercase tracking-[1.1px] transition-colors lg:h-8",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30",
               basemap === "satellite"
                 ? "bg-primary text-primary-foreground"
@@ -392,7 +392,7 @@ function EvacuationLayers({
           <button
             type="button"
             className={cn(
-              "inline-flex h-8 items-center gap-1 px-2 font-mono text-[9px] font-semibold uppercase tracking-[1.1px] transition-colors",
+              "inline-flex h-11 items-center gap-1 px-2 font-mono text-[9px] font-semibold uppercase tracking-[1.1px] transition-colors lg:h-8",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring/30",
               basemap === "streets"
                 ? "bg-primary text-primary-foreground"

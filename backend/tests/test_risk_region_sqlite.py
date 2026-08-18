@@ -1,18 +1,14 @@
-"""SQLite async session tests: region risk query (no N+1) + Google OAuth upsert."""
+"""SQLite async session tests: region risk query (no N+1)."""
 
 from datetime import datetime, timezone
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.database import Base
 from app.models.comuna import Comuna
-from app.models.oauth_account import OAuthAccount
 from app.models.region import Region
 from app.models.risk_score import RiskScore
-from app.models.user import User
-from app.services.auth_service import upsert_google_user
 from app.services.risk_service import get_latest_risks_for_region
 
 
@@ -59,21 +55,3 @@ async def test_get_latest_risks_for_region_empty_region(session):
     scores = await get_latest_risks_for_region(session, 15)
 
     assert scores == []
-
-
-@pytest.mark.asyncio
-async def test_upsert_google_user_links_account_once(session):
-    user = await upsert_google_user(
-        session, email="A@B.com", name="Ana", provider_account_id="g-1"
-    )
-    assert user.email == "a@b.com"
-
-    again = await upsert_google_user(
-        session, email="a@b.com", name=None, provider_account_id="g-1"
-    )
-    assert again.id == user.id
-
-    users = (await session.execute(select(User))).scalars().all()
-    accounts = (await session.execute(select(OAuthAccount))).scalars().all()
-    assert len(users) == 1
-    assert len(accounts) == 1

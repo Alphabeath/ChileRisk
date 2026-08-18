@@ -1,6 +1,6 @@
 # AGENTS.md — ChileRisk (root)
 
-Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS.md](docs/HARNESS.md) (playbooks) · `make verify`
+Bootstrap mínimo. **No expandir contexto aquí** → área · `make verify`
 
 ---
 
@@ -10,7 +10,7 @@ Bootstrap mínimo. **No expandir contexto aquí** → área → [docs/HARNESS.md
 |-------|----------------|
 | UI, mapa, hooks, Next.js | [frontend/AGENTS.md](frontend/AGENTS.md) |
 | API, DB, scheduler, integraciones | [backend/AGENTS.md](backend/AGENTS.md) |
-| Contrato FE↔BE o `?date=` | [docs/HARNESS.md](docs/HARNESS.md) contract/cross + área |
+| Contrato FE↔BE o `?date=` | [docs/CONTRACT.md](docs/CONTRACT.md) + área |
 | Documentación, README o estado del producto | [docs/README.md](docs/README.md) + [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) |
 | Tocas… | Editar |
 |--------|--------|
@@ -28,19 +28,11 @@ Monitoreo multi-amenaza Chile (16 regiones, 346 comunas): CSN + Open-Meteo + SER
 
 ---
 
-## Contrato FE ↔ BE
-
-- HTTP: `frontend/lib/api.ts` → `backend/app/api/*` (nunca Postgres desde FE).
-- Tipos: `backend/app/schemas/` ↔ `frontend/lib/types.ts` (mismo task si cambia JSON).
-- **OpenAPI (runtime):** `http://localhost:8000/openapi.json` — resumen en [backend/docs/BACKEND.md](backend/docs/BACKEND.md).
-
----
-
 ## Comandos
 
 ```bash
 make up              # stack Docker
-make verify          # harness: links + contract + lint/tsc + compileall
+make verify          # enlaces + contrato + lint/tsc + compileall
 ```
 
 Puertos y stack: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -57,7 +49,6 @@ Puertos y stack: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | UI pulida / auditoría | `impeccable` |
 | Next perf | `vercel-react-best-practices` |
 
-Skills detalle: [docs/HARNESS.md](docs/HARNESS.md#skills-del-repo).
 
 ---
 
@@ -69,4 +60,4 @@ Al cerrar task: [docs/DOC-MAINTENANCE.md](docs/DOC-MAINTENANCE.md) + `make verif
 
 ---
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

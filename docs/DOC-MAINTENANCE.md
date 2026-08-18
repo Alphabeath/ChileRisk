@@ -1,83 +1,55 @@
-# Documentación — mantenimiento obligatorio
+# Documentación — política de escritura
 
 Reglas para cualquier agente o desarrollador que modifique ChileRisk. La documentación debe describir capacidades comprobables, no intenciones de producto.
 
 ---
 
-## Cuándo actualizar docs
+## Matriz de cambios y ownership
 
-Actualiza documentación en el mismo task si el cambio es importante:
+Actualiza la fuente canónica en el mismo task cuando el cambio altera el comportamiento observable:
 
-| Tipo de cambio | Qué actualizar |
-|----------------|----------------|
-| Nuevo endpoint, query param o forma de respuesta | `backend/docs/BACKEND.md`, `backend/app/schemas/`, `make sync-contract`, `frontend/lib/types.ts`, `frontend/lib/api.ts` |
-| Nuevo modelo, tabla o job | `backend/docs/BACKEND.md`, `backend/AGENTS.md` si cambia el routing |
-| Nuevo componente, hook o página visible | `frontend/docs/FRONTEND.md`, `frontend/docs/UI-GUIDELINES.md` si afecta implementación visual; `frontend/DESIGN.md` solo si cambia una decisión portable |
-| Flujo cross-stack como `?date=` | `docs/QUERY-DATE.md` y ambos lados del contrato |
-| Arquitectura, puertos, Compose o monorepo | `docs/ARCHITECTURE.md` y el índice que cambie de routing |
-| Nueva carpeta o área de código | `AGENTS.md` del área y README/índice correspondiente |
-| Solo fix interno sin cambio de contrato ni UX | Docs opcionales |
+| Cambio comprobable | Fuente canónica | Artefactos adicionales |
+|---------------------|------------------|------------------------|
+| Contrato HTTP: endpoint, parámetro o forma de respuesta | `backend/docs/BACKEND.md` + schemas/OpenAPI | `make sync-contract`; si hay consumidor web, `frontend/docs/FRONTEND.md`, `frontend/lib/api-schema.d.ts`, `frontend/lib/types.ts`, `frontend/lib/api.ts`, hook y consumidor |
+| Modelo, job, fuente o error backend | `backend/docs/BACKEND.md` | Código, configuración y pruebas del backend que aporten la evidencia |
+| Ruta o UX pública | `frontend/docs/FRONTEND.md` | `frontend/docs/UI-GUIDELINES.md` si cambia la implementación visual |
+| Decisión visual de implementación | `frontend/docs/UI-GUIDELINES.md` | `frontend/DESIGN.md` solo si la decisión también es portable |
+| Decisión visual portable | `frontend/DESIGN.md` | `frontend/docs/UI-GUIDELINES.md` si requiere una regla operativa |
+| Propósito, audiencia, posicionamiento, compromisos de marca o accesibilidad portable | `frontend/PRODUCT.md` | `frontend/DESIGN.md` o `UI-GUIDELINES.md` solo para la consecuencia visual correspondiente |
+| Semántica de `?date=` | `docs/QUERY-DATE.md` | Referencias de `backend/docs/BACKEND.md` y `frontend/docs/FRONTEND.md`; contrato y tipos si cambia JSON |
+| Arquitectura, puertos o deploy | `docs/ARCHITECTURE.md` | `AGENTS.md` del área solo si cambia routing o scope |
+| Nueva área o ubicación de código | `AGENTS.md` del área | Documento de referencia del área solo si cambia su destino o ownership |
+| Fix interno sin cambio de contrato, UX o routing | Ninguna referencia nueva por defecto | Evidencia técnica y pruebas aplicables |
 
-“Importante” no significa cada línea: un typo o rename local sin API no requiere una referencia nueva.
+No dupliques una referencia larga en un `AGENTS.md` o README de entrada. Una sola fuente contiene el detalle; las entradas humanas resumen y enlazan.
 
----
+## Propietarios de evidencia
 
-## Regla de evidencia
+- `frontend/docs/FRONTEND.md`, sección **Estado de rutas**, es la única fuente de `disponible`, `stub` y `ausente`.
+- `backend/docs/BACKEND.md`, sección **API consumida por la web | API backend-only**, es la única fuente de `backend-only`.
+- Los README humanos pueden resumir y enlazar esas secciones, pero no mantienen inventarios paralelos.
+- La evidencia se comprueba en manifests, archivos reales bajo `frontend/app/`, OpenAPI runtime y símbolos/configuración existentes. No inventes benchmarks, latencias, uptime ni disponibilidad externa.
+- Una fuente real vacía o caída no se convierte en un dato sintético; un endpoint sin consumidor web no se presenta como UI terminada.
 
-Cada feature documentada debe llevar una clasificación explícita:
+## Flujo visual portable
 
-- **`disponible`:** superficie web comprobable end to end.
-- **`backend-only`:** API o servicio implementado sin consumidor web completo.
-- **`stub`:** ruta visible que muestra “Próximamente” o equivalente.
-- **`ausente`:** ruta o superficie todavía inexistente.
+Para cambios visuales, `frontend/docs/UI-GUIDELINES.md` sigue siendo el contrato detallado de implementación. `frontend/DESIGN.md` y `frontend/PRODUCT.md` forman, junto con `impeccable` y `bun run impeccable:detect`, el contexto portable de Impeccable.
 
-La evidencia se obtiene de fuentes concretas:
+Conserva el frontmatter de `DESIGN.md` y el comentario `impeccable:product-schema 1` de `PRODUCT.md`. Actualiza `PRODUCT.md` cuando cambien propósito, audiencia, posicionamiento, compromisos de marca o accesibilidad portable; actualiza `DESIGN.md` cuando cambien decisiones visuales portables.
 
-- versiones: manifests (`package.json`, `frontend/package.json`, `backend/pyproject.toml`);
-- estado de rutas: archivos reales bajo `frontend/app/`;
-- contrato HTTP: `GET /openapi.json` en runtime;
-- optimizaciones: símbolos, literales y configuración existentes, por ejemplo `next/dynamic`, `setFeatureState`, `staleTimeForLive`, batches, locks y TTL caches.
+## Checklist universal
 
-No inventes benchmarks, latencias, uptime ni disponibilidad externa. Un endpoint backend-only no se presenta como UI terminada. Una fuente de datos que falla no se convierte en un dato sintético.
+- [ ] Evidencia comprobada en la fuente canónica y en el código/configuración que la respalda.
+- [ ] OpenAPI sincronizado cuando cambia un contrato HTTP (`make sync-contract`).
+- [ ] Cada Markdown tocado termina con una única línea `Last updated: YYYY-MM-DD`.
+- [ ] Enlaces locales comprobados con `make verify-docs`.
+- [ ] Gate de área y `make verify` ejecutados cuando corresponda.
+- [ ] `cd frontend && bun run build` ejecutado solo cuando cambia el artefacto Next.
 
----
-
-## Jerarquía de ownership
-
-No dupliques una referencia larga en `AGENTS.md` ni en un README de entrada:
-
-1. **`AGENTS.md`** (raíz, `frontend/`, `backend/`) — índice, scope, prohibiciones y tabla “dónde poner X”.
-2. **`backend/docs/`** y **`frontend/docs/`** — referencias estables por stack.
-3. **`docs/`** — arquitectura, `?date=`, harness y mantenimiento cross-stack.
-4. **`frontend/docs/UI-GUIDELINES.md`** — contrato detallado y canónico de implementación visual: tokens, Mica, patrones citizen y excepciones.
-5. **`frontend/DESIGN.md`** — spec portable para Impeccable; resume principios sin reemplazar la guía detallada.
-
-La adopción de Impeccable del 2026-08-07 se conserva: `impeccable`, `frontend/DESIGN.md`, `frontend/docs/UI-GUIDELINES.md` y `bun run impeccable:detect` forman una integración; no se mueve el frontmatter portable ni se renombra el skill.
-
-Si un párrafo largo vive en dos sitios, una sola fuente de verdad contiene el detalle y la otra solo enlaza.
-
----
-
-## Checklist antes de cerrar un task
-
-- [ ] ¿Cambió contrato HTTP? → `backend/docs/BACKEND.md` + `make sync-contract` + `frontend/lib/types.ts` + `frontend/lib/api.ts`.
-- [ ] ¿Cambió UI pública? → `frontend/docs/FRONTEND.md` + `frontend/docs/UI-GUIDELINES.md`.
-- [ ] ¿Cambió paleta, tipografía, forma, elevación o doctrina portable? → sincronizar `frontend/DESIGN.md`; si no, dejarlo intacto.
-- [ ] ¿Nuevo archivo hot path? → fila en el `AGENTS.md` del área.
-- [ ] ¿Feature cross-stack? → `docs/QUERY-DATE.md` o `docs/ARCHITECTURE.md`.
-- [ ] ¿Estado de feature? → etiqueta `disponible`, `backend-only`, `stub` o `ausente` con evidencia.
-- [ ] ¿README o índice mantenido? → actualizar según su task-first ownership.
-- [ ] ¿Fecha? → `Last updated: YYYY-MM-DD` en cada Markdown modificado.
-- [ ] ¿Enlaces? → `make verify-docs` incluye `README.md`, los tres `AGENTS.md`, todos los `docs/*.md`, `frontend/README.md`, `frontend/DESIGN.md`, los dos READMEs de evacuación y los índices backend/frontend.
-- [ ] ¿Gate? → `make verify` en la raíz, o al menos `verify-frontend` / `verify-backend` durante una iteración.
-- [ ] ¿Artefacto Next? → `cd frontend && bun run build`; `make verify` no lo ejecuta.
-
-El verificador mantenido es `docs/scripts/verify-doc-links.sh`. No amplía su alcance a `.agents/`, `misc/` ni `TrueRisk/`.
-
----
+El alcance de Markdown mantenido lo define exclusivamente `docs/scripts/verify-doc-links.sh`; no se replica aquí en una lista manual. Ese verificador no amplía su alcance a `misc/`, `TrueRisk/` ni `.agents/`.
 
 ## Aprobación del usuario
 
 Las ediciones en `docs/`, `backend/docs/` y `frontend/docs/` están permitidas cuando forman parte del task. Cambios en `docker-compose.yml`, root `.env` y `.gitignore` siguen requiriendo aprobación explícita según [AGENTS.md](../AGENTS.md).
 
-*Last updated: 2026-08-07*
+*Last updated: 2026-08-12*

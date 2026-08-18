@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 
-import { createGuestBackendApiToken } from "@/lib/api-token"
+import { auth } from "@/auth"
+import {
+  createBackendApiToken,
+  createGuestBackendApiToken,
+} from "@/lib/api-token"
 import { getBackendInternalUrl } from "@/lib/backend-url"
 
 /**
  * Same-origin proxy → FastAPI. Always attaches a Bearer JWT.
- * Until NextAuth exists, uses guest (`sub: "guest"`).
+ * Signed-in Auth.js session → `sub` = user id; otherwise guest.
  */
 async function proxyRequest(req: NextRequest, pathSegments: string[]) {
   const targetPath = `/${pathSegments.join("/")}`
   const url = new URL(targetPath, getBackendInternalUrl())
   url.search = req.nextUrl.search
 
-  const token = await createGuestBackendApiToken()
+  const session = await auth()
+  const token = session?.user?.id
+    ? await createBackendApiToken({
+        sub: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+      })
+    : await createGuestBackendApiToken()
 
   const headers = new Headers()
   const contentType = req.headers.get("content-type")

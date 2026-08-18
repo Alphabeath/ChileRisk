@@ -6,6 +6,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
 
+GUEST_SUB = "guest"
+
 _bearer = HTTPBearer(auto_error=False)
 
 
@@ -59,3 +61,15 @@ async def get_current_user(
             detail="Missing bearer token",
         )
     return decode_api_token(credentials.credentials)
+
+
+async def require_account_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> CurrentUser:
+    user = await get_current_user(credentials)
+    if user.id == GUEST_SUB:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account required",
+        )
+    return user
